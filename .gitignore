@@ -1,0 +1,18 @@
+# Tuanjie / Unity generated
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]serSettings/
+*.pid
+*.log
+
+# Secrets
+.env
+.env.*
+
+# Codely runtime
+.codely-cli/scheduled_tasks.json
+.codely-cli/settings.local.json

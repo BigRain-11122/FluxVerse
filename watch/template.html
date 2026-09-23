@@ -103,6 +103,11 @@
   <div class="card"><h3>居民之声（AI 台词 · 锚定真实事件 · 本地大脑）</h3><div id="residents" style="max-height:260px;overflow:auto"></div></div>
 </div>
 
+<div class="grid" style="grid-template-columns:2fr 1fr">
+  <div class="card"><h3>人口普查 · 叙事市民层（BigLife 万人户籍库 · 只读消费）</h3><div id="pop"></div></div>
+  <div class="card"><h3>今日面孔（展示级手写锚卡 · 每日轮换）</h3><div id="faces" style="max-height:280px;overflow:auto"></div></div>
+</div>
+
 <div class="grid" style="grid-template-columns:1fr 1fr">
   <div class="card"><h3>城市图志（概念图/施工截图 · 最新）</h3><div class="gal" id="gal"></div></div>
   <div class="card"><h3>tick 最近轮次（探针健康）</h3><pre id="tick2" style="max-height:240px;overflow:auto">--</pre></div>
@@ -180,6 +185,35 @@ document.getElementById('gts').textContent=DATA.generated_ts||'--';
   const loc={work:'岗位工作中',sleep:'居所休眠',night:'值夜岗','night-shift':'值夜岗'};
   const keys=Object.keys(R);
   document.getElementById('residents').innerHTML=keys.length?keys.map(k=>{const r=R[k];return '<div class="ev" style="border-left-color:#a6f"><span class="t">'+String(r.ts||'').slice(11,16)+'</span><b style="color:#cde">'+r.id+'</b>'+(r.location?'<span style="color:#557">['+(loc[r.location]||r.location)+']</span> ':' ')+String(r.line||'')+'</div>'}).join(''):'<span style="color:#556;font-size:11px">居民大脑启动中——下一轮 scan 后有台词</span>';
+})();
+
+// ---------- population (BigLife census - narrative-citizen layer, P-22 honest-layer law) ----------
+(function(){
+  const el=document.getElementById('pop'); if(!el)return;
+  const P=DATA.population;
+  if(!P){el.innerHTML='<span style="color:#556;font-size:11px">户籍库数据待接入（BigLife census 未就绪）</span>';return}
+  const SP={carbon:'碳基市民',silicon:'硅基民',sprite:'像素灵'};
+  const DI={NS:'北外滩·治理岸',QT:'QUANT 城',GM:'GAME 城',MD:'MEDIA 城',RV:'江面与光桥',OR:'外环感知网'};
+  const FA={lilong:'弄堂派',newcomer:'新市民派',commuter:'通勤族',native:'原生代',photonsoul:'光机魂系',compiled:'编译系',elf:'精灵系',radiocat:'电波猫',finch:'消息雀',nightlamp:'守夜灯灵',koi:'数据锦鲤',rainfrog:'雨声蛙',chimefly:'风铃蝶'};
+  const sec=t=>'<div class="lbl" style="margin-top:8px;color:#22d3ee"><span>'+t+'</span><span></span></div>';
+  const bars=(obj,map)=>Object.keys(obj).map(k=>'<div class="lbl"><span>'+(map[k]||k)+'</span><span>'+obj[k]+'</span></div><div class="bar"><i style="width:'+(obj[k]/P.total*100)+'%"></i></div>').join('');
+  let h='<div class="lbl"><span>叙事市民总数（诚实虚构层 · CODEX §一）</span><span style="color:#f0f6ff;font-size:13px"><b style="color:#f0f6ff">'+P.total+'</b> 位</span></div>';
+  h+='<div class="lbl"><span>实锚层（机队升维居民 · 真实机器真实事件）</span><span>'+(P.anchor_layer||0)+' 位 · 见居民之声/居民卡</span></div>';
+  h+=sec('物种谱系')+bars(P.by_species,SP);
+  h+=sec('城区分布')+bars(P.by_district,DI);
+  h+='<div class="row" style="margin-top:8px">'+Object.keys(P.by_faction).sort((a,b)=>P.by_faction[b]-P.by_faction[a]).map(k=>'<span class="chip">'+(FA[k]||k)+' <b>'+P.by_faction[k]+'</b></span>').join('')+'</div>';
+  h+='<div class="row" style="margin-top:6px">'+Object.keys(P.by_gender).map(k=>'<span class="chip">'+k+' <b>'+P.by_gender[k]+'</b></span>').join('')+'</div>';
+  h+='<div style="color:#556;font-size:10px;margin-top:8px;line-height:1.6">诚实律：叙事市民=人设生产资料（诚实虚构），生活锚定真实城市环境（北京时间/上海天气/行情/城市事件）；与实锚层互不冒充。数据面=BigLife CODEX §十二导出面 v1.2（T2 否决窗内·只读消费）。</div>';
+  el.innerHTML=h;
+})();
+
+// ---------- faces (hand-written showcase anchors, deterministic daily rotation) ----------
+(function(){
+  const el=document.getElementById('faces'); if(!el)return;
+  const P=DATA.population;
+  if(!P||!P.showcase||!P.showcase.length){el.innerHTML='<span style="color:#556;font-size:11px">展示卡待接入</span>';return}
+  const DI={NS:'北外滩',QT:'QUANT 城',GM:'GAME 城',MD:'MEDIA 城',RV:'江面光桥',OR:'外环感知网'};
+  el.innerHTML=P.showcase.map(c=>'<div class="ev" style="border-left-color:#a6f"><b style="color:#cde">'+c.name+'</b> <span style="color:#557">'+(typeof c.age==='number'?c.age+' 岁 · ':'')+(DI[c.district]||c.district)+' · '+c.block+'</span><br><span style="color:#9ab">'+c.profession+'</span><br><span style="color:#7b8aa3">「'+c.creed+'」</span></div>').join('')+'<div style="color:#556;font-size:10px;margin-top:6px">展示级手写锚卡 '+P.anchors+' 张全库覆盖物种派系×城区（CODEX §十一）·按日轮换</div>';
 })();
 
 // ---------- gallery ----------

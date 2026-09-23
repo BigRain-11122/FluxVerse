@@ -85,6 +85,60 @@ if (Test-Path $msFile) {
   } catch {}
 }
 
+# ---------- population (P-22 claim: BigLife census read-only consumption) ----------
+# CODEX sec.12 names CityWatch population panel as consumer of the export face
+# census/export/citizens-light.jsonl (v1.2). Honest-layer law (CODEX sec.1): the
+# census IS the narrative-citizen layer - panel must label it as such and never
+# mix it with the anchor layer (machine residents in docs\residents). Encoding
+# law: script body stays ASCII - codes and Chinese values flow through raw from
+# data; Chinese labels live in template.html (UTF-8 data file).
+# Zero interference: file read once on demand (snapshot build), nothing written.
+$population = $null
+try {
+  $censusFile = Join-Path $group 'life\BigLife\census\export\citizens-light.jsonl'
+  if (Test-Path $censusFile) {
+    $craw = [string](Get-Content $censusFile -Raw -Encoding UTF8)
+    $clines = @($craw -split "`n" | ForEach-Object { [string]$_ } | Where-Object { $_.Trim() })  # ETS unwrap law
+    function Get-FieldCounts([string]$text, [string]$field) {
+      $h = @{}
+      foreach ($m in [regex]::Matches($text, ('"' + $field + '":\s*"([^"]*)"'))) {
+        $k = $m.Groups[1].Value; $h[$k] = 1 + [int]$h[$k]
+      }
+      return $h
+    }
+    $byDistrict = Get-FieldCounts $craw 'district'
+    $byFaction  = Get-FieldCounts $craw 'faction'
+    $bySpecies  = Get-FieldCounts $craw 'species'
+    $byGender   = Get-FieldCounts $craw 'gender'
+    # hand-written showcase anchors (CODEX sec.11.4) - rotate per day, deterministic;
+    # stride 5 because anchors are grouped by district, so consecutive picks would
+    # fill the card with one district - striding spreads the daily four across zones
+    $anchors = @($clines | Where-Object { $_ -match '"anchor":\s*true' })
+    $showcase = @()
+    if ($anchors.Count -gt 0) {
+      $dayIdx = [int](Get-Date -Format 'yyyyMMdd') % $anchors.Count
+      $take = [Math]::Min(4, $anchors.Count)
+      for ($i = 0; $i -lt $take; $i++) {
+        $a = $anchors[($dayIdx + 5 * $i) % $anchors.Count] | ConvertFrom-Json
+        $showcase += @{ id = $a.id; name = $a.name; age = $a.age; profession = $a.profession; district = $a.district; block = $a.block; creed = $a.creed }
+      }
+    }
+    $anchorLayer = 0
+    $resCardsDir = Join-Path $repoRoot 'docs\residents'
+    if (Test-Path $resCardsDir) { $anchorLayer = @(Get-ChildItem $resCardsDir -Filter *.md -ErrorAction SilentlyContinue).Count }
+    $population = [ordered]@{
+      total        = $clines.Count
+      by_district  = $byDistrict
+      by_faction   = $byFaction
+      by_species   = $bySpecies
+      by_gender    = $byGender
+      anchors      = $anchors.Count
+      showcase     = $showcase
+      anchor_layer = $anchorLayer
+    }
+  }
+} catch { $population = $null }   # census missing/broken => panel hides, snapshot still ships
+
 # ---------- welcome line: a resident greets the CEO on every open (local LLM) ----------
 # CEO order 2026-09-23 (open-world NPC AI): the city greets its master on arrival.
 # The fact "the CEO just opened CityWatch" IS a real event - honest to use.
@@ -125,6 +179,7 @@ $data = [ordered]@{
   tick_tail      = $tick
   images         = $imgList
   milestones     = $milestones
+  population     = $population
   welcome        = $welcome
 }
 $stateObj = $null

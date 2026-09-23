@@ -89,6 +89,7 @@ Tools/perceptor/
 - 计划任务 `FluxVerseTick`：每 10 分钟，无人值守；
 - 日志：`logs/tick-YYYYMMDD.log`（gitignored，轮转保留 7 天）；
 - 健康指标：每轮 PASS/FAIL + 事件增量数 + fleet 在线数。
+- 任务动作=Set-ScheduledTask 注册（PowerShell 模块）；**首次真 OS 轮 2026-09-23 17:19**（r2 修红：注册首日动作串遭 schtasks /tr 引号残废，心跳从未真正点火——新法见 §九）。
 
 ## 八、目录全景
 
@@ -113,10 +114,11 @@ gaming/FluxVerse/
 - [P2] jsonl 按日轮转归档
 - [P2] MiniGame 任务面板/BigStream 产出探针
 - [P2] HQ-FEEDBACK 感知探针（向上反馈通道可视化）
-- [P1] 风格定稿 → 城市美术资产管线
+- [P1] 城市美术资产管线（风格已定案「高清赛博像素」=CEO 附图三裁决 2026-09-23·d021a49·M0 收口；下一步=城市版概念稿黄昏档+夜档）
 - [✅ 2026-09-23·r1] 现实链接首批五探针（CEO 新令「要和现实产生链接和互动」·通道台账与视觉映射=docs/research/R-20260923-reality-link.md + DESIGN §十五）：clock/weather/fx/github_events 四针已落地（全零 key·静默降级·游标增量），**market+calendar 一针剩余**（akshare 依赖 BigMoney 同源·交易日历可修 clock 的节假日近似——下轮候选）
 - [✅ 2026-09-23·r1] 新事件登记 MARKET_OPEN/MARKET_CLOSE/WEATHER_ALERT（T2·7 天否决窗）——实际登记五型（+FX_TICK/GITHUB_EVENT），否决窗至 2026-09-30
 - [新法·已修] **PS5.1 ParseExact 'Z' 陷阱**：格式串含字面 'Z' = .NET 按 UTC 解析后**转本地时**（实证：clock 首版 UTC+8 双重偏移成次日凌晨）——解析 UTC 戳一律剥 Z 再 ParseExact 或用 AdjustToUniversal；未来任何探针吃时间戳适用
+- [新法·已修·r2] **schtasks /tr 引号残废陷阱**：OS 任务动作串被转义成 `-File " 路径\ /F`（引号后带空格 + schtasks /F 力 flag 漏进串尾）→ powershell.exe 判非 .ps1 扩展名当场死，exit **-196608**（逐位=任务 LastTaskResult 4294770688）——FluxVerseTick 自 16:17 注册以来**从未点火**，日志 16:17/16:57 两条全是别窗手动跑；修=Set-ScheduledTask 换净动作串 + 17:19 点火实证（13 探针全 OK+gate 双绿）。法：**OS 任务注册/改一律走 PowerShell ScheduledTasks 模块**（DevLoop register_loop_task 同源范式），用 schtasks /tr 后必读回 XML 验动作串
 - [P1] 令行通道：指令文件出口→签收关卡→OS 循环消费→回流事件（环B 闭环=数字影子升格真孪生的唯一通道·Kritzinger 2018 判据·署名按 CEO 委托令 O-20260923-1620 分级）
 - [P2] Biggame U-登记簿探针（先定位 MiniGame 侧登记簿文件；orders 探针已覆盖面=fleet orders+集团台账+BigStream orders）
 

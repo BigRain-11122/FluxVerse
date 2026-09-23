@@ -1,0 +1,11 @@
+{
+  "milestones": [
+    { "id": "M0",   "name": "开窍·定稿（风格+地理+设定）",     "status": "done" },
+    { "id": "M1",   "name": "立骨·引擎工程+城市场景",           "status": "building" },
+    { "id": "M1.5", "name": "萌发·现实入城（感知✓·引擎并M1）",   "status": "partial" },
+    { "id": "M2",   "name": "神经接通·实况动画",                 "status": "next" },
+    { "id": "M3",   "name": "感官成形·看查令（升格真孪生）",      "status": "planned" },
+    { "id": "M4",   "name": "无处不在·参观端",                   "status": "planned" },
+    { "id": "M5+",  "name": "化入日常·数字生命栖居",             "status": "vision" }
+  ]
+}

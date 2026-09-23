@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>超体宇宙城 · 观城台 CityWatch</title>
+<style>
+  :root{--bg:#05070d;--panel:#0b101c;--line:#1a2334;--cyan:#22d3ee;--gold:#f5c542;--mag:#f45bb0;--red:#ff4d4d;--white:#f0f6ff;--dim:#7b8aa3}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--white);font-family:"Microsoft YaHei",system-ui,sans-serif;font-size:13px;padding:14px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+  header .title{font-size:17px;font-weight:700;letter-spacing:2px}
+  header .sub{color:var(--dim);font-size:11px;margin-top:2px}
+  .badge{margin-left:auto;text-align:right;color:var(--dim);font-size:11px;line-height:1.7}
+  .badge b{color:var(--cyan)}
+  .grid{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:10px}
+  .card{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:10px}
+  .card h3{font-size:12px;color:var(--cyan);letter-spacing:1px;margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  canvas{image-rendering:pixelated;width:100%;border-radius:6px;display:block}
+  #tip{position:fixed;pointer-events:none;background:#000c;padding:3px 8px;border:1px solid var(--cyan);border-radius:4px;font-size:11px;display:none;z-index:9}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);border-radius:6px;padding:5px 9px;font-size:11px;background:#070c16}
+  .chip b{color:var(--cyan)}
+  .zone{display:flex;justify-content:space-between;padding:4px 2px;font-size:12px}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px}
+  .fleet{font-size:11px;color:var(--dim);padding:3px 0;border-bottom:1px dashed #141c2c}
+  .fleet b{color:var(--white)}
+  .ev{font-size:11px;padding:3px 6px;border-left:3px solid #555;margin:3px 0;background:#070c16;border-radius:0 4px 4px 0;word-break:break-all}
+  .ev .t{color:var(--dim);margin-right:6px;font-family:Consolas,monospace}
+  .ms{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:var(--dim)}
+  .ms .st{width:54px;text-align:center;font-size:10px;border-radius:3px;padding:1px 0}
+  .ms.done .st{background:#063;color:#5f5} .ms.building .st{background:#443;color:#fc6;animation:blink 1.2s infinite}
+  .ms.partial .st{background:#134;color:#7df} .ms.next .st,.ms.planned .st{background:#112;color:#889} .ms.vision .st{background:#1a1a2e;color:#a6f}
+  .ms.done{color:#9f9}
+  @keyframes blink{50%{opacity:.5}}
+  .bar{height:10px;background:#070c16;border:1px solid var(--line);border-radius:3px;overflow:hidden;margin:3px 0 8px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#123,#2ad)}
+  .lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--dim)}
+  .gal img{width:100%;border:1px solid var(--line);border-radius:6px;display:block}
+  .gal .cap{font-size:10px;color:var(--dim);margin:4px 0 10px}
+  .gal{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  pre{font-size:10px;color:#8fa;line-height:1.5;white-space:pre-wrap;word-break:break-all}
+  footer{color:var(--dim);font-size:11px;margin-top:10px;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);line-height:1.8}
+  footer b{color:var(--cyan)}
+  #detail{font-size:12px;line-height:1.8;min-height:120px}
+  #detail h4{color:var(--gold);font-size:12px;margin-bottom:4px}
+  .up{color:#ff5f56}.down{color:#2ecc71}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <svg width="46" height="46" viewBox="0 0 96 96">
+    <rect x="2" y="2" width="92" height="92" rx="10" fill="#070b14" stroke="#1a2334"/>
+    <rect x="44" y="14" width="8" height="4" fill="#fff"/>
+    <rect x="42" y="18" width="12" height="2" fill="#22d3ee" opacity=".5"/>
+    <rect x="45" y="20" width="6" height="26" fill="#0e7490"/>
+    <rect x="46" y="20" width="4" height="26" fill="#22d3ee" opacity=".55"/>
+    <rect x="8" y="76" width="80" height="2" fill="#22d3ee" opacity=".35"/>
+    <rect x="20" y="62" width="10" height="10" fill="#22d3ee"/>
+    <rect x="42" y="54" width="12" height="20" fill="#f5c542"/>
+    <rect x="66" y="62" width="9" height="9" fill="#f45bb0"/>
+    <rect x="23" y="52" width="2" height="2" fill="#fff" opacity=".8"/><rect x="70" y="52" width="2" height="2" fill="#fff" opacity=".8"/>
+  </svg>
+  <div>
+    <div class="title">超体宇宙城 · 观城台</div>
+    <div class="sub">FluxVerse CityWatch —— 数字生命栖居的现实链接元宇宙</div>
+  </div>
+  <div class="badge">
+    只读快照 · <b id="gts">--</b> · 观看零干扰<br>
+    真实北京时间 <b id="clock">--</b>
+  </div>
+</header>
+
+<div class="grid">
+  <div class="card">
+    <h3>城市实况俯瞰（点击城区/脑塔查看详情）</h3>
+    <canvas id="city" width="240" height="135"></canvas>
+    <div class="row" style="margin-top:8px" id="reality"></div>
+  </div>
+  <div class="card">
+    <h3>详情面板</h3>
+    <div id="detail">点击左侧城区或脑塔，查看该区实况。</div>
+    <h3 style="margin-top:12px">机队在线（街道机器人）</h3>
+    <div id="fleet"></div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1fr 1fr">
+  <div class="card"><h3>建设进度（大脑开发度）</h3><div id="ms"></div></div>
+  <div class="card"><h3>近 24 小时 commits（三司+总控）</h3><div id="commits"></div>
+    <h3 style="margin-top:10px">tick 最近轮次</h3><pre id="tick">--</pre></div>
+  <div class="card"><h3>QUANT 真K线 · 510300 沪深300ETF</h3>
+    <canvas id="kline" width="240" height="80" style="background:#070c16"></canvas>
+    <div class="lbl" style="margin-top:4px"><span id="mk">--</span><span id="mk2"></span></div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1fr">
+  <div class="card"><h3>事件流回放（真实事件 · 最近 40 条）</h3><div id="evs" style="max-height:260px;overflow:auto"></div></div>
+  <div class="card"><h3>城市图志（概念图/施工截图 · 最新）</h3><div class="gal" id="gal"></div></div>
+</div>
+
+<footer>
+  <b>使用</b>：任何机器——git pull FluxVerse 仓后双击 <b>watch\CityWatch.bat</b> 即看（未克隆的机器：bootstrap-machine.ps1 -Roles fluxverse 三步就位）。
+  <b>零干扰保证</b>：观城台只读（world 快照+git log），输出落 watch\out\（gitignored），永不打开引擎编辑器、不写任何共享文件、不加锁——您的观看不影响开发进度。实时驾驶舱属 M3（引擎工程），本台为进度观景层。
+  Logo 件：<b>docs/design/fluxverse-logo.svg</b>（脑塔之光辐射三流 · 五色律 · 像素正体）。
+</footer>
+</div>
+<div id="tip"></div>
+<script>
+const B64='__CITY_WATCH_B64__';
+let DATA,S,EV;
+try{const bin=atob(B64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);DATA=JSON.parse(new TextDecoder('utf-8').decode(u));}catch(e){document.body.innerHTML='<p style="padding:20px">快照数据损坏，请重新运行 CityWatch.bat。</p>';throw e;}
+S=DATA.state;EV=(DATA.events||[]).map(l=>{try{return JSON.parse(l)}catch(e){return null}}).filter(Boolean);
+document.getElementById('gts').textContent=DATA.generated_ts||'--';
+
+// ---------- reality chips ----------
+(function(){
+  const r=S&&S.reality; if(!r)return;
+  const el=document.getElementById('reality');
+  const chip=(k,v)=>{if(v!==undefined&&v!==null&&v!=='')el.innerHTML+='<span class="chip">'+k+' <b>'+v+'</b></span>'};
+  chip('北京',r.beijing_hhmm);chip('相位',r.city_day_phase);chip('天气',(r.weather_kind||'')+' '+r.weather_temp_c+'°C');
+  chip('风',r.weather_wind_ms+'m/s');chip('USD/CNY',r.fx_usdcny);chip('交易日',r.is_trading_day!==undefined?(r.is_trading_day?'开市':'休市'):'--');
+  if(r.market&&r.market.change_pct!==undefined){const c=r.market.change_pct;chip('510300',(c>=0?'+':'')+c+'%')}
+  chip('GitHub生态',r.github_pulse);
+})();
+
+// ---------- clock ----------
+(function(){const r=S&&S.reality;if(r&&r.beijing_hhmm)document.getElementById('clock').textContent=r.beijing_hhmm;})();
+
+// ---------- milestones ----------
+(function(){
+  const g={'done':'完成','building':'在建','partial':'半成','next':'下一档','planned':'规划','vision':'愿景'};
+  document.getElementById('ms').innerHTML=(DATA.milestones||[]).map(m=>'<div class="ms '+m.status+'"><span class="st">'+(g[m.status]||m.status)+'</span><span><b style="color:#cde">'+m.id+'</b> '+m.name+'</span></div>').join('');
+})();
+
+// ---------- commits ----------
+(function(){
+  const c=DATA.commits_24h||{};const max=Math.max(1,...Object.values(c));
+  const name={fluxgroup:'总控',minigame:'GAME',bigmoney:'QUANT',bigstream:'MEDIA',fluxverse:'元宙'};
+  document.getElementById('commits').innerHTML=Object.keys(c).map(k=>'<div class="lbl"><span>'+name[k]+'</span><span>'+c[k]+'</span></div><div class="bar"><i style="width:'+(c[k]/max*100)+'%"></i></div>').join('');
+})();
+
+// ---------- tick ----------
+(function(){document.getElementById('tick').textContent=(DATA.tick_tail||[]).join('\n')||'--'})();
+
+// ---------- fleet ----------
+(function(){
+  const f=S&&S.fleet;if(!f)return;
+  const col=m=>m&&m.company==='biggame'?'#22d3ee':(m.id&&m.id.indexOf('bg')===0?'#22d3ee':(m.id==='bm-b'||m.id==='bm-a'?'#f5c542':'#f45bb0'));
+  document.getElementById('fleet').innerHTML=f.map(m=>'<div class="fleet"><span class="dot" style="background:'+(m.online?'#4ade80':'#555')+'"></span><b>'+m.id+'</b> '+(m.online?'在线':'离线')+' · '+(m.current_task||'').slice(0,42)+'</div>').join('');
+})();
+
+// ---------- events ----------
+(function(){
+  const col=t=>({CEO_ORDER:'#fff',COMMIT:'#22d3ee',HEARTBEAT:'#334',MARKET_OPEN:'#f5c542',MARKET_CLOSE:'#f5c542',FX_TICK:'#f5c542',GITHUB_EVENT:'#2ad',WEATHER_ALERT:'#ff4d4d'}[t]||'#556');
+  document.getElementById('evs').innerHTML=EV.slice().reverse().map(e=>'<div class="ev" style="border-left-color:'+col(e.type)+'"><span class="t">'+String(e.ts_utc||'').slice(11,16)+'</span>'+(e.type||'')+' · <span style="color:#9ab">'+String(e.summary||'').slice(0,64)+'</span></div>').join('')||'--';
+})();
+
+// ---------- gallery ----------
+(function(){
+  document.getElementById('gal').innerHTML=(DATA.images||[]).map(i=>'<div><img src="'+i.src+'" loading="lazy"><div class="cap">'+i.name+' · '+i.ts+'</div></div>').join('')||'<span style="color:#556;font-size:11px">暂无图片（施工截图将随 M1 出现）</span>';
+})();
+
+// ---------- kline ----------
+(function(){
+  const m=S&&S.reality&&S.reality.market;if(!m||!m.bars||!m.bars.length){document.getElementById('mk').textContent='数据待接入';return}
+  const cv=document.getElementById('kline'),g=cv.getContext('2d');const bars=m.bars;
+  let hi=-1e9,lo=1e9;bars.forEach(b=>{hi=Math.max(hi,b[2]);lo=Math.min(lo,b[3])});
+  const W=240,H=80,pad=6,n=bars.length,bw=Math.floor((W-pad*2)/n);
+  for(let i=0;i<n;i++){const b=bars[i];const x=pad+i*bw;const up=b[4]>=b[1];
+    g.strokeStyle=up?'#ff5f56':'#2ecc71';g.fillStyle=up?'#ff5f56':'#2ecc71';
+    g.beginPath();g.moveTo(x+bw/2,pad+(hi-b[2])/(hi-lo)*(H-pad*2));g.lineTo(x+bw/2,pad+(hi-b[3])/(hi-lo)*(H-pad*2));g.stroke();
+    const y1=pad+(hi-Math.max(b[1],b[4]))/(hi-lo)*(H-pad*2),y2=pad+(hi-Math.min(b[1],b[4]))/(hi-lo)*(H-pad*2);
+    g.fillRect(x+1,y1,Math.max(1,bw-2),Math.max(1,y2-y1));
+  }
+  const last=bars[bars.length-1];
+  document.getElementById('mk').textContent='最新 '+last[0]+' 收盘 '+last[4];
+  let cp=m.change_pct;
+  if(cp===undefined||cp===null){cp=bars.length>1?Math.round((bars[bars.length-1][4]-bars[bars.length-2][4])/bars[bars.length-2][4]*10000)/100:0}
+  const el2=document.getElementById('mk2');el2.textContent='涨跌 '+(cp>=0?'+':'')+cp+'%';el2.className=cp>=0?'up':'down';
+})();
+
+// ---------- city canvas ----------
+(function(){
+  const cv=document.getElementById('city'),g=cv.getContext('2d');
+  const r=S&&S.reality||{};const phase=r.city_day_phase||'night';
+  const zones=(S&&S.zones)||[];const zst={};zones.forEach(z=>zst[z.id]=z);
+  const fleet=(S&&S.fleet)||[];
+  const ZONES={gaming:{x:22,y:96,w:44,h:26,name:'GAME 城 · FLUX Gaming',col:'#22d3ee'},quant:{x:92,y:78,w:24,h:38,name:'QUANT 城 · FLUX Quant',col:'#f5c542'},media:{x:152,y:92,w:22,h:26,name:'MEDIA 城 · BigStream',col:'#f45bb0'},tower:{x:113,y:24,w:14,h:36,name:'超体脑塔 · 治理中枢',col:'#fff'}};
+  const tint={dawn:'rgba(255,150,90,.10)',day:'rgba(120,180,255,.05)',dusk:'rgba(210,120,255,.16)',night:'rgba(10,20,60,.30)'}[phase]||'rgba(10,20,60,.30)';
+  const wet=r.weather_kind||'';const rain=/rain|shower|drizzle/i.test(wet),snow=/snow/i.test(wet),cloud=/cloud|fog|mist/i.test(wet);
+  let rainArr=[];if(rain||snow){for(let i=0;i<40;i++)rainArr.push({x:Math.random()*240,y:Math.random()*135,s:snow?.3:1.6})}
+  const stars=[];for(let i=0;i<26;i++)stars.push({x:Math.random()*240,y:Math.random()*50,tw:Math.random()*6});
+
+  // robots: walk loop toward their company zone
+  const rob=fleet.filter(m=>m.online).map((m,i)=>{const z=m.company==='biggame'||(m.id||'').indexOf('bg')===0?'gaming':(m.id==='bm-a'||m.id==='bm-b'?'quant':'media');
+    return{x:Math.random()*240,y:88+ (i%3)*3,tx:ZONES[z].x+ZONES[z].w/2,col:ZONES[z].col,v:.06+Math.random()*.08}});
+  // event pulses
+  const pulses=[];let evi=0;
+  const evCol=t=>({CEO_ORDER:'#ffffff',COMMIT:'#22d3ee',HEARTBEAT:'#334455',MARKET_OPEN:'#f5c542',MARKET_CLOSE:'#f5c542',FX_TICK:'#f5c542',GITHUB_EVENT:'#224466',WEATHER_ALERT:'#ff4d4d'}[t]||'#334455');
+  const zPos=zn=>{const z=ZONES[zn]||ZONES.gaming;return{x:z.x+z.w/2,y:z.y+z.h/2}};
+  function spawn(){if(!EV.length)return;const e=EV[evi%EV.length];evi++;
+    const whitePulse=e.type==='CEO_ORDER';
+    const from=whitePulse?{x:120,y:24}:zPos(e.zone==='quant'?'quant':e.zone==='media'?'media':'gaming');
+    const to=whitePulse?zPos((e.summary||'').match(/quant/i)?'quant':(e.summary||'').match(/media|BigStream/i)?'media':'gaming'):{x:120,y:30};
+    pulses.push({x:from.x,y:from.y,tx:to.x,ty:to.y,col:evCol(e.type),v:.9,t:e.type});}
+
+  let t=0;const alert=EV.some(e=>e.type==='WEATHER_ALERT');
+  function draw(){
+    t++;
+    // sky
+    g.fillStyle=phase==='night'?'#04060d':phase==='day'?'#0a1526':'#070a18';g.fillRect(0,0,240,58);
+    if(phase==='night'||phase==='dusk'){g.fillStyle='rgba(255,255,255,.5)';stars.forEach(s=>{if(Math.sin(t*.05+s.tw)>0)g.fillRect(s.x|0,s.y|0,1,1)})}
+    // north bank ground
+    g.fillStyle='#0a0f1c';g.fillRect(0,58,240,14);
+    // historic facades (north, low)
+    for(let x=4;x<236;x+=8){const h=4+((x*7)%5);g.fillStyle='#111a2c';g.fillRect(x,58-h,7,h);
+      if(((x+((t/40)|0))%3)===0){g.fillStyle='rgba(180,210,255,.35)';g.fillRect(x+1,58-h+1,2,2)}}
+    // river
+    g.fillStyle='#06121e';g.fillRect(0,72,240,10);
+    g.fillStyle='rgba(34,211,238,.12)';g.fillRect(0,72,240,10);
+    for(let x=0;x<240;x+=5){const y=73+Math.sin(t*.06+x*.3)*2+((x/5)%4);g.fillStyle='rgba(34,211,238,'+(0.08+0.10*Math.abs(Math.sin(t*.04+x)))+')';g.fillRect(x,y|0,3,1)}
+    // light bridges
+    [[34,'rgba(34,211,238,.5)'],[206,'rgba(34,211,238,.35)']].forEach(b=>{g.fillStyle=b[1];g.fillRect(b[0],73,2,8);g.fillRect(b[0]-3,81,8,1)});
+    // south bank ground
+    g.fillStyle='#0c1220';g.fillRect(0,82,240,53);
+    // GAME blocks (cyan cluster + window lights)
+    for(let i=0;i<4;i++){const x=26+i*10,h=10+((i*7)%8);g.fillStyle='#0e2a3a';g.fillRect(x,128-h-2,8,h);
+      g.fillStyle=zst.gaming&&zst.gaming.status==='active'?'rgba(34,211,238,.5)':'rgba(34,211,238,.15)';
+      for(let wy=0;wy<h-2;wy+=3)for(let wx=0;wx<3;wx++)if(((i+wy+wx+((t/30)|0))%3)<2)g.fillRect(x+1+wx*2,128-h-1+wy,1,1)}
+    // QUANT tower (gold, tall twisted)
+    const mUp=(S&&S.reality&&S.reality.market)||{};const cpc=mUp.change_pct||0;
+    for(let y=0;y<46;y++){const x=102+Math.round(Math.sin(y*.15)*1.5);g.fillStyle='#2a2008';g.fillRect(x,82+y,10,1)}
+    g.fillStyle='#f5c542';g.fillRect(104,78,4,3);g.fillStyle='rgba(245,197,66,'+(0.3+0.2*Math.sin(t*.08))+')';g.fillRect(102,74,8,4);
+    // K-line mega screen on tower: flicker with real change sign
+    g.fillStyle=cpc>=0?'rgba(255,95,86,.5)':'rgba(46,204,113,.5)';g.fillRect(102,88,10,8);
+    for(let i=0;i<5;i++){g.fillStyle=cpc>=0?'#ff5f56':'#2ecc71';g.fillRect(103+i*2,92-((Math.sin(t*.1+i*2)+1)*3|0),1,4)}
+    // MEDIA twin balls (magenta)
+    [[156,104],[159,116]].forEach((p,i)=>{g.fillStyle='#3a0c28';g.fillRect(p[0]-1,p[1]-1,8,8);g.fillStyle='rgba(244,91,176,'+(0.35+0.25*Math.sin(t*.05+i*2))+')';g.fillRect(p[0],p[1],6,6)});
+    // signal ripple from MEDIA
+    if(zst.media&&zst.media.status==='active'){const rr=(t%90)/6;if(rr<15){g.strokeStyle='rgba(244,91,176,'+(1-rr/15)+')';g.strokeRect(159-rr,110-rr,rr*2,rr*2)}}
+    // brain tower (white top + cyan body + radiating lines)
+    g.fillStyle='#0e7490';g.fillRect(117,44,6,30);g.fillStyle='rgba(34,211,238,.45)';g.fillRect(118,44,2,30);
+    g.fillStyle='#fff';g.fillRect(115,40,10,4);g.fillStyle='rgba(255,255,255,'+(0.25+0.15*Math.sin(t*.1))+')';g.fillRect(112,36,16,4);g.fillRect(110,32,20,2);
+    g.fillStyle='#062a36';g.fillRect(114,74,12,8); // hub node
+    // radiating neural lines
+    g.strokeStyle='rgba(34,211,238,.35)';g.beginPath();g.moveTo(120,42);g.lineTo(48,100);g.moveTo(120,42);g.lineTo(107,80);g.moveTo(120,42);g.lineTo(160,104);g.stroke();
+    // robots
+    rob.forEach(m=>{const dx=m.tx-m.x;m.x+=dx>1?m.v:dx<-1?-m.v:0;if(Math.abs(dx)<1.5&&Math.random()<.002){m.x=Math.random()*240}
+      g.fillStyle=m.col;g.fillRect(m.x|0,m.y+Math.sin(t*.2+m.x)*1|0,2,2);g.fillStyle='rgba(255,255,255,.25)';g.fillRect(m.x|0,m.y+2+Math.sin(t*.2+m.x)|0,2,1)});
+    // event pulses
+    if(t%45===0)spawn();
+    for(let i=pulses.length-1;i>=0;i--){const p=pulses[i];const dx=p.tx-p.x,dy=p.ty-p.y,d=Math.hypot(dx,dy);
+      if(d<2){pulses.splice(i,1);continue}
+      p.x+=dx/d*1.8;p.y+=dy/d*1.8;g.fillStyle=p.col;g.fillRect(p.x|0,p.y|0,2,2);g.fillStyle='rgba(255,255,255,.3)';g.fillRect((p.x|0)-1,(p.y|0)-1,1,1)}
+    // weather overlay
+    if(rain||snow)rainArr.forEach(d=>{d.y+=snow?d.s*.4:d.s*2;if(d.y>135)d.y=-2;d.x+=snow?Math.sin(t*.05+d.y*.1)*.3:0;
+      g.fillStyle=snow?'rgba(255,255,255,.7)':'rgba(160,220,255,.45)';snow?g.fillRect(d.x|0,d.y|0,1,1):g.fillRect(d.x|0,d.y|0,1,4)});
+    if(cloud){g.fillStyle='rgba(140,160,190,.08)';g.fillRect(0,0,240,135)}
+    // S0 alert band
+    if(alert){g.fillStyle='rgba(255,77,77,'+(0.12+0.08*Math.sin(t*.15))+')';g.fillRect(0,0,240,2);g.fillRect(0,133,240,2)}
+    // ambient tint
+    g.fillStyle=tint;g.fillRect(0,0,240,135);
+    // zone hover outlines pulse
+    requestAnimationFrame(draw);
+  }
+  // interactions
+  const tip=document.getElementById('tip');
+  function pick(e){const rc=cv.getBoundingClientRect();const x=(e.clientX-rc.left)/rc.width*240,y=(e.clientY-rc.top)/rc.height*135;
+    for(const k in ZONES){const z=ZONES[k];if(x>=z.x-6&&x<=z.x+z.w+6&&y>=z.y-6&&y<=z.y+z.h+6)return k}return null}
+  cv.addEventListener('mousemove',e=>{const k=pick(e);if(k){tip.style.display='block';tip.style.left=e.clientX+14+'px';tip.style.top=e.clientY+10+'px';tip.textContent=ZONES[k].name}else tip.style.display='none'});
+  cv.addEventListener('click',e=>{const k=pick(e);if(!k)return;const d=document.getElementById('detail');
+    const tasks=(S&&S.tasks)||[];const fl=(S&&S.fleet)||[];const rt=(S&&S.reality)||{};
+    if(k==='tower'){const pend=(S&&S.governance&&S.governance.ceo_orders_pending)||[];
+      d.innerHTML='<h4>超体脑塔 · 治理中枢</h4>五层：塔顶 CEO 光点 / 皮层治理晶片 / 脑深层 CPH4 Labs / 中枢枢纽 / 塔基编年史<br>待办令牌：'+(pend.length?pend.join(' · '):'无')+'<br>进化轮开放提案：'+((S&&S.governance&&S.governance.evolution&&S.governance.evolution.open_proposals)||0)+' 项<br>面壁者架构：城内全透明，唯一黑箱=CEO。';}
+    else if(k==='quant'){const m=rt.market||{};const bars=m.bars||[];
+      d.innerHTML='<h4>QUANT 城 · BigMoney</h4>状态 '+(zst.quant?zst.quant.status:'--')+' · 活跃度 '+(zst.quant?zst.quant.activity:'--')+'<br>510300 沪深300ETF：'+(bars.length?('收盘 '+bars[bars.length-1][4]+' · 涨跌 '+(m.change_pct>=0?'+':'')+m.change_pct+'% · '+(m.is_trading_day?'开市中':'休市')):'数据待接')+'<br>任务：'+(tasks.filter(x=>x.zone==='quant').map(x=>x.id+'('+x.status+')').join(' ')||'--')+'<br>机队：'+fl.filter(x=>x.id==='bm-a'||x.id==='bm-b').map(x=>x.id).join(' · ');}
+    else if(k==='gaming'){d.innerHTML='<h4>GAME 城 · Biggame/MiniGame</h4>状态 '+(zst.gaming?zst.gaming.status:'--')+' · 活跃度 '+(zst.gaming?zst.gaming.activity:'--')+'<br>居民：首席制作人 盛永康（虚拟人设）<br>P01-P08 游戏楼 · X026Gate 城门 · G 系灯塔<br>机队：'+fl.filter(x=>(x.company==='biggame'||(x.id||'').indexOf('bg')===0||x.id==='BG-A'||x.id==='BG-B'||x.id==='BG-C')).map(x=>x.id).join(' · ');}
+    else{d.innerHTML='<h4>MEDIA 城 · BigStream</h4>状态 '+(zst.media?zst.media.status:'--')+' · 活跃度 '+(zst.media?zst.media.activity:'--')+'<br>信号塔阵 · M0-M6 生产线 · 居民待 CEO 命名<br>发布动态见事件流（CONTENT_PUBLISH=信号波纹）。';}
+  });
+  draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+// FluxVerse P-16 r15/r16: CityInterior - thin MonoBehaviour adapter of the interior
+// window. SEPARATE FILE LAW (r14): component class must live in <ClassName>.cs or
+// the saved scene reference dies across editor sessions. Pure core (InteriorRouter)
+// stays in InteriorWindow.cs. Play mode: left-click a registered building -> the
+// company's live panel opens in the OS browser window (v0 equivalent - Tuanjie
+// 1.10.3 has no native WebView on the Windows target; see InteriorWindow.cs header)
+// AND the in-engine GUIAgent-glass banner confirms it. The banner is RUNTIME-ONLY
+// (r13 law): created on demand, never saved into the scene.
+//
+// r16 PIVOT - the banner is a procedural SpriteRenderer stack, NOT a uGUI canvas:
+// r15 measured (pixel-diff on the proof shots) that a WorldSpace Canvas renders
+// as ScreenSpaceOverlay in batch-mode Camera.Render() - the renderMode=WorldSpace
+// assignment needs a player-loop canvas update that batch mode never runs, so the
+// "world-space" banner landed as a 2000x260 SCREEN-px strip at the bottom-left of
+// the screen instead of a 20x2.6 world panel. Procedural sprites are the
+// r12/r13-proven path (event pulse, weather field, sky gradient) and render
+// identically in batch proofs and play mode. Layers (sortingOrder, z = -9):
+//   Halo  20 - soft gold wash, extends 0.30u beyond the glass (GUIAgent glow)
+//   Rim   21 - gold frame, extends 0.16u (bright warm ring for the proof)
+//   Glass 22 - dark translucent fill 20x2.6 (GUIAgent glassmorphism v0)
+// Banner text is deferred debt (TECH P-16): CJK copy source lives in the UTF-8
+// data file Assets/Data/interior-strings.txt; candidate bake = PS GDI+ texture.
+// Pure 2D: flat sprites, ortho camera, no 3D. Scripts ASCII (encoding law).
+using System;
+using System.IO;
+using UnityEngine;
+
+namespace FluxVerse
+{
+    public class CityInterior : MonoBehaviour
+    {
+        public const float BannerLifeSec = 6f;
+        public const float BannerWidth = 20f;
+        public const float BannerHeight = 2.6f;
+
+        InteriorRouter core;
+        Camera cam;
+        GameObject banner;
+        float bannerLeft;
+
+        public InteriorRouter Core
+        {
+            get
+            {
+                if (core == null)
+                {
+                    // <group root>/quant/bigmoney/... from <repo>/City/Assets (4 levels up)
+                    string groupRoot = Application.dataPath;
+                    for (int i = 0; i < 4; i++) groupRoot = Path.GetDirectoryName(groupRoot);
+                    core = new InteriorRouter(groupRoot, Application.OpenURL, InteriorRouter.DefaultCooldownSec);
+                    core.AddDefaultRegistry();
+                }
+                return core;
+            }
+        }
+
+        void Update()
+        {
+            if (Application.isPlaying && Input.GetMouseButtonDown(0))
+            {
+                Camera c = EnsureCam();
+                if (c == null) return;
+                Vector3 p = c.ScreenToWorldPoint(Input.mousePosition);
+                Vector2 w = new Vector2(p.x, p.y);
+                InteriorTarget t = Core.Hit(w);
+                if (Core.Open(w, Time.realtimeSinceStartup))
+                    ShowBanner(t != null ? t.zone : null, t != null ? t.company : null);
+            }
+            StepBanner(Time.deltaTime);
+        }
+
+        // explicit edit-mode alias for proofs (same Advance/StepNow pattern as CityCameraRig)
+        public void StepBanner(float dt)
+        {
+            if (banner == null) return;
+            bannerLeft -= dt;
+            Camera c = EnsureCam();
+            if (c != null)
+            {
+                // hug the bottom of whatever view the camera holds (L0 or L1)
+                Vector3 cp = c.transform.position;
+                banner.transform.position = new Vector3(cp.x, cp.y - c.orthographicSize + BannerHeight * 0.5f + 0.35f, -9f);
+            }
+            if (bannerLeft <= 0f) HideBanner();
+        }
+
+        public void ShowBanner(string zone, string company)
+        {
+            if (banner == null) BuildBanner();
+            banner.SetActive(true);
+            bannerLeft = BannerLifeSec;
+        }
+
+        public void HideBanner()
+        {
+            if (banner == null) return;
+            if (Application.isPlaying) UnityEngine.Object.Destroy(banner);
+            else UnityEngine.Object.DestroyImmediate(banner);
+            banner = null;
+        }
+
+        public bool BannerVisible { get { return banner != null && banner.activeSelf; } }
+
+        // ---- banner construction (runtime-only, NEVER saved - r13 law) ----
+        // Procedural sprite stack (r16): 4px white sprite @16ppu = 0.25u natural
+        // size; localScale must be RELATIVE to sprite.bounds.size (r13 law) or the
+        // panel lands at the wrong world size.
+        void BuildBanner()
+        {
+            banner = new GameObject("InteriorBanner");
+            Sprite white = WhiteSprite();
+            Vector3 n = white.bounds.size;
+
+            SpriteRenderer halo = MakeSprite(banner.transform, "Halo", white, 20);
+            halo.color = new Color(0.92f, 0.76f, 0.35f, 0.16f);   // soft gold glow wash
+            halo.transform.localScale = new Vector3((BannerWidth + 0.30f) / n.x, (BannerHeight + 0.30f) / n.y, 1f);
+
+            SpriteRenderer rim = MakeSprite(banner.transform, "Rim", white, 21);
+            rim.color = new Color(0.92f, 0.76f, 0.35f, 0.9f);     // gold frame (bright warm ring)
+            rim.transform.localScale = new Vector3((BannerWidth + 0.16f) / n.x, (BannerHeight + 0.16f) / n.y, 1f);
+
+            SpriteRenderer glass = MakeSprite(banner.transform, "Glass", white, 22);
+            glass.color = new Color(0.07f, 0.09f, 0.13f, 0.82f);  // dark glassmorphism fill
+            glass.transform.localScale = new Vector3(BannerWidth / n.x, BannerHeight / n.y, 1f);
+
+            banner.transform.position = new Vector3(0f, 0f, -9f);   // in front of the z=0 city
+        }
+
+        static SpriteRenderer MakeSprite(Transform parent, string name, Sprite sprite, int order)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.sortingOrder = order;
+            return sr;
+        }
+
+        // same recipe as CityAmbient.WhiteSprite (r13) - a fresh cache per adapter
+        // (static cache would die with the editor session anyway)
+        static Sprite _white;
+        static Sprite WhiteSprite()
+        {
+            if (_white != null) return _white;
+            const int S = 4;
+            Texture2D tex = new Texture2D(S, S, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Point;
+            for (int y = 0; y < S; y++)
+                for (int x = 0; x < S; x++) tex.SetPixel(x, y, new Color(1f, 1f, 1f, 1f));
+            tex.Apply();
+            _white = Sprite.Create(tex, new Rect(0, 0, S, S), new Vector2(0.5f, 0.5f), 16f);
+            return _white;
+        }
+
+        Camera EnsureCam()
+        {
+            if (cam == null) cam = GetComponent<Camera>();
+            return cam;
+        }
+    }
+}

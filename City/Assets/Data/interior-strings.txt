@@ -1,0 +1,6 @@
+# FluxVerse CityInterior banner strings (UTF-8 data file - CJK lives here so all
+# scripts stay ASCII, per the PS5.1 GBK encoding law; consumed by CityInterior.cs).
+# Keys: banner_<zone>_title / banner_<zone>_note. v0 registry = QUANT (P-16: connect
+# bigmoney.html first; GAME/MEDIA rows join when their panels are wired in later rounds).
+banner_QUANT_title=QUANT 城内景 · BigMoney 量化交易公司总控
+banner_QUANT_note=bigmoney.html 实况面板已在浏览器窗打开（引用实址 · 零复制）

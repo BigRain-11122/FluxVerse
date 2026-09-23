@@ -66,6 +66,12 @@ try {
     $p.Refresh()
     Log "headless dev round finished exit=$($p.ExitCode)"
     Beat "round done exit=$($p.ExitCode)"
+    # Group order 2026-09-23 (CEO: publish city progress so every machine can
+    # preview). Ref-level push only - never touches the worktree, safe always.
+    if ((git -C $Project remote) -match 'origin') {
+        git -C $Project push --quiet origin HEAD 2>$null
+        Log ("round publish: " + $(if ($LASTEXITCODE -eq 0) {'pushed to origin'} else {'push failed - left for next round'}))
+    }
     exit $p.ExitCode
 }
 finally {

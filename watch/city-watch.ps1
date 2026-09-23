@@ -55,16 +55,18 @@ $tick = @()
 $logFile = Join-Path $repoRoot ('logs\tick-' + (Get-Date).ToString('yyyyMMdd') + '.log')
 if (Test-Path $logFile) { $tick = @(Get-Content $logFile -Encoding UTF8 | ForEach-Object { [string]$_ } | Select-Object -Last 6) }
 
-# images: FluxVerse-local only (docs + City/Assets). Never crawl MiniGame 22GB or
-# engine Library/ - heavy disk IO during dev would violate the zero-interference law.
+# images: screenshots & concept art live under docs/ (m1-r*.png per DevLoop
+# round = the build process). City\Assets excluded on purpose: 953 art tiles
+# would flood the gallery whenever assets get re-imported. Never crawl MiniGame
+# 22GB or engine Library/ - heavy disk IO during dev violates zero-interference.
 $imgs = @()
-$searchRoots = @((Join-Path $repoRoot 'docs'), (Join-Path $repoRoot 'City\Assets'))
+$searchRoots = @((Join-Path $repoRoot 'docs'))
 foreach ($rt in $searchRoots) {
   if (Test-Path $rt) {
     $imgs += @(Get-ChildItem $rt -Recurse -Include *.png -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notmatch '\\out\\' })
   }
 }
-$imgs = @($imgs | Sort-Object LastWriteTime -Descending | Select-Object -First 6)
+$imgs = @($imgs | Sort-Object LastWriteTime -Descending | Select-Object -First 16)
 $imgList = @()
 foreach ($i in $imgs) {
   $rel = [System.IO.Path]::GetFullPath($i.FullName).Substring($repoRoot.Path.Length + 1)

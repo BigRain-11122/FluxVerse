@@ -126,6 +126,7 @@ gaming/FluxVerse/
 - [P2] Biggame U-登记簿探针（先定位 MiniGame 侧登记簿文件；orders 探针已覆盖面=fleet orders+集团台账+BigStream orders）
 - [✅ 2026-09-23·r4] market+calendar 探针（五现实探针收口·M1.5 感知侧全部落地）：**交易日历修 clock 节假日近似**——market.ps1 单写者持 world/market-cal.json（akshare tool_trade_date_hist_sina·覆盖至 2026-12-31），clock.ps1 只读；as_of=当日新鲜才生效（true/false 覆盖 Mon-Fri），stale/缺失→退回近似兜底（已知边缘：凌晨断 tick+节假日 09:30 首轮误钟一轮自愈，OS 循环 24h 在跑即不触发）；**510300 沪深300ETF 日线入 state.reality.market**（BigMoney 同源旗舰标的=regime/evolve/strategies target·30 bars [date,o,h,l,c]·change_pct·is_trading_day·cal_next_trade_date——QUANT 城真K线巨屏数据就绪，引擎侧映射属 M2）；源链实证改序 **TX→Sina→EM**（TX 实测通含当日 in-flight bar·Sina ETF 股票端点当日解析坏死 demjson No value·EM RemoteDisconnected 同 BigMoney 09-21 断连实证——与 BigMoney 顺序不同已在 commit 注明理由：以当日实测为准）；缓存节奏=cal 日更+ETF 30min TTL→10min tick 不打爆源；双绿实证=14 探针全 OK+VERIFY PASS+bars 30 条含当日 4.590；独立逻辑测试 4 例全过（节假日 closed 零钟/stale 回退/补钟 4 连响有序/节后无伪钟）
 - [新法·已立·r4] **探针子进程硬顶律**：PS 调外部抓取器（python/akshare 等）一律 `Start-Process -PassThru` + `WaitForExit(毫秒)` + 超时 `Kill()`——akshare 各源无内置超时（BigMoney 实证腾讯级可挂 5min+），无硬顶=一针挂死整轮 tick；配套律：嵌套数据入 state 用 array-of-arrays（标量叶保 ConvertTo-Json -Depth 6 余量·对象套对象有 null 截断险）；探针自测收集器禁 `+=`（scriptblock 域假象·用 ArrayList 方法调用）
+- [✅ 2026-09-23·r5] DESIGN 编号残迹+误字收口（r4 呈报两项他窗债·自领）：①双「十四」去重=原「十四、治理挂接」并入城市治理规则章作 14.6（锚点不动：现实链接层仍 §十五，TECH/mandate/R-synthesis 三处引用零改动）；②「秩库」→「私库」误字修复（git log -S 实证=他窗 4198432 引入·README 与 R-synthesis §五在册正字均=私库）；他窗 R-synthesis 17:56 活跃 WIP（对外口径 CEO 纠偏令）按单执行体退避律未卷入
 
 ## 十、溯源
 

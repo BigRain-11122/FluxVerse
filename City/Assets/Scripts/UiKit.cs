@@ -65,6 +65,37 @@ namespace FluxVerse
             return root;
         }
 
+        // P-18 slice 2 (r23): the P-16 interior banner upgrades to this same
+        // recipe, but keeps the banner sorting band (20..23) instead of the UI
+        // shell band (40..59) - callers own the orders. Any world-layer glass
+        // widget that must render below the UI shell uses this entry point.
+        public static GameObject BuildGlassPanel(Transform parent, string name, Vector2 center,
+            Vector2 size, int glowOrder, int glassOrder, int rimOrder)
+        {
+            GameObject root = new GameObject(name);
+            if (parent != null) root.transform.SetParent(parent, false);
+            root.transform.position = new Vector3(center.x, center.y, Depth);
+
+            SpriteRenderer glass = Layer(root.transform, "Glass",
+                TexturedSprite(MakeGlassTex(TexW(size.x), TexH(size.y))), glassOrder);
+            Fit(glass, size);
+
+            float rimW = RimPx(size) / PPU;
+            SpriteRenderer rim = Layer(root.transform, "Rim",
+                TexturedSprite(MakeRimTex(TexW(size.x + 2f * rimW), TexH(size.y + 2f * rimW), RimPx(size))),
+                rimOrder);
+            rim.color = CoolRim;
+            Fit(rim, size + new Vector2(2f * rimW, 2f * rimW));
+
+            float range = GlowRange(size);
+            SpriteRenderer glow = Layer(root.transform, "Glow",
+                TexturedSprite(MakeGlowTex(TexW(size.x + 2f * range), TexH(size.y + 2f * range), range * PPU)),
+                glowOrder);
+            glow.color = GlowColor;
+            Fit(glow, size + new Vector2(2f * range, 2f * range));
+            return root;
+        }
+
         public static GameObject BuildButton(Transform parent, string name, Vector2 center, Vector2 size, Color accent)
         {
             GameObject root = new GameObject(name);

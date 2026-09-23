@@ -14,10 +14,13 @@
 // "world-space" banner landed as a 2000x260 SCREEN-px strip at the bottom-left of
 // the screen instead of a 20x2.6 world panel. Procedural sprites are the
 // r12/r13-proven path (event pulse, weather field, sky gradient) and render
-// identically in batch proofs and play mode. Layers (sortingOrder, z = -9):
-//   Halo  20 - soft gold wash, extends 0.30u beyond the glass (GUIAgent glow)
-//   Rim   21 - gold frame, extends 0.16u (bright warm ring for the proof)
-//   Glass 22 - dark translucent fill 20x2.6 (GUIAgent glassmorphism v0)
+// identically in batch proofs and play mode.
+//
+// r23 (P-18 slice 2) - the banner shell is the GUIAgent canon: the UiKit recipe
+// (dark glass gradient + thin cool rim + blue-violet outer glow) via
+// UiKit.BuildGlassPanel, in the banner sorting band (Glow 20 / Glass 22 / Rim
+// 21, Text 23). Warm accent = the baked gold CJK text. Hide = UiKit.Release,
+// which owns every runtime texture the stack generated.
 // Banner text (r18): CJK copy lives in the UTF-8 data file
 // Assets/Data/interior-strings.txt; Tools/city/bake-banner-text.ps1 pre-bakes the
 // glyphs into Assets/Data/interior-banner-text.png (GDI+ - no CJK font asset in
@@ -96,8 +99,12 @@ namespace FluxVerse
         public void HideBanner()
         {
             if (banner == null) return;
-            if (Application.isPlaying) UnityEngine.Object.Destroy(banner);
-            else UnityEngine.Object.DestroyImmediate(banner);
+            // r23: UiKit.Release destroys the banner GO AND every runtime texture
+            // the stack owns (UiKit procedural textures + the baked text texture).
+            // The pre-r23 code destroyed only the GO, so every show/hide cycle
+            // leaked textures - once BuildBanner started generating fresh
+            // per-instance textures this had to become an owned-lifetime release.
+            UiKit.Release(banner);
             banner = null;
         }
 
@@ -110,20 +117,15 @@ namespace FluxVerse
         void BuildBanner()
         {
             banner = new GameObject("InteriorBanner");
-            Sprite white = WhiteSprite();
-            Vector3 n = white.bounds.size;
 
-            SpriteRenderer halo = MakeSprite(banner.transform, "Halo", white, 20);
-            halo.color = new Color(0.92f, 0.76f, 0.35f, 0.16f);   // soft gold glow wash
-            halo.transform.localScale = new Vector3((BannerWidth + 0.30f) / n.x, (BannerHeight + 0.30f) / n.y, 1f);
-
-            SpriteRenderer rim = MakeSprite(banner.transform, "Rim", white, 21);
-            rim.color = new Color(0.92f, 0.76f, 0.35f, 0.9f);     // gold frame (bright warm ring)
-            rim.transform.localScale = new Vector3((BannerWidth + 0.16f) / n.x, (BannerHeight + 0.16f) / n.y, 1f);
-
-            SpriteRenderer glass = MakeSprite(banner.transform, "Glass", white, 22);
-            glass.color = new Color(0.07f, 0.09f, 0.13f, 0.82f);  // dark glassmorphism fill
-            glass.transform.localScale = new Vector3(BannerWidth / n.x, BannerHeight / n.y, 1f);
+            // r23 (P-18 slice 2): the shell is now the GUIAgent canon recipe via
+            // UiKit - dark glass gradient + cool thin rim + blue-violet outer glow
+            // (replaces the r16 flat-tint halo/rim/glass stack). The banner keeps
+            // its own sorting band 20..23 (UiKit widgets own 40..59); the warm
+            // accent moves to the baked gold CJK text (moonlight LUT: cool body,
+            // warm accent). UiKit.Release on hide owns every texture made here.
+            UiKit.BuildGlassPanel(banner.transform, "Shell", Vector2.zero,
+                new Vector2(BannerWidth, BannerHeight), 20, 22, 21);
 
             // r18 CJK text layer: pre-baked by Tools/city/bake-banner-text.ps1 (GDI+
             // glyph rasterization - the engine has no CJK font asset). Runtime bytes
@@ -176,21 +178,8 @@ namespace FluxVerse
             return sr;
         }
 
-        // same recipe as CityAmbient.WhiteSprite (r13) - a fresh cache per adapter
-        // (static cache would die with the editor session anyway)
-        static Sprite _white;
-        static Sprite WhiteSprite()
-        {
-            if (_white != null) return _white;
-            const int S = 4;
-            Texture2D tex = new Texture2D(S, S, TextureFormat.RGBA32, false);
-            tex.filterMode = FilterMode.Point;
-            for (int y = 0; y < S; y++)
-                for (int x = 0; x < S; x++) tex.SetPixel(x, y, new Color(1f, 1f, 1f, 1f));
-            tex.Apply();
-            _white = Sprite.Create(tex, new Rect(0, 0, S, S), new Vector2(0.5f, 0.5f), 16f);
-            return _white;
-        }
+        // (r23) WhiteSprite retired with the r16 flat-tint layers - the banner
+        // shell now renders UiKit procedural textures and the text layer the bake.
 
         Camera EnsureCam()
         {

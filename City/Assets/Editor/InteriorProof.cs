@@ -15,9 +15,11 @@
 //  4) REAL RENDERS from CityScene at L1 street level (Zone_QUANT focus): baseline
 //     vs banner-on gates - dark glass darkens the band's NON-TEXT pixels (r18: the
 //     bright CJK glyphs share the band, so the r16 full-band darken signal moved
-//     to the b<=0.50 subpopulation), the gold rim ring OUTSIDE the glass keeps the
-//     exact r16 bright+warm gates, the baked CJK glyphs add bright pixels INSIDE
-//     the band (r18 text gate), hide returns to baseline.
+//     to the b<=0.50 subpopulation), the COOL rim ring OUTSIDE the glass holds the
+//     bright+cool gates (r23: GUIAgent canon shell - the r16 gold rim became the
+//     UiKit cool-blue rim; warm accent = the baked gold glyphs), the baked CJK
+//     glyphs add bright pixels INSIDE the band (r18 text gate), hide returns to
+//     baseline.
 //     (r16: banner = procedural SpriteRenderer stack, NOT uGUI - a WorldSpace
 //     canvas renders as ScreenSpaceOverlay in batch mode; TECH new-law r16.)
 //  5) RELOAD GATE (logs/interior-reload.run): a SECOND editor session re-opens the
@@ -341,10 +343,10 @@ namespace FluxVerse
             int textDx = onBrightCnt - baseBrightCnt;
             Chk(textDx >= 300, "baked CJK glyphs must add bright pixels to the band (delta "
                 + textDx + " sampled px, on=" + onBrightCnt + " base=" + baseBrightCnt + ")");
-            int brightPx, warmPx;
-            RingMetrics(bannerShot, cam, out brightPx, out warmPx);
-            Chk(brightPx >= 120, "gold rim must light the banner frame (bright px " + brightPx + ")");
-            Chk(warmPx >= 60, "warm gold rim pixels missing (warm px " + warmPx + ")");
+            int brightPx, coolPx;
+            RingMetrics(bannerShot, cam, out brightPx, out coolPx);
+            Chk(brightPx >= 120, "cool rim must light the banner frame (bright px " + brightPx + ")");
+            Chk(coolPx >= 60, "cool blue rim/glow pixels missing (cool px " + coolPx + ")");
 
             // C3 banner off: band returns to baseline
             interior.HideBanner();
@@ -367,7 +369,7 @@ namespace FluxVerse
                 + ",off=" + offDark.ToString("F3") + ")"
                 + " text_px(on=" + onBrightCnt + ",base=" + baseBrightCnt + ",dx=" + textDx + ")"
                 + " bake_gold_px=" + goldPx
-                + " ring(bright=" + brightPx + ",warm=" + warmPx + ")"
+                + " ring(bright=" + brightPx + ",cool=" + coolPx + ")"
                 + " opens=" + opened.Count + " url=" + (url == null ? "null" : "ok")
                 + " shots=3 reload_gate=pass2";
         }
@@ -429,32 +431,35 @@ namespace FluxVerse
             darkAvg = nDark > 0 ? (float)(sumDark / nDark) : 0f;
         }
 
-        // r16: the gold treatment lives OUTSIDE the glass - the rim strip at half
-        // extents (10.0..10.08, 1.3..1.38) plus the halo wash beyond. Sample the
-        // ring annulus (outer 10.25 x 1.55 minus inner 9.95 x 1.25 around the
-        // banner center) and count bright/warm gold pixels there.
-        static void RingMetrics(Texture2D tex, Camera cam, out int brightPx, out int warmPx)
+        // r23 (P-18 slice 2): the banner ring is now the GUIAgent cool treatment -
+        // the rim strip (half extents 10..10.125, 1.3..1.425) plus the blue-violet
+        // glow beyond. Sample the ring annulus (outer 10.25 x 1.55 minus inner
+        // 9.95 x 1.25 around the banner center) and count bright + COOL pixels
+        // (the r16 gold rim gates became cool-blue gates when the shell adopted
+        // the UiKit canon; the warm accent moved to the baked gold CJK text,
+        // already gated by the in-band text gate).
+        static void RingMetrics(Texture2D tex, Camera cam, out int brightPx, out int coolPx)
         {
             Vector3 cp = cam.transform.position;
             float wy = cp.y - cam.orthographicSize + CityInterior.BannerHeight * 0.5f + 0.35f;
             float halfH = cam.orthographicSize, halfW = halfH * (1920f / 1080f);
-            brightPx = 0; warmPx = 0;
+            brightPx = 0; coolPx = 0;
             for (int y = 0; y < 1080; y += 2)
             {
                 // ReadPixels row y = world bottom-up (r13 law)
                 float wpy = cp.y - halfH + (y + 0.5f) / 1080f * 2f * halfH;
                 float dy = Mathf.Abs(wpy - wy);
-                if (dy >= 1.55f) continue;                        // outside the halo vertically
+                if (dy >= 1.55f) continue;                        // outside the glow vertically
                 for (int x = 0; x < 1920; x += 2)
                 {
                     float wpx = cp.x - halfW + (x + 0.5f) / 1920f * 2f * halfW;
                     float dx = Mathf.Abs(wpx - cp.x);
-                    if (dx >= 10.25f) continue;                  // outside the halo horizontally
+                    if (dx >= 10.25f) continue;                  // outside the glow horizontally
                     if (dx < 9.95f && dy < 1.25f) continue;      // inside the glass fill
                     Color c = tex.GetPixel(x, y);
-                    float b = (c.r + c.g + c.b) / 3f, w = c.r - c.b;
+                    float b = (c.r + c.g + c.b) / 3f;
                     if (b > 0.55f) brightPx++;
-                    if (b > 0.40f && w > 0.25f) warmPx++;
+                    if (b > 0.40f && c.b - c.r > 0.15f) coolPx++;
                 }
             }
         }

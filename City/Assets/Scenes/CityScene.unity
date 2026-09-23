@@ -1004,6 +1004,7 @@ GameObject:
   m_Component:
   - component: {fileID: 687993657}
   - component: {fileID: 687993656}
+  - component: {fileID: 687993658}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: CityAmbient
@@ -1039,6 +1040,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &687993658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 687993655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1d091d73e03f1e4aba41be9be8a24cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  noiseBed: {fileID: 8300000, guid: 74745cf5759f79d4493ecb98bb03272d, type: 3}
+  bgmDawn: {fileID: 8300000, guid: 67fa70a9923edc347bd695f51c16f304, type: 3}
+  bgmDay: {fileID: 8300000, guid: ce0b0d8e44e817e4a8f8eaa9667d21d6, type: 3}
+  bgmDusk: {fileID: 8300000, guid: 2ebdf375bfe2ea54e85122b56080e99f, type: 3}
+  bgmNight: {fileID: 8300000, guid: 0969a0adbc35580468ea6032d523fd53, type: 3}
+  weatherRain: {fileID: 8300000, guid: 5aa598ef9783fe445a3eba711da9bd93, type: 3}
+  weatherStorm: {fileID: 8300000, guid: dc6453c658a1bf94fb6b014d17fb9b93, type: 3}
+  weatherWind: {fileID: 8300000, guid: 78fdc6f4e5996bf4d997305de5a1c81b, type: 3}
 --- !u!1 &751672087
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
-// FluxVerse P-27 r25 (first audio wire) -> r30 (rows batch 2): batch proof for the
-// event-type -> clip table. Sentinel pattern (r11 builder style):
+// FluxVerse P-27 r25 (first audio wire) -> r30 (rows batch 2) -> r31 (ambient bed):
+// batch proof for the event-type -> clip table + the day-phase/weather ambient bed.
+// Sentinel pattern (r11 builder style):
 //   pass 1: logs/audio.run            -> FluxVerse.AudioProof.BatchRun   -> logs/audio.done
 //   pass 2: logs/audio-reload.run     -> FluxVerse.AudioProof.ReloadGate  -> logs/audio-reload.done
 // Sections:
@@ -14,8 +15,13 @@
 //    A6 real adapter wiring in edit mode: ResolveClip all 7, TriggerDirect(COMMIT)
 //       = sink-only (no pulse), TriggerDirect(CEO_ORDER) = pulse+play, play-mode-only
 //       mixer law (no CityAudio GO), pulse drain, zero residue.
+//    A7 ambient bed pure core (r31): volume canon 0.35/0.5, BGM x4 tier map, weather
+//       matrix (rain/storm/snow-silence/wind threshold) + all 8 bed clips load,
+//    A8 ambient bed adapter in edit mode: ApplyBed state matrix, unwired-field
+//       silence, play-mode-only law (no bed GO), zero residue.
 //  B CityScene wiring: all 7 serialized clip fields wired + saved + disk round-trip,
-//    neighbor wiring regression (CityInterior/CityCameraRig/CityAmbient + L0 camera).
+//    neighbor wiring regression (CityInterior/CityCameraRig/CityAmbient + L0 camera);
+//    r31: CityAmbientAudio on the CityAmbient GO (idempotent) + 8 bed clips saved.
 // Pass 2 re-proves persistence in a SECOND editor session (r14 SEPARATE FILE LAW gate).
 // Fail-loud: any broken assumption throws into the .done report. All comments ASCII. No 3D.
 using System;
@@ -241,6 +247,65 @@ namespace FluxVerse
             if (GameObject.Find("TmpRouter") != null || GameObject.Find("EventPulse") != null)
                 throw new InvalidOperationException("boot-scene residue after cleanup");
 
+            // ---- A7 ambient bed pure core (r31 P-27 item 2) + all 8 bed clips ----
+            if (FluxAmbientBed.BgmVolume != 0.35f || FluxAmbientBed.AmbientVolume != 0.5f)
+                throw new InvalidOperationException("bed volume canon wrong (P-27 item 3: bgm 0.35 / ambient 0.5)");
+            if (FluxAmbientBed.BgmFor(AmbientTier.Dawn) != FluxAmbientBed.BgmDawnClip
+                || FluxAmbientBed.BgmFor(AmbientTier.Day) != FluxAmbientBed.BgmDayClip
+                || FluxAmbientBed.BgmFor(AmbientTier.Dusk) != FluxAmbientBed.BgmDuskClip
+                || FluxAmbientBed.BgmFor(AmbientTier.Night) != FluxAmbientBed.BgmNightClip)
+                throw new InvalidOperationException("bed BGM tier map wrong (R- 1.2 four-tier)");
+            if (FluxAmbientBed.WeatherFor(WeatherMode.Rain, false, 5f) != FluxAmbientBed.WeatherRainClip)
+                throw new InvalidOperationException("rain layer missing");
+            if (FluxAmbientBed.WeatherFor(WeatherMode.Rain, true, 25f) != FluxAmbientBed.WeatherStormClip)
+                throw new InvalidOperationException("gale/severe alert must enhance rain to storm layer");
+            if (FluxAmbientBed.WeatherFor(WeatherMode.Snow, false, 2f) != null)
+                throw new InvalidOperationException("snow has no asset: silence (honesty law)");
+            if (FluxAmbientBed.WeatherFor(WeatherMode.None, false, 12f) != FluxAmbientBed.WeatherWindClip)
+                throw new InvalidOperationException("dry wind >= Beaufort 6 must layer wind2");
+            if (FluxAmbientBed.WeatherFor(WeatherMode.None, false, 9f) != null)
+                throw new InvalidOperationException("wind below threshold must stay silent");
+            Dictionary<string, AudioClip> bedClips = new Dictionary<string, AudioClip>();
+            string[] bedPaths = new string[] {
+                FluxAmbientBed.NoiseBedClip, FluxAmbientBed.BgmDawnClip, FluxAmbientBed.BgmDayClip,
+                FluxAmbientBed.BgmDuskClip, FluxAmbientBed.BgmNightClip, FluxAmbientBed.WeatherRainClip,
+                FluxAmbientBed.WeatherStormClip, FluxAmbientBed.WeatherWindClip };
+            foreach (string p in bedPaths)
+            {
+                AudioClip c = AssetDatabase.LoadAssetAtPath<AudioClip>(p);
+                if (c == null) throw new InvalidOperationException("bed clip missing/unimported: " + p);
+                if (c.length <= 0f) throw new InvalidOperationException("bed clip zero length: " + p);
+                bedClips[p] = c;
+            }
+
+            // ---- A8 ambient bed adapter, edit mode (selection state only; play-mode-only law) ----
+            GameObject bedTmp = new GameObject("TmpBedRouter");
+            CityAmbientAudio bedAd = bedTmp.AddComponent<CityAmbientAudio>();
+            WireBed(bedAd, bedClips);
+            bedAd.ApplyBed(AmbientTier.Night, WeatherMode.None, false, 2.9f);
+            if (bedAd.CurrentBgm != FluxAmbientBed.BgmNightClip || bedAd.CurrentWeather != "")
+                throw new InvalidOperationException("bed selection night/dry wrong: " + bedAd.CurrentBgm + "|" + bedAd.CurrentWeather);
+            bedAd.ApplyBed(AmbientTier.Dawn, WeatherMode.None, false, 2.9f);
+            if (bedAd.CurrentBgm != FluxAmbientBed.BgmDawnClip) throw new InvalidOperationException("dawn BGM wrong");
+            bedAd.ApplyBed(AmbientTier.Day, WeatherMode.Rain, false, 5f);
+            if (bedAd.CurrentWeather != FluxAmbientBed.WeatherRainClip) throw new InvalidOperationException("adapter rain layer wrong");
+            bedAd.ApplyBed(AmbientTier.Dusk, WeatherMode.Rain, true, 25f);
+            if (bedAd.CurrentBgm != FluxAmbientBed.BgmDuskClip || bedAd.CurrentWeather != FluxAmbientBed.WeatherStormClip)
+                throw new InvalidOperationException("dusk + alert must select storm layer");
+            bedAd.ApplyBed(AmbientTier.Day, WeatherMode.Snow, false, 2f);
+            if (bedAd.CurrentWeather != "") throw new InvalidOperationException("snow must stay silent (honesty)");
+            bedAd.ApplyBed(AmbientTier.Day, WeatherMode.None, false, 12f);
+            if (bedAd.CurrentWeather != FluxAmbientBed.WeatherWindClip) throw new InvalidOperationException("adapter wind layer wrong");
+            AudioClip savedNight = bedAd.bgmNight;   // unwired field = silent layer (honesty)
+            bedAd.bgmNight = null;
+            bedAd.ApplyBed(AmbientTier.Night, WeatherMode.None, false, 2.9f);
+            if (bedAd.CurrentBgm != "") throw new InvalidOperationException("unwired BGM must resolve to silence");
+            bedAd.bgmNight = savedNight;
+            if (GameObject.Find("CityAmbientAudio") != null || bedAd.BedActive)
+                throw new InvalidOperationException("runtime-only law broken: bed GO alive in edit mode");
+            UnityEngine.Object.DestroyImmediate(bedTmp);
+            if (GameObject.Find("TmpBedRouter") != null) throw new InvalidOperationException("bed adapter residue after cleanup");
+
             // ---- B CityScene wiring (all 7 fields) + save + disk round-trip ----
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             GameObject routerGo = GameObject.Find("CityEventRouter");
@@ -254,6 +319,13 @@ namespace FluxVerse
             router.marketBellClose = clips[FluxAudioRouter.MarketCloseClip];
             router.weatherAlert = clips[FluxAudioRouter.WeatherAlertClip];
             router.residentTalk = clips[FluxAudioRouter.ResidentTalkClip];
+            // r31: ambient bed component rides the CityAmbient GO (idempotent add; state
+            // source on the same GO - Update pulls tier/mode/alert/wind getters)
+            CityAmbient[] ambs = UnityEngine.Object.FindObjectsOfType<CityAmbient>();
+            if (ambs.Length < 1) throw new InvalidOperationException("CityAmbient missing in CityScene (bed host)");
+            CityAmbientAudio bedComp = ambs[0].GetComponent<CityAmbientAudio>();
+            if (bedComp == null) bedComp = ambs[0].gameObject.AddComponent<CityAmbientAudio>();
+            WireBed(bedComp, bedClips);
             bool saved = EditorSceneManager.SaveScene(scene);   // persist BEFORE any transient dispatch
             Scene reopened = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             GameObject routerGo2 = GameObject.Find("CityEventRouter");
@@ -262,6 +334,12 @@ namespace FluxVerse
             foreach (string p in allPaths)
                 if (router2.ResolveClip(p) == null) throw new InvalidOperationException("clip not persisted to disk: " + p);
             if (router2.ceoOrderPulse.length < 2.0f) throw new InvalidOperationException("persisted CEO clip wrong length");
+            CityAmbientAudio[] bedComps = UnityEngine.Object.FindObjectsOfType<CityAmbientAudio>();
+            if (bedComps.Length != 1) throw new InvalidOperationException("bed component lost/duplicated after save: " + bedComps.Length);
+            foreach (string p in bedPaths)
+                if (bedComps[0].ResolveClip(p) == null) throw new InvalidOperationException("bed clip not persisted to disk: " + p);
+            if (bedComps[0].noiseBed.length <= 0f) throw new InvalidOperationException("persisted noise bed zero length");
+            if (GameObject.Find("CityAmbientAudio") != null) throw new InvalidOperationException("bed GO leaked into saved scene");
             if (GameObject.Find("CityAudio") != null) throw new InvalidOperationException("mixer GO leaked into saved scene");
             // neighbor wiring regression: our save must not drop any r13-r17 wiring
             if (UnityEngine.Object.FindObjectsOfType<CityInterior>().Length < 1) throw new InvalidOperationException("CityInterior lost after save");
@@ -277,7 +355,22 @@ namespace FluxVerse
                 + ",f2=" + f2 + ",dual=pulse1+play1,mixed=3plays0pulse,alpha=peak_ok,drained) nullsink_ok"
                 + " clips(7/7 loaded,ceo=" + ceoClip.length.ToString("F2") + "s)"
                 + " adapter(editsilent=true,commit=sink-only-no-pulse,ceo=dual,no_mixer_go=true)"
-                + " scene(saved=" + saved + ",reopen_wired=7clips,cam_L0=" + cam.orthographicSize.ToString("F1") + ")";
+                + " bed(vol0.35/0.5,tier-x4,weather-matrix,snow-silent,wind-threshold,8/8clips,"
+                + "editstate+unwired-silent,no_bed_go=true)"
+                + " scene(saved=" + saved + ",reopen_wired=7clips+8bed,cam_L0=" + cam.orthographicSize.ToString("F1") + ")";
+        }
+
+        // wires all 8 ambient-bed clip fields from the loaded pool (B scene wiring + A8)
+        static void WireBed(CityAmbientAudio b, Dictionary<string, AudioClip> clips)
+        {
+            b.noiseBed = clips[FluxAmbientBed.NoiseBedClip];
+            b.bgmDawn = clips[FluxAmbientBed.BgmDawnClip];
+            b.bgmDay = clips[FluxAmbientBed.BgmDayClip];
+            b.bgmDusk = clips[FluxAmbientBed.BgmDuskClip];
+            b.bgmNight = clips[FluxAmbientBed.BgmNightClip];
+            b.weatherRain = clips[FluxAmbientBed.WeatherRainClip];
+            b.weatherStorm = clips[FluxAmbientBed.WeatherStormClip];
+            b.weatherWind = clips[FluxAmbientBed.WeatherWindClip];
         }
 
         static string ReloadProve()
@@ -299,6 +392,21 @@ namespace FluxVerse
             }
             if (router.ceoOrderPulse.length < 2.0f || router.ceoOrderPulse.length > 2.4f)
                 throw new InvalidOperationException("persisted CEO clip length off spec: " + router.ceoOrderPulse.length.ToString("F3"));
+            // r31: ambient bed survives the editor restart (SEPARATE FILE LAW gate)
+            CityAmbientAudio[] bedComps = UnityEngine.Object.FindObjectsOfType<CityAmbientAudio>();
+            if (bedComps.Length != 1) throw new InvalidOperationException("CityAmbientAudio lost/duplicated after restart: " + bedComps.Length);
+            string[] bedPaths = new string[] {
+                FluxAmbientBed.NoiseBedClip, FluxAmbientBed.BgmDawnClip, FluxAmbientBed.BgmDayClip,
+                FluxAmbientBed.BgmDuskClip, FluxAmbientBed.BgmNightClip, FluxAmbientBed.WeatherRainClip,
+                FluxAmbientBed.WeatherStormClip, FluxAmbientBed.WeatherWindClip };
+            foreach (string p in bedPaths)
+            {
+                AudioClip c = bedComps[0].ResolveClip(p);
+                if (c == null) throw new InvalidOperationException("bed clip lost across sessions: " + p);
+                if (c.length <= 0f) throw new InvalidOperationException("bed clip zero length after restart: " + p);
+            }
+            if (GameObject.Find("CityAmbientAudio") != null)
+                throw new InvalidOperationException("bed GO persisted into scene (runtime-only law broken)");
             if (UnityEngine.Object.FindObjectsOfType<CityInterior>().Length < 1) throw new InvalidOperationException("CityInterior unresolved after restart");
             if (UnityEngine.Object.FindObjectsOfType<CityCameraRig>().Length < 1) throw new InvalidOperationException("CityCameraRig unresolved after restart");
             if (UnityEngine.Object.FindObjectsOfType<CityAmbient>().Length < 1) throw new InvalidOperationException("CityAmbient unresolved after restart");
@@ -309,7 +417,7 @@ namespace FluxVerse
             if (router.Core == null) throw new InvalidOperationException("core build failed after restart");
             if (router.AudioPlays != 0) throw new InvalidOperationException("AudioPlays not zero at cold start");
             return "reload_gate=OK component=resolved clips=7/7 ceo=" + router.ceoOrderPulse.length.ToString("F2")
-                + "s neighbors=3 cam_L0=" + cam.orthographicSize.ToString("F1") + " no_mixer_go core=poll-ready";
+                + "s bed=resolved(8/8,no_go) neighbors=3 cam_L0=" + cam.orthographicSize.ToString("F1") + " no_mixer_go core=poll-ready";
         }
     }
 }

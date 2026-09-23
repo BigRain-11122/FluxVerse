@@ -7,6 +7,8 @@
 // Rows with no live event source yet stay OUT (honesty law: sound anchors a real
 // event, never decoration): OS_TICK/GATE_*/TRANSFER/MACHINE_* are P-12 pending.
 // Volume canon (P-27 item 3): signature layer 1.0, event-SFX layer 0.8.
+// r31 (P-27 item 2): FluxAmbientBed appended - four-tier BGM by city_day_phase +
+// weather layer by weather_kind + always-on city noise bed (same volume canon family).
 // Pure logic, zero GameObject/AudioSource: headless-testable; the CityEventRouter
 // adapter owns the real player delegate. Unmapped type = silent, never a fallback
 // jingle. All comments ASCII. No 3D.
@@ -78,6 +80,52 @@ namespace FluxVerse
             if (!map.TryGetValue(ev.type, out r)) return;
             if (player != null) player(r.Path, r.Vol);
             Plays++;
+        }
+    }
+
+    // r31 (P-27 item 2): ambient bed pure core - four-tier BGM by city_day_phase +
+    // weather layer + always-on city noise. Mapping = R-20260923-audio-assets.md
+    // section 1.2 (semantic inference; listening calibration = P-27 item 6 v2).
+    // Volume canon (P-27 item 3): BGM 0.35 (never covers city information),
+    // ambient/environment layer 0.5. Tier tracks: dawn=calm_synthwave, day=synth_wave_0,
+    // dusk=tt_caves (smallest of the cyber pool; pool rotation/crossfade = v2),
+    // night=midnight_drive. Weather: rain=rain_loop_2, gale/severe alert enhances to
+    // rain_loop_3; snow = silence (no snow asset in the pack - honesty law, never a
+    // substitute jingle); dry wind >= 10.8 m/s (Beaufort 6 strong-breeze family) =
+    // wind2 layer. Headless-testable; the CityAmbientAudio adapter owns the players.
+    public static class FluxAmbientBed
+    {
+        public const float BgmVolume = 0.35f;     // P-27 item 3: BGM below city info
+        public const float AmbientVolume = 0.5f;  // P-27 item 3: ambient/weather layer
+
+        public const string NoiseBedClip   = "Assets/Audio/ambience/busy_cyberworld.ogg";
+        public const string BgmDawnClip    = "Assets/Audio/music/calm_synthwave_421k.mp3";
+        public const string BgmDayClip     = "Assets/Audio/music/synth_wave_0.mp3";
+        public const string BgmDuskClip    = "Assets/Audio/music/tt_caves.ogg";
+        public const string BgmNightClip   = "Assets/Audio/music/midnight_drive.ogg";
+        public const string WeatherRainClip  = "Assets/Audio/weather/rain_loop_2.ogg";
+        public const string WeatherStormClip = "Assets/Audio/weather/rain_loop_3.ogg";
+        public const string WeatherWindClip  = "Assets/Audio/weather/wind2.wav";
+
+        public const float WindLayerMs = 10.8f;   // Beaufort 6 lower bound
+
+        public static string BgmFor(AmbientTier t)
+        {
+            switch (t)
+            {
+                case AmbientTier.Dawn: return BgmDawnClip;
+                case AmbientTier.Day:  return BgmDayClip;
+                case AmbientTier.Dusk: return BgmDuskClip;
+                default:               return BgmNightClip;
+            }
+        }
+
+        public static string WeatherFor(WeatherMode mode, bool alert, float windMs)
+        {
+            if (mode == WeatherMode.Rain) return alert ? WeatherStormClip : WeatherRainClip;
+            if (mode == WeatherMode.Snow) return null;   // no snow asset: silence (honesty)
+            if (windMs >= WindLayerMs) return WeatherWindClip;
+            return null;
         }
     }
 }

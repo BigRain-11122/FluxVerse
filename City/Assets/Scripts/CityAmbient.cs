@@ -37,6 +37,7 @@ namespace FluxVerse
         public WeatherMode CurrentMode { get { return mode; } }
         public bool AlertOn { get { return alert; } }
         public float BandAlpha { get { return bandAlpha; } }
+        public float WindMs { get; private set; }   // r31: read-only for the ambient bed adapter
 
         void Awake() { EnsureVisuals(); }
 
@@ -100,6 +101,7 @@ namespace FluxVerse
             if (sky == null) EnsureVisuals();
             mode = WeatherRules.ModeForKind(kind);
             alert = WeatherRules.IsAlert(windMs, wmoCode);
+            WindMs = windMs;
             field.Configure(mode, windMs);
             SyncDrops();
         }

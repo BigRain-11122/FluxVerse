@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>超体宇宙城 · 概念设计图 · 上海参照</title>
+<style>
+  body { background:#03050a; color:#cde; font-family:"Cascadia Code",Consolas,"Microsoft YaHei",monospace; margin:0; padding:40px 20px; }
+  h1 { font-weight:400; font-size:20px; letter-spacing:6px; color:#f0faff; margin:0 0 4px; }
+  .sub { color:#678; font-size:12px; letter-spacing:1px; margin-bottom:48px; line-height:1.8; }
+  .block { margin:0 0 60px 0; max-width:1100px; }
+  .block h2 { font-weight:400; font-size:14px; letter-spacing:3px; color:#e8f6ff; margin:0 0 4px; }
+  .block h2 .n { color:#22d3ee; }
+  .desc { color:#7a8ca8; font-size:12px; margin:0 0 10px 0; line-height:1.7; }
+  canvas { width:100%; max-width:1100px; height:auto; display:block; border:1px solid #14203a; background:#04060d; image-rendering:pixelated; }
+  .foot { color:#456; font-size:11px; letter-spacing:2px; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<h1>超体宇宙城 <span style="color:#7ff5ff">概念设计图</span> · 上海参照</h1>
+<div class="sub">参照上海（天际线秩序感 · 黄浦江 · 球塔地标），更科幻更未来，<b style="color:#7ff5ff">不俗气</b>=BRAND §6 深夜蓝黑+单强调青，拒绝赛博朋克紫粉俗艳；高清像素（240×135 底图 ×4 锐放）；全部程序化动画示意。—— 回编号即可，可组合。</div>
+
+<div class="block">
+  <h2><span class="n">[1]</span> 外滩 2200 · 陆家嘴像素天际线</h2>
+  <div class="desc">参照：陆家嘴三件套+东方明珠。上海中心=螺旋光纹扭塔，明珠双球=全息枢纽节点，黄浦江面像素倒影。窗灯=活跃实况的伏笔。</div>
+  <canvas id="c1" width="960" height="540"></canvas>
+</div>
+
+<div class="block">
+  <h2><span class="n">[2]</span> 数据黄浦 · 河流即光流</h2>
+  <div class="desc">黄浦江化为流动的数据光带（集团三流的具象），两岸楼群克制点灯，一道光桥横跨——元宙「神经主干道」的城市原型。</div>
+  <canvas id="c2" width="960" height="540"></canvas>
+</div>
+
+<div class="block">
+  <h2><span class="n">[3]</span> 脑塔夜景 · 城市之心</h2>
+  <div class="desc">我们的核心地标：中央巨塔=集团大脑（扭塔身+球节点+塔顶 CEO 光点脉冲+神经光线螺旋上升），全城低伏环绕——大脑居中的城市构图。</div>
+  <canvas id="c3" width="960" height="540"></canvas>
+</div>
+
+<div class="block">
+  <h2><span class="n">[4]</span> 光轨高架 · 数据飞驰</h2>
+  <div class="desc">参照上海高架夜车流：透视光轨全为青-白单强调（拒绝彩虹俗艳），飞行器=机队伏笔，两侧全息街牌克制闪烁。</div>
+  <canvas id="c4" width="960" height="540"></canvas>
+</div>
+
+<div class="block">
+  <h2><span class="n">[5]</span> 超体俯瞰 · 城市网格</h2>
+  <div class="desc">俯视城市网格：街区窗灯阵=活跃热度图，主干光路汇向中心脑塔节点——超体宇宙城总布局的城市质感底图。</div>
+  <canvas id="c5" width="960" height="540"></canvas>
+</div>
+
+<div class="foot">FLUXVERSE CONCEPT · SHANGHAI REF · 2D PIXEL · 2026-09-23 · 挑编号即可</div>
+
+<script>
+(function(){
+"use strict";
+const PW=240, PH=135;
+let _s=777; function rnd(){ _s=(_s*16807)%2147483647; return _s/2147483647; }
+
+function mk(id){ const c=document.getElementById(id); return {cv:c,ctx:c.getContext("2d")}; }
+function pxo(){ const o=document.createElement("canvas"); o.width=PW; o.height=PH; return {cv:o,ctx:o.getContext("2d")}; }
+function blit(m,o){ const c=m.ctx; c.imageSmoothingEnabled=false; c.clearRect(0,0,m.cv.width,m.cv.height);
+  c.drawImage(o.cv,0,0,PW,PH,0,0,m.cv.width,m.cv.height); }
+function P(x){ return {cv:null,ctx:null}; }
+
+// palette (non-vulgar: deep blue-black base + cyan accents + few warm windows)
+const BG0="#04060d", BG1="#070b18", BG2="#0a1024";
+const CY="#22d3ee", CYL="#7ff5ff", CYD="#0e7490", WHT="#e8f6ff";
+const WARM="#f5c97b", DIM="#123", GRID="#0d1830";
+
+// shared: starfield + sky gradient
+function sky(px){
+  for(let y=0;y<PH;y++){ const k=y/PH;
+    px.fillStyle = y<40? BG0 : (y<80? BG1 : BG2);
+    px.fillRect(0,y,PW,1);
+  }
+  for(let i=0;i<46;i++){ const x=(rnd()*PW)|0, y=(rnd()*72)|0;
+    px.fillStyle="rgba(190,239,255,"+(0.15+rnd()*0.5)+")"; px.fillRect(x,y,1,1); }
+}
+function pxGlow(px,x,y,r,col,a){ px.globalAlpha=a; px.fillStyle=col;
+  px.beginPath(); px.arc(x,y,r,0,7); px.fill(); px.globalAlpha=1; }
+
+// ---------- [1] Bund 2200 skyline ----------
+const m1=mk("c1"), o1=pxo();
+function drawTwist(px, x, h, w, t){ // spiral tower (Shanghai Tower ref)
+  for(let i=0;i<h;i++){ const y=PH-8-i;
+    const off=Math.round(Math.sin(i*0.16+t*0.6)*3);
+    px.fillStyle="#0c1526"; px.fillRect(x+off-w/2, y, w, 1);
+    if(i%7===0){ px.fillStyle="rgba(34,211,238,"+(0.35+0.3*Math.abs(Math.sin(t+i*0.3)))+")";
+      px.fillRect(x+off-1, y, 2, 1); }
+  }
+  pxGlow(px,x,PH-8-h-2,3,CYL,0.6);
+}
+function drawPearl(px,x,t){ // oriental-pearl-like twin nodes
+  const hy=PH-40, hy2=PH-64;
+  px.fillStyle="#0c1526"; px.fillRect(x-1,hy2,3,hy-hy2+8);
+  for(let i=hy;i<PH-8;i++){ px.fillStyle="#0c1526"; px.fillRect(x-2,i,5,1); }
+  pxGlow(px,x,hy,5,CY,0.10+0.05*Math.sin(t)); pxGlow(px,x,hy2,4,CY,0.08);
+  const cc=(c,r)=>{ px.fillStyle=CYD; px.fillRect(x-r,c-r,r*2,r*2);
+    px.fillStyle="#0e7490"; px.fillRect(x-r+1,c-r+1,r*2-2,r*2-2);
+    px.fillStyle=CYL; px.fillRect(x-r+1,c,1,1); };
+  cc(hy,4); cc(hy2,3);
+}
+function draw1(t){
+  const px=o1.ctx; _s=777; sky(px);
+  // far layer buildings
+  for(let i=0;i<26;i++){ const x=(rnd()*PW)|0, w=4+(rnd()*6)|0, h=18+(rnd()*30)|0;
+    px.fillStyle="#080d1c"; px.fillRect(x,PH-9-h,w,h);
+    for(let wy=0;wy<h;wy+=3) if(rnd()>0.5){ px.fillStyle="rgba(34,211,238,0.22)"; px.fillRect(x+(rnd()*w)|0,PH-9-h+wy,1,1); }
+  }
+  // river
+  px.fillStyle="#060b18"; px.fillRect(0,PH-9,PW,9);
+  // main skyline row
+  const towers=[[18,26,6],[34,20,8],[52,42,5],[74,34,7],[92,50,6],[112,28,8],[130,44,5],[150,24,7],[168,38,6],[188,30,5],[204,46,8],[224,22,6]];
+  towers.forEach((tw,ti)=>{ const [x,h,w]=tw;
+    px.fillStyle="#0b1428"; px.fillRect(x,PH-9-h,w,h);
+    px.fillStyle="#16233f"; px.fillRect(x,PH-9-h,w,1);
+    for(let wy=2;wy<h-2;wy+=3) for(let wx=1;wx<w-1;wx+=2)
+      if(rnd()>0.42){ const flick=Math.sin(t*1.5+ti*3+wy+wx)>0.1;
+        px.fillStyle = rnd()>0.12 ? (flick?"rgba(127,245,255,0.75)":"rgba(34,211,238,0.25)") : (flick?"rgba(245,201,123,0.8)":"rgba(245,201,123,0.2)");
+        px.fillRect(x+wx,PH-9-h+wy,1,1); }
+  });
+  drawPearl(px,42,t);
+  drawTwist(px,206,58,7,t);
+  drawTwist(px,100,46,5,t+2);
+  // river reflections
+  for(let x=0;x<PW;x+=2){ const src=px.getImageData(x,PH-10,1,1).data;
+    if(src[2]>40){ px.fillStyle="rgba(34,211,238,"+(0.06+0.05*Math.sin(t*2+x))+")";
+      px.fillRect(x,PH-8+((x*3)%5),2,1); } }
+  blit(m1,o1);
+  const c=m1.ctx;
+  c.fillStyle="rgba(200,230,255,0.75)"; c.font="13px Consolas";
+  c.textAlign="left"; c.fillText("外滩 2200 · FLUX 天际线",18,26);
+  c.fillStyle="rgba(127,245,255,0.5)"; c.font="11px Consolas";
+  c.fillText("扭塔=上海中心 · 双球=明珠 · 倒影=黄浦",18,44);
+}
+
+// ---------- [2] data Huangpu ----------
+const m2=mk("c2"), o2=pxo();
+function draw2(t){
+  const px=o2.ctx; _s=555; sky(px);
+  // banks
+  for(const side of [[0,88],[152,PW]]){
+    for(let i=0;i<14;i++){ const x=side[0]+((rnd()*(side[1]-side[0]))|0), w=5+(rnd()*7)|0, h=20+(rnd()*40)|0;
+      px.fillStyle="#0a1224"; px.fillRect(x,PH-9-h,w,h);
+      for(let wy=2;wy<h-2;wy+=3) if(rnd()>0.45){ px.fillStyle=rnd()>0.15?"rgba(127,245,255,0.6)":"rgba(245,201,123,0.55)";
+        px.fillRect(x+(rnd()*w)|0,PH-9-h+wy,1,1); }
+    }
+  }
+  // holo billboards (restrained, single accent)
+  for(let b=0;b<3;b++){ const bx=20+b*88, by=40+(b%2)*14;
+    px.fillStyle="#050b18"; px.fillRect(bx,by,30,16);
+    px.strokeStyle="rgba(34,211,238,0.5)"; px.strokeRect(bx,by,30,16);
+    for(let ly=0;ly<4;ly++){ px.fillStyle="rgba(127,245,255,"+(0.25+0.3*Math.abs(Math.sin(t*2+b+ly)))+")";
+      px.fillRect(bx+3,by+3+ly*3,10+(Math.sin(b*3+ly*2+t)+1)*7,1); }
+  }
+  // the data river (glowing flow band)
+  for(let y=PH-60;y<PH-4;y++){
+    const w = 26 + Math.round(Math.sin(y*0.2)*4);
+    const cx = 120 + Math.round(Math.sin(y*0.12)*6);
+    px.fillStyle="rgba(14,116,144,0.28)"; px.fillRect(cx-w/2,y,w,1);
+  }
+  for(let i=0;i<16;i++){ const yy=PH-60+((i*3.5+((t*40)%3.5))%(PH-56));
+    const cx = 120 + Math.round(Math.sin(yy*0.12)*6);
+    const dir = (Math.floor(i/8)%2===0)?1:-1;
+    const xx = cx + dir*((t*30+i*17)%(14-2))-7;
+    px.fillStyle= i%3===0? WHT : CYL; px.fillRect(xx,yy,1,1); }
+  // light bridge
+  for(let i=0;i<70;i++){ const x=6+i*3.2, y=PH-58-Math.round(Math.sin(i/70*Math.PI)*16);
+    px.fillStyle="rgba(127,245,255,"+(0.3+0.4*Math.abs(Math.sin(t*3-i*0.2)))+")";
+    px.fillRect(x,y,2,1); }
+  blit(m2,o2);
+  const c=m2.ctx; c.fillStyle="rgba(200,230,255,0.75)"; c.font="13px Consolas"; c.textAlign="left";
+  c.fillText("数据黄浦 · 河即光流",18,26);
+  c.fillStyle="rgba(127,245,255,0.5)"; c.font="11px Consolas";
+  c.fillText("河流=集团三流 · 光桥=神经主干道",18,44);
+}
+
+// ---------- [3] brain tower night ----------
+const m3=mk("c3"), o3=pxo();
+function draw3(t){
+  const px=o3.ctx; _s=999; sky(px);
+  // low city ring around the tower
+  for(let i=0;i<40;i++){ const x=(rnd()*PW)|0, w=4+(rnd()*5)|0, h=8+(rnd()*14)|0;
+    px.fillStyle="#081020"; px.fillRect(x,PH-9-h,w,h);
+    if(rnd()>0.5){ px.fillStyle="rgba(34,211,238,0.25)"; px.fillRect(x+(rnd()*w)|0,PH-9-h+(rnd()*h)|0,1,1); }
+  }
+  // brain ring plaza
+  const py=PH-10;
+  for(let x=0;x<PW;x++){ const d=Math.abs(x-120);
+    if(d<40){ px.fillStyle="rgba(34,211,238,"+(0.10*(1-d/40)+0.02)+")"; px.fillRect(x,py-1,1,2); } }
+  // the brain tower
+  const TX=120;
+  for(let i=0;i<86;i++){ const y=py-i;
+    const off=Math.round(Math.sin(i*0.09)*5);
+    const w = i>70? 4 : (i>50? 6 : (i>30? 8 : 10));
+    px.fillStyle="#0c1526"; px.fillRect(TX+off-w/2,y,w,1);
+    if(i>72){ px.fillStyle="rgba(34,211,238,"+(0.5+0.4*Math.abs(Math.sin(t*2+i)))+")";
+      px.fillRect(TX+off-1,y,2,1); }
+  }
+  // node spheres on the tower (pearls ref -> brain nodes)
+  const nodes=[[py-30,5],[py-52,4],[py-74,3]];
+  nodes.forEach((nd,i)=>{ const [ny,nr]=nd; const pulse=0.10+0.08*Math.sin(t*1.5+i);
+    pxGlow(px,TX+Math.round(Math.sin((py-ny)*0.09)*5),ny,nr*2.2,CY,pulse);
+    px.fillStyle=CYD; px.fillRect(TX-((nr/2)|0)+Math.round(Math.sin((py-ny)*0.09)*5)-((nr/2)|0),ny-((nr/2)|0),nr,nr);
+    px.fillStyle=CYL; px.fillRect(TX+Math.round(Math.sin((py-ny)*0.09)*5)-1,ny-1,2,2); });
+  // neural lines spiraling up
+  for(let i=0;i<3;i++){ const a=t*0.8+i*2.1;
+    const yy=py-((t*30+i*30)%90);
+    const xx=TX+Math.sin(yy*0.09)*5+Math.cos(a)*9;
+    px.fillStyle="rgba(232,246,255,0.9)"; px.fillRect(xx,yy,1,1); }
+  // apex CEO light
+  pxGlow(px,TX+Math.round(Math.sin(86*0.09)*5),py-88,4,"#f0abfc",0.25+0.15*Math.sin(t*2));
+  px.fillStyle="#f5d0fe"; px.fillRect(TX+Math.round(Math.sin(86*0.09)*5)-1,py-89,2,2);
+  // beams to city
+  for(let i=0;i<3;i++){ const gx=30+i*90; const ph=(t*0.5+i*0.33)%1;
+    const bx=gx+(TX-gx)*ph, byy=py-4-(py-30)*ph;
+    px.fillStyle="rgba(127,245,255,"+(1-ph*0.5)+")"; px.fillRect(bx,byy,1,1); }
+  blit(m3,o3);
+  const c=m3.ctx; c.fillStyle="rgba(200,230,255,0.75)"; c.font="13px Consolas"; c.textAlign="left";
+  c.fillText("脑塔夜景 · 城市之心",18,26);
+  c.fillStyle="rgba(127,245,255,0.5)"; c.font="11px Consolas";
+  c.fillText("扭塔+球节点=明珠基因 · 顶光=CEO 指令 · 螺旋=思考",18,44);
+}
+
+// ---------- [4] sky traffic ----------
+const m4=mk("c4"), o4=pxo();
+function draw4(t){
+  const px=o4.ctx; _s=333; sky(px);
+  // perspective street to horizon
+  px.fillStyle="#050a14"; px.fillRect(0,70,PW,PH-70);
+  const HZ=70, VX=120;
+  // road edges
+  for(let i=0;i<44;i++){ const y=HZ+6+i; const sp=(y-HZ)/44;
+    const wl=VX-8-sp*90, wr=VX+8+sp*90;
+    px.fillStyle="rgba(34,211,238,0.30)"; px.fillRect(wl,y,1,1); px.fillRect(wr,y,1,1); }
+  // side buildings walls
+  for(const side of [-1,1]){ for(let i=0;i<20;i++){ const sp=i/20;
+    const x=VX+side*(14+sp*105), w=2+sp*10;
+    px.fillStyle="#081020"; px.fillRect(x-w/2,HZ+sp*3,w,PH-HZ);
+    if(rnd()>0.4){ px.fillStyle="rgba(127,245,255,0.5)";
+      px.fillRect(x-w/2+(rnd()*w)|0,HZ+6+(rnd()*(PH-HZ-8))|0,1,1); } } }
+  // light trails (cyan-white, single accent)
+  for(let i=0;i<14;i++){ const sp=((t*0.35+i/14)%1);
+    const y=HZ+4+sp*sp*60; const w=1+sp*3;
+    const cx=VX+(rnd()>0.5?1:-1)*(6+sp*40);
+    px.fillStyle= sp>0.8? WHT : (sp>0.4? CYL : CY);
+    px.globalAlpha=0.3+sp*0.7; px.fillRect(cx-w/2,y,w,1+sp*2); px.globalAlpha=1; }
+  // flying drones
+  for(let i=0;i<4;i++){ const dx=((t*22+i*60)%(PW+20))-10, dy=26+i*9;
+    px.fillStyle="rgba(127,245,255,0.85)"; px.fillRect(dx,dy,2,1); px.fillRect(dx-1,dy+1,4,1); }
+  // holo street signs (restrained)
+  px.fillStyle="rgba(34,211,238,0.4)"; px.strokeRect(30,52,26,12);
+  px.fillStyle="rgba(232,246,255,0.7)"; px.fillRect(33,56,14+Math.sin(t*2)*5,1);
+  blit(m4,o4);
+  const c=m4.ctx; c.fillStyle="rgba(200,230,255,0.75)"; c.font="13px Consolas"; c.textAlign="left";
+  c.fillText("光轨高架 · 数据飞驰",18,26);
+  c.fillStyle="rgba(127,245,255,0.5)"; c.font="11px Consolas";
+  c.fillText("高架车流=光轨单强调 · 飞行器=机队伏笔",18,44);
+}
+
+// ---------- [5] city grid overview ----------
+const m5=mk("c5"), o5=pxo();
+function draw5(t){
+  const px=o5.ctx; _s=888; sky(px);
+  // grid blocks
+  for(let gy=6;gy<PH-4;gy+=10) for(let gx=6;gx<PW-4;gx+=14){
+    const hot = Math.sin(gx*0.3+gy*0.2)>0.3;
+    px.fillStyle= hot? "#0a1226":"#070c1a"; px.fillRect(gx,gy,11,7);
+    for(let wy=0;wy<5;wy+=2) for(let wx=0;wx<9;wx+=3){
+      if(rnd()>0.62){ const on=Math.sin(t*1.2+gx*0.2+gy*0.3+wx)>0;
+        px.fillStyle= on? (rnd()>0.9?"rgba(245,201,123,0.8)":"rgba(127,245,255,0.7)") : "rgba(34,211,238,0.18)";
+        px.fillRect(gx+1+wx,gy+1+wy,1,1); } }
+  }
+  // main avenues to center
+  const CX=120, CY2=PH/2+6;
+  for(const [x1,y1] of [[8,CY2],[CX-4,8],[PW-8,CY2],[CX-4,PH-16]]){
+    for(let i=0;i<40;i++){ const q=i/40;
+      const xx=x1+(CX-x1)*q, yy=y1+(CY2-y1)*q;
+      const ph=(t*0.8+q*2)%1; if(ph<0.5)
+      { px.fillStyle="rgba(127,245,255,"+(1-q*0.4)+")"; px.fillRect(xx,yy,1,1); } }
+    px.fillStyle="rgba(34,211,238,0.22)";
+    for(let i=0;i<40;i++){ const q=i/40; px.fillRect(x1+(CX-x1)*q,y1+(CY2-y1)*q,1,1); }
+  }
+  // center brain node
+  const pulse=0.14+0.1*Math.sin(t*2);
+  pxGlow(px,CX,CY2,9,CY,pulse);
+  px.fillStyle=CYL; px.fillRect(CX-1,CY2-1,3,3);
+  px.strokeStyle="rgba(165,243,252,0.6)";
+  px.beginPath(); px.arc(CX,CY2,6,0,7); px.stroke();
+  blit(m5,o5);
+  const c=m5.ctx; c.fillStyle="rgba(200,230,255,0.75)"; c.font="13px Consolas"; c.textAlign="left";
+  c.fillText("超体俯瞰 · 城市网格",18,26);
+  c.fillStyle="rgba(127,245,255,0.5)"; c.font="11px Consolas";
+  c.fillText("窗灯=活跃热度 · 光路汇心=信息回流大脑",18,44);
+}
+
+const rs=[draw1,draw2,draw3,draw4,draw5];
+let last=0;
+function loop(ts){ const t=ts/1000; if(ts-last>33){ last=ts; rs.forEach(r=>r(t)); } requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

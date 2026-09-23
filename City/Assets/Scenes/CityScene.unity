@@ -1025,6 +1025,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f2f739ad5bc77042bda46aaf7a3a76a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  skylineFar: {fileID: 21300000, guid: 9f312210bfdb5dc41bd3faee84a9e06b, type: 3}
+  skylineNear: {fileID: 21300000, guid: a34a3d0be5a33fa49b24ad39dec5472e, type: 3}
 --- !u!4 &687993657
 Transform:
   m_ObjectHideFlags: 0

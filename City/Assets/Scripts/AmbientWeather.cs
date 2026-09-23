@@ -154,5 +154,65 @@ namespace FluxVerse
         public float Y(int i) { return y[i]; }
     }
 
+    // P-28 item 2 (r34): parallax skyline pure rules. Source pack = parallax-skyline
+    // (OGA-BY 3.0, ledger in City/Assets/ArtPacks/ARTPACKS-LEDGER.md). The r29 style
+    // gate passed the pack conditionally with five laws, all enforced here:
+    //   1 point filter + INTEGER scale only (x2 at PPU 16 -> texel 0.125u),
+    //   2 fog desaturation tint into the anchor pink-purple fog band (per tier),
+    //   3 only the 2 farthest pale silhouette layers (near-black layers rejected),
+    //   4 no seamless-loop claim -> the single quad is never tiled/repeated, so its
+    //     width must cover every camera position (Covers gate below),
+    //   5 five-color law untouched: silhouettes are AMBIENT scenery (pink/purple
+    //     is a legal ambient sky color per DESIGN section 9, never a functional light).
+    // Pink/purple stays ambient-only; geometry mirrors the measured pack content rows
+    // (r33 survey + r34 PS re-measure: layer-2 rows 61..234, layer-3 rows 79..323).
+    public static class SkylineRules
+    {
+        public const float FollowFactor = 0.9f;          // parallax: tracks 0.9 x camera
+        public const int FarOrder = -9, NearOrder = -8;  // between AmbientSky -10 and tilemaps 0..4
+        public const float Scale = 2f;                    // law 1: integer multiple only
+        public const float PPU = 16f;
+        public const float Texel = Scale / PPU;           // 0.125u per source texel
+        public const float SourceW = 576f, SourceH = 324f;
+        public const int FarTopRow = 61, FarBotRow = 234;      // layer-2 measured content rows
+        public const int NearTopRow = 79, NearBotRow = 323;    // layer-3 measured content rows
+        public const float FarContentTopY = 19f;         // far spires peek 4u above the +15 roofline
+        public const float NearContentTopY = 17.5f;      // near skyline plateaus lower (depth stack)
+        public const float RoofY = 15f;                 // painted band top edge (r22 survey)
+
+        // quad center Y so the content (first opaque row) lands exactly at contentTopY
+        public static float QuadCenterY(int topRow, float contentTopY)
+        {
+            float quadTop = contentTopY + topRow * Texel;
+            return quadTop - (SourceH * Texel) * 0.5f;
+        }
+
+        // law 4 gate: non-looping quad must span the view at every camera position
+        public static bool Covers(float camX, float halfView)
+        {
+            float half = SourceW * Texel * 0.5f;   // 36u
+            float cx = camX * FollowFactor;
+            return (cx - half) <= (camX - halfView) && (camX + halfView) <= (cx + half);
+        }
+
+        // law 2: per-tier fog multiplier on the pack's native rose (240,147,161)/255.
+        // Multiplication compresses the r-g spread (desaturation) and can only darken,
+        // which is exactly "recede into fog". Dusk pushes mauve (anchor fog band).
+        public static Color FogFar(AmbientTier t)
+        {
+            switch (t)
+            {
+                case AmbientTier.Dawn: return new Color(0.86f, 0.72f, 0.80f);  // dusty rose haze
+                case AmbientTier.Day:  return new Color(0.85f, 0.88f, 0.98f);  // pale cool haze
+                case AmbientTier.Dusk: return new Color(0.62f, 0.58f, 0.78f);  // mauve fog band
+                default:               return new Color(0.10f, 0.10f, 0.18f);  // dark blue mass
+            }
+        }
+
+        // near layer = slightly heavier fog-darkening (nearer silhouette reads as the
+        // denser mass; classic depth cue for dark aerial perspective)
+        public static Color FogNear(AmbientTier t) { return FogFar(t) * 0.85f; }
+    }
+
     // scene adapter CityAmbient lives in CityAmbient.cs (SEPARATE FILE LAW, r14)
 }

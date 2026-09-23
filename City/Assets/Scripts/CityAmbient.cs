@@ -24,8 +24,13 @@ namespace FluxVerse
             public string city_day_phase, beijing_hhmm, weather_kind, weather_code, weather_wind_ms;
         }
 
+        // P-28 item 2 (r34): parallax silhouette sprites (scene-wired serialized fields;
+        // unwired = silent degrade per the probe contract - no skyline, no exceptions)
+        public Sprite skylineFar, skylineNear;
+
         WeatherField field;
         SpriteRenderer sky, tint, band;
+        SpriteRenderer skylineFarR, skylineNearR;
         SpriteRenderer[] drops;
         float pollTimer = 999f;      // poll on first Update
         float bandPhase, bandAlpha;
@@ -46,6 +51,7 @@ namespace FluxVerse
             pollTimer += Time.deltaTime;
             if (pollTimer >= PollIntervalSec) { pollTimer = 0f; Poll(); }
             StepWeather(Time.deltaTime);
+            SyncSkyline();
         }
 
         // reads the perceptor snapshot (read-only); silent-degrade on any file trouble
@@ -92,8 +98,29 @@ namespace FluxVerse
             AmbientPalette p = AmbientWheel.PaletteFor(t);
             sky.sprite = SkySprite(t);
             tint.color = new Color(p.tint.r, p.tint.g, p.tint.b, p.tintAlpha);
+            if (skylineFarR != null) skylineFarR.color = SkylineRules.FogFar(t);
+            if (skylineNearR != null) skylineNearR.color = SkylineRules.FogNear(t);
             Camera cam = Cam();
             if (cam != null) cam.backgroundColor = p.camBg;
+        }
+
+        // P-28 (r34): silhouettes track 0.9 x camera (subtle parallax). Y stays glued
+        // to the world horizon (a distant skyline does not sink when the camera drops).
+        public void SyncSkyline()
+        {
+            if (skylineFarR == null && skylineNearR == null) return;
+            Camera cam = Cam();
+            float fx = cam != null ? SkylineRules.FollowFactor * cam.transform.position.x : 0f;
+            if (skylineFarR != null)
+            {
+                Vector3 p = skylineFarR.transform.position;
+                skylineFarR.transform.position = new Vector3(fx, p.y, p.z);
+            }
+            if (skylineNearR != null)
+            {
+                Vector3 p = skylineNearR.transform.position;
+                skylineNearR.transform.position = new Vector3(fx, p.y, p.z);
+            }
         }
 
         public void ApplyWeather(string kind, float windMs, int wmoCode)
@@ -129,6 +156,21 @@ namespace FluxVerse
             // (zenith color truly reached at the top edge; camBg = skyTop covers any later drift).
             sky = MakeQuad("AmbientSky", -10, SkySprite(tier), 92f, 40f, 0f);
             sky.transform.SetParent(transform, false);
+            // P-28 item 2 (r34): parallax silhouettes behind every tilemap, in front of
+            // the sky (orders -9/-8). Runtime-constructed like every ambient visual;
+            // unwired sprites stay silent. Integer x2 scale = point-filter law (r29 gate).
+            if (skylineFar != null)
+            {
+                skylineFarR = SkylineQuad("SkylineFar", SkylineRules.FarOrder, skylineFar,
+                    SkylineRules.FarTopRow, SkylineRules.FarContentTopY, SkylineRules.FogFar(tier));
+                skylineFarR.transform.SetParent(transform, false);
+            }
+            if (skylineNear != null)
+            {
+                skylineNearR = SkylineQuad("SkylineNear", SkylineRules.NearOrder, skylineNear,
+                    SkylineRules.NearTopRow, SkylineRules.NearContentTopY, SkylineRules.FogNear(tier));
+                skylineNearR.transform.SetParent(transform, false);
+            }
             // ambient tint over the CITY band only (painted extent y -16..+14): atmosphere between
             // buildings, sky strips stay pure gradient. Above tilemaps 0..4, below band 9 / pulses 10.
             tint = MakeQuad("AmbientTint", 8, WhiteSprite(), 92f, 30f, -1f);
@@ -196,6 +238,20 @@ namespace FluxVerse
             sr.sortingOrder = order;
             Vector3 n = sprite.bounds.size;   // natural world size: scale must be RELATIVE
             go.transform.localScale = new Vector3(sx / n.x, sy / n.y, 1f);
+            return sr;
+        }
+
+        // P-28 (r34): skyline quad - integer x2 scale (point law), center solved so the
+        // measured first content row lands exactly at contentTopY (geometry in SkylineRules)
+        static SpriteRenderer SkylineQuad(string name, int order, Sprite sprite, int topRow, float contentTopY, Color fog)
+        {
+            GameObject go = new GameObject(name);
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.sortingOrder = order;
+            sr.color = fog;
+            go.transform.localScale = new Vector3(SkylineRules.Scale, SkylineRules.Scale, 1f);
+            go.transform.position = new Vector3(0f, SkylineRules.QuadCenterY(topRow, contentTopY), 0f);
             return sr;
         }
 

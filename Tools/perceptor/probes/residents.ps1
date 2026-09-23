@@ -1,12 +1,23 @@
-# Probe: resident minds - local Ollama LLM lines grounded in real events (CEO order 2026-09-23)
-# Plan: docs/research/R-20260923-resident-ai.md. Local-first law: localhost Ollama,
-# zero API, zero tokens. Encoding law: ASCII script; ALL Chinese lives in data files
-# (docs/residents/<id>.md cards + residents-prompt.txt template).
-# Honesty law: prompt only receives REAL facts (persona card + world-events tail +
-# previous world-state time/weather). No fabrication, no event = no line.
-# Rate limits: max ONE line per round; per-resident cooldown 45 min; needs >=1 event
-# newer than the resident's last line. Ollama down => silent degrade (contract #4).
-# Events: RESIDENT_SAY (registered T2 2026-09-23). State: residents = { id: {line,ts} }
+# Probe: resident minds - local Ollama LLM lines grounded in real events
+# v1.5 (CEO order: study open-world game NPC AI) upgrades over v1:
+#   - Daily-routine location states (RDR2 schedules / Skyrim Radiant AI adapted):
+#     location derived from REAL status + REAL Beijing time (work post / dorm /
+#     night shift). No fake wandering (decoration ban).
+#   - Self-memory: last 3 own lines fed back into prompt (anti-repeat continuity).
+#   - Resident-to-resident chat: every 4th round, two eligible residents hold a
+#     2-line exchange (v2 feature pulled forward, cheap: 2 LLM calls).
+# Local-first law: localhost Ollama only, zero API tokens. Encoding law: ASCII
+# script; Chinese lives in data files (cards + prompt templates).
+# Honesty law: only REAL facts are fed. No new events => silence. Cooldown 45min.
+# Events: RESIDENT_SAY. State: residents = { id: {line, ts, location} }
+
+function Get-ResidentLocation([string]$rid, [bool]$online, [int]$hourBeijing) {
+  if (-not $online) { return 'ji-dui-su-she' }              # dorm (offline, lights out)
+  $isNight = ($hourBeijing -ge 22 -or $hourBeijing -lt 7)
+  if ($isNight) { return 'night-shift' }                    # on duty at night
+  if ($rid -like 'bm-*') { return 'quant-computing-tower' } # at QUANT tower desk
+  return 'game-city-studio'                                 # at GAME city studio
+}
 
 function Probe-residents {
   param($ctx)
@@ -25,9 +36,10 @@ function Probe-residents {
     }
     if ($evLines.Count -eq 0) { return @{ state = @{ } } }
 
-    # context: previous-round world-state (time / weather), ~10 min stale is fine
+    # context: previous-round world-state (time / weather / fleet online states)
     $nowTxt = ''
     $weatherTxt = ''
+    $fleetOnline = @{}
     $stFile = Join-Path $worldDir 'world-state.json'
     if (Test-Path $stFile) {
       try {
@@ -36,9 +48,12 @@ function Probe-residents {
           $nowTxt = [string]$st.reality.beijing_hhmm
           $weatherTxt = [string]$st.reality.weather_kind
         }
+        if ($st.fleet) { foreach ($m in @($st.fleet)) { $fleetOnline[[string]$m.id] = [bool]$m.online } }
       } catch {}
     }
     if (-not $nowTxt) { $nowTxt = (Get-Date).ToString('HH:mm') }
+    $hourBj = 0
+    try { $hourBj = [int]$nowTxt.Substring(0, 2) } catch { $hourBj = (Get-Date).Hour }
 
     # newest event ts (freshness gate)
     $newestEvTs = ''
@@ -51,63 +66,93 @@ function Probe-residents {
       } catch {}
     }
 
-    # --- pick ONE eligible resident (cooldown + fresh event) ---
+    # --- eligible residents (cooldown + fresh event) ---
     $cooldownMin = 45
-    $chosen = $null
-    $chosenKey = ''
-    $oldest = $null
+    $eligible = @()
     foreach ($cf in (Get-ChildItem $cardsDir -Filter *.md | Sort-Object Name)) {
       $rid = $cf.BaseName
       $tsKey = 'res:' + $rid + ':ts'
       $lastTs = ''
       if ($ctx.cursor.ContainsKey($tsKey)) { $lastTs = [string]$ctx.cursor[$tsKey] }
-      if ($lastTs -and $newestEvTs -le $lastTs) { continue }        # nothing new to say
+      if ($lastTs -and $newestEvTs -le $lastTs) { continue }
       if ($lastTs) {
         try {
           $age = ((Get-Date).ToUniversalTime() - [datetime]::ParseExact($lastTs, 'yyyy-MM-ddTHH:mm:ssZ', [Globalization.CultureInfo]::InvariantCulture)).TotalMinutes
           if ($age -lt $cooldownMin) { continue }
         } catch { }
-      } elseif ($oldest -eq $null) {
-        # first run: allow, but only the roster rotates one at a time via $oldest logic below
       }
-      if ($oldest -eq $null -or ($lastTs -lt $oldest)) { $oldest = $lastTs; $chosen = $cf; $chosenKey = $rid }
+      $eligible += $cf
     }
-    if (-not $chosen) { return @{ state = @{ } } }
+    if ($eligible.Count -eq 0) { return @{ state = @{ } } }
 
-    # --- build prompt from data files ---
-    $card = [string](Get-Content $chosen.FullName -Raw -Encoding UTF8)
+    # --- chat mode: every 4th speaking round, two residents talk (v2 pulled forward) ---
+    $chatCount = 0
+    if ($ctx.cursor.ContainsKey('res:chat:count')) { try { $chatCount = [int]$ctx.cursor['res:chat:count'] } catch {} }
+    $isChat = ($chatCount % 4 -eq 3 -and $eligible.Count -ge 2)
+    $ctx.cursor['res:chat:count'] = [string]($chatCount + 1)
+
+    $speakers = @()
+    if ($isChat) { $speakers = @($eligible | Select-Object -First 2) }
+    else { $speakers = @($eligible | Select-Object -First 1) }
+
+    # --- generate lines ---
     $tmpl = [string](Get-Content $promptFile -Raw -Encoding UTF8)
-    $prompt = $tmpl.Replace('__CARD__', $card).Replace('__EVENTS__', ($facts -join "`n")).Replace('__NOW__', $nowTxt).Replace('__WEATHER__', $weatherTxt)
+    $said = @()
+    $prevLine = ''
+    foreach ($chosen in $speakers) {
+      $rid = $chosen.BaseName
+      $card = [string](Get-Content $chosen.FullName -Raw -Encoding UTF8)
+      # self-memory: last 3 own lines (anti-repeat continuity)
+      $memKey = 'res:' + $rid + ':mem'
+      $memTxt = ''
+      if ($ctx.cursor.ContainsKey($memKey)) { $memTxt = [string]$ctx.cursor[$memKey] }
+      $extraFacts = $facts
+      if ($memTxt) { $extraFacts = @('note: you recently said (do not repeat yourself): ' + $memTxt) + $facts }
+      if ($isChat -and $prevLine) { $extraFacts = @(($speakers[0].BaseName) + ' just said to you: ' + $prevLine) + $extraFacts }
+      $prompt = $tmpl.Replace('__CARD__', $card).Replace('__EVENTS__', ($extraFacts -join "`n")).Replace('__NOW__', $nowTxt).Replace('__WEATHER__', $weatherTxt)
 
-    # --- call local Ollama (hard timeout, silent degrade) ---
-    $line = ''
-    try {
-      $body = @{ model = 'qwen2.5:7b-instruct'; prompt = $prompt; stream = $false; options = @{ num_predict = 60; temperature = 0.8 } } | ConvertTo-Json -Depth 4
-      $resp = Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/generate' -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 30
-      $line = ([string]$resp.response).Trim() -replace "`r`n", ' ' -replace "`n", ' '
-    } catch { return @{ state = @{ } } }
-    if ($line.Length -eq 0) { return @{ state = @{ } } }
-    if ($line.Length -gt 90) { $line = $line.Substring(0, 90) }
+      $line = ''
+      try {
+        $body = @{ model = 'qwen2.5:7b-instruct'; prompt = $prompt; stream = $false; options = @{ num_predict = 60; temperature = 0.8 } } | ConvertTo-Json -Depth 4
+        $resp = Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/generate' -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 30
+        $line = ([string]$resp.response).Trim() -replace "`r`n", ' ' -replace "`n", ' '
+      } catch { break }
+      if ($line.Length -eq 0) { break }
+      if ($line.Length -gt 90) { $line = $line.Substring(0, 90) }
 
-    # --- zone by resident id ---
-    $zone = 'governance'
-    if ($chosenKey -like 'bm-*') { $zone = 'quant' } elseif ($chosenKey -like 'BG-*') { $zone = 'gaming' }
-    $repo = 'bigmoney'
-    if ($zone -eq 'gaming') { $repo = 'minigame' }
+      $zone = 'governance'
+      if ($rid -like 'bm-*') { $zone = 'quant' } elseif ($rid -like 'BG-*') { $zone = 'gaming' }
+      $repo = 'bigmoney'
+      if ($zone -eq 'gaming') { $repo = 'minigame' }
+      & $ctx.AddEvent 'RESIDENT_SAY' $rid $repo $zone $line
 
-    $sayTs = $ctx.now
-    & $ctx.AddEvent 'RESIDENT_SAY' $chosenKey $repo $zone $line
-    $ctx.cursor['res:' + $chosenKey + ':ts'] = $sayTs
-    $ctx.cursor['res:' + $chosenKey + ':line'] = $line
+      $loc = Get-ResidentLocation $rid ($fleetOnline.ContainsKey($rid) -and $fleetOnline[$rid]) $hourBj
+      $ctx.cursor['res:' + $rid + ':ts'] = $ctx.now
+      $ctx.cursor['res:' + $rid + ':line'] = $line
+      $ctx.cursor['res:' + $rid + ':loc'] = $loc
+      # rolling self-memory: keep last 3 lines, | separated
+      $newMem = $line
+      if ($memTxt) { $parts = @($memTxt -split '\|') + $line; if ($parts.Count -gt 3) { $parts = @($parts | Select-Object -Last 3) }; $newMem = ($parts -join '|') }
+      $ctx.cursor['res:' + $rid + ':mem'] = $newMem
 
-    # --- state: all residents' latest lines (from cursor memory) ---
+      $prevLine = $line
+      $said += $rid
+    }
+
+    # --- state: all residents' latest lines + locations (from cursor memory) ---
     $residents = @{}
     foreach ($cf in (Get-ChildItem $cardsDir -Filter *.md | Sort-Object Name)) {
       $rid = $cf.BaseName
-      $kTs = 'res:' + $rid + ':ts'
       $kLine = 'res:' + $rid + ':line'
       if ($ctx.cursor.ContainsKey($kLine)) {
-        $residents[$rid] = @{ id = $rid; line = [string]$ctx.cursor[$kLine]; ts = [string]$ctx.cursor[$kTs] }
+        $kTs = 'res:' + $rid + ':ts'
+        $kLoc = 'res:' + $rid + ':loc'
+        $locStr = ''
+        if ($ctx.cursor.ContainsKey($kLoc)) {
+          $locStr = [string]$ctx.cursor[$kLoc]
+          if ($locStr -eq 'ji-dui-su-she') { $locStr = 'sleep' } elseif ($locStr -eq 'night-shift') { $locStr = 'night-shift' } else { $locStr = 'work' }
+        }
+        $residents[$rid] = @{ id = $rid; line = [string]$ctx.cursor[$kLine]; ts = [string]$ctx.cursor[$kTs]; location = $locStr }
       }
     }
     return @{ state = @{ residents = $residents } }

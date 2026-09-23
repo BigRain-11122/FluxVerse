@@ -83,6 +83,37 @@ if (Test-Path $msFile) {
   } catch {}
 }
 
+# ---------- welcome line: a resident greets the CEO on every open (local LLM) ----------
+# CEO order 2026-09-23 (open-world NPC AI): the city greets its master on arrival.
+# The fact "the CEO just opened CityWatch" IS a real event - honest to use.
+# Rotates the greeter via watch\out\welcome-rotate.txt (gitignored area only).
+$welcome = $null
+try {
+  $cardsDir = Join-Path $repoRoot 'docs\residents'
+  $welcomePromptFile = Join-Path $PSScriptRoot 'welcome-prompt.txt'
+  if ((Test-Path $cardsDir) -and (Test-Path $welcomePromptFile) -and $events.Count -gt 0) {
+    $cards = @(Get-ChildItem $cardsDir -Filter *.md | Sort-Object Name)
+    $rotFile = Join-Path $outDir 'welcome-rotate.txt'
+    $rot = 0
+    if (Test-Path $rotFile) { $r = [string](Get-Content $rotFile -Raw); try { $rot = [int]$r } catch {} }
+    $chosen = $cards[$rot % $cards.Count]
+    [System.IO.File]::WriteAllText($rotFile, [string](($rot + 1) % 1000), (New-Object System.Text.UTF8Encoding($false)))
+
+    $facts = @()
+    foreach ($ln in ($events | Select-Object -Last 6)) {
+      try { $e = $ln | ConvertFrom-Json; $facts += ('- [' + [string]$e.type + '] ' + [string]$e.summary) } catch {}
+    }
+    $card = [string](Get-Content $chosen.FullName -Raw -Encoding UTF8)
+    $tmpl = [string](Get-Content $welcomePromptFile -Raw -Encoding UTF8)
+    $wprompt = $tmpl.Replace('__CARD__', $card).Replace('__EVENTS__', ($facts -join "`n")).Replace('__NOW__', (Get-Date).ToString('HH:mm'))
+    $wbody = @{ model = 'qwen2.5:7b-instruct'; prompt = $wprompt; stream = $false; options = @{ num_predict = 40; temperature = 0.75 } } | ConvertTo-Json -Depth 4
+    $wresp = Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/generate' -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($wbody)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 20
+    $wline = ([string]$wresp.response).Trim() -replace "`r`n", ' ' -replace "`n", ' '
+    if ($wline.Length -gt 60) { $wline = $wline.Substring(0, 60) }
+    if ($wline) { $welcome = @{ id = $chosen.BaseName; line = $wline } }
+  }
+} catch { $welcome = $null }   # Ollama down => no greeting, snapshot still ships
+
 # ---------- assemble + base64 payload ----------
 $data = [ordered]@{
   generated_ts   = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
@@ -92,6 +123,7 @@ $data = [ordered]@{
   tick_tail      = $tick
   images         = $imgList
   milestones     = $milestones
+  welcome        = $welcome
 }
 $stateObj = $null
 try { $stateObj = $stateJson | ConvertFrom-Json } catch {}

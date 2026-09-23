@@ -1,8 +1,8 @@
 // FluxVerse P-23(2) r41: engine-side resident barks pool - pure data core.
 // M2 barks window (ledger P-2026-09-23-23 face 2): the engine bubble layer
 // consumes the BigLife cognition layer-2 line pool. This v0 slice is the DATA
-// substrate only - no visuals, no scene wiring (render slice is a later
-// round); the renderer will call Pick/DeriveContext/BudgetedSpeakers.
+// substrate; the r42 render slice (CityBubbles + ResidentBubbleRules) mounts
+// it through Pick/DeriveContext/BudgetedSpeakers + LineKey.
 //
 // Data flow: Tools/city/bake-resident-barks.ps1 (deterministic PS bake,
 // fail-loud gates) writes Assets/Data/residents-barks.json (6 used axes x 12
@@ -191,6 +191,16 @@ namespace FluxVerse
                 if (line.Length > MaxLineChars) return null;   // runtime guard, <24-char law
                 return line;
             }
+        }
+
+        // r42 render slice: line -> bubble texture key = md5(line) first 4
+        // digest bytes as 8 lowercase hex - the SAME law the PS bake keys its
+        // City/BubbleData/bark-<key>.png files by (single source; the proof
+        // gates all 576 keys byte-for-byte against the bake manifest).
+        public static string LineKey(string line)
+        {
+            if (string.IsNullOrEmpty(line)) return null;
+            return BarkHash(line);
         }
 
         // context derivation port (draw.py derive_context): the FACT GATE -

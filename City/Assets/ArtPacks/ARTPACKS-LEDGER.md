@@ -42,6 +42,7 @@
 - 内容：robot_sheet_16x16.png（64×64=4×4 帧格·16×16/帧·动画全帧）。
 - **验图：适配度=中高**（16×16 正中 P-17 街道机器人规格；台架糊影同为缩放伪影·源件原生）。
 - 用途：街道机器人变体池（灯流主角的形态候选）。
+- **消费实况（r36 首批入城 8 帧）**：Tools/city/crop-robot-frames.ps1 全帧 16 切入 frames/robot_f00..f15.png（确定性裁帧留痕：实勘 8 可用帧=F00/F08 站立+F05/F07 并腿+F01/F04/F06/F12 迈步·余 8 槽为作者未填的镜像空帧·全右向）；8 机器人入城=City/Assets/Scripts/RobotRules.cs（RobotRules 单一正典·street 层 order 7=signs 6 与 tint 8 之间·native PPU16+scale 1 零重采样·每机独立帧=r35 克隆行禁律）——场景持久化 8 位（Robot* GO·南广场 3+南街 2+城前 2+北 promenade 1·**落位门=从活 tilemap 再推导**〔Ground pavement ∨ Roads cell·禁信注释信场景〕）；RobotProof 双会话 249+reload 断言全绿+渲染门（dusk_px=672 worst 81·夜 lum 0.478→0.280=乘性 tint 下差分像素集同构）+多模态双图绿（m1-r36-robots-{dusk,night}.png·8/8 着地零浮空城市完好零伪影）；v0=静态布景（巡行动画属 M2 事件驱动面·禁装饰性动画）；CC-BY 3.0 署名=本文件署名段既有行（Top-Hat Robot by Nelson Yiap）。
 
 ## ships-ripple/（112 件·CC-BY 3.0·chabull·/content/ships-with-ripple-effect）
 

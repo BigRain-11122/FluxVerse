@@ -1,0 +1,303 @@
+// FluxVerse P-15 r13: batch proof harness for the ambient cycle + weather FX (sentinel pattern,
+// r11/r12 style). Proves, fail-loud, the M1 acceptance expansion item (CEO order 18:45):
+//  1) PURE LOGIC on headless cores: tier bounds (mirror probes/clock.ps1), palette character
+//     (dusk warm-gold horizon + purple zenith, night deep blue-black, day untinted), weather
+//     rules (kind->mode, gale/heavy-WMO alert = probes/weather.ps1), field recycle simulation.
+//  2) FOUR TIER SCREENSHOTS from the real CityScene (hours 6/12/18/23 injected into the pure
+//     wheel): region pixel gates per tier + brain-tower day-vs-night tint gate.
+//  3) WEATHER PARTICLES rendered on the night tier: rain / snow delta-brightness gates vs the
+//     night baseline + alert band (thunder + gale wind) delta-warmth gate at river level.
+//  4) CityScene saved with CityAmbient wired - play mode polls world-state.json for real.
+// Sentinel: <repo>/logs/ambient.run -> proof -> <repo>/logs/ambient.done (OK/FAIL report).
+// Hermetic: no world/ reads; the proof injects probe-shaped values directly (live weather today
+// is cloud - particle visuals must still be provable regardless of the current sky).
+// All comments ASCII. No 3D. Screenshots: <repo>/docs/design/m1-r13-*.png
+using System;
+using System.IO;
+using UnityEngine;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
+
+namespace FluxVerse
+{
+    public static class AmbientProof
+    {
+        static string ProjectRoot { get { return Path.GetDirectoryName(Application.dataPath); } }
+        static string RepoRoot { get { return Path.GetDirectoryName(ProjectRoot); } }
+        static string SentinelPath { get { return Path.Combine(RepoRoot, "logs", "ambient.run"); } }
+        static string DonePath { get { return Path.Combine(RepoRoot, "logs", "ambient.done"); } }
+        static string ScenePath { get { return "Assets/Scenes/CityScene.unity"; } }
+        static int asserts;
+
+        [InitializeOnLoadMethod]
+        static void Hook()
+        {
+            if (File.Exists(SentinelPath))
+                EditorApplication.delayCall += Run;
+        }
+
+        public static void BatchRun() { Run(); }
+
+        static void Run()
+        {
+            if (!File.Exists(SentinelPath)) return;   // single-shot guard
+            try
+            {
+                string report = Prove();
+                File.WriteAllText(DonePath, "OK " + report + " ts=" + DateTime.UtcNow.ToString("o"));
+            }
+            catch (Exception e)
+            {
+                File.WriteAllText(DonePath, "FAIL " + e.GetType().Name + ": " + e.Message + " | " + e.StackTrace
+                    + " ts=" + DateTime.UtcNow.ToString("o"));
+            }
+            finally
+            {
+                if (File.Exists(SentinelPath)) File.Delete(SentinelPath);
+            }
+        }
+
+        static void Chk(bool ok, string what)
+        {
+            if (!ok) throw new InvalidOperationException("ASSERT FAIL: " + what);
+            asserts++;
+        }
+
+        static string Prove()
+        {
+            // ---- A1. tier bounds (mirror probes/clock.ps1 exactly) ----
+            Chk(AmbientWheel.TierForHour(5) == AmbientTier.Dawn, "hour 5 must be dawn");
+            Chk(AmbientWheel.TierForHour(8) == AmbientTier.Dawn, "hour 8 must be dawn");
+            Chk(AmbientWheel.TierForHour(9) == AmbientTier.Day, "hour 9 must be day");
+            Chk(AmbientWheel.TierForHour(16) == AmbientTier.Day, "hour 16 must be day");
+            Chk(AmbientWheel.TierForHour(17) == AmbientTier.Dusk, "hour 17 must be dusk");
+            Chk(AmbientWheel.TierForHour(19) == AmbientTier.Dusk, "hour 19 must be dusk");
+            Chk(AmbientWheel.TierForHour(20) == AmbientTier.Night, "hour 20 must be night");
+            Chk(AmbientWheel.TierForHour(23) == AmbientTier.Night, "hour 23 must be night");
+            Chk(AmbientWheel.TierForHour(2) == AmbientTier.Night, "hour 2 must be night");
+            Chk(AmbientWheel.TierFromName("dusk") == AmbientTier.Dusk, "name dusk must map");
+            Chk(AmbientWheel.TierFromName("night") == AmbientTier.Night, "name night must map");
+
+            // ---- A2. palette character (DESIGN section 9) ----
+            AmbientPalette dawnP = AmbientWheel.PaletteFor(AmbientTier.Dawn);
+            Chk(dawnP.skyBottom.r - dawnP.skyBottom.b > 0.15f, "dawn horizon must be warm");
+            Chk(dawnP.skyTop.b - dawnP.skyTop.r > 0.05f, "dawn zenith must be cool blue");
+            AmbientPalette dayP = AmbientWheel.PaletteFor(AmbientTier.Day);
+            Chk(dayP.tintAlpha == 0f, "day must not tint the city");
+            Chk(dayP.skyBottom.b - dayP.skyBottom.r > 0.02f, "day sky must be blue");
+            AmbientPalette duskP = AmbientWheel.PaletteFor(AmbientTier.Dusk);
+            Chk(duskP.skyBottom.r - duskP.skyBottom.b > 0.3f, "dusk horizon must be warm gold");
+            Chk(duskP.skyTop.b - duskP.skyTop.r > 0.05f, "dusk zenith must be purple (ambient only)");
+            Chk(duskP.tintAlpha > 0f && duskP.tint.r > duskP.tint.b, "dusk tint must be warm");
+            AmbientPalette nightP = AmbientWheel.PaletteFor(AmbientTier.Night);
+            Chk((nightP.skyTop.r + nightP.skyTop.g + nightP.skyTop.b) / 3f < 0.06f, "night sky deep");
+            Chk(nightP.skyTop.b > nightP.skyTop.r, "night sky blue-dominant");
+            Chk(nightP.tintAlpha >= 0.3f, "night must tint the city");
+            Chk(nightP.tint.b > nightP.tint.r, "night tint blue-black");
+
+            // ---- A3. weather rules (mirror probes/weather.ps1 exactly) ----
+            Chk(WeatherRules.ModeForKind("rain") == WeatherMode.Rain, "rain kind -> rain");
+            Chk(WeatherRules.ModeForKind("thunder") == WeatherMode.Rain, "thunder kind -> rain");
+            Chk(WeatherRules.ModeForKind("snow") == WeatherMode.Snow, "snow kind -> snow");
+            Chk(WeatherRules.ModeForKind("clear") == WeatherMode.None, "clear kind -> none");
+            Chk(WeatherRules.ModeForKind("cloud") == WeatherMode.None, "cloud kind -> none");
+            Chk(WeatherRules.ModeForKind("fog") == WeatherMode.None, "fog kind -> none");
+            Chk(WeatherRules.IsAlert(17.2f, 0), "gale threshold 17.2 must alert");
+            Chk(WeatherRules.IsAlert(25f, 3), "gale wind over cloud must alert");
+            Chk(!WeatherRules.IsAlert(7.4f, 3), "today's real weather must NOT alert");
+            Chk(WeatherRules.IsAlert(5f, 95), "WMO 95 must alert");
+            Chk(WeatherRules.IsAlert(5f, 65), "WMO 65 must alert");
+            Chk(!WeatherRules.IsAlert(5f, 64), "WMO 64 must not alert");
+            Chk(!WeatherRules.IsAlert(5f, 98), "WMO 98 must not alert");
+
+            // ---- A4. field recycle simulation (headless) ----
+            WeatherField f = new WeatherField(140, 7);
+            f.Configure(WeatherMode.Rain, 6f);
+            int rec = 0;
+            for (int i = 0; i < 300; i++) rec += f.Step(0.05f);
+            Chk(rec > 0, "rain field must recycle");
+            for (int i = 0; i < f.Count; i++) Chk(f.Y(i) >= WeatherField.YBottom, "rain drop below floor");
+            f.Configure(WeatherMode.Snow, 2f);
+            rec = 0;
+            for (int i = 0; i < 3000; i++) rec += f.Step(0.05f);
+            Chk(rec > 0, "snow field must recycle");
+
+            // ---- B. real scene: wire the persistent component, save BEFORE any transient visual ----
+            Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            GameObject ambGo = GameObject.Find("CityAmbient");
+            CityAmbient amb = ambGo != null ? ambGo.GetComponent<CityAmbient>() : null;
+            if (amb == null)
+            {
+                ambGo = new GameObject("CityAmbient");
+                amb = ambGo.AddComponent<CityAmbient>();
+            }
+            bool saved = EditorSceneManager.SaveScene(scene);   // persist wiring only
+            Chk(saved, "scene save failed");
+            GameObject camGo = GameObject.Find("CityCamera");
+            Chk(camGo != null, "CityCamera missing in CityScene");
+            Camera cam = camGo.GetComponent<Camera>();
+            Chk(cam != null, "CityCamera has no Camera component");
+            amb.EnsureVisuals();   // transient runtime children (never saved)
+
+            // ---- C. four-tier color wheel: injected hours, region pixel gates ----
+            // NOTE: ReadPixels/GetPixel texture rows are BOTTOM-UP (row 0 = bottom of image;
+            // PNG export flips for display). World y at row R = (R/1080 - 0.5) * 40.
+            // So "horizon (bottom sky)" = rows 20..120; "zenith (top sky)" = rows 960..1060.
+            Texture2D dawnShot, dayShot, duskShot, nightShot;
+            float b, w;
+            amb.ApplyAmbient(AmbientWheel.TierForHour(6));   // dawn 06:00
+            amb.StepWeather(0.1f);
+            dawnShot = Shot(cam, "m1-r13-dawn.png");
+            RegionAvg(dawnShot, 0, 20, 1920, 120, out b, out w);
+            Chk(w > 0.10f, "dawn horizon not warm enough on screen: " + w.ToString("F3"));
+            float dawnBotWarm = w;
+            RegionAvg(dawnShot, 0, 960, 1920, 1060, out b, out w);
+            Chk(w < -0.05f, "dawn zenith not cool on screen: " + w.ToString("F3"));
+
+            amb.ApplyAmbient(AmbientWheel.TierForHour(12));   // day 12:00
+            amb.StepWeather(0.1f);
+            dayShot = Shot(cam, "m1-r13-day.png");
+            RegionAvg(dayShot, 0, 960, 1920, 1060, out b, out w);
+            Chk(b > 0.50f, "day sky too dark on screen: " + b.ToString("F3"));
+            Chk(w < -0.05f, "day sky not blue on screen: " + w.ToString("F3"));
+
+            amb.ApplyAmbient(AmbientWheel.TierForHour(18));   // dusk 18:00 (art-target tier)
+            amb.StepWeather(0.1f);
+            duskShot = Shot(cam, "m1-r13-dusk.png");
+            RegionAvg(duskShot, 0, 20, 1920, 120, out b, out w);
+            Chk(w > 0.25f, "dusk horizon not warm gold on screen: " + w.ToString("F3"));
+            float duskBotWarm = w;
+            RegionAvg(duskShot, 0, 960, 1920, 1060, out b, out w);
+            Chk(w < -0.05f, "dusk zenith not purple on screen: " + w.ToString("F3"));
+
+            amb.ApplyAmbient(AmbientWheel.TierForHour(23));   // night 23:00
+            amb.StepWeather(0.1f);
+            nightShot = Shot(cam, "m1-r13-night.png");
+            RegionAvg(nightShot, 0, 960, 1920, 1060, out b, out w);
+            Chk(b < 0.12f, "night sky too bright on screen: " + b.ToString("F3"));
+            Chk(w < -0.02f, "night sky not blue-dominant: " + w.ToString("F3"));
+
+            // tint gate: the near-white brain tower must visibly darken at night vs day
+            float dayTowerBri, dayTowerWarm, nightTowerBri, nightTowerWarm;
+            BoxMetrics(dayShot, cam, 0f, 11.5f, out dayTowerBri, out dayTowerWarm);
+            BoxMetrics(nightShot, cam, 0f, 11.5f, out nightTowerBri, out nightTowerWarm);
+            Chk(nightTowerBri < dayTowerBri - 0.05f, "night tint did not darken the city: d="
+                + (dayTowerBri - nightTowerBri).ToString("F3"));
+
+            // ---- D. weather particles + alert band, all on the night tier (best contrast) ----
+            int nightBase = CountBright(nightShot, 100, 300, 1820, 800, 0.30f);
+            amb.ApplyWeather("rain", 6f, 61);
+            Chk(amb.CurrentMode == WeatherMode.Rain && !amb.AlertOn, "rain apply state wrong");
+            for (int i = 0; i < 20; i++) amb.StepWeather(0.5f);
+            Texture2D rainShot = Shot(cam, "m1-r13-rain.png");
+            int rainN = CountBright(rainShot, 100, 300, 1820, 800, 0.30f);
+            Chk(rainN - nightBase > 80, "rain particles not visible: d=" + (rainN - nightBase));
+
+            amb.ApplyWeather("snow", 2f, 71);
+            Chk(amb.CurrentMode == WeatherMode.Snow, "snow apply state wrong");
+            for (int i = 0; i < 20; i++) amb.StepWeather(0.5f);
+            Texture2D snowShot = Shot(cam, "m1-r13-snow.png");
+            int snowN = CountBright(snowShot, 100, 300, 1820, 800, 0.30f);
+            Chk(snowN - nightBase > 80, "snow particles not visible: d=" + (snowN - nightBase));
+
+            amb.ApplyWeather("thunder", 25f, 95);   // typhoon-family: rain + city alert band
+            Chk(amb.CurrentMode == WeatherMode.Rain && amb.AlertOn, "alert apply state wrong");
+            for (int i = 0; i < 20; i++) amb.StepWeather(0.5f);
+            Chk(amb.BandAlpha > 0.08f, "alert band alpha too low: " + amb.BandAlpha.ToString("F3"));
+            Texture2D alertShot = Shot(cam, "m1-r13-alert.png");
+            float baseWarm, alertWarm, bb, bw;
+            RegionAvg(nightShot, 0, 510, 1920, 570, out bb, out baseWarm);
+            RegionAvg(alertShot, 0, 510, 1920, 570, out bw, out alertWarm);
+            Chk(alertWarm - baseWarm > 0.04f, "alert band not red-visible: d=" + (alertWarm - baseWarm).ToString("F3"));
+            int alertN = CountBright(alertShot, 100, 300, 1820, 800, 0.30f);
+            Chk(alertN - nightBase > 80, "storm rain enhancement not visible: d=" + (alertN - nightBase));
+
+            // cleanup in-memory evidence textures
+            UnityEngine.Object.DestroyImmediate(dawnShot);
+            UnityEngine.Object.DestroyImmediate(dayShot);
+            UnityEngine.Object.DestroyImmediate(duskShot);
+            UnityEngine.Object.DestroyImmediate(nightShot);
+            UnityEngine.Object.DestroyImmediate(rainShot);
+            UnityEngine.Object.DestroyImmediate(snowShot);
+            UnityEngine.Object.DestroyImmediate(alertShot);
+
+            return "asserts=" + asserts
+                + " tiers(dawn_bot_warm=" + dawnBotWarm.ToString("F2")
+                + ", dusk_bot_warm=" + duskBotWarm.ToString("F2") + ")"
+                + " tower(day_bri=" + dayTowerBri.ToString("F3") + ", night_bri=" + nightTowerBri.ToString("F3") + ")"
+                + " weather(base=" + nightBase + ", rain+" + (rainN - nightBase)
+                + ", snow+" + (snowN - nightBase) + ", alert_rain+" + (alertN - nightBase)
+                + ", band_alpha=" + amb.BandAlpha.ToString("F3")
+                + ", band_warm_d=" + (alertWarm - baseWarm).ToString("F3") + ")"
+                + " scene_saved=" + saved + " shots=7";
+        }
+
+        static Texture2D Shot(Camera cam, string name)
+        {
+            RenderTexture rt = new RenderTexture(1920, 1080, 24, RenderTextureFormat.ARGB32);
+            cam.targetTexture = rt;
+            cam.Render();
+            RenderTexture.active = rt;
+            Texture2D tex = new Texture2D(1920, 1080, TextureFormat.RGBA32, false);
+            tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
+            tex.Apply();
+            cam.targetTexture = null;
+            RenderTexture.active = null;
+            rt.Release();
+            UnityEngine.Object.DestroyImmediate(rt);
+            File.WriteAllBytes(Path.Combine(RepoRoot, "docs", "design", name), tex.EncodeToPNG());
+            return tex;
+        }
+
+        // average brightness + warmth (r-b) over a screen rectangle (stride-sampled)
+        static void RegionAvg(Texture2D tex, int x0, int y0, int x1, int y1, out float brightness, out float warmth)
+        {
+            double sumBri = 0, sumWarm = 0; int n = 0;
+            for (int y = y0; y < y1; y += 4)
+                for (int x = x0; x < x1; x += 4)
+                {
+                    Color c = tex.GetPixel(x, y);
+                    sumBri += (c.r + c.g + c.b) / 3.0; sumWarm += c.r - c.b; n++;
+                }
+            int nn = System.Math.Max(1, n);
+            brightness = (float)(sumBri / nn);
+            warmth = (float)(sumWarm / nn);
+        }
+
+        // count sampled pixels above a brightness threshold (particle visibility metric)
+        static int CountBright(Texture2D tex, int x0, int y0, int x1, int y1, float thr)
+        {
+            int n = 0;
+            for (int y = y0; y < y1; y += 2)
+                for (int x = x0; x < x1; x += 2)
+                {
+                    Color c = tex.GetPixel(x, y);
+                    if ((c.r + c.g + c.b) / 3f > thr) n++;
+                }
+            return n;
+        }
+
+        // average luminance + warmth (r-b) in a 40px-radius box around a world position (ortho)
+        static void BoxMetrics(Texture2D tex, Camera cam, float wx, float wy, out float brightness, out float warmth)
+        {
+            float halfH = cam.orthographicSize;
+            float halfW = halfH * (1920f / 1080f);
+            int cx = (int)(((wx - cam.transform.position.x) / (2f * halfW) + 0.5f) * 1920f);
+            int cy = (int)(((wy - cam.transform.position.y) / (2f * halfH) + 0.5f) * 1080f);
+            double sumBri = 0, sumWarm = 0; int n = 0;
+            for (int y = cy - 40; y <= cy + 40; y += 4)
+                for (int x = cx - 40; x <= cx + 40; x += 4)
+                {
+                    if (x < 0 || x >= 1920 || y < 0 || y >= 1080) continue;
+                    Color c = tex.GetPixel(x, y);
+                    sumBri += (c.r + c.g + c.b) / 3f;
+                    sumWarm += c.r - c.b;
+                    n++;
+                }
+            int nn = System.Math.Max(1, n);
+            brightness = (float)(sumBri / nn);
+            warmth = (float)(sumWarm / nn);
+        }
+    }
+}

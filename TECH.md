@@ -107,6 +107,9 @@ gaming/FluxVerse/
 - [P2] MiniGame 任务面板/BigStream 产出探针
 - [P2] HQ-FEEDBACK 感知探针（向上反馈通道可视化）
 - [P1] 风格定稿 → 城市美术资产管线
+- [P2] 现实链接首批五探针 clock/weather/market+calendar/fx/github_events（CEO 新令「要和现实产生链接和互动」·通道台账与视觉映射=docs/research/R-20260923-reality-link.md + DESIGN §十五·T2 流程落地）
+- [P2] 新事件登记 MARKET_OPEN/MARKET_CLOSE/WEATHER_ALERT（随探针落地·events-registry T2·7 天否决窗）
+- [P1] 令行通道：指令文件出口→签收关卡→OS 循环消费→回流事件（环B 闭环=数字影子升格真孪生的唯一通道·Kritzinger 2018 判据·署名按 CEO 委托令 O-20260923-1620 分级）
 
 ## 十、溯源
 

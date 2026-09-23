@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>超体宇宙城 FluxVerse · 城市规划图 v1</title>
+<style>
+  body { background:#05070d; color:#cde; font-family:"Cascadia Code",Consolas,"Microsoft YaHei",monospace; margin:0; padding:36px 20px; }
+  h1 { font-weight:400; font-size:20px; letter-spacing:6px; color:#f0faff; margin:0 0 4px; }
+  .sub { color:#678; font-size:12px; letter-spacing:1px; margin-bottom:20px; }
+  .wrap { max-width:1240px; margin:0 auto; }
+  .cols { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
+  .map { border:1px solid #1a2436; background:#05070d; flex:0 0 760px; }
+  .side { flex:1 1 380px; min-width:360px; }
+  h2 { font-weight:400; font-size:14px; color:#7ff5ff; letter-spacing:3px; border-bottom:1px solid #14273a; padding-bottom:6px; margin:18px 0 10px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid #0f1826; vertical-align:top; }
+  th { color:#7ff5ff; font-weight:400; letter-spacing:1px; }
+  td { color:#9ab; line-height:1.5; }
+  td b { color:#e8f6ff; font-weight:600; }
+  .live { background:#071018; border:1px solid #14273a; padding:10px 14px; font-size:12px; color:#9ab; line-height:1.9; margin-top:14px; }
+  .live .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#34d399; margin-right:6px; box-shadow:0 0 8px #34d399; }
+  .live .warn { background:#fbbf24; box-shadow:0 0 8px #fbbf24; }
+  .legend { font-size:11px; color:#567; margin-top:10px; line-height:1.8; }
+  .cyan { color:#7ff5ff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>超体宇宙城 <span class="cyan">FluxVerse</span> · 城市规划图</h1>
+<div class="sub">城即集团：大脑居中心思考，三城环绕运转，机器人在街上干活，信息回流大脑。每个动画 = 一次真实 AI 行为，无装饰动画。</div>
+
+<div class="cols">
+  <canvas id="city" class="map" width="760" height="700"></canvas>
+
+  <div class="side">
+    <h2>① 你看到的 → 它是什么</h2>
+    <table>
+      <tr><th>城上</th><th>集团里</th><th>何时会动</th></tr>
+      <tr><td><b>脑塔</b>（中心·呼吸光核）</td><td>超体宇宙集团=大脑+中枢</td><td>CEO 发令=塔顶光脉冲；周日 09:17 进化轮=脑塔思考脉冲</td></tr>
+      <tr><td><b>三条主干道</b>（光流）</td><td>数据流/资金流/流量流</td><td>任何仓 git commit=信使光点跑向脑塔</td></tr>
+      <tr><td><b>GAME 城</b>（方块群楼）</td><td>Biggame·MiniGame（P01-P08）</td><td>构建发布=新楼点亮；窗灯=活跃度</td></tr>
+      <tr><td><b>QUANT 城</b>（算力楼+K线屏）</td><td>BigMoney</td><td>回测/门禁 G1'/G2=K 线滚动+光门判罚</td></tr>
+      <tr><td><b>MEDIA 城</b>（塔阵·在建）</td><td>BigStream</td><td>开线五步推进=脚手架逐层点亮；发内容=波纹</td></tr>
+      <tr><td><b>街道机器人</b>（移动光块）</td><td>机队 bm-a/bm-b/B/C</td><td>任务认领=驶向城区；心跳=灯流</td></tr>
+      <tr><td><b>外环</b>（旋转光点）</td><td>感知器（数据导管）</td><td>每 10 分钟自动扫描全集团</td></tr>
+      <tr><td><b>预留地</b>（虚线空区）</td><td>未来新线/新仓</td><td>开线=开工仪式：脚手架→封顶→点灯</td></tr>
+    </table>
+
+    <h2>② 脑塔剖面（五层=集团本体）</h2>
+    <table>
+      <tr><th>层</th><th>是什么</th></tr>
+      <tr><td>塔顶 ◉</td><td><b>CEO 指令光点</b>——发令=光脉冲射向城区</td></tr>
+      <tr><td>上层 ▣</td><td><b>治理晶片</b> governance/BRAND/RULES（记忆+立法）</td></tr>
+      <tr><td>中层 ◈</td><td><b>CPH4 脑深层</b>——研究核心发光体</td></tr>
+      <tr><td>下层 ⊙</td><td><b>中枢枢纽</b>——三主干道圆心，全城信息必经</td></tr>
+      <tr><td>塔基 ▤</td><td><b>编年史库</b>——git 全史，可时间轴回放</td></tr>
+    </table>
+
+    <div class="live">
+      <b class="cyan">实况快照</b>（感知器 world-state.json · 16:17）<br>
+      <span class="dot"></span>bm-a · 32 核 · 在线——J12 小镇 v0.4 交付中<br>
+      <span class="dot"></span>bm-b · 16 核 · 在线——bars 传输 & 主线整合<br>
+      <span class="dot"></span>T-2026-09--01 任务在册 · bm-b 认领<br>
+      <span class="dot warn"></span>MEDIA 城在建（BigStream onboarding）<br>
+      集团全史 <b>3454</b> commits · 进化轮 <b>6</b> 提案 open · CEO 令 <b>5</b> 在途
+    </div>
+
+    <div class="legend">
+      路线：M0 定稿（风格待 CEO 点选）→ M1 引擎 2D 工程+静态城 → M2 事件流入城（城活起来）→ M3 CEO 驾驶舱（看/查/令）→ M4 参观模式（微信端+编年史回放）<br>
+      硬约束：团结引擎原生 2D · 禁 3D · 零服务器 · 只读感知（AI 零改造）
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const cv = document.getElementById("city"), c = cv.getContext("2d");
+const W = 760, H = 700, CX = 380, CY = 320;
+const ZONES = [
+  { id:"GAMING 城",  ang: -90, dist: 250, col:"#22d3ee" },
+  { id:"QUANT 城",   ang:  30, dist: 250, col:"#38bdf8" },
+  { id:"MEDIA 城",   ang: 150, dist: 250, col:"#fbbf24" },
+];
+ZONES.forEach(z => { const a = z.ang*Math.PI/180; z.x = CX + Math.cos(a)*z.dist; z.y = CY + Math.sin(a)*z.dist; });
+
+function tag(txt,x,y,col,align,size){ c.fillStyle = col||"#7ff5ff"; c.font=(size||11)+"px Consolas,monospace";
+  c.textAlign = align||"center"; c.fillText(txt,x,y); }
+
+function drawCity(t){
+  c.fillStyle = "#05070d"; c.fillRect(0,0,W,H);
+  // faint stars
+  for(let i=0;i<40;i++){ const x=(i*137)%W, y=(i*89)%(H-90);
+    c.fillStyle="rgba(120,150,200,0.25)"; c.fillRect(x,y,1,1); }
+
+  const breath = Math.sin(t*1.2)*0.5+0.5;
+
+  // ---- outer sensing ring ----
+  c.strokeStyle = "rgba(34,211,238,0.18)"; c.lineWidth = 1;
+  c.setLineDash([4,6]); c.beginPath(); c.arc(CX,CY,330,0,7); c.stroke(); c.setLineDash([]);
+  for(let i=0;i<10;i++){ const a = t*0.25 + i*Math.PI/5;
+    const x = CX+Math.cos(a)*330, y = CY+Math.sin(a)*330;
+    c.fillStyle="rgba(127,245,255,0.9)"; c.fillRect(x-1,y-1,2,2); }
+  tag("感知外环 · 每 10 分钟扫描全集团", CX, CY+352, "rgba(127,245,255,0.5)", "center", 10);
+
+  // ---- reserved plots ----
+  c.strokeStyle="rgba(80,110,140,0.35)"; c.setLineDash([3,4]);
+  c.strokeRect(60,560,130,60); c.strokeRect(570,560,130,60);
+  c.setLineDash([]);
+  tag("预留地", 125, 585, "rgba(140,170,200,0.55)","center",10);
+  tag("未来新线/新仓", 125, 600, "rgba(140,170,200,0.4)","center",9);
+  tag("预留地", 635, 585, "rgba(140,170,200,0.55)","center",10);
+  tag("未来新线/新仓", 635, 600, "rgba(140,170,200,0.4)","center",9);
+
+  // ---- neural highways (center -> zones) ----
+  ZONES.forEach((z,zi) => {
+    c.strokeStyle = "rgba(34,211,238,0.30)"; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(CX,CY); c.lineTo(z.x,z.y); c.stroke();
+    // flowing packets = commits streaming to the brain
+    for(let k=0;k<3;k++){
+      const ph = ((t*0.35 + zi*0.4 + k*0.33)%1);
+      const px = z.x + (CX-z.x)*ph, py = z.y + (CY-z.y)*ph;
+      c.fillStyle = k===0 ? "#ffffff" : "rgba(127,245,255,0.8)";
+      c.shadowColor="#22d3ee"; c.shadowBlur=8;
+      c.fillRect(px-2,py-2,4,4); c.shadowBlur=0;
+    }
+  });
+
+  // ---- brain ring plaza ----
+  c.strokeStyle="rgba(127,245,255,0.35)"; c.lineWidth=1.5;
+  c.beginPath(); c.arc(CX,CY,58,0,7); c.stroke();
+  tag("脑环广场·信使集散", CX, CY+76, "rgba(127,245,255,0.55)","center",10);
+
+  // ---- THE BRAIN TOWER (center) ----
+  const g = c.createRadialGradient(CX,CY,0,CX,CY,46+breath*8);
+  g.addColorStop(0,"rgba(255,255,255,0.95)");
+  g.addColorStop(0.3,"rgba(127,245,255,0.5)");
+  g.addColorStop(1,"rgba(34,211,238,0)");
+  c.fillStyle=g; c.beginPath(); c.arc(CX,CY,46+breath*8,0,7); c.fill();
+  c.strokeStyle="rgba(165,243,252,0.8)"; c.lineWidth=1.2;
+  c.beginPath(); c.arc(CX,CY,16+breath*2,0,7); c.stroke();
+  c.beginPath(); c.arc(CX,CY,30+breath*3,0,7); c.strokeStyle="rgba(34,211,238,0.45)"; c.stroke();
+  c.fillStyle="#ffffff"; c.beginPath(); c.arc(CX,CY,3.5,0,7); c.fill();
+  // CEO apex light
+  c.fillStyle="#f0abfc"; c.shadowColor="#f0abfc"; c.shadowBlur=10;
+  c.beginPath(); c.arc(CX,CY-4,2,0,7); c.fill(); c.shadowBlur=0;
+  tag("超体脑塔", CX, CY-56, "#e8f6ff","center",13);
+  tag("集团=大脑+中枢", CX, CY-40, "rgba(127,245,255,0.7)","center",10);
+  tag("◉ CEO 指令", CX, CY+30, "rgba(240,171,252,0.85)","center",9);
+
+  // ---- three city districts ----
+  ZONES.forEach((z,zi) => {
+    const x=z.x, y=z.y;
+    // district ground
+    c.strokeStyle = z.col+"66"; c.lineWidth=1;
+    c.strokeRect(x-72,y-52,144,104);
+    if(zi===0){ // GAME city: cube blocks
+      for(let i=0;i<8;i++){ const bx=x-52+(i%4)*30, by=y-30+((i/4)|0)*34;
+        const on = (Math.floor(t*0.8)%8)===i;
+        c.fillStyle = on? "#67e8f9" : "#155e75";
+        c.fillRect(bx,by,20,20);
+        c.fillStyle = on? "#ffffff" : "#a5f3fc";
+        c.fillRect(bx,by,20,3);
+      }
+      tag("8 款游戏楼 P01-P08", x, y+34, "rgba(165,243,252,0.7)","center",9);
+      tag("GAME 城 · MiniGame", x, y-64, z.col,"center",12);
+    }
+    if(zi===1){ // QUANT city: tower + kline
+      c.fillStyle="#0f2749"; c.fillRect(x-30,y-38,22,64);
+      c.fillStyle="#38bdf8"; c.fillRect(x-30,y-38,22,3);
+      c.strokeStyle="#1e3a5f"; c.strokeRect(x+2,y-24,58,40);
+      for(let k=0;k<7;k++){ const h=6+Math.abs(Math.sin(t*1.8+k*1.2))*28;
+        c.fillStyle = k%2 ? "#e879f9" : "#22d3ee";
+        c.fillRect(x+8+k*7, y+10-h, 3, h); }
+      tag("算力楼 + K线屏 · 门禁 G1'/G2", x, y+44, "rgba(165,243,252,0.7)","center",9);
+      tag("QUANT 城 · BigMoney", x, y-64, z.col,"center",12);
+    }
+    if(zi===2){ // MEDIA city: towers in scaffold
+      for(let k=0;k<3;k++){ const tx=x-34+k*32, th=30+k*14;
+        c.strokeStyle="rgba(251,191,36,0.8)"; c.lineWidth=1;
+        c.beginPath(); c.moveTo(tx,y+38); c.lineTo(tx,y+38-th); c.stroke();
+        c.fillStyle = Math.sin(t*2.5+k)>0.3 ? "#ffffff" : "#fbbf24";
+        c.beginPath(); c.arc(tx,y+38-th-3,2.5,0,7); c.fill();
+        // scaffold glow (under construction)
+        c.strokeStyle="rgba(251,191,36,0.25)"; c.setLineDash([2,3]);
+        c.strokeRect(tx-8,y+38-th-10,16,th+10); c.setLineDash([]);
+      }
+      tag("信号塔阵 · 在建（onboarding）", x, y+52, "rgba(251,191,36,0.8)","center",9);
+      tag("MEDIA 城 · BigStream", x, y-64, z.col,"center",12);
+    }
+  });
+
+  // ---- street robots (fleet) ----
+  const robots=[{name:"bm-a",zi:0,off:0.2},{name:"bm-b",zi:1,off:0.55},{name:"B/C",zi:2,off:0.8}];
+  robots.forEach(r=>{
+    const z=ZONES[r.zi];
+    const ph=(t*0.12+r.off)%1;
+    const rx=z.x+(CX-z.x)*ph*0.75, ry=z.y+(CY-z.y)*ph*0.75;
+    c.fillStyle="#7ff5ff"; c.shadowColor="#22d3ee"; c.shadowBlur=8;
+    c.fillRect(rx-3,ry-3,6,6); c.shadowBlur=0;
+    c.fillStyle="rgba(232,246,255,0.75)"; c.font="9px Consolas"; c.textAlign="left";
+    c.fillText(r.name, rx+7, ry+3);
+  });
+  tag("街道机器人=机队", 60, 40, "rgba(127,245,255,0.6)","left",10);
+  tag("认领任务→驶向城区", 60, 54, "rgba(127,245,255,0.4)","left",9);
+  tag("光点沿主干道=commit 回流大脑", 60, 68, "rgba(127,245,255,0.4)","left",9);
+
+  tag("超体宇宙城 FluxVerse · 城市规划 v1（示意）", CX, 675, "rgba(120,150,180,0.5)","center",10);
+}
+let last=0;
+function loop(ts){ const t=ts/1000; if(ts-last>33){ last=ts; drawCity(t); } requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

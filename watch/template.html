@@ -89,7 +89,7 @@
 <div class="grid" style="grid-template-columns:1fr 1fr 1fr">
   <div class="card"><h3>建设进度（大脑开发度）</h3><div id="ms"></div></div>
   <div class="card"><h3>近 24 小时 commits（三司+总控）</h3><div id="commits"></div>
-    <h3 style="margin-top:10px">tick 最近轮次</h3><pre id="tick">--</pre></div>
+    <h3 style="margin-top:10px">tick 最近轮次</h3><pre id="tick" style="max-height:120px;overflow:auto">--</pre></div>
   <div class="card"><h3>QUANT 真K线 · 510300 沪深300ETF</h3>
     <canvas id="kline" width="240" height="80" style="background:#070c16"></canvas>
     <div class="lbl" style="margin-top:4px"><span id="mk">--</span><span id="mk2"></span></div>
@@ -98,7 +98,12 @@
 
 <div class="grid" style="grid-template-columns:1fr 1fr">
   <div class="card"><h3>事件流回放（真实事件 · 最近 40 条）</h3><div id="evs" style="max-height:260px;overflow:auto"></div></div>
+  <div class="card"><h3>居民之声（AI 台词 · 锚定真实事件 · 本地大脑）</h3><div id="residents" style="max-height:260px;overflow:auto"></div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1fr">
   <div class="card"><h3>城市图志（概念图/施工截图 · 最新）</h3><div class="gal" id="gal"></div></div>
+  <div class="card"><h3>tick 最近轮次（探针健康）</h3><pre id="tick2" style="max-height:240px;overflow:auto">--</pre></div>
 </div>
 
 <footer>
@@ -143,19 +148,27 @@ document.getElementById('gts').textContent=DATA.generated_ts||'--';
 })();
 
 // ---------- tick ----------
-(function(){document.getElementById('tick').textContent=(DATA.tick_tail||[]).join('\n')||'--'})();
+(function(){const t=(DATA.tick_tail||[]).join('\n')||'--';const a=document.getElementById('tick');if(a)a.textContent=t;const b=document.getElementById('tick2');if(b)b.textContent=t})();
 
 // ---------- fleet ----------
 (function(){
   const f=S&&S.fleet;if(!f)return;
+  const R=S&&S.residents||{};
   const col=m=>m&&m.company==='biggame'?'#22d3ee':(m.id&&m.id.indexOf('bg')===0?'#22d3ee':(m.id==='bm-b'||m.id==='bm-a'?'#f5c542':'#f45bb0'));
-  document.getElementById('fleet').innerHTML=f.map(m=>'<div class="fleet"><span class="dot" style="background:'+(m.online?'#4ade80':'#555')+'"></span><b>'+m.id+'</b> '+(m.online?'在线':'离线')+' · '+(m.current_task||'').slice(0,42)+'</div>').join('');
+  document.getElementById('fleet').innerHTML=f.map(m=>'<div class="fleet"><span class="dot" style="background:'+(m.online?'#4ade80':'#555')+'"></span><b>'+m.id+'</b> '+(m.online?'在线':'离线')+' · '+(m.current_task||'').slice(0,42)+'</div>'+(R[m.id]?'<div class="fleet" style="color:#a6f;border-left:2px solid #a6f;padding-left:6px">「'+String(R[m.id].line||'').slice(0,60)+'」</div>':'')).join('');
 })();
 
 // ---------- events ----------
 (function(){
-  const col=t=>({CEO_ORDER:'#fff',COMMIT:'#22d3ee',HEARTBEAT:'#334',MARKET_OPEN:'#f5c542',MARKET_CLOSE:'#f5c542',FX_TICK:'#f5c542',GITHUB_EVENT:'#2ad',WEATHER_ALERT:'#ff4d4d'}[t]||'#556');
+  const col=t=>({CEO_ORDER:'#fff',COMMIT:'#22d3ee',HEARTBEAT:'#334',MARKET_OPEN:'#f5c542',MARKET_CLOSE:'#f5c542',FX_TICK:'#f5c542',GITHUB_EVENT:'#2ad',WEATHER_ALERT:'#ff4d4d',RESIDENT_SAY:'#a6f'}[t]||'#556');
   document.getElementById('evs').innerHTML=EV.slice().reverse().map(e=>'<div class="ev" style="border-left-color:'+col(e.type)+'"><span class="t">'+String(e.ts_utc||'').slice(11,16)+'</span>'+(e.type||'')+' · <span style="color:#9ab">'+String(e.summary||'').slice(0,64)+'</span></div>').join('')||'--';
+})();
+
+// ---------- residents (AI lines) ----------
+(function(){
+  const R=S&&S.residents; if(!R)return;
+  const keys=Object.keys(R);
+  document.getElementById('residents').innerHTML=keys.length?keys.map(k=>{const r=R[k];return '<div class="ev" style="border-left-color:#a6f"><span class="t">'+String(r.ts||'').slice(11,16)+'</span><b style="color:#cde">'+r.id+'</b>：'+String(r.line||'')+'</div>'}).join(''):'<span style="color:#556;font-size:11px">居民大脑启动中——下一轮 scan 后有台词</span>';
 })();
 
 // ---------- gallery ----------

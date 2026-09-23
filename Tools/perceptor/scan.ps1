@@ -159,6 +159,10 @@ foreach ($rk in @('city_day_phase','beijing_hhmm','market_phase','market_calenda
   if ($stateParts.ContainsKey('reality_' + $rk)) { $reality[$rk] = $stateParts['reality_' + $rk] }
 }
 
+# resident minds (probe residents.ps1): latest AI line per resident -> state.residents
+$residents = @{}
+if ($stateParts.ContainsKey('residents')) { $residents = $stateParts.residents }
+
 $state = [ordered]@{
   protocol = 'fluxverse/0.1'
   ts_utc = $now
@@ -186,6 +190,7 @@ $state = [ordered]@{
   }
   history = @{ commits_total = $total; last_commit_ts = $lastC }
   reality = $reality
+  residents = $residents
 }
 
 # ---------- write outputs (state -> .new, verify promotes on PASS) ----------

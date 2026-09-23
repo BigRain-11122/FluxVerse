@@ -35,6 +35,10 @@ namespace FluxVerse
         long cursor;          // stream lines already consumed
         float pollTimer;
 
+        // optional presenter tap (P-27 r25): fired on every dispatched event, after the pulse.
+        // null = no-op, so every r12/r13 baseline (pulse-only) stays bit-identical when unwired.
+        public Action<FluxEvent> EventSink;
+
         public FluxEventRouter(string streamPath, Func<string, Vector3?> anchorLookup)
         {
             this.streamPath = streamPath;
@@ -97,6 +101,7 @@ namespace FluxVerse
             Vector3? pos = anchorLookup != null ? anchorLookup("BrainTower") : null;
             if (pos == null) pos = new Vector3(0f, 11f, 0f);   // hardcoded fallback = builder anchor
             pulses.Add(new GlowPulse(pos.Value, new Color(1f, 0.85f, 0.45f)));   // CEO gold
+            if (EventSink != null) EventSink(ev);   // P-27 r25: same event, second presenter (audio)
         }
 
         // proof hook (editor harness): dispatch as if a live event just arrived

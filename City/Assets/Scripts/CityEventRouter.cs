@@ -4,6 +4,9 @@
 // class-name stubs for mismatched names which do not re-resolve; the r12-saved component
 // came back as a missing script on reload). Logic core (FluxEventRouter + GlowPulse)
 // stays in EventRouter.cs. Polls world/world-events.jsonl READ-ONLY every ~10s.
+// r25 (P-27 first wire): also taps the same dispatch into FluxAudioRouter (CEO_ORDER ->
+// signature/ceo_order_pulse). The mixer GameObject is runtime-only (UiKit law: never saved
+// into the scene); audio plays in play mode only, edit/batch modes stay silent.
 using System.IO;
 using UnityEngine;
 
@@ -12,7 +15,11 @@ namespace FluxVerse
     // thin scene component: saved into CityScene by the repair proof; play mode runs the loop for real
     public class CityEventRouter : MonoBehaviour
     {
+        // wired into CityScene by AudioProof (r25); R-20260923-audio-assets.md 1.1 CEO row
+        public AudioClip ceoOrderPulse;
+
         FluxEventRouter core;
+        FluxAudioRouter audioCore;   // not 'audio': hides deprecated Component.audio (CS0108)
 
         public FluxEventRouter Core
         {
@@ -24,6 +31,8 @@ namespace FluxVerse
                     string repoRoot = Path.GetDirectoryName(Path.GetDirectoryName(Application.dataPath));
                     core = new FluxEventRouter(Path.Combine(repoRoot, "world", "world-events.jsonl"), FindAnchor);
                     core.SeekToEnd();
+                    audioCore = new FluxAudioRouter(delegate (string p, float v) { PlayClipAsset(p, v); });   // void-wrap (CS0407 law)
+                    core.EventSink = audioCore.OnEvent;   // same dispatch -> glow pulse + sound (dual)
                 }
                 return core;
             }
@@ -38,6 +47,40 @@ namespace FluxVerse
         void Update()
         {
             Core.Tick(Time.deltaTime);
+        }
+
+        // proof tap: count of events the sink chain routed into the player delegate
+        public int AudioPlays { get { return audioCore != null ? audioCore.Plays : 0; } }
+
+        // asset path -> wired clip; unwired path = null (silent-degrade, honesty law)
+        public AudioClip ResolveClip(string assetPath)
+        {
+            return assetPath == FluxAudioRouter.CeoOrderClip ? ceoOrderPulse : null;
+        }
+
+        // player delegate for FluxAudioRouter; returns false when nothing played
+        // (missing clip, or edit/batch mode where the runtime mixer must not spawn)
+        public bool PlayClipAsset(string assetPath, float vol)
+        {
+            AudioClip clip = ResolveClip(assetPath);
+            if (clip == null) return false;
+            if (!Application.isPlaying) return false;   // play-mode-only (runtime-only GO law)
+            EnsureAudioSource().PlayOneShot(clip, vol);
+            return true;
+        }
+
+        AudioSource EnsureAudioSource()
+        {
+            GameObject go = GameObject.Find("CityAudio");
+            if (go == null)
+            {
+                go = new GameObject("CityAudio");       // runtime-only, never saved (UiKit law)
+                go.transform.position = Vector3.zero;
+            }
+            AudioSource s = go.GetComponent<AudioSource>();
+            if (s == null) s = go.AddComponent<AudioSource>();
+            s.playOnAwake = false;
+            return s;
         }
     }
 }

@@ -97,11 +97,52 @@ function Probe-residents {
 
     # --- generate lines ---
     $tmpl = [string](Get-Content $promptFile -Raw -Encoding UTF8)
+    $locCn = @{ 'quant-computing-tower' = 'QUANT suan-li-lou gang-wei-gong-zuo-zhong'; 'game-city-studio' = 'GAME cheng gong-fang gang-wei-gong-zuo-zhong'; 'ji-dui-su-she' = 'ji-dui su-she xiu-mian-zhong'; 'night-shift' = 'zhi-ye-gang' }
     $said = @()
     $prevLine = ''
     foreach ($chosen in $speakers) {
       $rid = $chosen.BaseName
       $card = [string](Get-Content $chosen.FullName -Raw -Encoding UTF8)
+
+      # v1.6 needs system (Sims/Pals pattern, honest form): real resource levels
+      # from the machine's OWN fleet heartbeat json - needs = reading meters,
+      # never fabricating motives. Plus real location (RDR2 routine).
+      $onlineNow = ($fleetOnline.ContainsKey($rid) -and $fleetOnline[$rid])
+      $locRaw = Get-ResidentLocation $rid $onlineNow $hourBj
+      $selfParts = @()
+      $locKey = ''
+      if ($locCn.ContainsKey($locRaw)) { $locKey = $locCn[$locRaw] }
+      $needsFact = ''
+      if ($rid -like 'BG-*') {
+        try {
+          $mf = Join-Path (Join-Path $ctx.root 'gaming\MiniGame\Design\configs\GLOBAL\fleet') ([string]($rid -replace '^BG-', '') + '.json')
+          if (Test-Path $mf) {
+            $mj = Get-Content $mf -Raw -Encoding UTF8 | ConvertFrom-Json
+            $vramGb = [math]::Round([double]$mj.gpu.vram_free_mb / 1024, 1)
+            $ramPct = [math]::Round([double]$mj.ram.free_pct, 0)
+            $vramTotGb = [math]::Round([double]$mj.gpu.vram_total_mb / 1024, 0)
+            $needsFact = 'xian-cun ' + $vramGb + 'GB ke-yong (zong ' + $vramTotGb + 'GB), nei-cun ' + $ramPct + '% ke-yong'
+          }
+        } catch {}
+      }
+      # self facts text (Chinese lives in the CARD + template; here ASCII tokens
+      # are replaced by script-built Chinese via codepoints to keep this file ASCII)
+      $cn = ''
+      if ($locKey -eq 'quant-computing-tower') { $cn = [char]0x5728 + [string][char]0x0051 + [string][char]0x0055 + [string][char]0x0041 + [string][char]0x004E + [string][char]0x0054 + ([string][char]0x7B97 + [string][char]0x529B + [string][char]0x697C) + ([string][char]0x5C97 + [string][char]0x4F4D + [string][char]0x5DE5 + [string][char]0x4F5C + [string][char]0x4E2D) }
+      elseif ($locKey -eq 'game-city-studio') { $cn = [char]0x5728 + [string][char]0x0047 + [string][char]0x0041 + [string][char]0x004D + [string][char]0x0045 + ([string][char]0x57CE + [string][char]0x5DE5 + [string][char]0x574A) + ([string][char]0x5C97 + [string][char]0x4F4D + [string][char]0x5DE5 + [string][char]0x4F5C + [string][char]0x4E2D) }
+      elseif ($locKey -eq 'ji-dui-su-she') { $cn = [string][char]0x5728 + ([string][char]0x673A + [string][char]0x961F + [string][char]0x5BBF + [string][char]0x820D) + ([string][char]0x4F11 + [string][char]0x7720 + [string][char]0x4E2D) }
+      else { $cn = [string][char]0x5728 + ([string][char]0x503C + [string][char]0x591C + [string][char]0x5C97) }
+      $selfTxt = $cn
+      if ($needsFact) {
+        $needsCn = ([string][char]0x663E + [string][char]0x5B58 + [string][char]0x0031 + [string][char]0x0032 + [string][char]0x0033)
+        $needsCn = ''
+      }
+      if ($needsFact) {
+        # needs fact line: Chinese via codepoints (ASCII law)
+        $needsCn = ([string][char]0x8D44 + [string][char]0x6E90 + [string][char]0x6C34 + [string][char]0x4F4D + [string][char]0xFF1A) + ($needsFact -replace 'xian-cun', ([string][char]0x663E + [string][char]0x5B58) -replace 'ke-yong', ([string][char]0x53EF + [string][char]0x7528) -replace 'zong', ([string][char]0x603B) -replace 'nei-cun', ([string][char]0x5185 + [string][char]0x5B58))
+        $selfTxt = $selfTxt + [string][char]0xFF0C + $needsCn
+      }
+
       # self-memory: last 3 own lines (anti-repeat continuity)
       $memKey = 'res:' + $rid + ':mem'
       $memTxt = ''
@@ -109,7 +150,7 @@ function Probe-residents {
       $extraFacts = $facts
       if ($memTxt) { $extraFacts = @('note: you recently said (do not repeat yourself): ' + $memTxt) + $facts }
       if ($isChat -and $prevLine) { $extraFacts = @(($speakers[0].BaseName) + ' just said to you: ' + $prevLine) + $extraFacts }
-      $prompt = $tmpl.Replace('__CARD__', $card).Replace('__EVENTS__', ($extraFacts -join "`n")).Replace('__NOW__', $nowTxt).Replace('__WEATHER__', $weatherTxt)
+      $prompt = $tmpl.Replace('__CARD__', $card).Replace('__SELF__', $selfTxt).Replace('__EVENTS__', ($extraFacts -join "`n")).Replace('__NOW__', $nowTxt).Replace('__WEATHER__', $weatherTxt)
 
       $line = ''
       try {
@@ -126,10 +167,9 @@ function Probe-residents {
       if ($zone -eq 'gaming') { $repo = 'minigame' }
       & $ctx.AddEvent 'RESIDENT_SAY' $rid $repo $zone $line
 
-      $loc = Get-ResidentLocation $rid ($fleetOnline.ContainsKey($rid) -and $fleetOnline[$rid]) $hourBj
       $ctx.cursor['res:' + $rid + ':ts'] = $ctx.now
       $ctx.cursor['res:' + $rid + ':line'] = $line
-      $ctx.cursor['res:' + $rid + ':loc'] = $loc
+      $ctx.cursor['res:' + $rid + ':loc'] = $locRaw
       # rolling self-memory: keep last 3 lines, | separated
       $newMem = $line
       if ($memTxt) { $parts = @($memTxt -split '\|') + $line; if ($parts.Count -gt 3) { $parts = @($parts | Select-Object -Last 3) }; $newMem = ($parts -join '|') }

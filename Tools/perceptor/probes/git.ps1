@@ -1,10 +1,20 @@
 # Probe: git repos (5 repos) -> COMMIT events + zone activity + history
 # Events: COMMIT (registered)
+# r32 native-capture encoding law: git emits raw UTF-8 bytes (Chinese commit
+# subjects); PS5.1 decodes native stdout with [Console]::OutputEncoding, which
+# is the system codepage (GBK) under the tick's hidden console -> mojibake in
+# event summaries (CityWatch rendering proof). Law: save/swap/restore around
+# the probe body; ASCII outputs (hash/count/date) are decode-invariant.
 
 function Probe-git {
   param($ctx)
+  $prevEnc = $null
   try {
     $root = $ctx.root
+    try {
+      $prevEnc = [Console]::OutputEncoding
+      [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+    } catch { $prevEnc = $null }
     $repoDirs = @{
       'fluxgroup' = @{ dir = $root;                              zone = 'governance' }
       'minigame'  = @{ dir = (Join-Path $root 'gaming\MiniGame');  zone = 'gaming' }
@@ -67,4 +77,7 @@ function Probe-git {
       newcur = $newCur
     }
   } catch { return $null }
+  finally {
+    if ($null -ne $prevEnc) { try { [Console]::OutputEncoding = $prevEnc } catch {} }
+  }
 }

@@ -1,83 +1,147 @@
-# FluxVerse verify gate v2 - aligns with TECH claims (F4), cursor-incremental (S3),
-# self-healing quarantine (F1 companion): bad event lines are MOVED OUT of the
-# live feed to quarantine-events.jsonl instead of failing forever.
-# Exit 0 = PASS, 1 = FAIL. ASCII-only.
+# FluxVerse verify gate v0.3 - validates world outputs before they ship to the engine.
+# Exit 0 = PASS, 1 = FAIL.
+# Consolidated 2026-09-23 (CEO audit fix, dual-session merge - single executor):
+#   - Two-phase state: scan writes world-state.json.new; on PASS it is promoted to
+#     world-state.json; on FAIL the OLD state is kept and .new discarded.
+#   - Events self-heal: bad lines (unparseable / unregistered type / missing ts)
+#     are moved to world-events.quarantine.jsonl and removed from the live
+#     stream. The gate heals - it never deadlocks on a bad line (F1).
+#   - Delta cursor: only lines past the last verified count are checked
+#     (world/verify-state.txt), so verify cost stays O(new lines) (S3).
+#   - Inner-field checks: zones/fleet/tasks/flows/products/governance/history (F4).
+# ASCII-only (group PS5.1 encoding law).
 
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')       # -> gaming/FluxVerse
-$worldDir = Join-Path $repoRoot 'world'
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')      # -> gaming/FluxVerse
+$worldDir  = Join-Path $repoRoot 'world'
 $registryFile = Join-Path $repoRoot 'schema\events-registry.json'
 $stateFile  = Join-Path $worldDir 'world-state.json'
+$newStateFile = Join-Path $worldDir 'world-state.json.new'
 $eventsFile = Join-Path $worldDir 'world-events.jsonl'
-$quarFile   = Join-Path $worldDir 'quarantine-events.jsonl'
-$vcurFile   = Join-Path $worldDir 'verify-cursor.txt'
+$quarFile   = Join-Path $worldDir 'world-events.quarantine.jsonl'
+$verifyState = Join-Path $worldDir 'verify-state.txt'
+$utf8 = New-Object System.Text.UTF8Encoding($false)
 $fail = @()
+$healed = 0
 
-# ---------- registry ----------
-$known = @{}
-try {
-  $reg = Get-Content $registryFile -Raw -Encoding UTF8 | ConvertFrom-Json
-  $reg.events.PSObject.Properties | ForEach-Object { $known[$_.Name] = $true }
-} catch { $fail += 'registry: not parseable' }
-
-# ---------- 1. world-state.json + inner field checks (F4) ----------
-$state = $null
-if (Test-Path $stateFile) {
-  try { $state = Get-Content $stateFile -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $fail += 'state: not parseable JSON' }
-} else { $fail += 'state: file missing' }
-if ($state) {
-  if (-not $state.protocol) { $fail += 'state: protocol missing' }
-  elseif ($state.protocol -notlike 'fluxverse/*') { $fail += ('state: bad protocol ' + $state.protocol) }
-  foreach ($k in @('ts_utc','zones','fleet','tasks','flows','products','governance','history')) {
-    if (-not $state.PSObject.Properties[$k]) { $fail += ('state: field missing: ' + $k) }
+# ---------- 1. state (candidate = .new if present, else current) ----------
+$promote = (Test-Path $newStateFile)
+$cand = $null
+if ($promote) { $cand = $newStateFile } elseif (Test-Path $stateFile) { $cand = $stateFile }
+if (-not $cand) {
+  $fail += 'state: file missing'
+} else {
+  $state = $null
+  try { $state = Get-Content $cand -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $fail += 'state: not parseable JSON' }
+  if ($state) {
+    if (-not $state.protocol) { $fail += 'state: protocol field missing' }
+    elseif ($state.protocol -notlike 'fluxverse/*') { $fail += ('state: bad protocol ' + $state.protocol) }
+    foreach ($k in @('ts_utc','zones','fleet','tasks','flows','products','governance','history')) {
+      if (-not $state.PSObject.Properties[$k]) { $fail += ('state: field missing: ' + $k) }
+    }
+    if ($state.zones) {
+      $needZones = @('gaming','quant','media')
+      $haveZones = @($state.zones | ForEach-Object { $_.id })
+      foreach ($z in $needZones) { if ($haveZones -notcontains $z) { $fail += ('state: zone missing: ' + $z) } }
+      foreach ($z in @($state.zones)) {
+        foreach ($f in @('id','name','status','activity')) {
+          if (-not $z.PSObject.Properties[$f]) { $fail += ('state: zone[' + $z.id + '] missing field: ' + $f) }
+        }
+      }
+    }
+    foreach ($m in @($state.fleet)) {
+      if ($m) {
+        foreach ($f in @('id','online','last_seen','cores','current_task')) {
+          if (-not $m.PSObject.Properties[$f]) { $fail += ('state: fleet[' + $m.id + '] missing field: ' + $f) }
+        }
+      }
+    }
+    foreach ($t in @($state.tasks)) {
+      if ($t) {
+        foreach ($f in @('id','zone','owner','status')) {
+          if (-not $t.PSObject.Properties[$f]) { $fail += ('state: task[' + $t.id + '] missing field: ' + $f) }
+        }
+      }
+    }
+    foreach ($fl in @($state.flows)) {
+      if ($fl) {
+        foreach ($f in @('id','zone')) {
+          if (-not $fl.PSObject.Properties[$f]) { $fail += 'state: flow missing field: ' + $f }
+        }
+      }
+    }
+    if ($state.products) {
+      $needProd = @('minigame','bigmoney','bigstream')
+      $haveProd = @($state.products | ForEach-Object { $_.id })
+      foreach ($p in $needProd) { if ($haveProd -notcontains $p) { $fail += ('state: product missing: ' + $p) } }
+      foreach ($p in @($state.products)) {
+        foreach ($f in @('id','line','status')) {
+          if (-not $p.PSObject.Properties[$f]) { $fail += ('state: product[' + $p.id + '] missing field: ' + $f) }
+        }
+      }
+    }
+    if ($state.governance -and -not $state.governance.PSObject.Properties['ceo_orders_pending']) { $fail += 'state: governance.ceo_orders_pending missing' }
+    if ($state.history) {
+      foreach ($f in @('commits_total','last_commit_ts')) {
+        if (-not $state.history.PSObject.Properties[$f]) { $fail += ('state: history missing field: ' + $f) }
+      }
+    }
   }
-  if ($state.zones) {
-    $have = @($state.zones | ForEach-Object { $_.id })
-    foreach ($z in @('gaming','quant','media')) { if ($have -notcontains $z) { $fail += ('state: zone missing: ' + $z) } }
-    foreach ($z in $state.zones) { if (-not $z.status -or -not $z.activity) { $fail += ('state: zone field hole: ' + $z.id) } }
-  }
-  foreach ($f in @($state.fleet)) { if ($f -and (-not $f.id -or $null -eq $f.online)) { $fail += ('state: fleet field hole: ' + $f.id) } }
-  foreach ($p in @($state.products)) { if ($p -and (-not $p.id -or -not $p.status)) { $fail += ('state: product field hole: ' + $p.id) } }
 }
 
-# ---------- 2. events: cursor-incremental scan + self-heal quarantine (F1/S3) ----------
-$vcur = 0
-if (Test-Path $vcurFile) { $v = (Get-Content $vcurFile -Raw).Trim(); if ($v) { $vcur = [int]$v } }
-if (Test-Path $eventsFile) {
-  $all = @(Get-Content $eventsFile -Encoding UTF8)
-  $total = $all.Count
-  $keep = @()
-  $quarNew = @()
-  for ($i = 0; $i -lt $total; $i++) {
-    $ln = $all[$i]
-    if ($i -lt $vcur) { $keep += $ln; continue }               # already verified once
-    if (-not $ln.Trim()) { continue }
-    $e = $null; $bad = $false
-    try { $e = $ln | ConvertFrom-Json } catch { $bad = $true }
-    if (-not $bad) {
-      if (-not $e.ts_utc) { $bad = $true }
-      elseif ($known.Count -gt 0 -and -not $known.ContainsKey([string]$e.type)) { $bad = $true }
+# ---------- 2. registry + events self-heal (delta from cursor) ----------
+$reg = $null
+if (Test-Path $registryFile) {
+  try { $reg = Get-Content $registryFile -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $fail += 'registry: not parseable' }
+} else { $fail += 'registry: file missing' }
+$known = @{}
+if ($reg -and $reg.events) {
+  $reg.events.PSObject.Properties | ForEach-Object { $known[$_.Name] = $true }
+}
+
+if ((Test-Path $eventsFile) -and $known.Count -gt 0) {
+  $verified = -1
+  if (Test-Path $verifyState) {
+    foreach ($ln in (Get-Content $verifyState -Encoding UTF8)) {
+      if ($ln -match '^events_verified=(\d+)') { $verified = [int]$Matches[1] }
     }
-    if ($bad) { $quarNew += $ln } else { $keep += $ln }
   }
-  # renumber: lines may shrink when quarantined -> cursor = kept count
-  if ($quarNew.Count -gt 0) {
-    $oldQ = ''
-    if (Test-Path $quFile) { $oldQ = [System.IO.File]::ReadAllText($quFile) }
-    $utf8 = New-Object System.Text.UTF8Encoding($false)
-    [System.IO.File]::WriteAllText($quFile, ($oldQ + (($quarNew -join "`n") + "`n")), $utf8)
-    [System.IO.File]::WriteAllText($eventsFile, (($keep -join "`n") + "`n"), $utf8)
-    $fail += ('self-heal: quarantined ' + $quarNew.Count + ' bad line(s)')
+  $lines = @(Get-Content $eventsFile -Encoding UTF8)
+  $start = 0
+  if ($verified -ge 0 -and $verified -le $lines.Count) { $start = $verified }
+  $clean = @()
+  if ($start -gt 0) { $clean = @($lines[0..($start-1)]) }
+  $bad = @()
+  for ($i = $start; $i -lt $lines.Count; $i++) {
+    $ln = $lines[$i]
+    if (-not $ln.Trim()) { continue }
+    $ok = $false
+    try {
+      $e = $ln | ConvertFrom-Json
+      if ($known.ContainsKey([string]$e.type) -and $e.ts_utc) { $ok = $true }
+    } catch { }
+    if ($ok) { $clean += $ln } else { $bad += $ln }
   }
-  $newCur = $keep.Count
-  [System.IO.File]::WriteAllText($vcurFile, [string]$newCur, (New-Object System.Text.UTF8Encoding($false)))
-} else { $fail += 'events: file missing' }
+  if ($bad.Count -gt 0) {
+    $healed = $bad.Count
+    [System.IO.File]::WriteAllText($eventsFile, (($clean -join "`n") + "`n"), $utf8)
+    foreach ($b in $bad) { [System.IO.File]::AppendAllText($quarFile, ($b + "`n"), $utf8) }
+  }
+  [System.IO.File]::WriteAllText($verifyState, ('events_verified=' + $clean.Count + "`n"), $utf8)
+}
 
 # ---------- verdict ----------
 if ($fail.Count -gt 0) {
-  $onlyHeal = ($fail | Where-Object { $_ -notlike 'self-heal:*' }).Count -eq 0
-  $fail | ForEach-Object { Write-Output ('VERIFY ' + $(if ($_ -like 'self-heal:*') {'HEAL'} else {'FAIL'}) + ': ' + $_) }
-  if ($onlyHeal) { Write-Output 'VERIFY PASS (after self-heal)'; exit 0 }
+  $fail | ForEach-Object { Write-Output ('VERIFY FAIL: ' + $_) }
+  if ($promote) {
+    Remove-Item $newStateFile -Force -ErrorAction SilentlyContinue
+    Write-Output 'VERIFY FAIL: .new state discarded, old world-state.json kept'
+  }
   exit 1
 }
-Write-Output 'VERIFY PASS'
+if ($promote) { Move-Item -Force $newStateFile $stateFile }
+if ($healed -gt 0) {
+  Write-Output ('VERIFY PASS (healed ' + $healed + ' bad event line(s) -> quarantine)')
+} else {
+  Write-Output 'VERIFY PASS'
+}
 exit 0

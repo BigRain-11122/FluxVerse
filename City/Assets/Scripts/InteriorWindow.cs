@@ -49,9 +49,15 @@ namespace FluxVerse
             this.cooldownSec = cooldownSec;
         }
 
-        // registry v0 (P-16: connect ONE panel first - bigmoney.html). Bounds mirror
-        // CitySkeletonBuilder QUANT block (cells x -2..2, y -9..8 -> world x -2.5..3.0,
-        // y -9.5..9.0 with tile-anchor margin; the tower row above y 9 is NOT hit).
+        // registry v1 (P-16 debt, r20): GAME city joins - the Biggame pixel-town
+        // board AT ITS SOURCE REPO (reference-not-copy). U175 retired the town LINE
+        // but archives this board on purpose; it stays the registered v0 face until
+        // the BoardForge game-company board lands (then only the path line below
+        // changes). CJK filename is built from code points (script ASCII law).
+        // MEDIA row waits until a real BigStream panel exists on disk (today the
+        // whole BigStream repo has no html panel - register nothing, guess no path).
+        // GAME bounds mirror CitySkeletonBuilder south block (cells x -24..-19,
+        // y -9..-6 -> world x -24.5..-18.0, y -9.5..-5.0 with tile-anchor margin).
         public static List<InteriorTarget> DefaultRegistry()
         {
             List<InteriorTarget> list = new List<InteriorTarget>();
@@ -61,6 +67,13 @@ namespace FluxVerse
                 company = "BigMoney",
                 panelRelPath = "quant/bigmoney/bigmoney.html",
                 bounds = new Rect(-2.5f, -9.5f, 5.5f, 18.5f)
+            });
+            list.Add(new InteriorTarget
+            {
+                zone = "GAME",
+                company = "Biggame",
+                panelRelPath = "gaming/MiniGame/\u50CF\u7D20\u5C0F\u9547\u770B\u677F.html",
+                bounds = new Rect(-24.5f, -9.5f, 6.5f, 4.5f)
             });
             return list;
         }
@@ -87,9 +100,10 @@ namespace FluxVerse
             if (t == null) return null;
             string abs = Path.Combine(groupRoot, t.panelRelPath.Replace('/', Path.DirectorySeparatorChar));
             if (!File.Exists(abs)) return null;
-            // browsers want forward slashes in file URLs
-            string url = "file:///" + abs.Replace('\\', '/');
-            return url;
+            // browsers want forward slashes AND percent-encoded UTF-8 (the r20 GAME
+            // row has a CJK panel filename); System.Uri gives both. For pure-ASCII
+            // paths the result is byte-identical to the old manual "file:///" build.
+            return new Uri(abs).AbsoluteUri;
         }
 
         // full click chain: hit -> resolve -> cooldown gate -> dispatch. True = opened.

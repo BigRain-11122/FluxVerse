@@ -2,7 +2,7 @@
 // r12/r13/r14 style) + idempotent scene wiring + cross-session reload gate. Proves,
 // fail-loud:
 //  1) PURE LOGIC on the headless core (recorder opener): registry hit-test (QUANT
-//     block in / tower row out / GAME-MEDIA unregistered), bounds edges, URL
+//     block in / tower row out / GAME registered r20, MEDIA pending), bounds, URL
 //     resolution at the SOURCE repo (file:/// + reference-not-copy law: url must
 //     NOT point inside FluxVerse/City), missing-file silent degrade, cooldown
 //     gating, non-hit click no-op, live-data dependency chain (dashboard_status.js
@@ -168,8 +168,14 @@ namespace FluxVerse
             Chk(r.Hit(new Vector2(-2.7f, 0f)) == null, "west of the block must miss");
             Chk(r.Hit(new Vector2(0f, 8.9f)) != null, "top row of the block must hit");
             Chk(r.Hit(new Vector2(0f, 9.1f)) == null, "tower row above must miss (no bleed)");
-            Chk(r.Hit(new Vector2(-21f, -5f)) == null, "GAME city must be unregistered in v0");
-            Chk(r.Hit(new Vector2(21f, -5f)) == null, "MEDIA city must be unregistered in v0");
+            // r20: GAME city is registered (Biggame board at its source repo);
+            // MEDIA stays unregistered until a real BigStream panel lands on disk.
+            InteriorTarget gt = r.Hit(new Vector2(-21.25f, -7.25f));
+            Chk(gt != null && gt.zone == "GAME" && gt.company == "Biggame",
+                "GAME block center must hit the Biggame target");
+            Chk(r.Hit(new Vector2(-24.4f, -9.4f)) != null, "GAME SW corner (inside margin) must hit");
+            Chk(r.Hit(new Vector2(-21f, -4.9f)) == null, "above the GAME block must miss (top edge)");
+            Chk(r.Hit(new Vector2(21f, -5f)) == null, "MEDIA city must stay unregistered until its panel lands");
             Chk(r.Hit(new Vector2(0f, 11f)) == null, "brain tower click must miss");
             Chk(r.Hit(new Vector2(30f, -15f)) == null, "river click must miss");
 
@@ -181,6 +187,17 @@ namespace FluxVerse
                 "URL must point into the BigMoney source repo");
             Chk(url == null || url.IndexOf("FluxVerse/City", StringComparison.Ordinal) < 0,
                 "URL must NOT point inside the City project (copy-forbidden law)");
+
+            // A3b r20 GAME row: CJK panel resolves at its source, escaped for browsers
+            string gurl = r.ResolveUrl(gt);
+            Chk(gurl != null && gurl.StartsWith("file:///", StringComparison.Ordinal),
+                "GAME panel URL must be a file:/// URL");
+            Chk(gurl != null && gurl.EndsWith(".html", StringComparison.Ordinal)
+                && gurl.IndexOf('\\') < 0, "GAME URL must be escaped (html tail, no backslash)");
+            Chk(gurl != null && gurl.IndexOf('%') >= 0,
+                "GAME URL must percent-encode the CJK filename");
+            Chk(File.Exists(Path.Combine(GroupRoot, gt.panelRelPath)),
+                "GAME panel must exist at its source repo (reference-not-copy law)");
 
             // A4 live-data chain: the panel's own dependencies exist in the sibling repo
             string bm = Path.Combine(GroupRoot, "quant", "bigmoney");
@@ -213,6 +230,12 @@ namespace FluxVerse
             // A7 non-hit click no-op
             Chk(!r.Open(new Vector2(30f, -15f), 100f), "river click must not open anything");
             Chk(opened.Count == 2, "non-hit click must not fire the opener");
+
+            // A7b r20 GAME dispatch: independent zone cooldown (QUANT window irrelevant)
+            Chk(r.Open(new Vector2(-21.25f, -7.25f), 101f), "GAME open must succeed (independent zone)");
+            Chk(opened.Count == 3 && opened[2] == gurl, "GAME opener must receive the resolved URL");
+            Chk(!r.Open(new Vector2(-21.25f, -7.25f), 102f), "GAME second open inside its cooldown must be gated");
+            Chk(opened.Count == 3, "gated GAME open must not fire");
 
             // A8 baked CJK text chain (r18): strings data file + GDI+ bake exist, decode
             // at the exact bake spec (1000x130 @ 50px/u -> 20x2.6), and the bake itself

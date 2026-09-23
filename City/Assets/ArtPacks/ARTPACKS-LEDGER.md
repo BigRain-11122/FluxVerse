@@ -1,0 +1,61 @@
+# ArtPacks Ledger — City/Assets/ArtPacks 逐包台账
+
+> 城市视觉外采资产本体唯一台账（provenance 面）：每包=来源/许可/件数/用途/验图结论。研究正典与缺口判定=`docs/research/R-20260923-city-art-assets.md`（引用不复制）。
+> 获取批：2026-09-23 批 2（CEO 令 ~23:31「城市还需要什么资产 都去弄」·音频批 1 姊妹批）。
+> 验证态：许可=7 源页许可图标精确探测（CC0×3/OGA-BY×2/CC-BY×2·零 SA）+池内覆盖三项实测；完整性=PNG/GIF 魔数全扫 306 件零坏（19 个 GIF 为合法 GIF8 魔数）；**视觉验图已做**（八格对比图多模态分析 2026-09-23·结论入各包行）；watercraft kit=3D 模型包违反 2D 铁律**整包弃用留痕**。
+
+## 署名义务（引擎/发布 credits 必带）
+
+- OGA-BY 3.0：`City Parallax Background & Residents of the City by CraftPix.net (OGA-BY 3.0, opengameart.org)`
+- CC-BY 3.0：`Ships with ripple effect by chabull` · `Top-Hat Robot by Nelson Yiap`（均 opengameart.org）
+- warped-city / cyber-city = CC0 零义务。
+
+## warped-city/（171 件·CC0·ansimuz·/content/warped-city）
+
+- 内容：**赛博城市环境全套**——霓虹招牌系列（banner-neon×4 帧/banner-coke/sushi/scroll/big/side/arrow/floor/hotel-sign·全带 preview GIF）、环境背景（skyline-a/b·near-buildings-bg·buildings-bg）、道具（antenna/control-box/monitorface）、玩家/无人机/炮塔精灵全套、PSD 源件（banner 可改公司名——FLUX/CPH4/公司名牌就地重制）、三张总表 sheet-01-sprites/02-environment/03-tiles。
+- **验图：适配度=高**（完整赛博横版街景·霓虹+都市一体·多模态定「可直接定美术基调」）；⚠️ 注 1=环境总表内嵌 "SCREENSHOT" 演示占位字样（DevLoop 消费时裁掉）；⚠️ 注 2=八格对比中曾见「糊」为**验图台架双线性缩放伪影**——源件原生像素实测（banner-neon 19×48·hotel-sign 68×35）零污染。
+- 用途：DESIGN §九「霓虹街牌 FLUX/CPH4/公司名」判据面主力 + 大气透视背景层 + 街道机器人补充（drone）。
+
+## cyber-city/（11 件·CC0·warlloyd·/content/cyber-city）
+
+- 内容：city.png 图块集（混凝土板/紫青砖墙/反光玻璃窗/人行道/路面）+ 角色精灵（$Yakuza1-3/Boss/lady）。
+- **验图：适配度=高**（现代都市 tile 直接可铺·配色已霓虹紫青系）。
+- 用途：南岸三城建筑墙面补充 tile 池 + 街头角色点缀。
+
+## parallax-skyline/（8 件·OGA-BY 3.0·CraftPix·/content/city-parallax-background-with-buildings-pixel-art）
+
+- 内容：layer-1~7 视差层 + composite-preview 全景合成图。
+- **验图：适配度=中**——🟡 层次结构适合远景视差，但**画风为平滑矢量/数字绘非像素**（多模态判定）且色调偏粉紫日落：DevLoop 入城须过风格闸（三选一：仅作 L0 远景雾化参考 / 加像素化滤镜转译 / 弃用留痕）。
+- 用途：远景天际线大气透视层候选（M1 赛博光效规格「大气透视」）。
+
+## residents-crowd/（31 件·OGA-BY 3.0·CraftPix·/content/residents-of-the-city-pixel-art-sprite-sheets）
+
+- 内容：编号居民 sprite sheets（10/11/12… 每人 Idle/Walk/Special 帧·48×48 步幅 4 帧）。
+- **验图：适配度=中高**（真像素·现代市民生态含轮椅市民等多样性）——服装为日常现代风非赛博（居民=日常人+机器人才是赛博，符合世界观：城是现实投影）。
+- 用途：M2 街道 NPC 池/BigLife census 万民→sprite 映射补充池（与 P-22 同线·池内主力仍 AA-016.04+AA-028.2105141）。
+
+## tophat-robot/（1 件·CC-BY 3.0·Nelson Yiap·/content/stylish-top-hat-robot-16x16-animated-spritesheet）
+
+- 内容：robot_sheet_16x16.png（64×64=4×4 帧格·16×16/帧·动画全帧）。
+- **验图：适配度=中高**（16×16 正中 P-17 街道机器人规格；台架糊影同为缩放伪影·源件原生）。
+- 用途：街道机器人变体池（灯流主角的形态候选）。
+
+## ships-ripple/（112 件·CC-BY 3.0·chabull·/content/ships-with-ripple-effect）
+
+- 内容：水面单位精灵（ship_big 系列含 destroyed 态/water_units.json 动画配置/涟漪动效件）+ images/sprites/ 解包展开（嵌套 zip 已展开）。
+- **验图：适配度=低**（多模态判定：俯视 RTS 视角与横版街景冲突·战争烟雾题材偏离）——🟡 留观池：仅取其船体配色/结构为重绘参考，或远期 M4 俯视地图端复用；直接入世界层**不过风格闸**。
+- 用途：黄浦江江面生活感候选素材（需要侧视重绘——DevLoop 定夺）。
+
+## 已验弃用/否决（诚实律留痕）
+
+| 项 | 判定 | 依据 |
+|---|---|---|
+| Kenney Watercraft Kit | **整包弃用** | 3D 模型包（FBX/GLB/OBJ）违反 CEO 2D 铁律——PNG 仅为 3D 贴图与预览 |
+| 池内已覆盖面（不外采） | 车辆=AA-016.02·光效=AA-034（193 PNG 实测）·字体=FT-011 缝合像素/FT-016/FT-010·居民主力=AA-016.04+AA-028.2105141 | R-city-art §一覆盖判定 |
+| 施工/脚手架 | 不外采——S 库线@Biggame（BoardForge 工地语法·引用不复制） | P-28 注 |
+| 云 sprite | 不采——程序化天空+视差层已足 | — |
+| 游戏图标 | 暂缓——M3 UI 壳期再定 | P-18 正典 |
+
+## 引用不复制（池内消费面·DevLoop 走 P-21/FT 通道）
+
+AA-016.02 车辆 / AA-034 光效粒子 193 PNG / FT-011 缝合像素（霓虹中文招牌字）· FT-016 PressStart2P（拉丁像素）· FT-010 得意黑（标题冲击感）。

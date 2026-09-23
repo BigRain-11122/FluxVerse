@@ -6,9 +6,9 @@
 
 ## 署名义务（引擎/发布 credits 必带）
 
-- **sfx_scifi/ 全部 16 件**：`Sci-Fi Sound Effects Library by Little Robot Sound Factory — CC BY 3.0 — opengameart.org/content/sci-fi-sound-effects-library`
+- **sfx_scifi/ 全部 16 件 + music/neon_transit.ogg**：`Sci-Fi Sound Effects Library by Little Robot Sound Factory — CC BY 3.0 — opengameart.org/content/sci-fi-sound-effects-library`；`Neon Transit by Alexandr Zhelanov — CC BY 3.0 — opengameart.org/content/neon-transit`
 - 未来若启用 AA-038 chiptune（MiniGame Art Assets 库内）：`Music by Eric Skiff — CC BY 4.0 — ericskiff.com`
-- ambience/ music/ weather/ signature/ = CC0 与自产，零署名义务。
+- 其余 ambience/ music/ weather/ signature/ 件 = CC0 与自产，零署名义务。
 
 ## ambience/（城市底噪与区域氛围）
 
@@ -27,12 +27,14 @@
 | tt_caves.ogg | 1,703,616 B | OGA /content/t-t-free-cyberpunk-pack · tricksntraps（源名 Caves.ogg） | CC0 | 赛博曲池（黄昏候选） |
 | tt_currents.ogg | 15,419,836 B | OGA /content/t-t-free-cyberpunk-pack · tricksntraps（源名 Currents.ogg） | CC0 | 赛博曲池（黄昏候选） |
 | tt_antimatter.ogg | 12,394,025 B | OGA /content/t-t-free-cyberpunk-pack · tricksntraps（源名 Anti Matter Magic.ogg·OGA 慢速 300s 超时一次后 900s 重试成功） | CC0 | 赛博曲池第三轨 |
+| neon_transit.ogg | 15,038,185 B | OGA /content/neon-transit · Alexandr Zhelanov（批 2 补·**CC-BY 署名**：credits 注 Alexandr Zhelanov / opengameart.org） | CC-BY | 赛博 BGM 池补充（霓虹轨道曲） |
 
 ## weather/（天气层 · weather 探针 weather_kind 驱动）
 
 | 文件 | 大小 | 源 | 许可 | 用途 |
 |---|---|---|---|---|
 | rain_loop_1.ogg ~ rain_loop_4.ogg | 550,049 / 529,890 / 913,769 / 762,663 B | OGA /content/rain-loopable · Ylmir（源名 1~4.ogg） | CC0 | 雨（四强度递进·3=台风候选主力） |
+| crickets_night.mp3 | 184,393 B | OGA /content/crickets-ambient-noise-loopable · Wolfgang_（源名 crickets_1.mp3·批 2 补） | CC0 | 夏夜层（夜间氛围叠用） |
 | wind2.wav | 2,326,195 B | OGA /content/wind1 · Luke.RUSTLTD | CC0 | 风 |
 
 ## sfx_scifi/（Sci-Fi Sound Effects Library 精选 16 件 · **CC BY 3.0 须署名见顶部**）

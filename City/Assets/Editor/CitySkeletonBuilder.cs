@@ -1,4 +1,7 @@
 // FluxVerse P-15 r10: static city skeleton builder (one-shot, sentinel-triggered).
+// r11 fix: MK() fed ArtRoot-relative sprite paths to AssetDatabase, which only accepts
+// project-relative (Assets/...) paths -> ImportAsset logged "does not exist", heal never ran,
+// whole catalog failed at first tile (000). All AssetDatabase calls now use ArtRoot-prefixed path.
 // Sentinel: <repo>/logs/citybuilder.run -> builds CityScene, saves, screenshots, writes <repo>/logs/citybuilder.done.
 // r10 rework: r9 saved scene had Ground/Water/Roads tilemaps EMPTY (Paint-closure tiles came up
 // fake-null -> silent skip). Fix class-wide: resolve tiles FRESH via LoadAssetAtPath at every use
@@ -93,22 +96,20 @@ public static class CitySkeletonBuilder
             t = ScriptableObject.CreateInstance<Tile>();
             AssetDatabase.CreateAsset(t, assetPath);
         }
-        Sprite s = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+        Sprite s = AssetDatabase.LoadAssetAtPath<Sprite>(ArtRoot + "/" + spritePath);
         if (s == null)
         {
-            // heal: copied-in .meta may be dup-GUID/corrupt (r10 evidence: 000.png meta valid-looking
-            // but asset DB rejected it while 007 from same copy imported fine). Fresh meta -> fresh GUID.
-            // NOTE: File I/O needs ABSOLUTE path (editor CWD != project root); spritePath is
-            // ArtRoot-relative, so the absolute base is ProjectRoot/ArtRoot. AssetDatabase wants the
-            // ArtRoot-relative path itself.
+            // heal: copied-in .meta may be dup-GUID/corrupt or missing (000.png lost its meta in the
+            // r10 broken-heal run). Fresh meta -> fresh GUID. NOTE: File I/O needs ABSOLUTE path
+            // (editor CWD != project root); AssetDatabase needs the project-relative Assets/ path.
             string absBase = Path.Combine(ProjectRoot, ArtRoot);
             string absPng = Path.Combine(absBase, spritePath);
             string absMeta = absPng + ".meta";
             if (!File.Exists(absPng))
                 throw new System.InvalidOperationException("sprite file not on disk: " + spritePath);
             if (File.Exists(absMeta)) File.Delete(absMeta);
-            AssetDatabase.ImportAsset(spritePath, ImportAssetOptions.ForceSynchronousImport);
-            s = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+            AssetDatabase.ImportAsset(ArtRoot + "/" + spritePath, ImportAssetOptions.ForceSynchronousImport);
+            s = AssetDatabase.LoadAssetAtPath<Sprite>(ArtRoot + "/" + spritePath);
         }
         if (s == null) throw new System.InvalidOperationException("sprite missing after reimport heal: " + spritePath);
         t.sprite = s;
@@ -318,7 +319,7 @@ public static class CitySkeletonBuilder
         }
 
         // screenshot (render to texture, no GUI needed)
-        string shotPath = Path.Combine(RepoRoot, "docs", "design", "m1-r10-cityskeleton.png");
+        string shotPath = Path.Combine(RepoRoot, "docs", "design", "m1-r11-cityskeleton.png");
         RenderTexture rt = new RenderTexture(1920, 1080, 24, RenderTextureFormat.ARGB32);
         cam.targetTexture = rt;
         cam.Render();

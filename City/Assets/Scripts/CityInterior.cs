@@ -18,8 +18,10 @@
 //   Halo  20 - soft gold wash, extends 0.30u beyond the glass (GUIAgent glow)
 //   Rim   21 - gold frame, extends 0.16u (bright warm ring for the proof)
 //   Glass 22 - dark translucent fill 20x2.6 (GUIAgent glassmorphism v0)
-// Banner text is deferred debt (TECH P-16): CJK copy source lives in the UTF-8
-// data file Assets/Data/interior-strings.txt; candidate bake = PS GDI+ texture.
+// Banner text (r18): CJK copy lives in the UTF-8 data file
+// Assets/Data/interior-strings.txt; Tools/city/bake-banner-text.ps1 pre-bakes the
+// glyphs into Assets/Data/interior-banner-text.png (GDI+ - no CJK font asset in
+// the engine) and the banner loads it as a runtime sprite layer (sortingOrder 23).
 // Pure 2D: flat sprites, ortho camera, no 3D. Scripts ASCII (encoding law).
 using System;
 using System.IO;
@@ -123,7 +125,45 @@ namespace FluxVerse
             glass.color = new Color(0.07f, 0.09f, 0.13f, 0.82f);  // dark glassmorphism fill
             glass.transform.localScale = new Vector3(BannerWidth / n.x, BannerHeight / n.y, 1f);
 
+            // r18 CJK text layer: pre-baked by Tools/city/bake-banner-text.ps1 (GDI+
+            // glyph rasterization - the engine has no CJK font asset). Runtime bytes
+            // path (File.ReadAllBytes + LoadImage): no asset-import dependency, so
+            // batch proofs and play mode load the identical pixels. Silent degrade
+            // when the bake is absent (the proof fails loud instead).
+            Sprite text = BannerTextSprite();
+            if (text != null)
+            {
+                SpriteRenderer txt = MakeSprite(banner.transform, "Text", text, 23);
+                txt.transform.localScale = Vector3.one;   // natural 20x2.6 via bake ppu 50
+            }
+
             banner.transform.position = new Vector3(0f, 0f, -9f);   // in front of the z=0 city
+        }
+
+        // 1000x130 bake @ 50px/u -> 20x2.6 world units (exactly the glass size).
+        // r18 notes baked into this loader:
+        //  a) the PNG lives in City/BannerData/ OUTSIDE Assets/ - the runtime
+        //     bytes path never touches the importer, so the bake must not grow an
+        //     imported twin under Assets/ (TextureImporter meta noise). The r18
+        //     "solid gold quad" regression was NOT the importer - it was a lost
+        //     glass localScale line during the text-layer edit (the misdiagnosis
+        //     walk is on record in TECH §九 so the class is not re-learned).
+        //  b) explicit Apply() after LoadImage - deterministic upload, batch and
+        //     play render the identical pixels.
+        static Sprite BannerTextSprite()
+        {
+            string path = Path.Combine(
+                Path.GetDirectoryName(Application.dataPath), "BannerData", "interior-banner-text.png");
+            if (!File.Exists(path)) return null;
+            Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!tex.LoadImage(File.ReadAllBytes(path)))
+            {
+                UnityEngine.Object.Destroy(tex);
+                return null;
+            }
+            tex.filterMode = FilterMode.Point;
+            tex.Apply(false, false);
+            return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 50f);
         }
 
         static SpriteRenderer MakeSprite(Transform parent, string name, Sprite sprite, int order)

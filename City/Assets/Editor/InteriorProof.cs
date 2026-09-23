@@ -13,8 +13,11 @@
 //     BEFORE any banner exists (r14 save-before-motion law), no InteriorBanner
 //     GO ever saved (runtime-only law, r13).
 //  4) REAL RENDERS from CityScene at L1 street level (Zone_QUANT focus): baseline
-//     vs banner-on gates - dark glass darkens the banner band, the gold rim ring
-//     around the glass produces bright+warm pixels, hide returns to baseline.
+//     vs banner-on gates - dark glass darkens the band's NON-TEXT pixels (r18: the
+//     bright CJK glyphs share the band, so the r16 full-band darken signal moved
+//     to the b<=0.50 subpopulation), the gold rim ring OUTSIDE the glass keeps the
+//     exact r16 bright+warm gates, the baked CJK glyphs add bright pixels INSIDE
+//     the band (r18 text gate), hide returns to baseline.
 //     (r16: banner = procedural SpriteRenderer stack, NOT uGUI - a WorldSpace
 //     canvas renders as ScreenSpaceOverlay in batch mode; TECH new-law r16.)
 //  5) RELOAD GATE (logs/interior-reload.run): a SECOND editor session re-opens the
@@ -121,6 +124,10 @@ namespace FluxVerse
             Chk(ambGo != null, "reload: CityAmbient GO missing");
             if (ambGo != null) amb = ambGo.GetComponent<CityAmbient>();
             Chk(amb != null, "reload: CityAmbient did not resolve");
+            // r18: the runtime text source must survive sessions on disk (read-only gate)
+            Chk(File.Exists(Path.Combine(Path.GetDirectoryName(Application.dataPath),
+                "BannerData", "interior-banner-text.png")),
+                "reload: baked banner texture must exist on disk (runtime text source)");
             int bannerCount = 0;
             foreach (GameObject root in scene.GetRootGameObjects())
                 if (root.name == "InteriorBanner") bannerCount++;
@@ -207,6 +214,28 @@ namespace FluxVerse
             Chk(!r.Open(new Vector2(30f, -15f), 100f), "river click must not open anything");
             Chk(opened.Count == 2, "non-hit click must not fire the opener");
 
+            // A8 baked CJK text chain (r18): strings data file + GDI+ bake exist, decode
+            // at the exact bake spec (1000x130 @ 50px/u -> 20x2.6), and the bake itself
+            // carries warm gold glyph pixels (pre-engine gate on the raw texture).
+            string stringsPath = Path.Combine(Application.dataPath, "Data", "interior-strings.txt");
+            Chk(File.Exists(stringsPath), "interior-strings.txt must exist (CJK copy source)");
+            string bakePath = Path.Combine(Path.GetDirectoryName(Application.dataPath),
+                "BannerData", "interior-banner-text.png");
+            Chk(File.Exists(bakePath), "baked banner texture must exist (run Tools/city/bake-banner-text.ps1)");
+            Texture2D bakeTex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            Chk(bakeTex.LoadImage(File.ReadAllBytes(bakePath)), "baked texture must decode as PNG");
+            Chk(bakeTex.width == 1000 && bakeTex.height == 130,
+                "bake must be 1000x130 (50px/u -> 20x2.6), got " + bakeTex.width + "x" + bakeTex.height);
+            int goldPx = 0;
+            for (int y = 0; y < bakeTex.height; y += 2)
+                for (int x = 0; x < bakeTex.width; x += 2)
+                {
+                    Color c = bakeTex.GetPixel(x, y);
+                    if (c.a > 0.5f && (c.r + c.g + c.b) / 3f > 0.5f && c.r - c.b > 0.15f) goldPx++;
+                }
+            Chk(goldPx >= 200, "bake must carry warm gold glyph pixels (sampled " + goldPx + ")");
+            UnityEngine.Object.DestroyImmediate(bakeTex);
+
             // ---------- B. scene wiring: idempotent, saved BEFORE any banner exists ----------
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             GameObject camGo = GameObject.Find("CityCamera");
@@ -239,22 +268,57 @@ namespace FluxVerse
             rig.FocusOn(new Vector2(0f, -12f));                  // drill down to QUANT street
             for (int i = 0; i < 27; i++) rig.Advance(0.05f);      // 1.35s > 1.2s switch
             Chk(Mathf.Abs(rig.SizeNow - 9f) < 0.01f, "must land at L1 size 9");
-            float baseBri, baseWarm;
+            float baseBri, baseWarm, baseDark; int bbPx, bwPx, baseBrightCnt;
             Texture2D l1Shot = Shot(cam, "m1-r15-l1-quant.png");  // street view, no banner
-            BannerMetrics(l1Shot, cam, out baseBri, out baseWarm);
+            BannerMetrics(l1Shot, cam, out baseBri, out baseWarm, out bbPx, out bwPx,
+                out baseDark, out baseBrightCnt);
             Chk(baseBri > 0.08f, "baseline banner band must show city (bri " + baseBri.ToString("F3") + ")");
 
-            // C2 banner on (r16 sprite stack): dark glass darkens the band; the gold
-            // rim ring (halo/rim strips OUTSIDE the glass) makes bright+warm pixels.
+            // C2 banner on (r16 ring gates unchanged + r18 text gates): the baked CJK
+            // glyphs share the band with the glass, so the r16 full-band darken signal
+            // moved to the NON-TEXT subpopulation (px b<=0.50, gate 0.03) and a NEW
+            // text gate requires the render to gain bright pixels vs baseline.
             interior.ShowBanner("QUANT", "BigMoney");
             Chk(interior.BannerVisible, "banner must be visible after ShowBanner");
             interior.StepBanner(0.05f);                           // position it at the view bottom
-            Texture2D bannerShot = Shot(cam, "m1-r15-interior-banner.png");
-            float bri, warm; int brightPx, warmPx;
-            BannerMetrics(bannerShot, cam, out bri, out warm);
-            Chk(baseBri - bri >= 0.04f,
-                "dark glass must darken the banner band (base " + baseBri.ToString("F3")
-                + " -> " + bri.ToString("F3") + ")");
+
+            // r18 render-time introspection: the Text child must exist, be 20x2.6
+            // world units, sit above the glass (order 23), and its sprite texture
+            // must be glyph-transparent AT RENDER TIME on the CPU side (catches the
+            // importer-interference class where Assets/-resident twins corrupt the
+            // runtime texture - first r18 render came out as a solid gold quad).
+            GameObject bannerGo = null;
+            foreach (GameObject root in scene.GetRootGameObjects())
+                if (root.name == "InteriorBanner") bannerGo = root;
+            Chk(bannerGo != null, "banner GO must exist while visible");
+            Transform textT = bannerGo != null ? bannerGo.transform.Find("Text") : null;
+            Chk(textT != null, "banner Text child must exist (bake loaded)");
+            SpriteRenderer txtSr = textT != null ? textT.GetComponent<SpriteRenderer>() : null;
+            Chk(txtSr != null && txtSr.sortingOrder == 23, "Text must render above the glass (order 23)");
+            Bounds bb = txtSr != null ? txtSr.bounds : default(Bounds);
+            Chk(Mathf.Abs(bb.size.x - 20f) < 0.05f && Mathf.Abs(bb.size.y - 2.6f) < 0.05f,
+                "Text world size must be 20x2.6, got " + bb.size.x.ToString("F2") + "x" + bb.size.y.ToString("F2"));
+            Texture2D txtTex = (txtSr != null && txtSr.sprite != null) ? txtSr.sprite.texture : null;
+            Chk(txtTex != null && txtTex.width == 1000 && txtTex.height == 130,
+                "Text texture must be the 1000x130 bake");
+            float bgA = txtTex != null ? txtTex.GetPixel(5, 5).a : 1f;
+            Chk(bgA < 0.10f, "bake background must stay transparent in the sprite texture (a="
+                + bgA.ToString("F2") + ")");
+            int ink = 0;
+            if (txtTex != null) for (int x = 480; x < 521; x++) if (txtTex.GetPixel(x, 40).a > 0.5f) ink++;
+            Chk(ink > 0, "title row must carry glyph ink in the sprite texture");
+
+            Texture2D bannerShot = Shot(cam, "m1-r18-interior-banner.png");
+            float bri, warm, onDark; int onBbPx, onBwPx, onBrightCnt;
+            BannerMetrics(bannerShot, cam, out bri, out warm, out onBbPx, out onBwPx,
+                out onDark, out onBrightCnt);
+            Chk(baseDark - onDark >= 0.03f,
+                "dark glass must darken the band's non-text pixels (base "
+                + baseDark.ToString("F3") + " -> " + onDark.ToString("F3") + ")");
+            int textDx = onBrightCnt - baseBrightCnt;
+            Chk(textDx >= 300, "baked CJK glyphs must add bright pixels to the band (delta "
+                + textDx + " sampled px, on=" + onBrightCnt + " base=" + baseBrightCnt + ")");
+            int brightPx, warmPx;
             RingMetrics(bannerShot, cam, out brightPx, out warmPx);
             Chk(brightPx >= 120, "gold rim must light the banner frame (bright px " + brightPx + ")");
             Chk(warmPx >= 60, "warm gold rim pixels missing (warm px " + warmPx + ")");
@@ -263,8 +327,9 @@ namespace FluxVerse
             interior.HideBanner();
             Chk(!interior.BannerVisible, "banner must hide");
             Texture2D offShot = Shot(cam, null);
-            float offBri, offWarm;
-            BannerMetrics(offShot, cam, out offBri, out offWarm);
+            float offBri, offWarm, offDark; int obPx, owPx, offBrightCnt;
+            BannerMetrics(offShot, cam, out offBri, out offWarm, out obPx, out owPx,
+                out offDark, out offBrightCnt);
             Chk(Mathf.Abs(offBri - baseBri) <= 0.02f,
                 "band must return to baseline after hide (off " + offBri.ToString("F3")
                 + " vs base " + baseBri.ToString("F3") + ")");
@@ -275,7 +340,11 @@ namespace FluxVerse
             return "asserts=" + asserts + " attached=" + attached + " scene_saved=" + saved
                 + " band(base=" + baseBri.ToString("F3") + ",on=" + bri.ToString("F3")
                 + ",off=" + offBri.ToString("F3") + ")"
-                + " px(bright=" + brightPx + ",warm=" + warmPx + ")"
+                + " dark(base=" + baseDark.ToString("F3") + ",on=" + onDark.ToString("F3")
+                + ",off=" + offDark.ToString("F3") + ")"
+                + " text_px(on=" + onBrightCnt + ",base=" + baseBrightCnt + ",dx=" + textDx + ")"
+                + " bake_gold_px=" + goldPx
+                + " ring(bright=" + brightPx + ",warm=" + warmPx + ")"
                 + " opens=" + opened.Count + " url=" + (url == null ? "null" : "ok")
                 + " shots=3 reload_gate=pass2";
         }
@@ -302,8 +371,12 @@ namespace FluxVerse
         // banner band = the strip the banner occupies: world center (camX, camY-9+1.65)
         // half extents 9.5u x 1.1u (banner 20x2.6). Bright px = brightness>0.55 (gold
         // title glyphs + rim); warm px = r-b>0.25 AND bright (GUIAgent gold accents).
+        // r18 extras: darkAvg = mean over NON-BRIGHT px (b<=0.50, the glass-vs-city
+        // subpopulation now that the CJK glyphs own the bright ones); brightCount =
+        // px with b>0.50 (the text-gate population, sampled every 2px).
         static void BannerMetrics(Texture2D tex, Camera cam,
-            out float brightness, out float warmth, out int brightPx, out int warmPx)
+            out float brightness, out float warmth, out int brightPx, out int warmPx,
+            out float darkAvg, out int brightCount)
         {
             Vector3 cp = cam.transform.position;
             float wy = cp.y - cam.orthographicSize + CityInterior.BannerHeight * 0.5f + 0.35f;
@@ -313,7 +386,8 @@ namespace FluxVerse
             int x1 = (int)(((cp.x + halfWu - cp.x) / (2f * halfW) + 0.5f) * 1920f);
             int y0 = (int)(((wy - halfHu - cp.y) / (2f * halfH) + 0.5f) * 1080f);
             int y1 = (int)(((wy + halfHu - cp.y) / (2f * halfH) + 0.5f) * 1080f);
-            double sumBri = 0, sumWarm = 0; int n = 0; brightPx = 0; warmPx = 0;
+            double sumBri = 0, sumWarm = 0, sumDark = 0;
+            int n = 0, nDark = 0; brightPx = 0; warmPx = 0; brightCount = 0;
             for (int y = y0; y < y1; y += 2)
                 for (int x = x0; x < x1; x += 2)
                 {
@@ -323,16 +397,13 @@ namespace FluxVerse
                     sumBri += b; sumWarm += w; n++;
                     if (b > 0.55f) brightPx++;
                     if (b > 0.40f && w > 0.25f) warmPx++;
+                    if (b > 0.50f) brightCount++;
+                    else { sumDark += b; nDark++; }
                 }
             int nn = System.Math.Max(1, n);
             brightness = (float)(sumBri / nn);
             warmth = (float)(sumWarm / nn);
-        }
-
-        static void BannerMetrics(Texture2D tex, Camera cam, out float brightness, out float warmth)
-        {
-            int bp, wp;
-            BannerMetrics(tex, cam, out brightness, out warmth, out bp, out wp);
+            darkAvg = nDark > 0 ? (float)(sumDark / nDark) : 0f;
         }
 
         // r16: the gold treatment lives OUTSIDE the glass - the rim strip at half

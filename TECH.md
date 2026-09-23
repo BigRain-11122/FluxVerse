@@ -21,7 +21,7 @@
 
 ```
 Tools/perceptor/
-├── scan.ps1            # 编排主脚本（固定：游标/事件出口/装配/输出·含 reality 装配段 M1.5+按日轮转 r3+单写者锁 v0.5 r6）
+├── scan.ps1            # 编排主脚本（固定：游标/事件出口/装配/输出·含 reality 装配段 M1.5+按日轮转 r3+单写者锁 v0.5 r6+quarantine 7d 生命周期 v0.6 r7）
 ├── probes/             # 探针目录（登记即生效·按文件名排序执行）
 │   ├── _template.ps1   # 新探针标准模板
 │   ├── clock.ps1        # 本地时钟 → 昼夜相位+沪深开闭市钟声 MARKET_OPEN/CLOSE（M1.5 现实链接·纯本地）
@@ -66,7 +66,8 @@ Tools/perceptor/
 3. **游标增量**：`world/verify-state.txt` 记已验行数，只验新增行——verify 成本 O(增量)，文件再大也不变慢；**游标自检（r3）**：游标越界（轮转/截断后游标>行数）或游标档不可读 → WARN+回零全量重验收敛，永不静默信任坏游标；
 4. 写侧双保险（scan v0.3）：事件出产即校验（未登记类型当场隔离·不落主流）+ `ConvertTo-Json -Compress` 全转义；
 5. **按日轮转（scan v0.4·r3）**：scan 写事件前若活流跨日——昨日流整体归档 `world/world-events-<YYYYMMDD>.jsonl`（编年史留盘·引擎 L2 回放可读），活流只含当日；同日存档已存在则追加合并不覆盖（时钟回拨安全）；verify 游标自检负责轮转后再收敛；
-6. 退出码：0=PASS（含自愈告警），1=FAIL（仅结构性问题：state 坏/registry 坏；tick 据此报警）。
+6. **隔离区 7 天生命周期（scan v0.6·r7·集团审计 P-14）**：quarantine 文件两梯清理——7 天未动整文件清空（mtime 判据=全部内容必过期）+行级 ts_utc>7d 修剪（retention.md R4 垃圾级·期满即清）；**fail-keep**：不可龄行（坏 JSON/缺 ts）永不静默毁证，留待整档陈旧梯收口——隔离区取证价值期内永不清、期满不再无限生长；
+7. 退出码：0=PASS（含自愈告警），1=FAIL（仅结构性问题：state 坏/registry 坏；tick 据此报警）。
 
 ## 五、拓展检查单（未来已验证可接）
 
@@ -131,7 +132,9 @@ gaming/FluxVerse/
 - [✅ 2026-09-23·r6] 集团审计转办件 **P-11**（P0）收口：**scan v0.5 单写者锁**（tick S1 同式+PID 存活检查：活锁<15min 退避·死 PID/坏锁 fail-open 即接管——17:37/17:42 tick×devloop 双写者同窗竞写实证根除；活锁实证=假锁退避者不动他人锁）+**tick v1.2 脏树退避**（轮首 git status 查 Tools/perceptor+schema 脏即跳过 scan+verify 本轮——审计规格只列 Tools/perceptor，扩入 schema 的理由：半编辑登记簿同型结构性假 FAIL 面；**18:27:01 OS 真轮自动退避实证**+手动复证·退避轮照写日志注明理由 exit 0 非失败）；ctx 增 worldDir+探针模板契约同步；完成回执已落本仓根 HQ-FEEDBACK.md F-20260923-01（evolution §7 面制）
 - [P1·待 CEO 署名] 集团审计转办件 **P-12**：DESIGN §七 映射表核心行为零事件源（OS_TICK_START/DONE·GATE_PASS/BLOCK·TASK_CLAIM·TRANSFER 全零发·城会静）——方案=tick/verify 补发轮次与门禁事件+fleet_tasks 登记即发+fleet/transfers 面探针；实施时新事件类型先走 T2 登记 events-registry（7 天否决窗）
 - [P1·转 Biggame] 集团审计转办件 **P-13**：GAME 城 U 号令面盲区——Biggame 按其自治法定唯一 U 号台账面后，DevLoop 加 orders_bg 探针（orders/orders_bs/orders_hq 已覆盖 quant/media/governance 三面）
-- [P2·下轮自领] 集团审计转办件 **P-14** 小病三件：quarantine 7 天轮转（retention.md R4 同律）+github_events zone 正则补 Bigmedia（media 域事件落 governance 默认）+`.codely-cli/` gitignore 行（轮首 `??` 噪音源）
+- [✅ 2026-09-23·r7] 集团审计转办件 **P-14**（P2）小病三件收口：①scan v0.6 quarantine 7 天生命周期（retention R4 两梯：文件 7d 未动整体清空+行级 ts>7d 修剪·fail-keep 不可龄行永不静默毁证·PS5.1 Z 律剥 Z 再 ParseExact）②github_events media 正则补 Bigmedia（`'BigStream|Stream|Bigmedia'`·-match 默认不区分大小写·media 域事件不再落 governance 默认）③`.gitignore` `.codely-cli/` 整目录行（原 scheduled_tasks/settings 两行子规则被吸收·轮首 `??` 噪音根除）；沙盒 14 断言全绿（过期行恰删/新鲜行留/坏行留/缺 ts 行留/7d 边界/陈档整清/zone 正则 6 例含无过匹配）+真机 scan+verify 双绿（14 探针 OK）
+- [P1·CEO 已署名·下轮认领·最高优] 集团审计转办件 **P-15 M1 引擎工程点火**（ledger P-2026-09-23-15·CEO 署名 P1 令 ~18:20「立项集团级元宇宙可视化项目，游戏化呈现，City 里是美术资产，开始走流程。优先级最高！」——**明文解除 DevLoop 引擎/美术禁区仅限此件**·认领制先到先得·分轮推进单轮 25min 预算·首轮=建工程骨架）：①Tuanjie 原生 2D 工程（正交相机/Sprite/Tilemap·禁 3D 铁律）②City 资产接线（**实址勘正 r7：`gaming/MiniGame/Art Assets/AA-022_SceneBG背景_清洁城市与万圣节动画件_GuttyKreum/CleanCityv3`——953 件 1.32MB 与台账数吻合；ledger 载「Art Assets/City」已因 MiniGame U164 正名过时**）③静态城市骨架=北外滩脑塔+黄浦江+陆家嘴三城街区（concept-shanghai 构图）④事件路由器一件（CEO_ORDER 光脉冲先做）⑤判据=编辑器可跑+截图+一件事件驱动动画；**就绪面已勘明 r7：Tuanjie 1.10.3 编辑器（2022.3.62t15）已装于 `C:\Program Files\Tuanjie\Hub\Editor\2022.3.62t15`，MiniGame 三工程 ProjectVersion 实证同版——环境零障碍**
+- [P1·CEO 令·与 P-15 同线推进] 集团审计转办件 **P-16 三司面板接入元宙 L1**（ledger P-2026-09-23-16·CEO 令 ~18:30「各个子公司可视化项目准备接入元宇宙项目，统一开发和管理，总控」·governance §1 集团层拥有表已加行=新可视化项目禁各司另建）：①接入协议落 TECH（L1 内景规范：城内建筑钻取→内景窗）②**引用不复制铁律**（Biggame 像素小镇看板/BigMoney bigmoney.html 禁重绘重建·引擎内嵌复用选型由 M1 工程实证）③统一像素壳层（1 号风 UI 框）归总控、面板数据面各司自治 ④判据=城内点建筑开内景窗见该司实况（先接 bigmoney.html 一件）
 
 ## 十、溯源
 

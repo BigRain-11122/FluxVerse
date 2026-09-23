@@ -16,6 +16,5 @@
 # Perceptor runtime data (world-state.json / world-events.jsonl)
 world/
 
-# Codely runtime
-.codely-cli/scheduled_tasks.json
-.codely-cli/settings.local.json
+# Codely runtime (P-14: whole dir - auto-saves were the untracked-noise source)
+.codely-cli/

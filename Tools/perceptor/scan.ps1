@@ -1,4 +1,8 @@
-# FluxVerse perceptor v0.5 - probe architecture + WRITE-SIDE gate + derived status
+# FluxVerse perceptor v0.6 - probe architecture + WRITE-SIDE gate + derived status
+# v0.6 2026-09-23 (r7, group audit P-14): quarantine 7-day lifecycle (retention.md
+#   R4, garbage class) - a file untouched for 7+ days is cleared whole; otherwise
+#   rows with a parseable ts_utc older than 7d are dropped. Fail-keep: a row we
+#   cannot age is never silently destroyed (forensic bias).
 # v0.5 2026-09-23 (r6, group audit P-11): single-writer lock (tick S1 pattern
 #   plus PID liveness) - the OS tick and a devloop round both call scan; the
 #   17:37/17:42 window proved two scans can race the same stream. A live lock
@@ -214,6 +218,35 @@ if (Test-Path $eventsFile) {
     $debug += ('rotation: live stream archived to ' + [System.IO.Path]::GetFileName($archive))
   }
 }
+# r7/P-14: quarantine 7-day lifecycle (retention.md R4 - expired rows are garbage)
+if (Test-Path $quarFile) {
+  $qItem = Get-Item $quarFile
+  $qCutoff = (Get-Date).ToUniversalTime().AddDays(-7)
+  if ($qItem.LastWriteTimeUtc -lt $qCutoff) {
+    [System.IO.File]::WriteAllText($quarFile, '', $utf8)
+    $debug += 'quarantine retention: file stale 7d+ untouched, cleared whole (retention R4)'
+  } else {
+    $qKeep = @()
+    $qExpired = 0
+    foreach ($ql in [System.IO.File]::ReadAllLines($quarFile)) {
+      if (-not $ql) { continue }
+      $qDrop = $false
+      try {
+        $qo = $ql | ConvertFrom-Json
+        # PS5.1 'Z' trap law: strip the literal Z, parse the rest as UTC
+        $qts = [datetime]::ParseExact(([string]$qo.ts_utc).TrimEnd('Z'), 'yyyy-MM-ddTHH:mm:ss', $null)
+        if ($qts -lt $qCutoff) { $qDrop = $true }
+      } catch { $qDrop = $false }
+      if ($qDrop) { $qExpired++ } else { $qKeep += $ql }
+    }
+    if ($qExpired -gt 0) {
+      $qOut = ''
+      if ($qKeep.Count -gt 0) { $qOut = ($qKeep -join "`n") + "`n" }
+      [System.IO.File]::WriteAllText($quarFile, $qOut, $utf8)
+      $debug += ('quarantine retention: cleared ' + $qExpired + ' expired row(s) (retention R4, 7d)')
+    }
+  }
+}
 if ($goodEvents.Count -gt 0) {
   [System.IO.File]::AppendAllText($eventsFile, (($goodEvents -join "`n") + "`n"), $utf8)
 }
@@ -223,5 +256,5 @@ foreach ($k in $cursor.Keys) { $curLines += ($k + '=' + $cursor[$k]) }
 [System.IO.File]::WriteAllText($cursorFile, ($curLines -join "`n") + "`n", $utf8)
 
 Remove-Item $lockFile -Force -ErrorAction SilentlyContinue   # release (stale takeover covers hard crashes)
-Write-Output ('perceptor v0.5 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
+Write-Output ('perceptor v0.6 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
 $debug | ForEach-Object { Write-Output ('  ' + $_) }

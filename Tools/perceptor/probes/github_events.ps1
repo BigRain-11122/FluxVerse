@@ -33,7 +33,7 @@ function Probe-github_events {
         $zone = 'governance'
         if ($short -match 'MiniGame|Biggame|FluxVerse') { $zone = 'gaming' }
         elseif ($short -match 'BigMoney|bigmoney') { $zone = 'quant' }
-        elseif ($short -match 'BigStream|Stream') { $zone = 'media' }
+        elseif ($short -match 'BigStream|Stream|Bigmedia') { $zone = 'media' }   # r7/P-14: Bigmedia = media-domain repo
         & $ctx.AddEvent 'GITHUB_EVENT' 'github' $short $zone ([string]$e.type + ' ' + $short)
         $emitted++
       }

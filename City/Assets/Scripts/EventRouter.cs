@@ -1,12 +1,12 @@
-// FluxVerse P-15 r12: event router — engine side, item 4 of the M1 ignition (CEO-signed P1).
-// Architecture (README): perceptor writes world/ stream -> engine polls READ-ONLY every ~10s -> visuals.
-// Never writes world/ or any sibling repo. Pure 2D (SpriteRenderer glow), no 3D anywhere.
-// Split: FluxEventRouter = plain logic core (poll/cursor/parse/route/pulse state machine, headless-testable)
-// + CityEventRouter = thin MonoBehaviour adapter (play mode drives core via Update).
-// Routing row 1 (mandate: one piece first): CEO_ORDER -> gold light pulse on BrainTower anchor.
-// Live rule: SeekToEnd at start — only events arriving AFTER engine start pulse; history is never replayed.
-// Rotation self-heal: active stream archives daily (scan v0.4). If line count < cursor -> cursor=0
-// (fresh file holds at most a few post-midnight lines; documented replay, no deep-history replay).
+// FluxVerse P-15 r12 (split r14): event router pure logic core — poll/cursor/parse/route
+// CEO_ORDER -> gold glow pulse, headless-testable. The MonoBehaviour adapter
+// CityEventRouter now lives in CityEventRouter.cs (SEPARATE FILE LAW, r14: a component
+// class must match its .cs file name or the saved scene reference dies across editor
+// sessions). Routing row 1 (mandate: one piece first): CEO_ORDER -> gold light pulse on
+// BrainTower anchor. Live rule: SeekToEnd at start — only events arriving AFTER engine
+// start pulse; history is never replayed. Rotation self-heal: active stream archives
+// daily (scan v0.4). If line count < cursor -> cursor=0 (fresh file holds at most a few
+// post-midnight lines; documented replay, no deep-history replay).
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -200,35 +200,5 @@ namespace FluxVerse
         }
     }
 
-    // thin scene component: saved into CityScene by EventRouterProof; play mode runs the loop for real
-    public class CityEventRouter : MonoBehaviour
-    {
-        FluxEventRouter core;
-
-        public FluxEventRouter Core
-        {
-            get
-            {
-                if (core == null)
-                {
-                    // <repo>/world/world-events.jsonl from <repo>/City/Assets
-                    string repoRoot = Path.GetDirectoryName(Path.GetDirectoryName(Application.dataPath));
-                    core = new FluxEventRouter(Path.Combine(repoRoot, "world", "world-events.jsonl"), FindAnchor);
-                    core.SeekToEnd();
-                }
-                return core;
-            }
-        }
-
-        static Vector3? FindAnchor(string name)
-        {
-            GameObject a = GameObject.Find(name);
-            return a == null ? (Vector3?)null : a.transform.position;
-        }
-
-        void Update()
-        {
-            Core.Tick(Time.deltaTime);
-        }
-    }
+    // scene adapter CityEventRouter lives in CityEventRouter.cs (SEPARATE FILE LAW, r14)
 }

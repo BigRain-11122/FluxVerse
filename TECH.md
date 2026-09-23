@@ -25,10 +25,10 @@ Tools/perceptor/
 ├── probes/             # 探针目录（登记即生效·按文件名排序执行）
 │   ├── _template.ps1   # 新探针标准模板
 │   ├── evolution.ps1   # cph4/evolution-ledger.md → 提案数
-│   ├── fleet_machines.ps1 # fleet/machines/*.json → fleet 实体+HEARTBEAT
+│   ├── fleet_machines.ps1 # fleet/machines/*.json + MiniGame 快照 B/C 分机 → fleet 实体+HEARTBEAT
 │   ├── fleet_tasks.ps1 # fleet/tasks/*.json → tasks
 │   ├── git.ps1         # 5 仓 git → COMMIT 事件+zones 活跃度+history
-│   ├── orders.ps1      # fleet/orders/*.md → CEO_ORDER
+│   ├── orders.ps1      # 三台账面：fleet/orders + 集团台账 docs/orders.md + BigStream/orders → CEO_ORDER
 │   └── snapshot.ps1    # MiniGame 自动化快照 → GAME 城活跃脉冲
 └── verify.ps1          # 验证门禁（schema+登记簿校验）
 ```
@@ -50,14 +50,14 @@ Tools/perceptor/
   - 禁止：偷偷改字段含义（= 协议作伪，门禁拦截）。
 - **事件登记簿**（`schema/events-registry.json`）：事件类型唯一仲裁面——探针不得产出未登记事件，verify.ps1 按此校验（集团登记簿治理的协议层移植）。
 
-## 四、验证门禁 verify.ps1（扎实正体·数据质量闸机）
+## 四、验证门禁 verify.ps1（扎实正体·数据质量闸机 v0.3·CEO 审计修）
 
-每次产出后校验，**FAIL 即阻断当轮**（旧 state 保留不覆盖）：
-1. world-state.json 可解析 + protocol 版本已登记；
-2. zones/fleet/tasks/products 数组结构完整、必填字段在位；
-3. world-events.jsonl 每行可解析 + type 在登记簿内；
-4. 时间戳格式合法；
-5. 退出码：0=PASS，1=FAIL（tick 据此决定是否上轮日志报警）。
+两阶段晋升制：感知器写 `world-state.json.new`，verify **PASS 才原子晋升**为 `world-state.json`；FAIL 则旧 state 原样保留、.new 废弃——「FAIL 阻断不覆盖」逐字为真。
+1. state(.new) 可解析 + protocol 版本已登记 + **内字段逐项校验**：zones（id/name/status/activity·必备三 zone）／fleet（id/online/last_seen/cores/current_task）／tasks（id/zone/owner/status）／flows（id/zone）／products（id/line/status·必备三产品）／governance／history；
+2. 事件流**自愈**：坏行（不可解析/未登记类型/缺 ts_utc）移入 `world-events.quarantine.jsonl` 并从主流剔除——门禁隔离坏死行，**永不因坏行永久卡死**；
+3. **游标增量**：`world/verify-state.txt` 记已验行数，只验新增行——verify 成本 O(增量)，文件再大也不变慢；
+4. 写侧双保险（scan v0.3）：事件出产即校验（未登记类型当场隔离·不落主流）+ `ConvertTo-Json -Compress` 全转义；
+5. 退出码：0=PASS（含自愈告警），1=FAIL（仅结构性问题：state 坏/registry 坏；tick 据此报警）。
 
 ## 五、拓展检查单（未来已验证可接）
 
@@ -72,7 +72,7 @@ Tools/perceptor/
 
 ## 六、FluxVerseTick（自迭代正体·集团同源 OS 循环）
 
-- 形态：10 分钟一轮，`Tools/tick/tick.ps1` 直调，中文 mandate 外置 `Tools/tick/mandate.txt`（编码律：脚本 ASCII，中文在 UTF-8 数据件）；
+- 形态：10 分钟一轮，`Tools/tick/tick.ps1` 直调，中文 mandate 外置 `Tools/tick/mandate.txt`（编码律：脚本 ASCII，中文在 UTF-8 数据件）；单实例锁=`logs/tick.lock`（15 分钟陈旧接管·CEO 审计修 S1）；
 - 每轮职责（v1.0）：①跑感知器 ②跑验证门禁 ③健康检查（写 logs/）④技术债自领（见 §九 backlog，P0 小步直改，P1+ 记 backlog 待 CEO 署名）；
 - **升级须 CEO**：新探针上新事件类型属 T2（7 天否决窗）；改协议版本/动引擎架构属 P1 须署名；
 - 反重复铁律：先读后写、复用禁重建、同仓单执行体退避（多窗时先 git status）。
@@ -110,6 +110,7 @@ gaming/FluxVerse/
 - [P2] 现实链接首批五探针 clock/weather/market+calendar/fx/github_events（CEO 新令「要和现实产生链接和互动」·通道台账与视觉映射=docs/research/R-20260923-reality-link.md + DESIGN §十五·T2 流程落地）
 - [P2] 新事件登记 MARKET_OPEN/MARKET_CLOSE/WEATHER_ALERT（随探针落地·events-registry T2·7 天否决窗）
 - [P1] 令行通道：指令文件出口→签收关卡→OS 循环消费→回流事件（环B 闭环=数字影子升格真孪生的唯一通道·Kritzinger 2018 判据·署名按 CEO 委托令 O-20260923-1620 分级）
+- [P2] Biggame U-登记簿探针（先定位 MiniGame 侧登记簿文件；orders 探针已覆盖面=fleet orders+集团台账+BigStream orders）
 
 ## 十、溯源
 

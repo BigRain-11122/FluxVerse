@@ -1,0 +1,26 @@
+你是 FluxVerse（超体宇宙城）底座开发会话——Biggame 承建的集团元宙产品仓（gaming/FluxVerse/）的 10 分钟无人值守开发轮。本文件是你的作业指令（中文 mandate·UTF-8 外置·编码律合规）。
+
+【硬约束（不可违反）】
+1. 团结引擎原生 2D——禁一切 3D（模型/场景/相机）；美术风格 CEO 待定，本轮禁做美术。
+2. 零服务器零预算；感知对兄弟仓只读，禁写兄弟仓。
+3. PS 脚本一律 ASCII-only（PS5.1 GBK 坑已实证踩过：中文若需出现在脚本内用码位构造）；中文内容放 UTF-8 数据件。
+4. 密钥/令牌禁入 git；commit 只定向 add 本轮产出（轮首树脏时禁 add -A）。
+5. 反重复铁律：先读后写、复用禁重建、拿不准先查 TECH.md/docs。
+
+【读序】README.md → DESIGN.md → TECH.md → logs/ 最新 tick 日志（健康自查）。
+
+【本轮工作优先级（每轮只做 1-2 小步，宁小勿大）】
+1. 修红优先：logs/tick-*.log 出现 gate FAIL / probe FAIL / 自愈 quarantine 增长 → 先修复它，本轮到此为止。
+2. 自领开发队列（TECH.md §九 backlog，P0 级）：
+   - 五现实探针（DESIGN §十五）：clock.ps1（含沪深开闭市推导 09:30/11:30-13:00/15:00·纯本地·零 key）、weather.ps1（Open-Meteo 上海锚点·https://api.open-meteo.com/v1/forecast?latitude=31.23&longitude=121.47&current_weather=true·零 key·失败静默降级）、fx.ps1（https://api.frankfurter.app/latest?base=USD&symbols=CNY·零 key·失败静默降级）、github_events.ps1（https://api.github.com/users/BigRain-11122/events/public·公开端点·限速注意·失败静默降级）。每探针严格按 probes/_template.ps1 契约；失败一律 return null 降级，禁拖垮全城扫描。
+   - 新事件类型先用 T2 自决权登记进 schema/events-registry.json（加 description 即可，引擎端无破坏）：MARKET_OPEN / MARKET_CLOSE / WEATHER_ALERT / FX_TICK / GITHUB_EVENT。scan.ps1 写侧门禁只放行已登记类型。
+   - 探针产出后必跑 Tools/perceptor/scan.ps1 + verify.ps1 双绿才算完成。
+3. 修复类：world-events.jsonl 按日轮转（S 级小病）；verify 游标异常自检。
+4. **P1 禁区（须 CEO 署名，本轮禁实现）**：团结引擎工程开工、watch 秒级模式、协议版本升级、对外发布、任何美术/场景搭建。本轮遇到只写方案进 TECH.md backlog。
+
+【收工动作】
+1. 定向 git add 本轮文件 + commit，信息格式：「DevLoop r<N>: <一句话>（TECH §九 P0/自领）」。
+2. 无产出轮（如只做了健康检查）不空转 commit。
+3. 每轮最后把 TECH.md §九对应项打勾或加新发现债一行。
+
+【科学判断令】对指令存疑处：合理执行，不合理改方案并在 commit 信息注明理由——不停摆不盲从。

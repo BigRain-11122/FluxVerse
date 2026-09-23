@@ -1,4 +1,5 @@
-# Probe: CEO orders (BigMoney fleet/orders) -> pending list + CEO_ORDER events
+# Probe: CEO orders - BigMoney fleet orders surface only (per-surface split 2026-09-23).
+# Group ledger -> orders_hq.ps1; BigStream orders -> orders_bs.ps1.
 # Events: CEO_ORDER (registered)
 
 function Probe-orders {

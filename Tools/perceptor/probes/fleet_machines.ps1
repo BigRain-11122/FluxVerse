@@ -1,4 +1,5 @@
-# Probe: fleet machines (BigMoney heartbeat) -> fleet entities + HEARTBEAT events
+# Probe: fleet machines - BigMoney heartbeat files (bm-a/bm-b) only.
+# Biggame A/B/C machines -> fleet_minigame.ps1 (per-surface split 2026-09-23).
 # Events: HEARTBEAT (registered)
 
 function Probe-fleet_machines {
@@ -20,7 +21,7 @@ function Probe-fleet_machines {
         $online = ((Get-Date) - $ls).TotalMinutes -le 20
       } catch {}
       $task = [string]$m.current_task
-      if ($task.Length -gt 120) { $task = $task.Substring(0,120) + '...' }
+      if ($task.Length -gt 120) { $task = $task.Substring(0,120) + ([string][char]46 + [string][char]46 + [string][char]46) }
       $cores = 0
       try { $cores = [int]$m.cpu_cores } catch {}
       $fleet += @{ id = $id; online = $online; last_seen = $seenAt; cores = $cores; current_task = $task }

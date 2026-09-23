@@ -122,6 +122,15 @@ if ($stateParts.ContainsKey('ceo_orders_bs')) {
 }
 $zoneStatus = @{ gaming = (Get-ProductStatus $minigameDir); quant = (Get-ProductStatus $bigmoneyDir); media = (Get-ProductStatus $bigstreamDir) }
 
+# M1.5 reality link: clock/weather/fx/github state fragments -> one state section
+# (protocol 0.1: additive fields are free; engine ignores what it does not map)
+$reality = @{}
+foreach ($rk in @('city_day_phase','beijing_hhmm','market_phase','weekday',
+                  'weather_kind','weather_code','weather_temp_c','weather_wind_ms',
+                  'fx_usdcny','fx_date','github_pulse')) {
+  if ($stateParts.ContainsKey('reality_' + $rk)) { $reality[$rk] = $stateParts['reality_' + $rk] }
+}
+
 $state = [ordered]@{
   protocol = 'fluxverse/0.1'
   ts_utc = $now
@@ -148,6 +157,7 @@ $state = [ordered]@{
     evolution = @{ next_tick = 'SUN 09:17'; open_proposals = $evOpen }
   }
   history = @{ commits_total = $total; last_commit_ts = $lastC }
+  reality = $reality
 }
 
 # ---------- write outputs (state -> .new, verify promotes on PASS) ----------

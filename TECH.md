@@ -21,15 +21,22 @@
 
 ```
 Tools/perceptor/
-├── scan.ps1            # 编排主脚本（固定：游标/事件出口/装配/输出）
+├── scan.ps1            # 编排主脚本（固定：游标/事件出口/装配/输出·含 reality 装配段 M1.5）
 ├── probes/             # 探针目录（登记即生效·按文件名排序执行）
 │   ├── _template.ps1   # 新探针标准模板
+│   ├── clock.ps1        # 本地时钟 → 昼夜相位+沪深开闭市钟声 MARKET_OPEN/CLOSE（M1.5 现实链接·纯本地）
 │   ├── evolution.ps1   # cph4/evolution-ledger.md → 提案数
-│   ├── fleet_machines.ps1 # fleet/machines/*.json + MiniGame 快照 B/C 分机 → fleet 实体+HEARTBEAT
+│   ├── fleet_machines.ps1 # BigMoney fleet/machines/*.json → fleet 实体+HEARTBEAT
+│   ├── fleet_minigame.ps1 # MiniGame 快照 A/B/C 机 → fleet_biggame 实体
 │   ├── fleet_tasks.ps1 # fleet/tasks/*.json → tasks
+│   ├── fx.ps1          # frankfurter ECB 汇率 → USDCNY+FX_TICK（资金道流量计·M1.5·零 key）
 │   ├── git.ps1         # 5 仓 git → COMMIT 事件+zones 活跃度+history
-│   ├── orders.ps1      # 三台账面：fleet/orders + 集团台账 docs/orders.md + BigStream/orders → CEO_ORDER
-│   └── snapshot.ps1    # MiniGame 自动化快照 → GAME 城活跃脉冲
+│   ├── github_events.ps1 # GitHub 公共事件 → GITHUB_EVENT（数据道生态脉冲·M1.5·零 key）
+│   ├── orders.ps1      # BigMoney fleet orders → CEO_ORDER（quant 面）
+│   ├── orders_bs.ps1   # BigStream/orders → CEO_ORDER（media 面）
+│   ├── orders_hq.ps1   # 集团台账 docs/orders.md → CEO_ORDER（governance 面）
+│   ├── snapshot.ps1    # MiniGame 自动化快照 → GAME 城活跃脉冲
+│   └── weather.ps1     # Open-Meteo 上海 → 天气片段+WEATHER_ALERT（M1.5·零 key）
 └── verify.ps1          # 验证门禁（schema+登记簿校验）
 ```
 
@@ -107,8 +114,9 @@ gaming/FluxVerse/
 - [P2] MiniGame 任务面板/BigStream 产出探针
 - [P2] HQ-FEEDBACK 感知探针（向上反馈通道可视化）
 - [P1] 风格定稿 → 城市美术资产管线
-- [P2] 现实链接首批五探针 clock/weather/market+calendar/fx/github_events（CEO 新令「要和现实产生链接和互动」·通道台账与视觉映射=docs/research/R-20260923-reality-link.md + DESIGN §十五·T2 流程落地）
-- [P2] 新事件登记 MARKET_OPEN/MARKET_CLOSE/WEATHER_ALERT（随探针落地·events-registry T2·7 天否决窗）
+- [✅ 2026-09-23·r1] 现实链接首批五探针（CEO 新令「要和现实产生链接和互动」·通道台账与视觉映射=docs/research/R-20260923-reality-link.md + DESIGN §十五）：clock/weather/fx/github_events 四针已落地（全零 key·静默降级·游标增量），**market+calendar 一针剩余**（akshare 依赖 BigMoney 同源·交易日历可修 clock 的节假日近似——下轮候选）
+- [✅ 2026-09-23·r1] 新事件登记 MARKET_OPEN/MARKET_CLOSE/WEATHER_ALERT（T2·7 天否决窗）——实际登记五型（+FX_TICK/GITHUB_EVENT），否决窗至 2026-09-30
+- [新法·已修] **PS5.1 ParseExact 'Z' 陷阱**：格式串含字面 'Z' = .NET 按 UTC 解析后**转本地时**（实证：clock 首版 UTC+8 双重偏移成次日凌晨）——解析 UTC 戳一律剥 Z 再 ParseExact 或用 AdjustToUniversal；未来任何探针吃时间戳适用
 - [P1] 令行通道：指令文件出口→签收关卡→OS 循环消费→回流事件（环B 闭环=数字影子升格真孪生的唯一通道·Kritzinger 2018 判据·署名按 CEO 委托令 O-20260923-1620 分级）
 - [P2] Biggame U-登记簿探针（先定位 MiniGame 侧登记簿文件；orders 探针已覆盖面=fleet orders+集团台账+BigStream orders）
 

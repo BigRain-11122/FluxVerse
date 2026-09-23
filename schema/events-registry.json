@@ -21,6 +21,11 @@
     "MACHINE_RETIRE":     { "actor": "machine id", "zone": "any",         "desc": "machine retired - reserved" },
     "LINE_OPEN":          { "actor": "line id",    "zone": "any",         "desc": "five-step open-line progress - reserved" },
     "LINE_CLOSE":         { "actor": "line id",    "zone": "any",         "desc": "line closed - reserved" },
-    "TRANSFER":           { "actor": "machine id", "zone": "any",         "desc": "fleet bulk transfer - reserved" }
+    "TRANSFER":           { "actor": "machine id", "zone": "any",         "desc": "fleet bulk transfer - reserved" },
+    "MARKET_OPEN":        { "actor": "clock",       "zone": "quant",       "desc": "reality link: Shanghai exchange session opens (09:30 am / 13:00 pm) - T2 2026-09-23" },
+    "MARKET_CLOSE":       { "actor": "clock",       "zone": "quant",       "desc": "reality link: Shanghai exchange session closes (11:30 lunch / 15:00 day close) - T2 2026-09-23" },
+    "WEATHER_ALERT":      { "actor": "weather",     "zone": "any",         "desc": "reality link: Shanghai extreme weather (gale wind / heavy rain-snow / thunderstorm) - T2 2026-09-23" },
+    "FX_TICK":            { "actor": "fx",         "zone": "quant",       "desc": "reality link: USDCNY reference rate changed (ECB via frankfurter) - T2 2026-09-23" },
+    "GITHUB_EVENT":       { "actor": "github",      "zone": "any",         "desc": "reality link: public GitHub activity of group account (ecosystem pulse) - T2 2026-09-23" }
   }
 }

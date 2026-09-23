@@ -1,10 +1,18 @@
 // FluxVerse P-28 item 3 (r35): neon street-sign pure rules (source pack = warped-city,
 // CC0 ansimuz, ledger City/Assets/ArtPacks/ARTPACKS-LEDGER.md). DESIGN section 9 base
 // visual law: "neon street signs (FLUX/CPH4/company names) + street data-duct light
-// lines". This slice wires the pack's EXISTING neon props onto the built facades;
-// the PSD company-name rework (FLUX/CPH4 plates) stays a ledger debt. Pure static
-// manifest = single source of truth for the scene wiring (NeonProof builds the
-// scene objects from this table; a future builder merge can call the same table).
+// lines". r35 wired the pack's EXISTING neon props onto the built facades; r38 closes
+// the recorded debt with six DevLoop-baked company plates (bake-company-plates.ps1,
+// pool font FT-016 PressStart2P OFL, reference-not-copy) living in the pack's
+// company-plates/ subfolder: FLUX + CPH4 headers on the brain-tower glass facade
+// (group brand above the evolution engine - tower five-layer canon), BIGGAME standing
+// on the GAME west roofline, BIGMONEY crown plate under the QUANT tower roof,
+// BIGSTREAM standing on the north-east MEDIA low-rise, BIGLIFE standing on the
+// north-west-mid low-rise. Plate colors follow the five-color placement law
+// (CEO white / Lucy blue / data cyan / capital gold / flow magenta; BIGLIFE amber =
+// ambient scenery channel, never a functional light). Pure static manifest = single
+// source of truth for the scene wiring (NeonProof builds the scene objects from this
+// table; RobotProof/ResidentProof consume the same rects for their clearance gates).
 // No MonoBehaviour on purpose: signs are STATIC built-city scenery persisted in the
 // scene exactly like the tilemaps (runtime-only law applies to transient visuals
 // such as pulses/banners/skyline quads, r12/r16/r34). Placement mirrors the
@@ -26,7 +34,7 @@ namespace FluxVerse
     {
         public const int Order = 6;            // mounting layer: Props 4 < signs 6 < tint 8
         public const float PPU = 16f;           // world law (r13); importer enforced, never assumed
-        public const int Count = 12;
+        public const int Count = 18;
         public const string NamePrefix = "Neon";
 
         public struct Sign
@@ -86,6 +94,18 @@ namespace FluxVerse
             new Sign { name = "NeonKiosk",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/monitorface/monitor-face-1.png",  pxW = 21, pxH = 18, x = 4.5f,    y = -10.6f },
             // 11. QUANT rooftop lattice antenna: rises from the roof edge (-2) to +4 against the sky
             new Sign { name = "NeonAntenna",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/antenna.png",                     pxW = 22, pxH = 96, x = 0.0f,    y = 1.0f },
+            // 12. brain-tower facade header: group brand FLUX (CEO white core, Lucy-blue glow)
+            new Sign { name = "NeonFlux",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-flux.png",      pxW = 44, pxH = 20, x = 0.0f,    y = 12.75f },
+            // 13. brain-tower facade below the brand: CPH4 evolution-engine plate (deep-layer blue)
+            new Sign { name = "NeonCPH4",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-cph4.png",      pxW = 44, pxH = 20, x = 0.0f,    y = 10.5f },
+            // 14. GAME west roofline standing plate (data cyan; legs sink 0.125u into the roof)
+            new Sign { name = "NeonBiggame",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-biggame.png",   pxW = 68, pxH = 28, x = -22.6f,  y = -4.25f },
+            // 15. QUANT tower facade crown under the roof edge: capital gold
+            new Sign { name = "NeonBigmoney",  path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-bigmoney.png",  pxW = 76, pxH = 20, x = 0.0f,    y = -3.3f },
+            // 16. north-east MEDIA low-rise rooftop: flow magenta (clear of the scroll tip between the legs)
+            new Sign { name = "NeonBigstream", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-bigstream.png", pxW = 84, pxH = 28, x = 27.0f,   y = 12.75f },
+            // 17. north-west-mid low-rise rooftop: BIGLIFE residents company (warm amber, ambient)
+            new Sign { name = "NeonBiglife",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-biglife.png",   pxW = 68, pxH = 28, x = -8.0f,   y = 12.75f },
         };
     }
 }

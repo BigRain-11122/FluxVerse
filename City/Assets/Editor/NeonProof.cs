@@ -1,23 +1,30 @@
-// FluxVerse P-28 item 3 (r35): batch proof for the neon street-sign mounting layer
-// (warped-city pack, CC0). Sentinel pattern (r11/r34 style):
+// FluxVerse P-28 item 3 (r35 + r38): batch proof for the neon street-sign mounting
+// layer (warped-city pack, CC0 + r38 DevLoop-baked company plates). Sentinel pattern
+// (r11/r34 style):
 //   pass 1: logs/neon.run        -> FluxVerse.NeonProof.BatchRun   -> logs/neon.done
 //   pass 2: logs/neon-reload.run -> FluxVerse.NeonProof.ReloadGate -> logs/neon-reload.done
 // Sections:
-//  A pure-core gates (NeonRules, headless): 12-entry manifest, paths under the pack,
-//    native px sizes, every sign fully inside the L0 view AND the tint band, pairwise
-//    min spacing, order 6 sits between Props 4 and tint 8.
-//  B asset gate: the 11 consumed sprites forced to Sprite + Single + Point + PPU16 +
+//  A pure-core gates (NeonRules, headless): 18-entry manifest (12 pack props + 6
+//    company plates), paths under the pack, native px sizes, every sign fully inside
+//    the L0 view AND the tint band, pairwise min spacing, order 6 sits between
+//    Props 4 and tint 8.
+//  B asset gate: the 17 consumed sprites forced to Sprite + Single + Point + PPU16 +
 //    no mips (r34 importer-default-PPU100 law, idempotent); rect == table px exactly.
-//  C CityScene wiring: stale Neon* sweep -> 12 sign GOs from the table (fresh
+//  C CityScene wiring: stale Neon* sweep -> 18 sign GOs from the table (fresh
 //    LoadAssetAtPath per r10 law) -> idempotent second sweep+build -> save -> disk
-//    round-trip; r34/r31 neighbor regressions (skyline sprites, bed clip, interior,
-//    rig, L0 camera, non-empty tilemaps, runtime-only law).
+//    round-trip; r34/r31/r36/r37 neighbor regressions (skyline sprites, bed clip,
+//    interior, rig, L0 camera, non-empty tilemaps, robots 8, residents 12,
+//    runtime-only law).
 //  D render gates (real CityScene, dusk anchor + night): per-sign window delta vs a
-//    signs-hidden baseline (clean attribution), dusk visibility for every sign,
-//    night law = the tint dims the neon but never kills it (count + luminance
-//    thresholds), dusk > night luminance (atmosphere owns the built city).
+//    signs-hidden baseline, dusk visibility for every sign, night law = the tint
+//    dims the neon but never kills it (count + luminance thresholds), dusk > night
+//    luminance (atmosphere owns the built city). Waiver (r38, documented): the
+//    company plates mount in saturated rooflines, so four windows overlap a
+//    neighbor sign's overhang TIP (west2 / OPEN / scroll / QUANT flank tops) - those
+//    lit tip pixels fold into the plate's delta count; every gate here is a MINIMUM,
+//    so the inflation is safe, per-plate purity is waived for those rows only.
 //  E pass 2: everything survives an editor restart (SEPARATE FILE LAW spirit:
-//    persisted scene objects + importer settings + exactly 12, zero duplicates).
+//    persisted scene objects + importer settings + exactly 18, zero duplicates).
 // Fail-loud: any broken assumption throws into the .done report. ASCII only. No 3D.
 using System;
 using System.IO;
@@ -91,7 +98,7 @@ namespace FluxVerse
         static string Prove()
         {
             // ---- A. pure-core gates on the manifest ----
-            Chk(NeonRules.Count == 12, "manifest must hold 12 signs");
+            Chk(NeonRules.Count == 18, "manifest must hold 18 signs (12 pack + 6 plates)");
             Chk(NeonRules.Order == 6, "mounting layer order must be 6 (Props 4 < signs < tint 8)");
             Chk(NeonRules.Order > 4 && NeonRules.Order < 8, "order 6 not between Props 4 and tint 8");
             for (int i = 0; i < NeonRules.Count; i++)
@@ -132,19 +139,19 @@ namespace FluxVerse
                     && Math.Abs(sp.bounds.size.y - NeonRules.WorldH(i)) < 0.01f,
                     "natural bounds != px/16 (PPU100 shrink disease) at " + NeonRules.Name(i));
             }
-            Chk(unique == 11, "expected 11 unique consumed sprites, got " + unique);
+            Chk(unique == 17, "expected 17 unique consumed sprites, got " + unique);
 
             // ---- C. CityScene wiring: sweep -> build -> idempotent rebuild -> save ----
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             Chk(scene.isLoaded, "CityScene failed to open");
             BuildSigns();
-            BuildSigns();   // idempotency: the second sweep+build must land on exactly 12
-            Chk(CountSigns() == 12, "idempotent rebuild count != 12: " + CountSigns());
+            BuildSigns();   // idempotency: the second sweep+build must land on exactly 18
+            Chk(CountSigns() == 18, "idempotent rebuild count != 18: " + CountSigns());
             bool saved = EditorSceneManager.SaveScene(scene);
             Chk(saved, "scene save failed");
 
             Scene reopened = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-            Chk(CountSigns() == 12, "persisted sign count != 12: " + CountSigns());
+            Chk(CountSigns() == 18, "persisted sign count != 18: " + CountSigns());
             for (int i = 0; i < NeonRules.Count; i++)
             {
                 GameObject go = GameObject.Find(NeonRules.Name(i));
@@ -167,6 +174,16 @@ namespace FluxVerse
             Chk(bed != null && bed.noiseBed != null && bed.noiseBed.length > 0f, "r31 bed clip lost after save");
             Chk(UnityEngine.Object.FindObjectsOfType<CityInterior>().Length >= 1, "CityInterior lost after save");
             Chk(UnityEngine.Object.FindObjectsOfType<CityCameraRig>().Length >= 1, "CityCameraRig lost after save");
+            // r36/r37 neighbor layers must survive our save too (their proofs assert
+            // the reverse direction - this is the symmetric half of the contract)
+            int robotsKept = 0, residentsKept = 0;
+            foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
+            {
+                if (sr.name.StartsWith(RobotRules.NamePrefix)) robotsKept++;
+                if (sr.name.StartsWith(ResidentRules.NamePrefix)) residentsKept++;
+            }
+            Chk(robotsKept == RobotRules.Count, "r36 robots lost after our save: " + robotsKept);
+            Chk(residentsKept == ResidentRules.Count, "r37 residents lost after our save: " + residentsKept);
             GameObject camGo = GameObject.Find("CityCamera");
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && cam.orthographic && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f,
@@ -180,11 +197,11 @@ namespace FluxVerse
             amb.EnsureVisuals();
             amb.ApplyAmbient(AmbientTier.Dusk);
             SpriteRenderer[] signs = CollectSignRenderers();
-            Chk(signs.Length == 12, "renderer collection != 12");
+            Chk(signs.Length == 18, "renderer collection != 18");
             SetSigns(signs, false);
             Texture2D duskBase = Shot(cam, null);
             SetSigns(signs, true);
-            Texture2D duskOn = Shot(cam, "m1-r35-neon-dusk.png");
+            Texture2D duskOn = Shot(cam, "m1-r38-plates-dusk.png");
             int duskTot = 0; float duskLum = 0f; int duskMin = int.MaxValue; string duskWorst = "";
             for (int i = 0; i < NeonRules.Count; i++)
             {
@@ -200,7 +217,7 @@ namespace FluxVerse
             SetSigns(signs, false);
             Texture2D nightBase = Shot(cam, null);
             SetSigns(signs, true);
-            Texture2D nightOn = Shot(cam, "m1-r35-neon-night.png");
+            Texture2D nightOn = Shot(cam, "m1-r38-plates-night.png");
             int nightTot = 0; float nightLum = 0f; int nightMin = int.MaxValue; string nightWorst = "";
             for (int i = 0; i < NeonRules.Count; i++)
             {
@@ -229,8 +246,8 @@ namespace FluxVerse
             UnityEngine.Object.DestroyImmediate(nightBase); UnityEngine.Object.DestroyImmediate(nightOn);
 
             return "asserts=" + asserts
-                + " table=12 unique_sprites=" + unique
-                + " scene(saved=" + saved + ",12 persisted,neighbors_ok)"
+                + " table=18 unique_sprites=" + unique
+                + " scene(saved=" + saved + ",18 persisted,robots8+residents12_kept,neighbors_ok)"
                 + " render(dusk_px=" + duskTot + " worst=" + duskWorst + ":" + duskMin
                 + " night_px=" + nightTot + " worst=" + nightWorst + ":" + nightMin
                 + " lum dusk=" + duskLum.ToString("F3") + " night=" + nightLum.ToString("F3") + ")"
@@ -241,7 +258,7 @@ namespace FluxVerse
         {
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             if (!scene.isLoaded) throw new InvalidOperationException("CityScene failed to load");
-            Chk(CountSigns() == 12, "sign count after editor restart != 12: " + CountSigns());
+            Chk(CountSigns() == 18, "sign count after editor restart != 18: " + CountSigns());
             for (int i = 0; i < NeonRules.Count; i++)
             {
                 GameObject go = GameObject.Find(NeonRules.Name(i));
@@ -249,11 +266,12 @@ namespace FluxVerse
                 SpriteRenderer sr = go != null ? go.GetComponent<SpriteRenderer>() : null;
                 Chk(sr != null && sr.sprite != null, "sign sprite unresolved after restart: " + NeonRules.Name(i));
             }
-            // importer spot check across the restart (hotel / neon frame / antenna)
+            // importer spot check across the restart (hotel / neon frame / antenna / plate)
             string[] spot = {
                 "Assets/ArtPacks/warped-city/ENVIRONMENT/props/hotel-sign.png",
                 "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-1.png",
-                "Assets/ArtPacks/warped-city/ENVIRONMENT/props/antenna.png" };
+                "Assets/ArtPacks/warped-city/ENVIRONMENT/props/antenna.png",
+                "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-flux.png" };
             foreach (string p in spot)
             {
                 TextureImporter imp = (TextureImporter)TextureImporter.GetAtPath(p);
@@ -271,11 +289,21 @@ namespace FluxVerse
             GameObject camGo = GameObject.Find("CityCamera");
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f, "L0 camera broken after restart");
-            return "reload_gate=OK signs=12/12 persisted importers=sprite+point+ppu16+nemip"
-                + " skyline=2/2 neighbors=3 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
+            int robotsKept = 0, residentsKept = 0;
+            foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
+            {
+                if (sr.name.StartsWith(RobotRules.NamePrefix)) robotsKept++;
+                if (sr.name.StartsWith(ResidentRules.NamePrefix)) residentsKept++;
+            }
+            Chk(robotsKept == RobotRules.Count, "robots lost across restart: " + robotsKept);
+            Chk(residentsKept == ResidentRules.Count, "residents lost across restart: " + residentsKept);
+            return "reload_gate=OK signs=18/18 persisted importers=sprite+point+ppu16+nemip"
+                + " skyline=2/2 robots=" + robotsKept + "/" + RobotRules.Count
+                + " residents=" + residentsKept + "/" + ResidentRules.Count
+                + " neighbors=3 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
         }
 
-        // sweep every root-level Neon* GO, then build the 12 from the manifest
+        // sweep every root-level Neon* GO, then build the 18 from the manifest
         // (fresh LoadAssetAtPath at every use = r10 fake-null law)
         static void BuildSigns()
         {

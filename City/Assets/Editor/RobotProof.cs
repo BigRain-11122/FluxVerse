@@ -14,7 +14,7 @@
 //    LoadAssetAtPath per r10 law) -> STAND gate re-derived from the live tilemaps
 //    (Ground pavement or Roads cell under every robot - never water/roof/air) ->
 //    idempotent second sweep+build -> save -> disk round-trip; r35/r34/r31
-//    neighbor regressions (neon 12 persisted, skyline sprites, bed clip, interior,
+//    neighbor regressions (neon signs persisted per NeonRules.Count, skyline sprites, bed clip, interior,
 //    rig, L0 camera, non-empty tilemaps, runtime-only law).
 //  D render gates (real CityScene, dusk anchor + night): per-robot window delta vs
 //    a robots-hidden baseline (clean attribution), dusk visibility for every robot,
@@ -198,7 +198,7 @@ namespace FluxVerse
             int neonKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(NeonRules.NamePrefix)) neonKept++;
-            Chk(neonKept == 12, "r35 neon signs lost after our save: " + neonKept);
+            Chk(neonKept == NeonRules.Count, "r35+r38 neon signs lost after our save: " + neonKept);
             GameObject ambGo = GameObject.Find("CityAmbient");
             CityAmbient amb = ambGo != null ? ambGo.GetComponent<CityAmbient>() : null;
             Chk(amb != null, "CityAmbient lost after save");
@@ -268,7 +268,7 @@ namespace FluxVerse
 
             return "asserts=" + asserts
                 + " table=8 unique_frames=" + unique
-                + " scene(saved=" + saved + ",8 persisted,stand_gate=street/pavement,neon12_kept,neighbors_ok)"
+                + " scene(saved=" + saved + ",8 persisted,stand_gate=street/pavement,neon" + NeonRules.Count + "_kept,neighbors_ok)"
                 + " render(dusk_px=" + duskTot + " worst=" + duskWorst + ":" + duskMin
                 + " night_px=" + nightTot + " worst=" + nightWorst + ":" + nightMin
                 + " lum dusk=" + duskLum.ToString("F3") + " night=" + nightLum.ToString("F3") + ")"
@@ -291,7 +291,7 @@ namespace FluxVerse
             int neonKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(NeonRules.NamePrefix)) neonKept++;
-            Chk(neonKept == 12, "neon signs lost across restart: " + neonKept);
+            Chk(neonKept == NeonRules.Count, "neon signs lost across restart: " + neonKept);
             // importer spot check across the restart (standing / together / stride)
             string[] spot = {
                 "Assets/ArtPacks/tophat-robot/frames/robot_f00.png",
@@ -314,7 +314,8 @@ namespace FluxVerse
             GameObject camGo = GameObject.Find("CityCamera");
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f, "L0 camera broken after restart");
-            return "reload_gate=OK robots=8/8 persisted neon=12/12 importers=sprite+point+ppu16+nemip"
+            return "reload_gate=OK robots=8/8 persisted neon=" + NeonRules.Count + "/" + NeonRules.Count
+                + " importers=sprite+point+ppu16+nemip"
                 + " skyline=2/2 neighbors=4 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
         }
 

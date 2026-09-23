@@ -1,7 +1,8 @@
-// FluxVerse P-28(3) pool-coverage face (r44): parked-vehicle pure rules (source
+// FluxVerse P-28(3) pool-coverage face (r44) + vertical-avenue facings (r45):
+// parked-vehicle pure rules (source
 // pack = MiniGame S-library AA-016.02 modern exteriors, 16x16-singles tier at
 // ~48px native density; S-library direct-use chain, license gate pre-cleared
-// 2026-09-22, consumption provenance = TECH sec.9 P-21(3) r44 ledger line).
+// 2026-09-22, consumption provenance = TECH sec.9 P-21(3) r44/r45 ledger lines).
 // Street-life demand per DESIGN organ table: the roads layer is built and
 // walked by robots (fleet avatars) and residents (census identities); parked
 // cars / one bus / vendor carts / a bus-stop sign are static street furniture.
@@ -11,15 +12,23 @@
 // (the singles ship asymmetric transparent padding; tight crop = symmetric pivot
 // so the ground-line math below is exact - r37 zero-floating law).
 // Scale law: PPU24 divisor absorbs the pack's pixel density (r37 residents
-// precedent - the divisor moves, the world law never does). Sizes: car 2.54x1.54u,
-// camper 3.92x2.33u, bus 4.63x2.58u, carts 1.83x2.0u / 2.0x2.29u, stop sign
-// 0.63x1.54u - all under the 2.8u resident line (P-17 small-props canon; the
-// >=3.3u tall singles were gate-rejected, disposal recorded in TECH P-21 row).
+// precedent - the divisor moves, the world law never does). Sizes: car 2.54x1.54u
+// (side) / 1.33x2.38u (avenue rear/front), camper 3.92x2.33u, bus 4.63x2.58u,
+// carts 1.83x2.0u / 2.0x2.29u, stop sign 0.63x1.54u - all under the 2.8u resident
+// line (P-17 small-props canon; the >=3.3u tall singles were gate-rejected,
+// disposal recorded in TECH P-21 row).
 // Placement law: FEET ON THE GROUND LINE - Street class parks on the vertical
 // middle of the 2-row road band (south street rows -8/-7 -> ground y = -7,
-// north street rows 7/8 -> ground y = +8), so the feet cell is a Roads tile;
-// Plaza class (carts, stop sign) stands on Ground pavement cells. The proof
-// re-derives the feet cell from the live tilemaps, never from this comment.
+// north street rows 7/8 -> ground y = +8), or centered across a 2-wide vertical
+// avenue (CitySkeletonBuilder vcols -18/-17 and 17/18 -> center x = +-17.5,
+// feet cell lands on the west column of each pair by FloorToInt law), so the
+// feet cell is a Roads tile; Plaza class (carts, stop sign) stands on Ground
+// pavement cells. The proof re-derives the feet cell from the live tilemaps,
+// never from this comment.
+// r45 traffic-side law: the two vertical avenues read as a two-way pair in the
+// city plan (east avenue = northbound lane, west = southbound), so the east car
+// faces up (rear view, Car_Up) and the west car faces down (front view, Car_Down)
+// - the same right-hand-traffic side a CEO reads off a real city map.
 // Clearance law: center distance >= 2.6u to every robot, >= 2.8u to every
 // resident (r37 spacing family), >= 2.6u between vehicles, and no overlap with
 // any mounted neon-sign rect expanded by 0.4u (r35 law). Sorting: street layer
@@ -33,7 +42,7 @@ namespace FluxVerse
     {
         public const int Order = 7;            // street layer: signs 6 < street 7 < tint 8
         public const float PPU = 24f;           // density divisor (r37 law); importer enforced, never assumed
-        public const int Count = 8;
+        public const int Count = 10;
         public const string NamePrefix = "Vehicle";
 
         public struct Veh
@@ -100,6 +109,14 @@ namespace FluxVerse
             // 7. north street, south sidewalk east of the bus - bus-stop sign
             // (pavement class; x clear of the north neon banner row, proof-caught)
             new Veh { name = "VehicleStopN",    path = "Assets/Art/Vehicles/frames/vehicle-stop-sign.png",  pxW = 15,  pxH = 37, x = 16.5f,  groundY = 9.0f,   street = false },
+            // 8. east vertical avenue (cols 17/18, MEDIA side) - sedan facing
+            // north, rear view; two-way-pair northbound lane (r45 traffic-side
+            // law), centered across the 2-wide avenue
+            new Veh { name = "VehicleCarAveE",  path = "Assets/Art/Vehicles/frames/vehicle-car-up.png",     pxW = 32,  pxH = 57, x = 17.5f,  groundY = -10.0f, street = true },
+            // 9. west vertical avenue (cols -18/-17, GAME side) - sedan facing
+            // south, front view; southbound lane; sits clear of the NeonGameWest2
+            // banner rect and the ResStWest pavement resident (proof-gated)
+            new Veh { name = "VehicleCarAveW",  path = "Assets/Art/Vehicles/frames/vehicle-car-down.png",   pxW = 32,  pxH = 57, x = -17.5f, groundY = -11.5f, street = true },
         };
     }
 }

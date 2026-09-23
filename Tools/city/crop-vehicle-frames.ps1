@@ -1,6 +1,9 @@
-# FluxVerse DevLoop r44: AA-016.02 vehicle singles cropper (P-28(3) pool-coverage
+# FluxVerse DevLoop r44/r45: AA-016.02 vehicle singles cropper (P-28(3) pool-coverage
 # face; P-21 consumption chain - S-library direct-use, license gate pre-cleared
 # 2026-09-22, harmony gate = docs/research + TECH sec.9 P-21 row r44 line).
+# r45 adds the two vertical-avenue facings (Car_Up_2 / Car_Down_4 - colors kept
+# distinct from the r44 set {1,3,5}; the Up/Down singles are rear/front views,
+# 32x57 tight, parked on the two 2-wide vertical avenues cols 17/18 and -18/-17).
 # Source: MiniGame S-library pack AA-016.02 (modern exteriors, 16x16 singles tier -
 # native ~48px-class density), resolved by GLOB because the pack path holds CJK
 # segments and this script body is ASCII-only per the PS5.1 GBK law (r44 first-run
@@ -27,6 +30,8 @@ $manifest = [ordered]@{
     "vehicle-cart-food.png"= @{ single = "Street_Food_Cart_1";  expect = "44x48" }
     "vehicle-cart-fruit.png" = @{ single = "Fruit_Flowers_Cart_1"; expect = "48x55" }
     "vehicle-stop-sign.png"  = @{ single = "Bus_Stop_Sign_1";    expect = "15x37" }
+    "vehicle-car-up.png"     = @{ single = "Car_Up_2";          expect = "32x57" }
+    "vehicle-car-down.png"   = @{ single = "Car_Down_4";        expect = "32x57" }
 }
 
 # resolve the CJK path segments by glob, never by literal

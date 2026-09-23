@@ -1,4 +1,4 @@
-# FluxVerse verify gate v0.3 - validates world outputs before they ship to the engine.
+# FluxVerse verify gate v0.4 - validates world outputs before they ship to the engine.
 # Exit 0 = PASS, 1 = FAIL.
 # Consolidated 2026-09-23 (CEO audit fix, dual-session merge - single executor):
 #   - Two-phase state: scan writes world-state.json.new; on PASS it is promoted to
@@ -8,6 +8,9 @@
 #     stream. The gate heals - it never deadlocks on a bad line (F1).
 #   - Delta cursor: only lines past the last verified count are checked
 #     (world/verify-state.txt), so verify cost stays O(new lines) (S3).
+#   - Cursor self-check (r3, v0.4): a cursor past EOF (stream rotated/truncated)
+#     or an unreadable cursor file is REPORTED and rebased to a full verify -
+#     a bad cursor is never silently trusted.
 #   - Inner-field checks: zones/fleet/tasks/flows/products/governance/history (F4).
 # ASCII-only (group PS5.1 encoding law).
 
@@ -106,8 +109,16 @@ if ((Test-Path $eventsFile) -and $known.Count -gt 0) {
     }
   }
   $lines = @(Get-Content $eventsFile -Encoding UTF8)
+  # r3 cursor self-check: anomaly = cursor past EOF (rotated/truncated stream)
+  # or unreadable cursor file -> report and rebase to full verify
   $start = 0
-  if ($verified -ge 0 -and $verified -le $lines.Count) { $start = $verified }
+  if ($verified -lt 0) {
+    if (Test-Path $verifyState) { Write-Output 'VERIFY WARN: cursor unreadable - full verify' }
+  } elseif ($verified -gt $lines.Count) {
+    Write-Output ('VERIFY WARN: cursor anomaly events_verified=' + $verified + ' > lines=' + $lines.Count + ' (rotated/truncated) - rebasing to 0')
+  } else {
+    $start = $verified
+  }
   $clean = @()
   if ($start -gt 0) { $clean = @($lines[0..($start-1)]) }
   $bad = @()

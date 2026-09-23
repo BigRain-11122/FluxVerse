@@ -1,4 +1,8 @@
-# FluxVerse perceptor v0.3 - probe architecture + WRITE-SIDE gate + derived status
+# FluxVerse perceptor v0.4 - probe architecture + WRITE-SIDE gate + derived status
+# v0.4 2026-09-23 (r3): daily rotation of the live event stream - yesterday's file
+#   is archived whole as world/world-events-<YYYYMMDD>.jsonl (chronicle stays on
+#   disk for engine L2 replay); the live stream only ever holds today's events.
+#   verify.ps1 cursor self-check detects the shrink and rebases events_verified.
 # Consolidated 2026-09-23 (CEO audit fix F1/F2/F3/S2, dual-session merge - single executor):
 #   - F1: unregistered/malformed events are QUARANTINED at write time
 #     (world-events.quarantine.jsonl, forensic trail kept), never into the live stream;
@@ -174,6 +178,22 @@ foreach ($ev in $events) {
     $debug += 'QUARANTINED malformed event line'
   }
 }
+# r3: daily rotation keeps the live stream bounded; archive keeps the chronicle
+if (Test-Path $eventsFile) {
+  $evItem = Get-Item $eventsFile
+  if ($evItem.Length -gt 0 -and $evItem.LastWriteTime.Date -lt (Get-Date).Date) {
+    $archive = Join-Path $worldDir ('world-events-' + $evItem.LastWriteTime.ToString('yyyyMMdd') + '.jsonl')
+    if (Test-Path $archive) {
+      # clock-jump safety: append-merge into an existing archive, never overwrite it
+      if (-not ([System.IO.File]::ReadAllText($archive)).EndsWith("`n")) { [System.IO.File]::AppendAllText($archive, "`n", $utf8) }
+      [System.IO.File]::AppendAllText($archive, [System.IO.File]::ReadAllText($eventsFile), $utf8)
+      Remove-Item $eventsFile -Force
+    } else {
+      Move-Item $eventsFile $archive
+    }
+    $debug += ('rotation: live stream archived to ' + [System.IO.Path]::GetFileName($archive))
+  }
+}
 if ($goodEvents.Count -gt 0) {
   [System.IO.File]::AppendAllText($eventsFile, (($goodEvents -join "`n") + "`n"), $utf8)
 }
@@ -182,5 +202,5 @@ $curLines = @()
 foreach ($k in $cursor.Keys) { $curLines += ($k + '=' + $cursor[$k]) }
 [System.IO.File]::WriteAllText($cursorFile, ($curLines -join "`n") + "`n", $utf8)
 
-Write-Output ('perceptor v0.3 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
+Write-Output ('perceptor v0.4 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
 $debug | ForEach-Object { Write-Output ('  ' + $_) }

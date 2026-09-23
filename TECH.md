@@ -21,7 +21,7 @@
 
 ```
 Tools/perceptor/
-├── scan.ps1            # 编排主脚本（固定：游标/事件出口/装配/输出·含 reality 装配段 M1.5）
+├── scan.ps1            # 编排主脚本（固定：游标/事件出口/装配/输出·含 reality 装配段 M1.5+按日轮转 r3）
 ├── probes/             # 探针目录（登记即生效·按文件名排序执行）
 │   ├── _template.ps1   # 新探针标准模板
 │   ├── clock.ps1        # 本地时钟 → 昼夜相位+沪深开闭市钟声 MARKET_OPEN/CLOSE（M1.5 现实链接·纯本地）
@@ -57,14 +57,15 @@ Tools/perceptor/
   - 禁止：偷偷改字段含义（= 协议作伪，门禁拦截）。
 - **事件登记簿**（`schema/events-registry.json`）：事件类型唯一仲裁面——探针不得产出未登记事件，verify.ps1 按此校验（集团登记簿治理的协议层移植）。
 
-## 四、验证门禁 verify.ps1（扎实正体·数据质量闸机 v0.3·CEO 审计修）
+## 四、验证门禁 verify.ps1（扎实正体·数据质量闸机 v0.4·CEO 审计修+r3）
 
 两阶段晋升制：感知器写 `world-state.json.new`，verify **PASS 才原子晋升**为 `world-state.json`；FAIL 则旧 state 原样保留、.new 废弃——「FAIL 阻断不覆盖」逐字为真。
 1. state(.new) 可解析 + protocol 版本已登记 + **内字段逐项校验**：zones（id/name/status/activity·必备三 zone）／fleet（id/online/last_seen/cores/current_task）／tasks（id/zone/owner/status）／flows（id/zone）／products（id/line/status·必备三产品）／governance／history；
 2. 事件流**自愈**：坏行（不可解析/未登记类型/缺 ts_utc）移入 `world-events.quarantine.jsonl` 并从主流剔除——门禁隔离坏死行，**永不因坏行永久卡死**；
-3. **游标增量**：`world/verify-state.txt` 记已验行数，只验新增行——verify 成本 O(增量)，文件再大也不变慢；
+3. **游标增量**：`world/verify-state.txt` 记已验行数，只验新增行——verify 成本 O(增量)，文件再大也不变慢；**游标自检（r3）**：游标越界（轮转/截断后游标>行数）或游标档不可读 → WARN+回零全量重验收敛，永不静默信任坏游标；
 4. 写侧双保险（scan v0.3）：事件出产即校验（未登记类型当场隔离·不落主流）+ `ConvertTo-Json -Compress` 全转义；
-5. 退出码：0=PASS（含自愈告警），1=FAIL（仅结构性问题：state 坏/registry 坏；tick 据此报警）。
+5. **按日轮转（scan v0.4·r3）**：scan 写事件前若活流跨日——昨日流整体归档 `world/world-events-<YYYYMMDD>.jsonl`（编年史留盘·引擎 L2 回放可读），活流只含当日；同日存档已存在则追加合并不覆盖（时钟回拨安全）；verify 游标自检负责轮转后再收敛；
+6. 退出码：0=PASS（含自愈告警），1=FAIL（仅结构性问题：state 坏/registry 坏；tick 据此报警）。
 
 ## 五、拓展检查单（未来已验证可接）
 
@@ -111,7 +112,8 @@ gaming/FluxVerse/
 
 - [P1] watch 模式（本机秒级实时，Windows 文件监听）
 - [P1] 引擎工程脚手架（团结引擎 2D 项目·待风格定稿）
-- [P2] jsonl 按日轮转归档
+- [✅ 2026-09-23·r3] jsonl 按日轮转归档（scan v0.4：跨日活流整体归档 world-events-<日期>.jsonl·同日重档追加合并不覆盖·真机实证 353 行 142KB 转档；并发实证=他窗手动 scan 同窗竞跑零重复零丢·源级游标去重有效）
+- [✅ 2026-09-23·r3] verify 游标异常自检（v0.4：游标越界/不可读→WARN+回零全量重验收敛——实证 353>3 警告回零；孤儿旧游标件 world/verify-cursor.txt 已清·现行唯一游标=verify-state.txt）
 - [P2] MiniGame 任务面板/BigStream 产出探针
 - [P2] HQ-FEEDBACK 感知探针（向上反馈通道可视化）
 - [P1] 城市美术资产管线（风格已定案「高清赛博像素」=CEO 附图三裁决 2026-09-23·d021a49·M0 收口；下一步=城市版概念稿黄昏档+夜档）
@@ -121,6 +123,7 @@ gaming/FluxVerse/
 - [新法·已修·r2] **schtasks /tr 引号残废陷阱**：OS 任务动作串被转义成 `-File " 路径\ /F`（引号后带空格 + schtasks /F 力 flag 漏进串尾）→ powershell.exe 判非 .ps1 扩展名当场死，exit **-196608**（逐位=任务 LastTaskResult 4294770688）——FluxVerseTick 自 16:17 注册以来**从未点火**，日志 16:17/16:57 两条全是别窗手动跑；修=Set-ScheduledTask 换净动作串 + 17:19 点火实证（13 探针全 OK+gate 双绿）。法：**OS 任务注册/改一律走 PowerShell ScheduledTasks 模块**（DevLoop register_loop_task 同源范式），用 schtasks /tr 后必读回 XML 验动作串
 - [P1] 令行通道：指令文件出口→签收关卡→OS 循环消费→回流事件（环B 闭环=数字影子升格真孪生的唯一通道·Kritzinger 2018 判据·署名按 CEO 委托令 O-20260923-1620 分级）
 - [P2] Biggame U-登记簿探针（先定位 MiniGame 侧登记簿文件；orders 探针已覆盖面=fleet orders+集团台账+BigStream orders）
+- [P0 下轮候选] market+calendar 探针（r3 实证 Python 3.14.4+akshare 1.18.96 已在机·依赖零阻塞）：交易日历修 clock 节假日近似 + ETF 日线入 state.reality（QUANT 城真K线巨屏）
 
 ## 十、溯源
 

@@ -26,7 +26,7 @@
 | midnight_drive.ogg | 229,058 B | OGA /content/midnight-drive · congusbongus | CC0 | 夜 |
 | tt_caves.ogg | 1,703,616 B | OGA /content/t-t-free-cyberpunk-pack · tricksntraps（源名 Caves.ogg） | CC0 | 赛博曲池（黄昏候选） |
 | tt_currents.ogg | 15,419,836 B | OGA /content/t-t-free-cyberpunk-pack · tricksntraps（源名 Currents.ogg） | CC0 | 赛博曲池（黄昏候选） |
-| tt_antimatter.ogg | 重试下载中 | 同上（源名 Anti Matter Magic.ogg·OGA 慢速 300s 超时一次·900s 重试在途） | CC0 | 赛博曲池第三轨（到货补行） |
+| tt_antimatter.ogg | 12,394,025 B | OGA /content/t-t-free-cyberpunk-pack · tricksntraps（源名 Anti Matter Magic.ogg·OGA 慢速 300s 超时一次后 900s 重试成功） | CC0 | 赛博曲池第三轨 |
 
 ## weather/（天气层 · weather 探针 weather_kind 驱动）
 

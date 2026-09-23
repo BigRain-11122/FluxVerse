@@ -36,6 +36,7 @@
 - 内容：编号居民 sprite sheets（10/11/12… 每人 Idle/Walk/Special 帧·48×48 步幅 4 帧）。
 - **验图：适配度=中高**（真像素·现代市民生态含轮椅市民等多样性）——服装为日常现代风非赛博（居民=日常人+机器人才是赛博，符合世界观：城是现实投影）。
 - 用途：M2 街道 NPC 池/BigLife census 万民→sprite 映射补充池（与 P-22 同线·池内主力仍 AA-016.04+AA-028.2105141）。
+- **消费实况（r37 首批入城 12 件）**：`Tools/city/crop-resident-frames.ps1` 全 idle 帧确定性裁切（12 居民·R1 6 帧/其余 4 帧=50 件入 frames/·多模态选帧=11 人 I0 静息姿·R6 I0 跨步倾身改选 I1；R7 冥想坐/R8 蹲坐/R10 轮椅=自然坐态布景直用）；居民入城正典=`City/Assets/Scripts/ResidentRules.cs`（ResidentRules 单一正典·street 层 order 7 与机器人同层〔signs 6<street 7<tint 8〕·**尺寸律=导入器 PPU24**〔48px/24=恰好 2u=P-17 居民 32×32 级世界律·localScale 1 零重采样——除数吸收包像素密度·世界律永不动·r34 PPU100 显微病在导入器执法非假设〕）；落位 12 席=QUANT 广场 3+GAME/MEDIA 前广场各 2+南街两侧人行道 2+北滨步道 2+北街 1+MEDIA 前西 1（**落位门=活 tilemap 再推导 FEET cell**〔中心 y−1 必 Ground 铺装或 Roads·r36 STAND 门律〕·居民间距≥2.2u·离机器人≥2.0u·霓虹矩形+半幅 1.0+0.4 净空）；ResidentProof 双会话一次过全绿=**434 断言**+reload 门（12/12 持久·robots 8/neon 12 保全·importer sprite+point+PPU24+nemip 跨重启）+渲染门（dusk_px=1431 worst 73·夜差分像素集与 r36 乘法 tint 同构律 lum 0.484→0.282 城暗我暗零发光）+多模态双图绿（黄昏 12/12 着地零浮空零裁切〔两处「偏小」疑点=灯柱道具+相机漂移坐标误差·导入器门 rect 48×48/bounds 2×2u 逐位排除〕·夜图 12/12 可读剪影零伪影·m1-r37-residents-{dusk,night}.png）；v0=静态布景（r36 静-transient 边界律·行走/待机动画=M2 事件驱动面·**BigLife census 身份映射=P-22② M2 窗口即开**）；**Walk/Special sheets 未消费留池**（M2 行走动画面+特色姿态候选）；OGA-BY 3.0 署名=本文件署名段既有行（City Parallax Background & Residents of the City by CraftPix.net）。
 
 ## tophat-robot/（1 件·CC-BY 3.0·Nelson Yiap·/content/stylish-top-hat-robot-16x16-animated-spritesheet）
 

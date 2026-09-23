@@ -180,7 +180,8 @@ document.getElementById('gts').textContent=DATA.generated_ts||'--';
 // ---------- events ----------
 (function(){
   const col=t=>({CEO_ORDER:'#fff',COMMIT:'#22d3ee',HEARTBEAT:'#334',MARKET_OPEN:'#f5c542',MARKET_CLOSE:'#f5c542',FX_TICK:'#f5c542',GITHUB_EVENT:'#2ad',WEATHER_ALERT:'#ff4d4d',RESIDENT_SAY:'#a6f'}[t]||'#556');
-  document.getElementById('evs').innerHTML=EV.slice().reverse().map(e=>'<div class="ev" style="border-left-color:'+col(e.type)+'"><span class="t">'+String(e.ts_utc||'').slice(11,16)+'</span>'+(e.type||'')+' · <span style="color:#9ab">'+String(e.summary||'').slice(0,64)+'</span></div>').join('')||'--';
+  const sum64=e=>{const s=String(e.summary||'');return s.length>64?s.slice(0,64)+'…':s};
+  document.getElementById('evs').innerHTML=EV.slice().reverse().map(e=>'<div class="ev" style="border-left-color:'+col(e.type)+'"><span class="t">'+String(e.ts_utc||'').slice(11,16)+'</span>'+(e.type||'')+' · <span style="color:#9ab">'+sum64(e)+'</span></div>').join('')||'--';
 })();
 
 // ---------- residents (AI lines) ----------

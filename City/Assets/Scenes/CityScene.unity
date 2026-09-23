@@ -765,6 +765,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ceoOrderPulse: {fileID: 8300000, guid: ecb6983869a42dc48bb4b7ea92866e27, type: 3}
+  commitBlip: {fileID: 8300000, guid: 93a425a0f666ff64184b22713d43d982, type: 3}
+  taskClaimSfx: {fileID: 8300000, guid: adcfec5572b38a74bb56082594cfb841, type: 3}
+  marketBellOpen: {fileID: 8300000, guid: 1afe9c5be5cbbe04a9ab80518410170b, type: 3}
+  marketBellClose: {fileID: 8300000, guid: 787b977deb83c254283e8c4a12c6c2f0, type: 3}
+  weatherAlert: {fileID: 8300000, guid: 7287e334fed1e774a9629a378a80f602, type: 3}
+  residentTalk: {fileID: 8300000, guid: 3b512cdf57c814643bd8ef39df76a87c, type: 3}
 --- !u!4 &130603996
 Transform:
   m_ObjectHideFlags: 0

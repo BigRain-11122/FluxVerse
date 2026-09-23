@@ -1,5 +1,6 @@
-// FluxVerse P-15 r12 (split r14): event router pure logic core — poll/cursor/parse/route
-// CEO_ORDER -> gold glow pulse, headless-testable. The MonoBehaviour adapter
+// FluxVerse P-15 r12 (split r14; gate widened r30): event router pure logic core —
+// poll/cursor/parse/route. CEO_ORDER -> gold glow pulse, headless-testable. The
+// MonoBehaviour adapter
 // CityEventRouter now lives in CityEventRouter.cs (SEPARATE FILE LAW, r14: a component
 // class must match its .cs file name or the saved scene reference dies across editor
 // sessions). Routing row 1 (mandate: one piece first): CEO_ORDER -> gold light pulse on
@@ -70,6 +71,32 @@ namespace FluxVerse
                     pulses.RemoveAt(i);
         }
 
+        // r30 (P-27 rows batch 2): cheap gate widened from the single CEO_ORDER token to
+        // every routed type -- visual row (CEO_ORDER) + all FluxAudioRouter map keys, so
+        // gate and map can never drift (single source of truth = MappedTypes).
+        static readonly string[] gateTokens = BuildGateTokens();
+
+        static string[] BuildGateTokens()
+        {
+            var set = new HashSet<string> { "CEO_ORDER" };
+            foreach (string k in FluxAudioRouter.MappedTypes) set.Add(k);
+            string[] arr = new string[set.Count];
+            set.CopyTo(arr);
+            return arr;
+        }
+
+        static bool GatePass(string line)
+        {
+            for (int i = 0; i < gateTokens.Length; i++)
+                if (line.IndexOf("\"" + gateTokens[i] + "\"", StringComparison.Ordinal) >= 0) return true;
+            return false;
+        }
+
+        static bool IsRoutedType(string type)
+        {
+            return type == "CEO_ORDER" || FluxAudioRouter.SoundFor(type) != null;
+        }
+
         // returns number of routed events this poll; silent-degrade on any file trouble
         public int PollOnce()
         {
@@ -83,10 +110,10 @@ namespace FluxVerse
             {
                 string line = lines[i];
                 if (string.IsNullOrEmpty(line)) continue;
-                if (line.IndexOf("\"CEO_ORDER\"", StringComparison.Ordinal) < 0) continue; // cheap gate
+                if (!GatePass(line)) continue; // cheap gate (r30: multi-token, parse only routed lines)
                 FluxEvent ev = null;
                 try { ev = JsonUtility.FromJson<FluxEvent>(line); } catch (Exception) { ev = null; }
-                if (ev != null && ev.type == "CEO_ORDER")
+                if (ev != null && IsRoutedType(ev.type))
                 {
                     Dispatch(ev);
                     fired++;
@@ -98,9 +125,15 @@ namespace FluxVerse
 
         void Dispatch(FluxEvent ev)
         {
-            Vector3? pos = anchorLookup != null ? anchorLookup("BrainTower") : null;
-            if (pos == null) pos = new Vector3(0f, 11f, 0f);   // hardcoded fallback = builder anchor
-            pulses.Add(new GlowPulse(pos.Value, new Color(1f, 0.85f, 0.45f)));   // CEO gold
+            // visual law: only CEO_ORDER has a mapped visual (r12 gold pulse on BrainTower);
+            // other rows are audio-presenters for now -- their visuals are M2 work and must
+            // not fire an un-anchored pulse (every animation anchors a real mapped behavior).
+            if (ev.type == "CEO_ORDER")
+            {
+                Vector3? pos = anchorLookup != null ? anchorLookup("BrainTower") : null;
+                if (pos == null) pos = new Vector3(0f, 11f, 0f);   // hardcoded fallback = builder anchor
+                pulses.Add(new GlowPulse(pos.Value, new Color(1f, 0.85f, 0.45f)));   // CEO gold
+            }
             if (EventSink != null) EventSink(ev);   // P-27 r25: same event, second presenter (audio)
         }
 

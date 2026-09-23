@@ -15,8 +15,15 @@ namespace FluxVerse
     // thin scene component: saved into CityScene by the repair proof; play mode runs the loop for real
     public class CityEventRouter : MonoBehaviour
     {
-        // wired into CityScene by AudioProof (r25); R-20260923-audio-assets.md 1.1 CEO row
+        // wired into CityScene by AudioProof (r25 CEO row; r30 P-27 rows batch 2);
+        // R-20260923-audio-assets.md 1.1 rows whose event types are live-emitted
         public AudioClip ceoOrderPulse;
+        public AudioClip commitBlip;        // COMMIT        -> sfx_scifi/Laser_00
+        public AudioClip taskClaimSfx;      // TASK_CLAIM    -> sfx_scifi/Robot_Activated_00
+        public AudioClip marketBellOpen;    // MARKET_OPEN   -> signature/market_bell_open
+        public AudioClip marketBellClose;  // MARKET_CLOSE  -> signature/market_bell_close
+        public AudioClip weatherAlert;     // WEATHER_ALERT -> signature/s0_red_alert
+        public AudioClip residentTalk;     // RESIDENT_SAY  -> sfx_scifi/Robot_Talk_00
 
         FluxEventRouter core;
         FluxAudioRouter audioCore;   // not 'audio': hides deprecated Component.audio (CS0108)
@@ -55,7 +62,14 @@ namespace FluxVerse
         // asset path -> wired clip; unwired path = null (silent-degrade, honesty law)
         public AudioClip ResolveClip(string assetPath)
         {
-            return assetPath == FluxAudioRouter.CeoOrderClip ? ceoOrderPulse : null;
+            if (assetPath == FluxAudioRouter.CeoOrderClip) return ceoOrderPulse;
+            if (assetPath == FluxAudioRouter.CommitClip) return commitBlip;
+            if (assetPath == FluxAudioRouter.TaskClaimClip) return taskClaimSfx;
+            if (assetPath == FluxAudioRouter.MarketOpenClip) return marketBellOpen;
+            if (assetPath == FluxAudioRouter.MarketCloseClip) return marketBellClose;
+            if (assetPath == FluxAudioRouter.WeatherAlertClip) return weatherAlert;
+            if (assetPath == FluxAudioRouter.ResidentTalkClip) return residentTalk;
+            return null;
         }
 
         // player delegate for FluxAudioRouter; returns false when nothing played

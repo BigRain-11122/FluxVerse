@@ -32,6 +32,7 @@ Tools/perceptor/
 │   ├── fx.ps1          # frankfurter ECB 汇率 → USDCNY+FX_TICK（资金道流量计·M1.5·零 key）
 │   ├── git.ps1         # 5 仓 git → COMMIT 事件+zones 活跃度+history
 │   ├── github_events.ps1 # GitHub 公共事件 → GITHUB_EVENT（数据道生态脉冲·M1.5·零 key）
+│   ├── market.ps1      # akshare 交易日历+510300ETF 日线 → reality.market（fetcher=market_fetch.py·BigMoney 同源链·M1.5·零 key）
 │   ├── orders.ps1      # BigMoney fleet orders → CEO_ORDER（quant 面）
 │   ├── orders_bs.ps1   # BigStream/orders → CEO_ORDER（media 面）
 │   ├── orders_hq.ps1   # 集团台账 docs/orders.md → CEO_ORDER（governance 面）
@@ -123,7 +124,8 @@ gaming/FluxVerse/
 - [新法·已修·r2] **schtasks /tr 引号残废陷阱**：OS 任务动作串被转义成 `-File " 路径\ /F`（引号后带空格 + schtasks /F 力 flag 漏进串尾）→ powershell.exe 判非 .ps1 扩展名当场死，exit **-196608**（逐位=任务 LastTaskResult 4294770688）——FluxVerseTick 自 16:17 注册以来**从未点火**，日志 16:17/16:57 两条全是别窗手动跑；修=Set-ScheduledTask 换净动作串 + 17:19 点火实证（13 探针全 OK+gate 双绿）。法：**OS 任务注册/改一律走 PowerShell ScheduledTasks 模块**（DevLoop register_loop_task 同源范式），用 schtasks /tr 后必读回 XML 验动作串
 - [P1] 令行通道：指令文件出口→签收关卡→OS 循环消费→回流事件（环B 闭环=数字影子升格真孪生的唯一通道·Kritzinger 2018 判据·署名按 CEO 委托令 O-20260923-1620 分级）
 - [P2] Biggame U-登记簿探针（先定位 MiniGame 侧登记簿文件；orders 探针已覆盖面=fleet orders+集团台账+BigStream orders）
-- [P0 下轮候选] market+calendar 探针（r3 实证 Python 3.14.4+akshare 1.18.96 已在机·依赖零阻塞）：交易日历修 clock 节假日近似 + ETF 日线入 state.reality（QUANT 城真K线巨屏）
+- [✅ 2026-09-23·r4] market+calendar 探针（五现实探针收口·M1.5 感知侧全部落地）：**交易日历修 clock 节假日近似**——market.ps1 单写者持 world/market-cal.json（akshare tool_trade_date_hist_sina·覆盖至 2026-12-31），clock.ps1 只读；as_of=当日新鲜才生效（true/false 覆盖 Mon-Fri），stale/缺失→退回近似兜底（已知边缘：凌晨断 tick+节假日 09:30 首轮误钟一轮自愈，OS 循环 24h 在跑即不触发）；**510300 沪深300ETF 日线入 state.reality.market**（BigMoney 同源旗舰标的=regime/evolve/strategies target·30 bars [date,o,h,l,c]·change_pct·is_trading_day·cal_next_trade_date——QUANT 城真K线巨屏数据就绪，引擎侧映射属 M2）；源链实证改序 **TX→Sina→EM**（TX 实测通含当日 in-flight bar·Sina ETF 股票端点当日解析坏死 demjson No value·EM RemoteDisconnected 同 BigMoney 09-21 断连实证——与 BigMoney 顺序不同已在 commit 注明理由：以当日实测为准）；缓存节奏=cal 日更+ETF 30min TTL→10min tick 不打爆源；双绿实证=14 探针全 OK+VERIFY PASS+bars 30 条含当日 4.590；独立逻辑测试 4 例全过（节假日 closed 零钟/stale 回退/补钟 4 连响有序/节后无伪钟）
+- [新法·已立·r4] **探针子进程硬顶律**：PS 调外部抓取器（python/akshare 等）一律 `Start-Process -PassThru` + `WaitForExit(毫秒)` + 超时 `Kill()`——akshare 各源无内置超时（BigMoney 实证腾讯级可挂 5min+），无硬顶=一针挂死整轮 tick；配套律：嵌套数据入 state 用 array-of-arrays（标量叶保 ConvertTo-Json -Depth 6 余量·对象套对象有 null 截断险）；探针自测收集器禁 `+=`（scriptblock 域假象·用 ArrayList 方法调用）
 
 ## 十、溯源
 

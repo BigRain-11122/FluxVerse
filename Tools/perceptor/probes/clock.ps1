@@ -1,8 +1,10 @@
 # Probe: local clock -> city day/night phase + Shanghai market session bells
 # Reality link M1.5 (DESIGN S15). Pure local, zero key, zero network.
-# Sessions (Beijing time, Mon-Fri approximation - holiday calendar is future
-# market.ps1 work): 09:30 am open / 11:30 lunch / 13:00 pm open / 15:00 close.
-# Rank machine: pre=0 am_open=1 lunch=2 pm_open=3 post=4 closed=5(weekend).
+# Sessions (Beijing time): 09:30 am open / 11:30 lunch / 13:00 pm open /
+# 15:00 day close. Trading day = real exchange calendar when the
+# market-cal.json cache (single writer: market.ps1) is fresh for today;
+# stale/missing cache -> Mon-Fri approximation fallback.
+# Rank machine: pre=0 am_open=1 lunch=2 pm_open=3 post=4 closed=5(weekend/holiday).
 # A skipped scan gap replays every missed boundary in order (day rollover
 # finishes yesterday's bells first) - the city never misses a bell.
 # Events: MARKET_OPEN / MARKET_CLOSE (registered T2 2026-09-23). ASCII-only.
@@ -21,7 +23,21 @@ function Probe-clock {
     $mins = $bj.Hour * 60 + $bj.Minute
     $day = $bj.ToString('yyyy-MM-dd')
 
+    # Trading day check: real exchange calendar when the market.ps1 cache is
+    # fresh for today (single writer = market.ps1); stale/missing -> Mon-Fri
+    # approximation fallback (holidays approximated only until next refresh).
     $trading = ($wd -ge 1 -and $wd -le 5)
+    $calMode = 'weekday-approx'
+    try {
+      $calFile = Join-Path $ctx.root 'gaming\FluxVerse\world\market-cal.json'
+      if (Test-Path $calFile) {
+        $cal = Get-Content $calFile -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ($cal.as_of -eq $day -and $null -ne $cal.is_trading_day) {
+          $trading = [bool]$cal.is_trading_day
+          $calMode = 'trade-cal'
+        }
+      }
+    } catch { }
     if (-not $trading) { $rank = 5; $phase = 'closed' }
     elseif ($mins -lt 570)  { $rank = 0; $phase = 'pre' }      # before 09:30
     elseif ($mins -lt 690)  { $rank = 1; $phase = 'am_open' }  # 09:30-11:30
@@ -75,6 +91,7 @@ function Probe-clock {
       reality_city_day_phase = $dp
       reality_beijing_hhmm = $bj.ToString('HH:mm')
       reality_market_phase = $phase
+      reality_market_calendar = $calMode
       reality_weekday = [string]($(if ($wd -eq 0) { 7 } else { $wd }))
     } }
   } catch { return $null }

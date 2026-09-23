@@ -126,12 +126,13 @@ if ($stateParts.ContainsKey('ceo_orders_bs')) {
 }
 $zoneStatus = @{ gaming = (Get-ProductStatus $minigameDir); quant = (Get-ProductStatus $bigmoneyDir); media = (Get-ProductStatus $bigstreamDir) }
 
-# M1.5 reality link: clock/weather/fx/github state fragments -> one state section
-# (protocol 0.1: additive fields are free; engine ignores what it does not map)
+# M1.5 reality link: clock/weather/fx/github/market state fragments -> one
+# state section (protocol 0.1: additive fields are free; engine ignores
+# what it does not map)
 $reality = @{}
-foreach ($rk in @('city_day_phase','beijing_hhmm','market_phase','weekday',
+foreach ($rk in @('city_day_phase','beijing_hhmm','market_phase','market_calendar','weekday',
                   'weather_kind','weather_code','weather_temp_c','weather_wind_ms',
-                  'fx_usdcny','fx_date','github_pulse')) {
+                  'fx_usdcny','fx_date','github_pulse','market')) {
   if ($stateParts.ContainsKey('reality_' + $rk)) { $reality[$rk] = $stateParts['reality_' + $rk] }
 }
 

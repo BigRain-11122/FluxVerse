@@ -7,7 +7,7 @@
 4. 密钥/令牌禁入 git；commit 只定向 add 本轮产出（轮首树脏时禁 add -A）。
 5. 反重复铁律：先读后写、复用禁重建、拿不准先查 TECH.md/docs。
 
-【读序】README.md → DESIGN.md → TECH.md → logs/ 最新 tick 日志（健康自查）。
+【读序】README.md → DESIGN.md → TECH.md → cph4/evolution-ledger.md 的 transferred/转办@FluxVerse 件（集团审计修复批优先自领，P0 最高优）→ logs/ 最新 tick 日志（健康自查）。
 
 【本轮工作优先级（每轮只做 1-2 小步，宁小勿大）】
 1. 修红优先：logs/tick-*.log 出现 gate FAIL / probe FAIL / 自愈 quarantine 增长 → 先修复它，本轮到此为止。

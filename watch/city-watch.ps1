@@ -85,6 +85,16 @@ if (Test-Path $msFile) {
   } catch {}
 }
 
+# ---------- census read (BigLife export face; shared by population + voice) ----------
+# ETS unwrap law (PS5.1, proven r27): every line becomes a plain string here.
+$censusFile = Join-Path $group 'life\BigLife\census\export\citizens-light.jsonl'
+$craw = ''
+$clines = @()
+if (Test-Path $censusFile) {
+  $craw = [string](Get-Content $censusFile -Raw -Encoding UTF8)
+  $clines = @($craw -split "`n" | ForEach-Object { [string]$_ } | Where-Object { $_.Trim() })
+}
+
 # ---------- population (P-22 claim: BigLife census read-only consumption) ----------
 # CODEX sec.12 names CityWatch population panel as consumer of the export face
 # census/export/citizens-light.jsonl (v1.2). Honest-layer law (CODEX sec.1): the
@@ -95,10 +105,7 @@ if (Test-Path $msFile) {
 # Zero interference: file read once on demand (snapshot build), nothing written.
 $population = $null
 try {
-  $censusFile = Join-Path $group 'life\BigLife\census\export\citizens-light.jsonl'
-  if (Test-Path $censusFile) {
-    $craw = [string](Get-Content $censusFile -Raw -Encoding UTF8)
-    $clines = @($craw -split "`n" | ForEach-Object { [string]$_ } | Where-Object { $_.Trim() })  # ETS unwrap law
+  if ($clines.Count -gt 0) {
     function Get-FieldCounts([string]$text, [string]$field) {
       $h = @{}
       foreach ($m in [regex]::Matches($text, ('"' + $field + '":\s*"([^"]*)"'))) {
@@ -170,6 +177,87 @@ try {
   }
 } catch { $welcome = $null }   # Ollama down => no greeting, snapshot still ships
 
+# ---------- voice v2 (P-23 claim: BigLife cognition layers 2+3 -> CityWatch) ----------
+# Situation bubbles = zero LLM: BigLife draw.py --tier standard derives the
+# context from OUR world state (read-only; fact gate: events > weather > clock)
+# and draws pool lines deterministically per (id, date, 45-min slot) - byte
+# stable inside a slot, rotating between slots. Spotlight = layer 3 (local
+# Ollama, fact level, only fed real signals): pre-computed per drawn citizen at
+# snapshot build, the panel click reveals it (static html, zero server).
+# Both BigLife tools are stdout-only - no writes to the brother repo (write-ban
+# respected). Honest-layer law (cognition/README): pool line = situation tone,
+# zero facts; spotlight = fed facts only. Degrade law: any failure => voice
+# card hides, snapshot still ships. Subprocess hard-cap law: Start-Process +
+# WaitForExit(ms) + Kill().
+$voice = $null
+try {
+  $bigTools = Join-Path $group 'life\BigLife\Tools'
+  $drawPy   = Join-Path $bigTools 'draw.py'
+  $spotPy   = Join-Path $bigTools 'spotlight.py'
+  if ($clines.Count -ge 100 -and (Test-Path $drawPy) -and (Test-Path $spotPy)) {
+    # deterministic daily pick of 5 citizens; their LINES rotate every slot via
+    # the draw key, the faces rotate every day (same-day reopen = same faces)
+    $n = $clines.Count
+    $daySeed = [int](Get-Date -Format 'yyyyMMdd')
+    $start = $daySeed % $n
+    $stride = 1999
+    $picks = @()
+    for ($i = 0; $i -lt 5; $i++) {
+      $ln = $clines[($start + $stride * $i) % $n]
+      $mi = [regex]::Match($ln, '"id":\s*"([^"]+)"')
+      $md = [regex]::Match($ln, '"district":\s*"([^"]*)"')
+      $mp = [regex]::Match($ln, '"profession":\s*"([^"]*)"')
+      if ($mi.Success -and $md.Success -and $mp.Success) { $picks += @{ id = $mi.Groups[1].Value; district = $md.Groups[1].Value; profession = $mp.Groups[1].Value } }
+    }
+    $ids = @($picks | ForEach-Object { $_.id } | Select-Object -Unique)
+    if ($ids.Count -ge 3) {
+      $env:PYTHONIOENCODING = 'utf-8'
+      $tmp = Join-Path $outDir ('voice-draw-' + [guid]::NewGuid().ToString('N') + '.txt')
+      $p = Start-Process -FilePath 'python' -ArgumentList @('-X','utf8','draw.py','--ids',($ids -join ','),'--tier','standard','--auto') -WorkingDirectory $bigTools -RedirectStandardOutput $tmp -RedirectStandardError ($tmp + '.err') -PassThru -NoNewWindow
+      if (-not $p.WaitForExit(30000)) { $p.Kill() }
+      $drawOut = @()
+      if (Test-Path $tmp) { $drawOut = @(Get-Content $tmp -Encoding UTF8 | ForEach-Object { [string]$_ } | Where-Object { $_.Trim() }) }
+      Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+      Remove-Item ($tmp + '.err') -Force -ErrorAction SilentlyContinue
+      $ctx = $null; $ctxSrc = $null; $slot = $null
+      $citizens = @()
+      if ($drawOut.Count -gt 0 -and $drawOut[0] -match '^ctx=(\S+) \(src=(\S+)\) tier=standard slot=(\d+)') {
+        $ctx = $Matches[1]; $ctxSrc = $Matches[2]; $slot = [int]$Matches[3]
+        foreach ($ln in ($drawOut | Select-Object -Skip 1)) {
+          $m = [regex]::Match($ln, '^(C-\d+)\s+(.+?)\s+\[(.+?)\]:\s*(.*)$')
+          if ($m.Success) {
+            $pick = $null; foreach ($pk in $picks) { if ($pk.id -eq $m.Groups[1].Value) { $pick = $pk; break } }
+            $citizens += @{ id = $m.Groups[1].Value; name = $m.Groups[2].Value; axis = $m.Groups[3].Value; line = $m.Groups[4].Value; district = $pick.district; profession = $pick.profession; spot = $null }
+          }
+        }
+      }
+      if ($citizens.Count -ge 3 -and $ctx) {
+        # spotlight gate: Ollama aliveness probe (3s). Dead/slow => skip all
+        # spotlights; bubbles still ship (designed degrade, honest label in UI).
+        $spotOk = $false
+        try { Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/tags' -Method Get -TimeoutSec 3 | Out-Null; $spotOk = $true } catch { $spotOk = $false }
+        if ($spotOk) {
+          foreach ($c in $citizens) {
+            $tmp2 = Join-Path $outDir ('voice-spot-' + [guid]::NewGuid().ToString('N') + '.txt')
+            $p2 = Start-Process -FilePath 'python' -ArgumentList @('-X','utf8','spotlight.py','--id',$c.id) -WorkingDirectory $bigTools -RedirectStandardOutput $tmp2 -RedirectStandardError ($tmp2 + '.err') -PassThru -NoNewWindow
+            if (-not $p2.WaitForExit(45000)) { $p2.Kill() }
+            if (Test-Path $tmp2) {
+              $sl = @((Get-Content $tmp2 -Encoding UTF8 | ForEach-Object { [string]$_ } | Where-Object { $_.Trim() }))
+              if ($sl.Count -gt 0) {
+                $ms = [regex]::Match($sl[0], ('^' + $c.id + '\s+(.+?):\s*(.*)$'))
+                if ($ms.Success) { $c.spot = $ms.Groups[2].Value }
+              }
+            }
+            Remove-Item $tmp2 -Force -ErrorAction SilentlyContinue
+            Remove-Item ($tmp2 + '.err') -Force -ErrorAction SilentlyContinue
+          }
+        }
+        $voice = [ordered]@{ context = $ctx; src = $ctxSrc; slot = $slot; citizens = $citizens }
+      }
+    }
+  }
+} catch { $voice = $null }   # cognition not ready => voice card hides, snapshot still ships
+
 # ---------- assemble + base64 payload ----------
 $data = [ordered]@{
   generated_ts   = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
@@ -181,6 +269,7 @@ $data = [ordered]@{
   milestones     = $milestones
   population     = $population
   welcome        = $welcome
+  voice          = $voice
 }
 $stateObj = $null
 try { $stateObj = $stateJson | ConvertFrom-Json } catch {}

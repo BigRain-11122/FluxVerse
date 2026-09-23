@@ -4,9 +4,10 @@
 #   2. ASCII-only script body (Chinese only inside data files).
 #   3. Define function Probe-<FileName> (this file: Probe-_template).
 #      Signature: param($ctx) -> return @{ state = @{...} }
-#      $ctx.root   = FluxGroup root path
-#      $ctx.now    = UTC now string
-#      $ctx.cursor = shared hashtable (persisted plain lines, see scan.ps1)
+#      $ctx.root    = FluxGroup root path
+#      $ctx.now     = UTC now string
+#      $ctx.cursor  = shared hashtable (persisted plain lines, see scan.ps1)
+#      $ctx.worldDir = FluxVerse world dir (own-repo runtime data, read-only here)
 #      $ctx.AddEvent = scriptblock: & $ctx.AddEvent 'TYPE' 'actor' 'repo' 'zone' 'summary'
 #   4. Self-limit: wrap body in try/catch; on failure return $null (degrade, never block).
 #   5. Register: add one line to TECH.md section 9 probe list + events used must exist

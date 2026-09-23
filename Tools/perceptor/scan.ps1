@@ -1,4 +1,9 @@
-# FluxVerse perceptor v0.4 - probe architecture + WRITE-SIDE gate + derived status
+# FluxVerse perceptor v0.5 - probe architecture + WRITE-SIDE gate + derived status
+# v0.5 2026-09-23 (r6, group audit P-11): single-writer lock (tick S1 pattern
+#   plus PID liveness) - the OS tick and a devloop round both call scan; the
+#   17:37/17:42 window proved two scans can race the same stream. A live lock
+#   (<15 min, owner PID alive) makes the late caller skip; a dead owner PID or
+#   a corrupt/overage lock is taken over at once (fail-open, never deadlocks).
 # v0.4 2026-09-23 (r3): daily rotation of the live event stream - yesterday's file
 #   is archived whole as world/world-events-<YYYYMMDD>.jsonl (chronicle stays on
 #   disk for engine L2 replay); the live stream only ever holds today's events.
@@ -23,6 +28,20 @@ $quarFile   = Join-Path $worldDir 'world-events.quarantine.jsonl'
 $outFile    = Join-Path $worldDir 'world-state.json'        # promoted by verify.ps1
 $newFile    = Join-Path $worldDir 'world-state.json.new'    # scan target (pre-gate)
 $registryFile = Join-Path $repoRoot 'schema\events-registry.json'
+
+# ---------- single-writer lock (P-11): one scan at a time owns the stream ----------
+$lockFile = Join-Path $worldDir 'scan.lock'
+if (Test-Path $lockFile) {
+  $lockPid = (Get-Content $lockFile -ErrorAction SilentlyContinue | Select-Object -First 1)
+  $lockAge = ((Get-Date) - (Get-Item $lockFile).LastWriteTime).TotalMinutes
+  $alive = $false
+  if ("$lockPid" -match '^\d+$') { if (Get-Process -Id ([int]"$lockPid") -ErrorAction SilentlyContinue) { $alive = $true } }
+  if ($alive -and $lockAge -lt 15) {
+    Write-Output 'perceptor: scan lock held by a live scan, skip (single writer)'
+    exit 0
+  }
+}
+Set-Content -Path $lockFile -Value ([string]$PID)
 
 $now = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
 $events = @()
@@ -61,7 +80,7 @@ if (Test-Path $cursorFile) {
 }
 
 # ---------- probe context ----------
-$ctx = @{ root = $root.Path; now = $now; cursor = $cursor;
+$ctx = @{ root = $root.Path; now = $now; cursor = $cursor; worldDir = $worldDir;
   AddEvent = { param($type,$actor,$repo,$zone,$summary) Add-WorldEvent $type $actor $repo $zone $summary } }
 
 # ---------- load + run probes ----------
@@ -203,5 +222,6 @@ $curLines = @()
 foreach ($k in $cursor.Keys) { $curLines += ($k + '=' + $cursor[$k]) }
 [System.IO.File]::WriteAllText($cursorFile, ($curLines -join "`n") + "`n", $utf8)
 
-Write-Output ('perceptor v0.4 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
+Remove-Item $lockFile -Force -ErrorAction SilentlyContinue   # release (stale takeover covers hard crashes)
+Write-Output ('perceptor v0.5 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
 $debug | ForEach-Object { Write-Output ('  ' + $_) }

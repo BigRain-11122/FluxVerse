@@ -21,7 +21,7 @@
 
 ```
 Tools/perceptor/
-├── scan.ps1            # 编排主脚本（固定：游标/事件出口/装配/输出·含 reality 装配段 M1.5+按日轮转 r3）
+├── scan.ps1            # 编排主脚本（固定：游标/事件出口/装配/输出·含 reality 装配段 M1.5+按日轮转 r3+单写者锁 v0.5 r6）
 ├── probes/             # 探针目录（登记即生效·按文件名排序执行）
 │   ├── _template.ps1   # 新探针标准模板
 │   ├── clock.ps1        # 本地时钟 → 昼夜相位+沪深开闭市钟声 MARKET_OPEN/CLOSE（M1.5 现实链接·纯本地）
@@ -35,7 +35,7 @@ Tools/perceptor/
 │   ├── market.ps1      # akshare 交易日历+510300ETF 日线 → reality.market（fetcher=market_fetch.py·BigMoney 同源链·M1.5·零 key）
 │   ├── orders.ps1      # BigMoney fleet orders → CEO_ORDER（quant 面）
 │   ├── orders_bs.ps1   # BigStream/orders → CEO_ORDER（media 面）
-│   ├── orders_hq.ps1   # 集团台账 docs/orders.md → CEO_ORDER（governance 面）
+│   ├── orders_hq.ps1   # 集团台账 docs/orders.md → CEO_ORDER（governance 面·内容寻址游标 hqorder: r6）
 │   ├── snapshot.ps1    # MiniGame 自动化快照 → GAME 城活跃脉冲
 │   └── weather.ps1     # Open-Meteo 上海 → 天气片段+WEATHER_ALERT（M1.5·零 key）
 └── verify.ps1          # 验证门禁（schema+登记簿校验）
@@ -44,7 +44,7 @@ Tools/perceptor/
 **探针契约**（写进 `_template.ps1`，违反契约=门禁拒绝）：
 1. 只读：绝不写任何兄弟仓；
 2. ASCII-only 脚本体，中文只存在于数据；
-3. 必须定义 `Probe-<文件名>` 函数，入参 `$ctx`（root/now/cursor/事件出口），返回 `state` 哈希片段由主脚本装配；
+3. 必须定义 `Probe-<文件名>` 函数，入参 `$ctx`（root/now/cursor/worldDir/事件出口——worldDir r6 增：本仓 world/ 只读数据面），返回 `state` 哈希片段由主脚本装配；
 4. 崩溃自限：探针内部 try/catch，失败只降级不阻断全城扫描；
 5. 新探针落文件 + 在本文件 §九登记一行。
 
@@ -81,7 +81,7 @@ Tools/perceptor/
 
 ## 六、FluxVerseTick（自迭代正体·集团同源 OS 循环）
 
-- 形态：10 分钟一轮，`Tools/tick/tick.ps1` 直调，中文 mandate 外置 `Tools/tick/mandate.txt`（编码律：脚本 ASCII，中文在 UTF-8 数据件）；单实例锁=`logs/tick.lock`（15 分钟陈旧接管·CEO 审计修 S1）；
+- 形态：10 分钟一轮，`Tools/tick/tick.ps1` 直调，中文 mandate 外置 `Tools/tick/mandate.txt`（编码律：脚本 ASCII，中文在 UTF-8 数据件）；单实例锁=`logs/tick.lock`（15 分钟陈旧接管·CEO 审计修 S1）；**v1.2 脏树退避（r6·集团审计 P-11）**：轮首 `git status` 见 `Tools/perceptor`+`schema` 脏即跳过 scan+verify 本轮——在飞开发轮半成品防 16:57 同型假 FAIL；退避轮照写日志注明理由、exit 0 非失败；scan 侧配套 v0.5 单写者锁（活锁<15min 退避·死 PID/坏锁即接管）；
 - 每轮职责（v1.0）：①跑感知器 ②跑验证门禁 ③健康检查（写 logs/）④技术债自领（见 §九 backlog，P0 小步直改，P1+ 记 backlog 待 CEO 署名）；
 - **升级须 CEO**：新探针上新事件类型属 T2（7 天否决窗）；改协议版本/动引擎架构属 P1 须署名；
 - 反重复铁律：先读后写、复用禁重建、同仓单执行体退避（多窗时先 git status）。
@@ -127,6 +127,11 @@ gaming/FluxVerse/
 - [✅ 2026-09-23·r4] market+calendar 探针（五现实探针收口·M1.5 感知侧全部落地）：**交易日历修 clock 节假日近似**——market.ps1 单写者持 world/market-cal.json（akshare tool_trade_date_hist_sina·覆盖至 2026-12-31），clock.ps1 只读；as_of=当日新鲜才生效（true/false 覆盖 Mon-Fri），stale/缺失→退回近似兜底（已知边缘：凌晨断 tick+节假日 09:30 首轮误钟一轮自愈，OS 循环 24h 在跑即不触发）；**510300 沪深300ETF 日线入 state.reality.market**（BigMoney 同源旗舰标的=regime/evolve/strategies target·30 bars [date,o,h,l,c]·change_pct·is_trading_day·cal_next_trade_date——QUANT 城真K线巨屏数据就绪，引擎侧映射属 M2）；源链实证改序 **TX→Sina→EM**（TX 实测通含当日 in-flight bar·Sina ETF 股票端点当日解析坏死 demjson No value·EM RemoteDisconnected 同 BigMoney 09-21 断连实证——与 BigMoney 顺序不同已在 commit 注明理由：以当日实测为准）；缓存节奏=cal 日更+ETF 30min TTL→10min tick 不打爆源；双绿实证=14 探针全 OK+VERIFY PASS+bars 30 条含当日 4.590；独立逻辑测试 4 例全过（节假日 closed 零钟/stale 回退/补钟 4 连响有序/节后无伪钟）
 - [新法·已立·r4] **探针子进程硬顶律**：PS 调外部抓取器（python/akshare 等）一律 `Start-Process -PassThru` + `WaitForExit(毫秒)` + 超时 `Kill()`——akshare 各源无内置超时（BigMoney 实证腾讯级可挂 5min+），无硬顶=一针挂死整轮 tick；配套律：嵌套数据入 state 用 array-of-arrays（标量叶保 ConvertTo-Json -Depth 6 余量·对象套对象有 null 截断险）；探针自测收集器禁 `+=`（scriptblock 域假象·用 ArrayList 方法调用）
 - [✅ 2026-09-23·r5] DESIGN 编号残迹+误字收口（r4 呈报两项他窗债·自领）：①双「十四」去重=原「十四、治理挂接」并入城市治理规则章作 14.6（锚点不动：现实链接层仍 §十五，TECH/mandate/R-synthesis 三处引用零改动）；②「秩库」→「私库」误字修复（git log -S 实证=他窗 4198432 引入·README 与 R-synthesis §五在册正字均=私库）；他窗 R-synthesis 17:56 活跃 WIP（对外口径 CEO 纠偏令）按单执行体退避律未卷入
+- [✅ 2026-09-23·r6] 集团审计转办件 **P-10**（P0）收口：orders_hq 行数位置游标→**内容寻址游标**（`hqorder:<time>/<quote前30字>` 键·bsorder 同式·'=' 从键材料剥离防游标行断键）+事件去重——多窗插行位移漏 4 令+retention 行双发根除；**迁移语义=当日未脉冲行一次性补齐**（真机落产 24 脉冲：审计漏发 17:05/17:20/17:25/17:30落地性 4+新令 18:20+日初出生抑制 19——城今日出生·引擎未建零消费端无闪烁爆 issue·流内已发 5 行零重发·未来同日游标意外清零也自限去重）；历史日期行静默种子禁旧史重放；pending 计数改全表 executing 总数（该 state 键原为 scan 装配死面零协议影响）；沙盒 21 断言全绿（迁移 29 键/二轮幂等零新增/插行位移恰发 1/含 = 引文键回环不断/流去重 26-5）+真机迁移落产（流 30 ledger 事件·游标 29 键·ledger_rows 退役）+verify PASS
+- [✅ 2026-09-23·r6] 集团审计转办件 **P-11**（P0）收口：**scan v0.5 单写者锁**（tick S1 同式+PID 存活检查：活锁<15min 退避·死 PID/坏锁 fail-open 即接管——17:37/17:42 tick×devloop 双写者同窗竞写实证根除；活锁实证=假锁退避者不动他人锁）+**tick v1.2 脏树退避**（轮首 git status 查 Tools/perceptor+schema 脏即跳过 scan+verify 本轮——审计规格只列 Tools/perceptor，扩入 schema 的理由：半编辑登记簿同型结构性假 FAIL 面；**18:27:01 OS 真轮自动退避实证**+手动复证·退避轮照写日志注明理由 exit 0 非失败）；ctx 增 worldDir+探针模板契约同步；完成回执已落本仓根 HQ-FEEDBACK.md F-20260923-01（evolution §7 面制）
+- [P1·待 CEO 署名] 集团审计转办件 **P-12**：DESIGN §七 映射表核心行为零事件源（OS_TICK_START/DONE·GATE_PASS/BLOCK·TASK_CLAIM·TRANSFER 全零发·城会静）——方案=tick/verify 补发轮次与门禁事件+fleet_tasks 登记即发+fleet/transfers 面探针；实施时新事件类型先走 T2 登记 events-registry（7 天否决窗）
+- [P1·转 Biggame] 集团审计转办件 **P-13**：GAME 城 U 号令面盲区——Biggame 按其自治法定唯一 U 号台账面后，DevLoop 加 orders_bg 探针（orders/orders_bs/orders_hq 已覆盖 quant/media/governance 三面）
+- [P2·下轮自领] 集团审计转办件 **P-14** 小病三件：quarantine 7 天轮转（retention.md R4 同律）+github_events zone 正则补 Bigmedia（media 域事件落 governance 默认）+`.codely-cli/` gitignore 行（轮首 `??` 噪音源）
 
 ## 十、溯源
 

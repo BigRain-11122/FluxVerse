@@ -1,0 +1,26 @@
+{
+  "version": "0.1",
+  "desc": "FluxVerse event type registry - probes may only emit types listed here (governance: registry arbitration)",
+  "events": {
+    "COMMIT":             { "actor": "repo name",  "zone": "any",         "desc": "git commit in any repo" },
+    "PUSH":               { "actor": "machine id", "zone": "any",         "desc": "git push (multi-machine sync) - reserved" },
+    "PULL":               { "actor": "machine id", "zone": "any",         "desc": "git pull - reserved" },
+    "TASK_CLAIM":         { "actor": "machine id", "zone": "quant",       "desc": "task claimed on board" },
+    "TASK_DONE":          { "actor": "machine id", "zone": "quant",       "desc": "task finished - reserved" },
+    "HEARTBEAT":          { "actor": "machine id", "zone": "quant",       "desc": "fleet heartbeat seen" },
+    "OS_TICK_START":      { "actor": "loop id",    "zone": "any",         "desc": "OS loop round start - reserved" },
+    "OS_TICK_DONE":       { "actor": "loop id",    "zone": "any",         "desc": "OS loop round done - reserved" },
+    "GATE_PASS":          { "actor": "gate id",   "zone": "quant",       "desc": "gatechain pass - reserved" },
+    "GATE_BLOCK":         { "actor": "gate id",    "zone": "quant",       "desc": "gatechain block - reserved" },
+    "EVOLUTION_PROPOSE":  { "actor": "evolution",  "zone": "governance",  "desc": "weekly evolution proposal - reserved" },
+    "EVOLUTION_LAW":      { "actor": "evolution",  "zone": "governance",  "desc": "law enacted - reserved" },
+    "CEO_ORDER":          { "actor": "CEO",        "zone": "any",         "desc": "CEO order token issued" },
+    "DEPLOY":             { "actor": "repo name",  "zone": "gaming",      "desc": "game build/publish - reserved" },
+    "CONTENT_PUBLISH":    { "actor": "media id",   "zone": "media",       "desc": "BigStream content published - reserved" },
+    "MACHINE_JOIN":       { "actor": "machine id", "zone": "any",         "desc": "new machine onboard - reserved" },
+    "MACHINE_RETIRE":     { "actor": "machine id", "zone": "any",         "desc": "machine retired - reserved" },
+    "LINE_OPEN":          { "actor": "line id",    "zone": "any",         "desc": "five-step open-line progress - reserved" },
+    "LINE_CLOSE":         { "actor": "line id",    "zone": "any",         "desc": "line closed - reserved" },
+    "TRANSFER":           { "actor": "machine id", "zone": "any",         "desc": "fleet bulk transfer - reserved" }
+  }
+}

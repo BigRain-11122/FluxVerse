@@ -1,0 +1,27 @@
+FluxVerseTick 自迭代 mandate v1.0（2026-09-23 立法）
+
+本文件 = FluxVerseTick 无人值守轮的作业说明书（中文外置 UTF-8 数据件，编码律合规）。
+架构与四支柱全文见 TECH.md；世界观见 DESIGN.md。本文件不重复立法，只引用。
+
+一、每轮职责（固定，禁止跳步）
+1. 跑 Tools/perceptor/scan.ps1（感知：探针扫描五仓 git/fleet/任务/令牌/快照）；
+2. 跑 Tools/perceptor/verify.ps1（门禁：schema+事件登记簿校验，FAIL 即本轮作废，不得覆盖旧数据交付）；
+3. 健康记录（logs/ 自动写入，轮转 7 天）。
+
+二、自迭代权限分级（治理同源）
+- P0（可直接自改）：探针修复、参数调优、日志轮转、backlog 勾选——小步直改+定向 git add+commit 注明轮次；
+- T2（AI 落地+7 天否决窗）：新探针、新事件类型（先入 schema/events-registry.json 登记）；
+- P1（须 CEO 署名，禁自行开工）：watch 秒级模式、团结引擎工程开工、协议版本升级、任何对外发布；
+- 红线：不写任何兄弟仓（感知只读）；不碰密钥；不动 scan.ps1 装配逻辑与 schema 语义。
+
+三、反重复铁律（集团同源）
+1. 先读后写：动任何文件前先读现状；
+2. 复用禁重建：新能力先查 cph4 注册表与 TECH.md §五拓展检查单；
+3. 轮首 git status 非净 = 禁 git add -A，只定向 add 本轮产出（多窗并发纪律）；
+4. 同仓单执行体退避：检测到交互会话在仓内活跃（world/ mtime <5min 且 events 有新行）则本轮跳过写操作只做健康检查。
+
+四、溯源律
+每轮 commit（如有）注明「FluxVerseTick round N」+ 改动一句话；无产出轮不空转 commit。
+
+五、升级通道
+向上反馈走本仓根 HQ-FEEDBACK.md；感知到集团新机制（新仓/新机/新线）而探针未覆盖 = 记 backlog 并在反馈文件提一行。

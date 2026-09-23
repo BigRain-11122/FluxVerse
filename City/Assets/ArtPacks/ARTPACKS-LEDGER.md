@@ -15,6 +15,7 @@
 - 内容：**赛博城市环境全套**——霓虹招牌系列（banner-neon×4 帧/banner-coke/sushi/scroll/big/side/arrow/floor/hotel-sign·全带 preview GIF）、环境背景（skyline-a/b·near-buildings-bg·buildings-bg）、道具（antenna/control-box/monitorface）、玩家/无人机/炮塔精灵全套、PSD 源件（banner 可改公司名——FLUX/CPH4/公司名牌就地重制）、三张总表 sheet-01-sprites/02-environment/03-tiles。
 - **验图：适配度=高**（完整赛博横版街景·霓虹+都市一体·多模态定「可直接定美术基调」）；⚠️ 注 1=环境总表内嵌 "SCREENSHOT" 演示占位字样（DevLoop 消费时裁掉）；⚠️ 注 2=八格对比中曾见「糊」为**验图台架双线性缩放伪影**——源件原生像素实测（banner-neon 19×48·hotel-sign 68×35）零污染。
 - 用途：DESIGN §九「霓虹街牌 FLUX/CPH4/公司名」判据面主力 + 大气透视背景层 + 街道机器人补充（drone）。
+- **消费实况（r35 首批入城 11 件）**：hotel-sign（北岸 NW 楼顶 HOTEL 牌）+banner-neon×4 帧（GAME 西/MEDIA 东/QUANT 双 flank/北岸中楼·各挂不同帧=免费闪烁相位差）+banner-side-1（GAME 西第二槽·平行四边形霓虹）+banner-sushi-1（MEDIA 东女儿墙横牌）+banner-scroll-1（北岸 NE 楼窄挂轴）+banner-open（北岸 GAME 中楼 OPEN 门牌）+monitor-face-1（QUANT 广场街亭屏）+antenna（QUANT 塔顶格构天线）——落位表=City/Assets/Scripts/NeonSigns.cs（NeonRules 单一正典）·场景持久化 12 位（NeonSign* GO·sortingOrder 6=Props 4 与 tint 8 之间）·NeonProof 双会话 189 断言绿+多模态双图绿（m1-r35-neon-{dusk,night}.png）·夜律实测=霓虹在夜 tint 下暗而不灭（lum dusk 0.504→night 0.282）；**banner-coke 未消费弃用留痕**（真实品牌 pastiche 与 FluxVerse 自有公司叙事冲突·公司名牌走 PSD 就地重制债）；PSD 公司名重制（FLUX/CPH4 牌）=后续债。
 
 ## cyber-city/（11 件·CC0·warlloyd·/content/cyber-city）
 

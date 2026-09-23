@@ -24,7 +24,9 @@
 | synth_wave_0.mp3 | 7,682,216 B | OGA /content/synth-wave · Pro Sensory（源名 Synth Wave_0.mp3） | CC0 | 昼/黄昏 |
 | loading_loop.wav | 2,195,123 B | OGA /content/loading-screen-loop · HaelDB（源名 TremLoadingloopl.wav） | CC0 | 循环氛围/加载面 |
 | midnight_drive.ogg | 229,058 B | OGA /content/midnight-drive · congusbongus | CC0 | 夜 |
-| tt_caves.ogg / tt_currents.ogg / tt_antimatter.ogg | — | OGA /content/t-t-free-cyberpunk-pack · tricksntraps | CC0 | 赛博曲池（黄昏候选·**下载在途，到货补行**） |
+| tt_caves.ogg | 1,703,616 B | OGA /content/t-t-free-cyberpunk-pack · tricksntraps（源名 Caves.ogg） | CC0 | 赛博曲池（黄昏候选） |
+| tt_currents.ogg | 15,419,836 B | OGA /content/t-t-free-cyberpunk-pack · tricksntraps（源名 Currents.ogg） | CC0 | 赛博曲池（黄昏候选） |
+| tt_antimatter.ogg | 重试下载中 | 同上（源名 Anti Matter Magic.ogg·OGA 慢速 300s 超时一次·900s 重试在途） | CC0 | 赛博曲池第三轨（到货补行） |
 
 ## weather/（天气层 · weather 探针 weather_kind 驱动）
 

@@ -107,7 +107,7 @@ gaming/FluxVerse/
 │   └── tick/ (tick.ps1 + mandate.txt)
 ├── world/    # 运行时数据（gitignored）
 ├── logs/     # tick 日志（gitignored）
-└── （未来）City/ 团结引擎 2D 工程
+└── City/     # 团结引擎 2D 工程（M1 点火 r8：Tuanjie 1.10.3 内置 2D 模板·Assets/Packages/ProjectSettings 入库·Library/Temp/Logs gitignored）
 ```
 
 ## 九、技术债 Backlog（tick 自领池·P1+ 须 CEO）
@@ -134,7 +134,7 @@ gaming/FluxVerse/
 - [P1·待 CEO 署名] 集团审计转办件 **P-12**：DESIGN §七 映射表核心行为零事件源（OS_TICK_START/DONE·GATE_PASS/BLOCK·TASK_CLAIM·TRANSFER 全零发·城会静）——方案=tick/verify 补发轮次与门禁事件+fleet_tasks 登记即发+fleet/transfers 面探针；实施时新事件类型先走 T2 登记 events-registry（7 天否决窗）
 - [P1·转 Biggame] 集团审计转办件 **P-13**：GAME 城 U 号令面盲区——Biggame 按其自治法定唯一 U 号台账面后，DevLoop 加 orders_bg 探针（orders/orders_bs/orders_hq 已覆盖 quant/media/governance 三面）
 - [✅ 2026-09-23·r7] 集团审计转办件 **P-14**（P2）小病三件收口：①scan v0.6 quarantine 7 天生命周期（retention R4 两梯：文件 7d 未动整体清空+行级 ts>7d 修剪·fail-keep 不可龄行永不静默毁证·PS5.1 Z 律剥 Z 再 ParseExact）②github_events media 正则补 Bigmedia（`'BigStream|Stream|Bigmedia'`·-match 默认不区分大小写·media 域事件不再落 governance 默认）③`.gitignore` `.codely-cli/` 整目录行（原 scheduled_tasks/settings 两行子规则被吸收·轮首 `??` 噪音根除）；沙盒 14 断言全绿（过期行恰删/新鲜行留/坏行留/缺 ts 行留/7d 边界/陈档整清/zone 正则 6 例含无过匹配）+真机 scan+verify 双绿（14 探针 OK）
-- [P1·CEO 已署名·下轮认领·最高优] 集团审计转办件 **P-15 M1 引擎工程点火**（ledger P-2026-09-23-15·CEO 署名 P1 令 ~18:20「立项集团级元宇宙可视化项目，游戏化呈现，City 里是美术资产，开始走流程。优先级最高！」——**明文解除 DevLoop 引擎/美术禁区仅限此件**·认领制先到先得·分轮推进单轮 25min 预算·首轮=建工程骨架）：①Tuanjie 原生 2D 工程（正交相机/Sprite/Tilemap·禁 3D 铁律）②City 资产接线（**实址勘正 r7：`gaming/MiniGame/Art Assets/AA-022_SceneBG背景_清洁城市与万圣节动画件_GuttyKreum/CleanCityv3`——953 件 1.32MB 与台账数吻合；ledger 载「Art Assets/City」已因 MiniGame U164 正名过时**）③静态城市骨架=北外滩脑塔+黄浦江+陆家嘴三城街区（concept-shanghai 构图）④事件路由器一件（CEO_ORDER 光脉冲先做）⑤判据=编辑器可跑+截图+一件事件驱动动画；**就绪面已勘明 r7：Tuanjie 1.10.3 编辑器（2022.3.62t15）已装于 `C:\Program Files\Tuanjie\Hub\Editor\2022.3.62t15`，MiniGame 三工程 ProjectVersion 实证同版——环境零障碍**
+- [P1·CEO 已署名·进行中 r8·最高优] 集团审计转办件 **P-15 M1 引擎工程点火**（ledger P-2026-09-23-15·CEO 署名 P1 令 ~18:20「立项集团级元宇宙可视化项目，游戏化呈现，City 里是美术资产，开始走流程。优先级最高！」——**明文解除 DevLoop 引擎/美术禁区仅限此件**·认领制先到先得·分轮推进单轮 25min 预算）：①Tuanjie 原生 2D 工程（正交相机/Sprite/Tilemap·禁 3D 铁律）②City 资产接线（**实址勘正 r7：`gaming/MiniGame/Art Assets/AA-022_SceneBG背景_清洁城市与万圣节动画件_GuttyKreum/CleanCityv3`——953 件 1.32MB 与台账数吻合；ledger 载「Art Assets/City」已因 MiniGame U164 正名过时**）③静态城市骨架=北外滩脑塔+黄浦江+陆家嘴三城街区（concept-shanghai 构图）④事件路由器一件（CEO_ORDER 光脉冲先做）⑤判据=编辑器可跑+截图+一件事件驱动动画；**就绪面已勘明 r7：Tuanjie 1.10.3 编辑器（2022.3.62t15）已装于 `C:\Program Files\Tuanjie\Hub\Editor\2022.3.62t15`，MiniGame 三工程 ProjectVersion 实证同版——环境零障碍**；**首轮已收 r8**：工程骨架建成——tuanjie-cli projects create（内置 2D 模板 cn.tuanjie.template.2d@7.0.4）→ City/ 落仓，ProjectVersion=2022.3.62t15 与 MiniGame 三工程同版，SampleScene 正交相机（orthographic: 1）+2D 全家桶（feature.2d/tilemap/physics2d/particlesystem·禁 3D 铁律自检通过），Hub 创建流自动开编辑器（「City - SampleScene - Tuanjie Editor 1.10.3」）=编辑器可跑实证；下轮=②City 资产接线+③静态城市骨架（M1 判据已扩容 24h 四档色轮+天气粒子·71e976a）
 - [P1·CEO 令·与 P-15 同线推进] 集团审计转办件 **P-16 三司面板接入元宙 L1**（ledger P-2026-09-23-16·CEO 令 ~18:30「各个子公司可视化项目准备接入元宇宙项目，统一开发和管理，总控」·governance §1 集团层拥有表已加行=新可视化项目禁各司另建）：①接入协议落 TECH（L1 内景规范：城内建筑钻取→内景窗）②**引用不复制铁律**（Biggame 像素小镇看板/BigMoney bigmoney.html 禁重绘重建·引擎内嵌复用选型由 M1 工程实证）③统一像素壳层（1 号风 UI 框）归总控、面板数据面各司自治 ④判据=城内点建筑开内景窗见该司实况（先接 bigmoney.html 一件）
 
 ## 十、溯源

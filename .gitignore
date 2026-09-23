@@ -8,6 +8,9 @@
 [Uu]serSettings/
 *.pid
 *.log
+# IDE-generated solution/project files (MiniGame repo convention: **/*.sln + **/*.csproj ignored, .vsconfig tracked)
+*.sln
+*.csproj
 
 # Secrets
 .env
@@ -18,3 +21,6 @@ world/
 
 # Codely runtime (P-14: whole dir - auto-saves were the untracked-noise source)
 .codely-cli/
+
+# CityWatch generated snapshots (CEO viewer output - never pollute the tree)
+watch/out/

@@ -13,7 +13,7 @@
 1. 修红优先：logs/tick-*.log 出现 gate FAIL / probe FAIL / 自愈 quarantine 增长 → 先修复它，本轮到此为止。
 2. 自领开发队列（TECH.md §九 backlog 为唯一权威·每轮先读；五现实探针 r1/r4 已收口、P-10~P-14 审计件 r6/r7 已收口）：
    - **当前最高优=ledger P-15/P-16（CEO 已署名 P1·转办@FluxVerse-DevLoop·认领制先到先得）**：
-     - P-15 M1 引擎工程点火（最高优·分轮推进·单轮 25min 预算·首轮=建工程骨架；就绪面与 City 资产实址已勘明见 TECH §九 P-15 行；CEO 署名明文解除引擎/美术禁区仅限此件）。
+     - P-15 M1 引擎工程点火（最高优·分轮推进·单轮 25min 预算；r8 已建工程骨架——City/ Tuanjie 1.10.3 内置 2D 模板·编辑器可跑已实证；下轮=City 资产接线+静态城市骨架〔M1 判据已扩容 24h 四档色轮+天气粒子〕；就绪面与 City 资产实址见 TECH §九 P-15 行；CEO 署名明文解除引擎/美术禁区仅限此件）。
      - P-16 三司面板接入元宙 L1（与 P-15 同线推进·引用不复制铁律·先接 bigmoney.html 一件）。
    - 新事件类型先 T2 登记 schema/events-registry.json（7 天否决窗·引擎端无破坏）；探针严格按 probes/_template.ps1 契约（失败一律 return null 静默降级，禁拖垮全城扫描）；探针/脚本产出后必跑 Tools/perceptor/scan.ps1 + verify.ps1 双绿才算完成。
 3. 未署名 P1 禁区（须 CEO 署名，禁实现）：watch 秒级模式、协议版本升级、对外发布、P-15 范围外的美术/场景搭建。P-12（核心行为事件源）待 CEO 署名；P-13 转 Biggame。本轮遇到只写方案进 TECH.md backlog。

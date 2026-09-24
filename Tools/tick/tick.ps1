@@ -12,6 +12,18 @@
 # test (scan.lock pattern): a lock only blocks while its owner PID is alive
 # AND fresh (<15 min). A crashed round (dead PID) is taken over at once - no
 # lost round; a hung-but-alive round is still taken over after 15 min.
+# v1.4 (2026-09-24 r66, P-43 residue / lock-atomicity law port): the v1.3
+# acquire was still check-then-act (Test-Path then Set-Content) - two
+# same-second launches could BOTH pass the check and double-run the round
+# (r65 AC-A live proof on scan.lock, same shape; bad case = a doubled tick
+# round, the stream itself already guarded by the atomic scan lock). Acquire
+# is now atomic (scan v0.7 law, verbatim port): CreateNew is the gate, the
+# PID is written+flushed+closed at once (LAW: no held handle - a lingering
+# write handle makes challengers' ReadAllText throw and read empty, firing
+# the takeover path on a healthy owner), the loser re-checks liveness and
+# skips, an empty/unreadable lock gets 6 beats (~1.5s) before crash-takeover,
+# and the release unlinks only if the on-disk PID is still ours (an overage
+# takeover may have replaced the lock mid-round).
 # Round: 1) perceptor (state -> .new)  2) verify gate (promotes on PASS)
 #        3) log  4) rotate logs (7 days)
 # Exit 0 = healthy round (or backoff skip); 1 = gate FAIL (old world-state kept).
@@ -22,14 +34,37 @@ $logsDir = Join-Path $repoRoot 'logs'
 if (-not (Test-Path $logsDir)) { New-Item -ItemType Directory -Path $logsDir | Out-Null }
 
 $lockFile = Join-Path $logsDir 'tick.lock'
-if (Test-Path $lockFile) {
-  $lockPid = (Get-Content $lockFile -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -First 1)
-  $lockAge = ((Get-Date) - (Get-Item $lockFile).LastWriteTime).TotalMinutes
-  $alive = $false
-  if ("$lockPid" -match '^\d+$') { if (Get-Process -Id ([int]"$lockPid") -ErrorAction SilentlyContinue) { $alive = $true } }
-  if ($alive -and $lockAge -lt 15) { Write-Output 'FluxVerseTick: lock held by a live round, skip'; exit 0 }
+$lockFs = $null
+$acquired = $false
+$emptySeen = 0
+for ($i = 0; $i -lt 60 -and -not $acquired; $i++) {
+  if (Test-Path $lockFile) {
+    $lockPid = ''
+    try { $lockPid = [string]([System.IO.File]::ReadAllText($lockFile)).Trim() } catch {}
+    if ($lockPid -match '^\d+$') {
+      $lockAge = ((Get-Date) - (Get-Item $lockFile).LastWriteTime).TotalMinutes
+      $alive = $false
+      if (Get-Process -Id ([int]$lockPid) -ErrorAction SilentlyContinue) { $alive = $true }
+      if ($alive -and $lockAge -lt 15) { Write-Output 'FluxVerseTick: lock held by a live round, skip'; exit 0 }
+      # dead PID or overage (>15min hung round) -> fail-open takeover
+      Remove-Item $lockFile -Force -ErrorAction SilentlyContinue
+    } else {
+      $emptySeen++
+      if ($emptySeen -ge 6) { Remove-Item $lockFile -Force -ErrorAction SilentlyContinue }
+    }
+    Start-Sleep -Milliseconds 250
+  }
+  try {
+    $lockFs = [System.IO.File]::Open($lockFile, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, ([System.IO.FileShare]::Read -bor [System.IO.FileShare]::Delete))
+    $pidBytes = [System.Text.Encoding]::ASCII.GetBytes(([string]$PID))
+    $lockFs.Write($pidBytes, 0, $pidBytes.Length)
+    $lockFs.Flush()
+    $lockFs.Close()
+    $lockFs = $null
+    $acquired = $true
+  } catch { Start-Sleep -Milliseconds 250 }
 }
-Set-Content -Path $lockFile -Value ([string]$PID)
+if (-not $acquired) { Write-Output 'FluxVerseTick: lock not acquirable this round, skip'; exit 0 }
 
 try {
   $stamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
@@ -75,5 +110,11 @@ try {
   Write-Output ('FluxVerseTick: gate=' + $(if ($gate -eq 0) { 'PASS' } else { 'FAIL' }))
   exit $gate
 } finally {
-  Remove-Item $lockFile -Force -ErrorAction SilentlyContinue
+  # r66 release law: unlink only if the lock on disk is still ours - an
+  # overage takeover may have unlinked/replaced it mid-round; the old
+  # unconditional remove would have deleted a successor's lock
+  try {
+    $ownLockPid = [string]([System.IO.File]::ReadAllText($lockFile)).Trim()
+    if ($ownLockPid -eq ([string]$PID)) { Remove-Item $lockFile -Force -ErrorAction SilentlyContinue }
+  } catch {}
 }

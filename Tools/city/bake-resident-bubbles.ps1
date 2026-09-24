@@ -1,14 +1,19 @@
-# FluxVerse City resident bark-bubble baker (r42: P-23(2) render slice - the last
-# open face of the cognition wiring; consumes the r41 barks pool substrate).
-# WHAT: every UNIQUE pool line (residents-barks.json holds 6 axes x 12 contexts
-# x 8 lines = 576, zero duplicates by the r41 bake gate) is rasterized ONCE into
-# a speech-bubble PNG. The engine cannot rasterize CJK at runtime (no font asset
-# - r18 law), and the pick law is day-granular (any bucket line may surface on
-# any future date), so the ONLY complete set is per-line, not per-(resident,ctx):
-# 576 textures cover every sentence the md5 law can ever pick. Line->texture is
-# keyed by KEY LAW = md5(UTF8(line)) first 4 digest bytes as 8 lowercase hex -
-# the SAME law as C# ResidentBarks.LineKey (single source; the proof gates all
-# 576 keys byte-for-byte against the C# side - dual-implementation, r39 law).
+# FluxVerse City resident bark-bubble baker (r42: P-23(2) render slice; consumes
+# the barks pool substrate; r109: count gates DERIVED from the pool itself).
+# r109 LAW: pool size is NOT pinned here anymore. The BigLife layer-2 pool was
+# refilled to v1.8 (15 per bucket = 1080 lines today), so every hardcoded
+# pool-size gate is now derived from the pool (one texture per unique line,
+# however many). Structural law (bucket 4..15, zero-dup, char law) is owned by
+# the r107 barks bake; this file re-asserts only zero-dup + per-line law.
+# WHAT: every UNIQUE pool line (zero duplicates, re-asserted below) is
+# rasterized ONCE into a speech-bubble PNG. The engine cannot rasterize CJK at
+# runtime (no font asset - r18 law), and the pick law is day-granular (any
+# bucket line may surface on any future date), so the ONLY complete set is
+# per-line, not per-(resident,ctx): the full set covers every sentence the
+# md5 law can ever pick. Line->texture is keyed by KEY LAW = md5(UTF8(line))
+# first 4 digest bytes as 8 lowercase hex -
+# the SAME law as C# ResidentBarks.LineKey (single source; the proof gates every
+# pool key byte-for-byte against the C# side - dual-implementation, r39 law).
 # OUTPUT PATH: City/BubbleData/ OUTSIDE Assets/ on purpose - the BannerData
 # byte-path precedent (r18): runtime File.ReadAllBytes + LoadImage never touches
 # the importer, so the bake must not grow an imported twin under Assets/ (meta
@@ -27,7 +32,7 @@
 # 6,9,14 a140 / interior dark glass 12,18,28 a150 (ambient info plate, five-color
 # law untouched, never a functional light). Draw passes = r24/r38/r40 law:
 # glow disk (13 offsets) -> shadow (+1 px) -> fill (interior, frame, text, tail).
-# Pixel checks use LockBits (576 files x GetPixel loops would take minutes in
+# Pixel checks use LockBits (per-file GetPixel loops would take minutes in
 # PS; byte-array sampling keeps the fail-loud gates affordable). Determinism:
 # re-bake SHA256 map + manifest bytes identical (r24/r38/r40 idempotence law).
 $ErrorActionPreference = "Stop"
@@ -60,7 +65,7 @@ foreach ($a in $barks.axes) {
         }
     }
 }
-if ($total -ne 576) { throw ("pool line count != 576: " + $total) }
+if ($total -lt 1) { throw ("pool line count is zero - nothing to bake") }
 if ($lineMap.Count -ne $total) { throw ("duplicate lines in pool: " + $lineMap.Count + " unique of " + $total) }
 foreach ($l in $lineMap.Keys) {
     $chars = $l.Length
@@ -196,7 +201,7 @@ try {
     $entries = New-Object System.Collections.ArrayList
     foreach ($l in $lineMap.Keys) { [void]$entries.Add((Bake-One $l $lineMap[$l])) }
     $sorted = @($entries | Sort-Object key)
-    if ($sorted.Count -ne 576) { throw ("baked file count != 576: " + $sorted.Count) }
+    if ($sorted.Count -ne $lineMap.Count) { throw ("baked file count != unique pool lines: " + $sorted.Count + " vs " + $lineMap.Count) }
 
     $manifest = [PSCustomObject]@{
         law   = "resident-bubble-bake/1"
@@ -224,12 +229,12 @@ try {
     foreach ($f in (Get-ChildItem -Path $outDir -Filter "bark-*.png" | Sort-Object Name)) { $h2[$f.Name] = (Get-FileHash -Path $f.FullName -Algorithm SHA256).Hash }
     [System.IO.File]::WriteAllText($manifestFile, $mjson, (New-Object System.Text.UTF8Encoding($false)))
     $m2 = [System.IO.File]::ReadAllText($manifestFile, [System.Text.Encoding]::UTF8)
-    if ($h1.Count -ne 576) { throw ("expected 576 textures, found " + $h1.Count) }
+    if ($h1.Count -ne $lineMap.Count) { throw ("expected " + $lineMap.Count + " textures, found " + $h1.Count) }
     foreach ($k in $h1.Keys) { if ($h1[$k] -ne $h2[$k]) { throw ("non-deterministic bake: " + $k) } }
     if ($m1 -ne $m2) { throw "manifest bytes not stable across re-bake" }
 
     $maniSha = (Get-FileHash -Path $manifestFile -Algorithm SHA256).Hash
-    Write-Output ("BAKE OK: 576 bubble textures + manifest, SHA256 stable across re-bake")
+    Write-Output ("BAKE OK: " + $sorted.Count + " bubble textures + manifest, SHA256 stable across re-bake")
     Write-Output ("manifest sha256=" + $maniSha)
     Write-Output ("font family=" + $familyName + " pxH=" + $H + " ppu=24")
 } catch {

@@ -87,3 +87,11 @@
 ## 引用不复制（池内消费面·DevLoop 走 P-21/FT 通道）
 
 AA-016.02 车辆 / AA-034 光效粒子 193 PNG / FT-011 缝合像素（霓虹中文招牌字）· FT-016 PressStart2P（拉丁像素）· FT-010 得意黑（标题冲击感）。
+
+
+## residents-atlas/（4 件·集团自产·cph4/research/sprites-20260924/atlas·fa7d951 定版只读拷贝·r97 入仓）
+
+- 内容：**批 1 居民部件图集正体**——atlas.png 128×96 九宫（skin/cloth/pant/hair-short/hair-long/eyes-led/eyes-dot/badge/being·32×32 部件掩膜·白=主色位/灰 210=影位）+layout.json（9 rect）+manifest.jsonl（32 行调色身份：id/name/species/skin/hair/cloth/eye/badge）+being-glow.png（DevLoop 伴生件·bake-being-glow.ps1：白 RGB 带 reference alpha 70/150/225/245+sparks #F5EFFF——atlas being 胞为不透明灰阶带〔集团产线律=alpha 于 remap 期注入〕而引擎 SpriteRenderer tint 无法灰阶→alpha 重映射·伴生件=切片染 core 即得精确带）。
+- 来源：**集团产线自产**（bake-residents.ps1+atlas-residents.ps1·BigLife census 只读确定性派生·P-68 批 1/P-72 部件化正典·CEO 图集浪费纠正令 09-24 ~21:10）——非外采件·零外部许可义务；身份数据契约=BigLife CODEX §十二（导出面在册）。
+- **零 per-resident 图件律**（CEO 令正体）：32 只个体 PNG 径已由 fa7d951 设计性作废（勿消费 batch1/manifest.json 的 file 字段）；伴生件 36 件同批落位=名牌 b1 组 32（residents-crowd/nameplates/plate-res-b1-*.png·66×20 画布·CJK 主名形律）+接地影子 shadow-res32.png（residents-crowd/shadows/·32×8@PPU24=1.33×0.33u·对 1.33u 身）。
+- 消费实况（r97 预置）：**引擎挂装待 r98**——ResidentRules 32 席表+部件栈挂装+ResidentProof 证明门（见 TECH §九 r97 行）；.meta 随首个编辑器轮导入生成（P-27⑤ 先例·CityImportPostprocessor PPU 表已增 residents-atlas→24 行）。

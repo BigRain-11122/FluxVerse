@@ -23,6 +23,8 @@ public class CityImportPostprocessor : AssetPostprocessor
     public static int PpuFor(string path)
     {
         if (path.StartsWith("Assets/ArtPacks/residents-crowd/")) return 24;
+        // r97 batch1 pool: 32px parts @ 24 = 1.33u body (P-69(1) single-source law)
+        if (path.StartsWith("Assets/ArtPacks/residents-atlas/")) return 24;
         return 16;
     }
 

@@ -11,6 +11,12 @@
 #   shadow-res.png  48x12 px @ PPU24 -> exactly 2.0 x 0.5 world units, native
 #                  under the 2u residents, scale stays 1 = zero resampling
 #                  (r37 divisor law; importer table: residents-crowd/ -> 24).
+#   shadow-res32.png 32x8  px @ PPU24 -> 1.33 x 0.33 world units, native under
+#                  the 1.33u batch1 paper-doll bodies (r97: the r96 survey
+#                  flagged the 48x12 blob oversized for the 32px class; same
+#                  proportions scaled 2/3 - the 48x12 original stays on disc
+#                  for the legacy 2u seats until the r98 table swap retires
+#                  them, discard-on-record law P-21(4)).
 #   shadow-bot.png  16x6  px @ PPU16 -> exactly 1.0 x 0.375 world units, native
 #                  under the 1u robots (tophat-robot/ -> PPU16 by table default).
 # PIXEL LAW: per-pixel radial falloff (pure math, no GDI+ pen/brush), alpha
@@ -72,12 +78,14 @@ function Bake-Shadow($path, $w, $h, $rx, $ry, $maxA)
 }
 
 $resPath = Join-Path $resDir "shadow-res.png"
+$res32Path = Join-Path $resDir "shadow-res32.png"
 $botPath = Join-Path $botDir "shadow-bot.png"
 Bake-Shadow $resPath 48 12 22.0 4.6 125
+Bake-Shadow $res32Path 32 8 14.5 3.0 125
 Bake-Shadow $botPath 16 6 7.0 2.2 125
 
 # verify + report (sizes, alpha center/rim, determinism SHA256)
-foreach ($p in @($resPath, $botPath))
+foreach ($p in @($resPath, $res32Path, $botPath))
 {
     $probe = New-Object System.Drawing.Bitmap($p)
     $cw = $probe.Width; $ch = $probe.Height

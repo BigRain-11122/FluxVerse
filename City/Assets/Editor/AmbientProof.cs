@@ -143,7 +143,18 @@ namespace FluxVerse
             // ---- C. four-tier color wheel: injected hours, region pixel gates ----
             // NOTE: ReadPixels/GetPixel texture rows are BOTTOM-UP (row 0 = bottom of image;
             // PNG export flips for display). World y at row R = (R/1080 - 0.5) * 40.
-            // So "horizon (bottom sky)" = rows 20..120; "zenith (top sky)" = rows 960..1060.
+            // So "horizon (bottom sky)" = rows 20..120. "Zenith (top sky)" = rows 1054..1079:
+            // r51 baseline recalibration - the r13 window (rows 960..1060) went stale at r34
+            // when the parallax silhouettes (SkylineRules, content top y +19 = row 1053)
+            // legally grew into it: their dusk fog-multiply reads warm rose and diluted the
+            // purple average to -0.019 (HEAD-verified identical before and after the r51
+            // pilot tint fix - a pre-existing stale baseline, not a pilot regression). The
+            // zenith gates prove the SKY GRADIENT, so the window now sits above the
+            // silhouette content top in pure sky (the skyline keeps its own fog gates in
+            // SkylineProof). The law-tie below fails loud if the spires ever grow taller.
+            float zenY0 = (1054 / 1080f - 0.5f) * 40f;
+            Chk(zenY0 > SkylineRules.FarContentTopY,
+                "zenith window must clear the silhouette content top");
             Texture2D dawnShot, dayShot, duskShot, nightShot;
             float b, w;
             amb.ApplyAmbient(AmbientWheel.TierForHour(6));   // dawn 06:00
@@ -152,13 +163,13 @@ namespace FluxVerse
             RegionAvg(dawnShot, 0, 20, 1920, 120, out b, out w);
             Chk(w > 0.10f, "dawn horizon not warm enough on screen: " + w.ToString("F3"));
             float dawnBotWarm = w;
-            RegionAvg(dawnShot, 0, 960, 1920, 1060, out b, out w);
+            RegionAvg(dawnShot, 0, 1054, 1920, 1079, out b, out w);
             Chk(w < -0.05f, "dawn zenith not cool on screen: " + w.ToString("F3"));
 
             amb.ApplyAmbient(AmbientWheel.TierForHour(12));   // day 12:00
             amb.StepWeather(0.1f);
             dayShot = Shot(cam, "m1-r13-day.png");
-            RegionAvg(dayShot, 0, 960, 1920, 1060, out b, out w);
+            RegionAvg(dayShot, 0, 1054, 1920, 1079, out b, out w);
             Chk(b > 0.50f, "day sky too dark on screen: " + b.ToString("F3"));
             Chk(w < -0.05f, "day sky not blue on screen: " + w.ToString("F3"));
 
@@ -168,13 +179,13 @@ namespace FluxVerse
             RegionAvg(duskShot, 0, 20, 1920, 120, out b, out w);
             Chk(w > 0.25f, "dusk horizon not warm gold on screen: " + w.ToString("F3"));
             float duskBotWarm = w;
-            RegionAvg(duskShot, 0, 960, 1920, 1060, out b, out w);
+            RegionAvg(duskShot, 0, 1054, 1920, 1079, out b, out w);
             Chk(w < -0.05f, "dusk zenith not purple on screen: " + w.ToString("F3"));
 
             amb.ApplyAmbient(AmbientWheel.TierForHour(23));   // night 23:00
             amb.StepWeather(0.1f);
             nightShot = Shot(cam, "m1-r13-night.png");
-            RegionAvg(nightShot, 0, 960, 1920, 1060, out b, out w);
+            RegionAvg(nightShot, 0, 1054, 1920, 1079, out b, out w);
             Chk(b < 0.12f, "night sky too bright on screen: " + b.ToString("F3"));
             Chk(w < -0.02f, "night sky not blue-dominant: " + w.ToString("F3"));
 
@@ -184,6 +195,25 @@ namespace FluxVerse
             BoxMetrics(nightShot, cam, 0f, 11.5f, out nightTowerBri, out nightTowerWarm);
             Chk(nightTowerBri < dayTowerBri - 0.05f, "night tint did not darken the city: d="
                 + (dayTowerBri - nightTowerBri).ToString("F3"));
+
+            // ---- C2. r51 pilot gates (TECH sec.9 r22 debt: paving-vs-tint 1u offset) ----
+            // (a) GEOMETRY: the tint quad must cover the painted band exactly - bottom -16,
+            //     top +15 (the builder paves to +15; a 30u quad topping at +14 left the top
+            //     paved row untinted = the night far-shore bright strip).
+            SpriteRenderer tintR = GameObject.Find("AmbientTint").GetComponent<SpriteRenderer>();
+            Bounds tb = tintR.bounds;
+            Chk(tb.min.y <= -15.9f, "tint must cover the band bottom -16, got " + tb.min.y.ToString("F2"));
+            Chk(Mathf.Abs(tb.max.y - 15f) <= 0.05f,
+                "tint top must sit at the painted +15, got " + tb.max.y.ToString("F2"));
+            // (b) RENDER: the far-shore strip window (rows 925..938 = world y 14.26..14.74,
+            //     x 300..1600 = well inside the painted map, no sky/edge leak) must darken
+            //     at night vs day by the tint amount - untinted it stayed day-bright (the
+            //     r22 proof failure: 1421 bright samples in a supposedly quiet night band).
+            float dayStripB, dayStripW, nightStripB, nightStripW;
+            RegionAvg(dayShot, 300, 925, 1600, 938, out dayStripB, out dayStripW);
+            RegionAvg(nightShot, 300, 925, 1600, 938, out nightStripB, out nightStripW);
+            Chk(dayStripB - nightStripB >= 0.05f,
+                "night far-shore strip not tinted (r51 pilot): d=" + (dayStripB - nightStripB).ToString("F3"));
 
             // ---- D. weather particles + alert band, all on the night tier (best contrast) ----
             int nightBase = CountBright(nightShot, 100, 300, 1820, 800, 0.30f);
@@ -226,6 +256,8 @@ namespace FluxVerse
                 + " tiers(dawn_bot_warm=" + dawnBotWarm.ToString("F2")
                 + ", dusk_bot_warm=" + duskBotWarm.ToString("F2") + ")"
                 + " tower(day_bri=" + dayTowerBri.ToString("F3") + ", night_bri=" + nightTowerBri.ToString("F3") + ")"
+                + " farshore(tint_top=" + tb.max.y.ToString("F2") + ", day_bri=" + dayStripB.ToString("F3")
+                + ", night_bri=" + nightStripB.ToString("F3") + ")"
                 + " weather(base=" + nightBase + ", rain+" + (rainN - nightBase)
                 + ", snow+" + (snowN - nightBase) + ", alert_rain+" + (alertN - nightBase)
                 + ", band_alpha=" + amb.BandAlpha.ToString("F3")

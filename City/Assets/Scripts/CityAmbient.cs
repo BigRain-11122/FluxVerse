@@ -171,9 +171,13 @@ namespace FluxVerse
                     SkylineRules.NearTopRow, SkylineRules.NearContentTopY, SkylineRules.FogNear(tier));
                 skylineNearR.transform.SetParent(transform, false);
             }
-            // ambient tint over the CITY band only (painted extent y -16..+14): atmosphere between
-            // buildings, sky strips stay pure gradient. Above tilemaps 0..4, below band 9 / pulses 10.
-            tint = MakeQuad("AmbientTint", 8, WhiteSprite(), 92f, 30f, -1f);
+            // ambient tint over the CITY band only - the PAINTED extent (y -16..+15): the
+            // builder paves to world +15 (tile cells to 14), so a 30u quad topping at +14
+            // left a 1u full-width untinted bright strip at the far shore on every tinted
+            // tier (r22 finding; fixed by the r51 pilot, TECH sec.9 debt line). Atmosphere
+            // between buildings, sky strips stay pure gradient. Above tilemaps 0..4, below
+            // band 9 / pulses 10.
+            tint = MakeQuad("AmbientTint", 8, WhiteSprite(), 92f, 31f, -0.5f);
             tint.transform.SetParent(transform, false);
             // city-wide alert band (gale / severe WMO): functional red, river level
             band = MakeQuad("AmbientAlertBand", 9, WhiteSprite(), 92f, 4f, 0f);

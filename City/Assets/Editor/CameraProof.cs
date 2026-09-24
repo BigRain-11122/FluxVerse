@@ -227,11 +227,30 @@ namespace FluxVerse
                 "second MoveTo must start from current pos (no teleport)");
 
             // ---- B. scene repair + wiring (SEPARATE FILE LAW fix), saved BEFORE any motion ----
+            // r51 NON-DESTRUCTIVE repair: the r14 routine deleted the CityAmbient /
+            // CityEventRouter roots unconditionally and rebuilt bare ones. Correct in the
+            // r14 era (nothing was serialized on those GOs yet), but r25/r31/r34 later grew
+            // serialized wiring onto them (event-router clips, ambient audio bed + 8 clips,
+            // skyline sprite fields) - the first post-r31 run of this proof destroyed the
+            // bed wiring on save and the SkylineProof r31 regression caught it. Ghosts now
+            // mean DUPLICATES and dead shells only; the healthy first-born keeps every
+            // serialized field. The camera keeps the same conservatism: only missing-script
+            // stubs and the rig (rebuilt fresh below) are stripped, never unknown future
+            // serialized components.
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             int ghosts = 0;
+            GameObject ambGo = null, routerGo = null;
             foreach (GameObject root in scene.GetRootGameObjects())   // snapshot array
-                if (root.name == "CityAmbient" || root.name == "CityEventRouter")
+            {
+                if (root.name != "CityAmbient" && root.name != "CityEventRouter") continue;
+                bool dead = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(root) > 0;
+                bool dup = (root.name == "CityAmbient" && ambGo != null)
+                        || (root.name == "CityEventRouter" && routerGo != null);
+                if (dead || dup)
                 { ghosts++; UnityEngine.Object.DestroyImmediate(root); }
+                else if (root.name == "CityAmbient") ambGo = root;
+                else routerGo = root;
+            }
             GameObject camGo = GameObject.Find("CityCamera");
             Chk(camGo != null, "CityCamera missing in CityScene");
             Camera cam = camGo.GetComponent<Camera>();
@@ -245,15 +264,17 @@ namespace FluxVerse
             }
             Component[] comps = camGo.GetComponents<Component>();
             foreach (Component c in comps)
-                if (!(c is Transform) && !(c is Camera))
+                if (c is CityCameraRig)
                 { UnityEngine.Object.DestroyImmediate(c); stripped++; }
             CityCameraRig rig = camGo.AddComponent<CityCameraRig>();
             Chk(rig != null, "CityCameraRig failed to attach");
-            GameObject ambGo = new GameObject("CityAmbient");
-            CityAmbient amb = ambGo.AddComponent<CityAmbient>();
+            if (ambGo == null) { ambGo = new GameObject("CityAmbient"); }
+            CityAmbient amb = ambGo.GetComponent<CityAmbient>();
+            if (amb == null) amb = ambGo.AddComponent<CityAmbient>();
             Chk(amb != null, "CityAmbient failed to attach");
-            GameObject routerGo = new GameObject("CityEventRouter");
-            CityEventRouter router = routerGo.AddComponent<CityEventRouter>();
+            if (routerGo == null) { routerGo = new GameObject("CityEventRouter"); }
+            CityEventRouter router = routerGo.GetComponent<CityEventRouter>();
+            if (router == null) router = routerGo.AddComponent<CityEventRouter>();
             Chk(router != null, "CityEventRouter failed to attach");
             int ambCount = 0;
             foreach (GameObject root in scene.GetRootGameObjects())

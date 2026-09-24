@@ -6,11 +6,13 @@
 //
 // Data flow: Tools/city/bake-resident-barks.ps1 (deterministic PS bake,
 // fail-loud gates) writes Assets/Data/residents-barks.json (6 used axes x 12
-// contexts x 8 lines + the 12-resident id->axis roster coupled to the r39
-// identity file) and Assets/Data/residents-barks-vectors.json (120
-// precomputed law vectors). The proof demands byte agreement on all vectors
-// -> the PS bake and this C# core are separate implementations of the SAME
-// law; agreement proves the law, not just the artifact (r39 dual-impl
+// contexts x up to 15 lines per the BigLife layer-2 contract v1.8 + the
+// 31-seat NARRATIVE id->axis roster in street slot order - the single anchor
+// seat, layer=anchor, is honestly excluded and never barks, r106/r107 law)
+// and Assets/Data/residents-barks-vectors.json (310 precomputed law vectors:
+// 31 residents x 5 contexts x 2 dates). The proof demands byte agreement on
+// all vectors -> the PS bake and this C# core are separate implementations of
+// the SAME law; agreement proves the law, not just the artifact (r39 dual-impl
 // pattern). Verified live 2026-09-24: python draw.py output == PS vectors
 // 12/12 for (all residents, morning, today) - the python law is the source.
 //
@@ -61,7 +63,7 @@ namespace FluxVerse
     [Serializable]
     public class BarkResidentRef
     {
-        public int slot;          // 0..11 == ResidentRules index
+        public int slot;          // street slot 0..31 (anchor 26 never present)
         public string id;         // census id C-#####
         public string axis;       // this resident's thought axis
     }
@@ -97,7 +99,8 @@ namespace FluxVerse
         public const string VectorsRelPath = "Data/residents-barks-vectors.json";
         public const int MaxLineChars = 24;                       // <24-char engine law (cognition README acceptance 2)
         public const int MaxBubblesPerScreen = 2;                 // attention rationing (P-23 spec)
-        public const int RosterCount = 12;                        // == ResidentIdentity.Count
+        public const int RosterCount = 31;                        // street NARRATIVE seats (r107): the 32-seat roster
+                                                                   // minus the anchor slot 26 (no axis, honest silence)
 
         // draw.py CONTEXTS canon order - never reorder (bucket routing key)
         public static readonly string[] ContextCanon = new string[]

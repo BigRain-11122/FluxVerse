@@ -1,9 +1,25 @@
-# FluxVerse DevLoop r41 / P-23(2) M2 barks data slice: bake the engine-side
-# resident-bark pool from BigLife cognition/pools.json (read-only sibling-repo
-# consumption - the cognition README layer-2 contract).
+# FluxVerse DevLoop r107 / r106 work-order slice A (P-69 leftover, barks data
+# slice, zero editor budget): re-bake the engine-side resident-bark pool from
+# BigLife cognition/pools.json (read-only sibling-repo consumption - the
+# cognition README layer-2 contract).
+#
+# r106 work order: the r41 bake source (residents-identity.json) is a DELETED
+# file - the street canon residents-street.json (r98, 32 seats) is the single
+# identity substrate, and the bark roster rides its NARRATIVE layer only
+# ("barks ride the narrative layer" law): the single anchor seat (slot 26,
+# layer=anchor, C-00001 tower-flank honor seat) has NO axis and is honestly
+# excluded - a bark is never invented for a seat with no voice axis.
+#
+# Contract adaptation (science-judgment note, commit-referenced): the BigLife
+# layer-2 pool self-stopped 2026-09-24 18:41 at the v1.8 water level (six axes
+# x 12 contexts x 15 lines; cognition README: bucket bounds 4..15, old 8/6
+# level is locked history). The r41 bucket gate 4..12 encoded the retired
+# water level and would reject the LIVE contract pool - raised here to 4..15.
+# All other gates hold on the live pool (r107 measured: total=1080 unique=1080
+# dup=0 digit=0 maxLen=24 minLen=7).
 #
 # Law source (BigLife Tools/draw.py, byte-mirrored here and in ResidentBarks.cs):
-#   - bucket routing: carbon citizen -> pools.axes[<citizen axis>][ctx]
+#   - bucket routing: citizen -> pools.axes[<citizen axis>][ctx]
 #     (draw.py falls back to the yanhuo axis when a bucket is empty; the bake
 #     instead FAILS LOUD on any empty/missing bucket - the committed pool must
 #     be complete, the fallback stays a C# runtime defense only)
@@ -16,31 +32,33 @@
 #
 # Outputs (deterministic, SHA256 recorded):
 #   City/Assets/Data/residents-barks.json         - 6 used axes x 12 contexts
-#     x 8 lines + the 12-resident id->axis roster (coupled to the r39 identity
-#     file: the bark roster IS the identity roster, orphan-face law)
-#   City/Assets/Data/residents-barks-vectors.json - 120 precomputed law vectors
-#     (12 residents x 5 contexts x 2 dates) for the C# cross-implementation
+#     x up to 15 lines + the 31-seat narrative id->axis roster in street slot
+#     order (slot 26 anchor excluded; coupled to residents-street.json)
+#   City/Assets/Data/residents-barks-vectors.json - 310 precomputed law vectors
+#     (31 residents x 5 contexts x 2 dates) for the C# cross-implementation
 #     proof gate: ResidentBarks.Pick must return these strings byte-for-byte
-#   logs/r41-barks-bake.txt                       - bake report + SHA256
+#   logs/r107-barks-bake.txt                      - bake report + SHA256
 #
-# Gates (all fail-loud): pool parses; every used axis has exactly the 12 canon
-# contexts; every bucket 4..12 lines; every line 4..24 chars / zero [0-9] /
-# non-blank; whole-bake line uniqueness (pool audit zero-dup contract);
-# identity roster 12 unique C-##### ids with axes present in the pool; two
-# builds byte-identical; round-trip parse of both outputs.
-# ASCII-only script body (PS5.1 GBK law); CJK lives only in the data. No 3D.
+# Gates (all fail-loud): pool parses; street roster holds 32 slots in order;
+# exactly ONE seat excluded and it carries layer=anchor; every kept seat has
+# layer=narrative, a unique C-##### id and an axis present in the pool; every
+# used axis has exactly the 12 canon contexts; every bucket 4..15 lines;
+# every line 4..24 chars / zero [0-9] / non-blank; whole-bake line uniqueness
+# (pool audit zero-dup contract); two builds byte-identical; round-trip parse
+# of both outputs. ASCII-only script body (PS5.1 GBK law); CJK lives only in
+# the data. No 3D.
 $ErrorActionPreference = "Stop"
 
 $repo   = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent   # Tools\city -> repo
 $group  = Split-Path (Split-Path $repo -Parent) -Parent           # -> FluxGroup root
 $pool   = Join-Path $group "life\BigLife\cognition\pools.json"
-$ident  = Join-Path $repo "City\Assets\Data\residents-identity.json"
+$street = Join-Path $repo "City\Assets\Data\residents-street.json"
 $out    = Join-Path $repo "City\Assets\Data\residents-barks.json"
 $outVec = Join-Path $repo "City\Assets\Data\residents-barks-vectors.json"
-$report = Join-Path $repo "logs\r41-barks-bake.txt"
+$report = Join-Path $repo "logs\r107-barks-bake.txt"
 
-if (-not (Test-Path -LiteralPath $pool))  { throw "pools.json not found: $pool" }
-if (-not (Test-Path -LiteralPath $ident)) { throw "identity file not found: $ident" }
+if (-not (Test-Path -LiteralPath $pool))   { throw "pools.json not found: $pool" }
+if (-not (Test-Path -LiteralPath $street)) { throw "street roster not found: $street" }
 
 # draw.py CONTEXTS canon order (engine contract - never reorder)
 $contexts = @('morning','dusk','night','weekend','rain','typhoon','heatwave','coldsnap','market_open','market_close','ceo_order','festival')
@@ -61,28 +79,36 @@ function JsonEsc([string]$s) {
     return $sb.ToString()
 }
 
-# ---- load pool + identity (read-only) ----
+# ---- load pool + street roster (read-only) ----
 $pools = [System.IO.File]::ReadAllText($pool, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
 if ($null -eq $pools.axes) { throw "pools.json has no axes face" }
 $axMap = @{}
 foreach ($p in $pools.axes.PSObject.Properties) { $axMap[$p.Name] = $p.Value }
 
-$identObj = [System.IO.File]::ReadAllText($ident, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
-$slots = @($identObj.slots)
-if ($slots.Count -ne 12) { throw "identity roster must hold 12 slots, got $($slots.Count)" }
+$streetObj = [System.IO.File]::ReadAllText($street, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+$slots = @($streetObj.slots)
+if ($slots.Count -ne 32) { throw "street roster must hold 32 slots, got $($slots.Count)" }
 
-# roster: the bark roster IS the identity roster (orphan-face law)
+# narrative filter (r106 law): barks ride the narrative layer only. Exactly
+# ONE seat may be excluded and it must carry layer=anchor - any other hole in
+# the roster is a data corruption, not a filter.
 $roster = @()
-for ($i = 0; $i -lt 12; $i++) {
+$anchorSeen = 0
+for ($i = 0; $i -lt 32; $i++) {
     $e = $slots[$i]
-    if ([int]$e.slot -ne $i) { throw "identity slot order drift at $i" }
-    if ($e.axis -eq $null -or $e.axis.Length -eq 0) { throw "identity slot $i has empty axis" }
-    if (-not $axMap.ContainsKey($e.axis)) { throw "identity slot $i axis not in pool: $($e.axis)" }
+    if ([int]$e.slot -ne $i) { throw "street slot order drift at $i" }
+    $lay = [string]$e.layer
+    if ($lay -eq 'anchor') { $anchorSeen++; continue }
+    if ($lay -ne 'narrative') { throw "street slot $i has unknown layer: $lay" }
+    if ([string]$e.id -notmatch '^C-\d{5}$') { throw "bad census id at slot ${i}: $($e.id)" }
+    if ([string]$e.axis -eq '') { throw "narrative slot $i has empty axis (anchor exemption lost)" }
+    if (-not $axMap.ContainsKey([string]$e.axis)) { throw "slot $i axis not in pool: $($e.axis)" }
     $roster += @{ slot = [int]$e.slot; id = [string]$e.id; axis = [string]$e.axis }
 }
+if ($anchorSeen -ne 1) { throw "narrative filter must exclude exactly ONE anchor seat, got $anchorSeen" }
+if ($roster.Count -ne 31) { throw "narrative roster must hold 31 seats, got $($roster.Count)" }
 $seenId = @{}
 foreach ($r in $roster) {
-    if ($r.id -notmatch '^C-\d{5}$') { throw "bad census id: $($r.id)" }
     if ($seenId.ContainsKey($r.id)) { throw "duplicate roster id: $($r.id)" }
     $seenId[$r.id] = $true
 }
@@ -103,7 +129,7 @@ foreach ($ax in $usedAxes) {
         $cp = $axVal.PSObject.Properties[$ctx]
         if ($null -eq $cp) { throw "axis $ax missing canon context: $ctx" }
         $lines = @($cp.Value)
-        if ($lines.Count -lt 4 -or $lines.Count -gt 12) { throw "bucket size out of 4..12: axis=$ax ctx=$ctx n=$($lines.Count)" }
+        if ($lines.Count -lt 4 -or $lines.Count -gt 15) { throw "bucket size out of 4..15 (contract v1.8): axis=$ax ctx=$ctx n=$($lines.Count)" }
         $clean = @()
         foreach ($ln in $lines) {
             $s = [string]$ln
@@ -132,6 +158,7 @@ function Pick-Index([string]$key, [int]$len) {
 }
 
 # ---- deterministic JSON builders ----
+$rosterN = $roster.Count
 function Build-Pool() {
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.Append("{`n`"axes`": [`n")
@@ -154,10 +181,10 @@ function Build-Pool() {
         [void]$sb.Append("`n")
     }
     [void]$sb.Append("],`n`"residents`": [`n")
-    for ($i = 0; $i -lt 12; $i++) {
+    for ($i = 0; $i -lt $rosterN; $i++) {
         $r = $roster[$i]
         [void]$sb.Append('{"slot":' + $r.slot + ',"id":"' + $r.id + '","axis":"' + (JsonEsc $r.axis) + '"}')
-        if ($i -lt 11) { [void]$sb.Append(',') }
+        if ($i -lt $rosterN - 1) { [void]$sb.Append(',') }
         [void]$sb.Append("`n")
     }
     [void]$sb.Append("]`n}`n")
@@ -168,7 +195,7 @@ function Build-Vectors() {
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.Append("{`n`"vectors`": [`n")
     $rows = New-Object 'System.Collections.Generic.List[string]'
-    for ($i = 0; $i -lt 12; $i++) {
+    for ($i = 0; $i -lt $rosterN; $i++) {
         $r = $roster[$i]
         foreach ($ctx in $vecCtxs) {
             $bucket = $bucketOf[($r.axis + [char]31 + $ctx)]
@@ -199,10 +226,10 @@ if ($vecJson1 -ne $vecJson2) { throw "vector bake is not deterministic - two bui
 # ---- round-trip parse + vector-vs-pool consistency ----
 $rt = $poolJson1 | ConvertFrom-Json
 if (@($rt.axes).Count -ne $usedAxes.Count) { throw "round-trip axis count drift" }
-if (@($rt.residents).Count -ne 12) { throw "round-trip roster count drift" }
+if (@($rt.residents).Count -ne $rosterN) { throw "round-trip roster count drift" }
 $rtv = $vecJson1 | ConvertFrom-Json
 $vecRows = @($rtv.vectors)
-if ($vecRows.Count -ne 120) { throw "vector count must be 120, got $($vecRows.Count)" }
+if ($vecRows.Count -ne ($rosterN * $vecCtxs.Count * $vecDates.Count)) { throw "vector count must be $($rosterN * $vecCtxs.Count * $vecDates.Count), got $($vecRows.Count)" }
 $vecSeen = @{}
 foreach ($v in $vecRows) {
     $k = $v.id + '|' + $v.date + '|' + $v.ctx
@@ -222,13 +249,13 @@ $shaP = (Get-FileHash -LiteralPath $out    -Algorithm SHA256).Hash
 $shaV = (Get-FileHash -LiteralPath $outVec -Algorithm SHA256).Hash
 
 $rl = New-Object 'System.Collections.Generic.List[string]'
-$rl.Add("axes=$($usedAxes.Count) contexts=12 lines_total=$totalLines vectors=$($vecRows.Count)")
+$rl.Add("axes=$($usedAxes.Count) contexts=12 lines_total=$totalLines vectors=$($vecRows.Count) roster=$rosterN")
 $rl.Add("pool_sha256=$shaP")
 $rl.Add("vectors_sha256=$shaV")
 foreach ($ax in $usedAxes) { $rl.Add("axis=" + $ax) }
 [System.IO.File]::WriteAllLines($report, $rl, (New-Object System.Text.UTF8Encoding $false))
 
-Write-Output ("BAKE OK axes=" + $usedAxes.Count + " lines=" + $totalLines + " vectors=" + $vecRows.Count)
+Write-Output ("BAKE OK axes=" + $usedAxes.Count + " lines=" + $totalLines + " vectors=" + $vecRows.Count + " roster=" + $rosterN)
 Write-Output ("pool_sha256=" + $shaP)
 Write-Output ("vectors_sha256=" + $shaV)
 Write-Output ("out=" + $out)

@@ -1,5 +1,7 @@
-// FluxVerse P-23(2) r41: batch proof for the engine resident-barks pool
-// (BigLife cognition layer-2 line pool baked for the 12 street residents).
+// FluxVerse P-23(2) r41/r107: batch proof for the engine resident-barks pool
+// (BigLife cognition layer-2 line pool baked for the 31 NARRATIVE street
+// residents - the street canon r98/r107 roster; the one anchor seat never
+// barks).
 // Sentinel pattern (r39/r40 style):
 //   pass 1: logs/barks.run         -> FluxVerse.ResidentBarksProof.BatchRun   -> logs/barks.done
 //   pass 2: logs/barks-reload.run  -> FluxVerse.ResidentBarksProof.ReloadGate -> logs/barks-reload.done
@@ -7,16 +9,21 @@
 //  A canon gates: context canon is the 12 draw.py keys, unique, in order;
 //    <24-char law; <=2 bubbles law; fallback axis non-empty.
 //  B data gates: pool parses; axis count == roster unique-axis count; every
-//    axis carries exactly the 12 canon contexts in order; buckets 4..12
-//    lines; every line 4..24 chars, zero digits, non-blank; whole-pool line
-//    uniqueness (zero-dup audit contract re-gated); roster 12 unique C-#####
-//    ids, slots 0..11, axes present in the pool.
-//  C identity coupling (orphan-face law): the bark roster IS the r39 identity
-//    roster - slot/id/axis equality against residents-identity.json.
-//  D vectors gate (dual implementation - the strongest gate): 120 baked law
-//    vectors (PS md5 law over the real pool; live-verified == python draw.py
-//    12/12 on 2026-09-24) must be reproduced byte-for-byte by the C# Pick;
-//    every vector line must live inside its own C# bucket.
+//    axis carries exactly the 12 canon contexts in order; buckets 4..15
+//    lines (BigLife layer-2 contract v1.8 water level); every line 4..24
+//    chars, zero digits, non-blank; whole-pool line uniqueness (zero-dup
+//    audit contract re-gated); roster = the 31 NARRATIVE street seats in
+//    street slot order with EXACTLY ONE hole at the anchor slot 26, unique
+//    C-##### ids, axes present in the pool.
+//  C identity coupling (orphan-face law, street canon): the bark roster IS
+//    the residents-street.json NARRATIVE subset - slot/id/axis equality per
+//    street slot, layer==narrative on every barking seat, exactly ONE anchor
+//    seat in the street file and it never carries a bark.
+//  D vectors gate (dual implementation - the strongest gate): 310 baked law
+//    vectors (31 residents x 5 contexts x 2 dates; PS md5 law over the real
+//    pool; live-verified == python draw.py 12/12 on 2026-09-24) must be
+//    reproduced byte-for-byte by the C# Pick; every vector line must live
+//    inside its own C# bucket.
 //  E law gates: pick determinism; unknown id/ctx -> honest null; draw.py
 //    fallback-axis law (in-memory file); <24-char runtime guard (in-memory);
 //    corrupt-file degrade -> null.
@@ -121,13 +128,18 @@ namespace FluxVerse
             {
                 BarkResidentRef r = f.residents[i];
                 Chk(r != null, "roster entry null at " + i);
-                Chk(r.slot == i, "roster slot order drift at " + i);
+                // street-slot law (r107): entry i holds street slot i below the
+                // anchor seat and slot i+1 above it - strictly ascending with
+                // EXACTLY ONE hole at the anchor slot, 31 narrative seats.
+                int expectSlot = (i < ResidentIdentity.AnchorSlot) ? i : i + 1;
+                Chk(r.slot == expectSlot, "roster street-slot order drift at " + i + ": " + r.slot);
                 Chk(r.id != null && System.Text.RegularExpressions.Regex.IsMatch(r.id, "^C-\\d{5}$"),
-                    "bad census id at slot " + i + ": " + r.id);
-                Chk(!string.IsNullOrEmpty(r.axis), "roster axis empty at slot " + i);
+                    "bad census id at street slot " + r.slot + ": " + r.id);
+                Chk(!string.IsNullOrEmpty(r.axis), "roster axis empty at street slot " + r.slot);
                 rosterAxes.Add(r.axis);
             }
-            Chk(f.residents.Length == ResidentBarks.RosterCount, "roster must hold 12");
+            Chk(f.residents.Length == ResidentBarks.RosterCount,
+                "roster must hold the 31 narrative street seats, got " + f.residents.Length);
             Chk(f.axes.Length == rosterAxes.Count, "axis count must equal the roster's unique-axis count (" +
                 f.axes.Length + " vs " + rosterAxes.Count + ")");
             HashSet<string> seenLine = new HashSet<string>();
@@ -142,8 +154,8 @@ namespace FluxVerse
                     BarkBucket b = ax.contexts[c];
                     Chk(b != null && b.ctx == ResidentBarks.ContextCanon[c],
                         "context canon order drift in axis " + ax.axis + " at " + c);
-                    Chk(b.lines != null && b.lines.Length >= 4 && b.lines.Length <= 12,
-                        "bucket out of 4..12: " + ax.axis + "/" + b.ctx);
+                    Chk(b.lines != null && b.lines.Length >= 4 && b.lines.Length <= 15,
+                        "bucket out of 4..15 (BigLife layer-2 contract v1.8): " + ax.axis + "/" + b.ctx);
                     foreach (string ln in b.lines)
                     {
                         Chk(!string.IsNullOrEmpty(ln) && ln.Trim().Length > 0, "blank line in " + ax.axis + "/" + b.ctx);
@@ -159,20 +171,38 @@ namespace FluxVerse
             }
             Chk(lineTotal >= 100, "suspiciously small pool: " + lineTotal + " lines");
 
-            // ---- C. identity coupling (orphan-face law) ----
+            // ---- C. identity coupling (orphan-face law, street canon r107) ----
             ResidentIdentityEntry[] idents = ResidentIdentity.Load(true);
-            Chk(idents != null, "identity file must parse for the coupling gate");
+            Chk(idents != null, "street identity file must parse for the coupling gate");
+            Chk(idents.Length == ResidentIdentity.Count, "street identity must hold 32 seats");
+            int anchorSeats = 0;
             for (int i = 0; i < idents.Length; i++)
             {
+                Chk(idents[i] != null && idents[i].slot == i, "street identity slot self-order drift at " + i);
+                if (idents[i].layer == ResidentIdentity.AnchorLayer) anchorSeats++;
+            }
+            Chk(anchorSeats == 1, "street identity must carry exactly ONE anchor seat, got " + anchorSeats);
+            Chk(idents[ResidentIdentity.AnchorSlot] != null &&
+                idents[ResidentIdentity.AnchorSlot].layer == ResidentIdentity.AnchorLayer,
+                "anchor-seat law: street slot " + ResidentIdentity.AnchorSlot + " must be the anchor");
+            for (int i = 0; i < f.residents.Length; i++)
+            {
                 BarkResidentRef r = f.residents[i];
-                Chk(idents[i].slot == r.slot && idents[i].id == r.id && idents[i].axis == r.axis,
-                    "bark roster != identity roster at slot " + i + " (a bark may only ride a live census identity)");
+                ResidentIdentityEntry e = idents[r.slot];
+                Chk(e != null, "bark street slot out of range: " + r.slot);
+                Chk(e.id == r.id && e.axis == r.axis,
+                    "bark roster != street identity at street slot " + r.slot +
+                    " (a bark may only ride a live census identity)");
+                Chk(e.layer == ResidentIdentity.NarrativeLayer,
+                    "bark roster carries a non-narrative seat at street slot " + r.slot);
             }
 
             // ---- D. vectors gate (dual implementation) ----
             BarkVectorsFile vf = JsonUtility.FromJson<BarkVectorsFile>(File.ReadAllText(VectorsPath, Encoding.UTF8));
             Chk(vf != null && vf.vectors != null, "vectors file must parse");
-            Chk(vf.vectors.Length == 120, "vectors must hold 120, got " + (vf.vectors == null ? -1 : vf.vectors.Length));
+            Chk(vf.vectors.Length == ResidentBarks.RosterCount * 5 * 2,
+                "vectors must hold " + (ResidentBarks.RosterCount * 5 * 2) + " (31 ids x 5 ctx x 2 dates), got " +
+                (vf.vectors == null ? -1 : vf.vectors.Length));
             HashSet<string> vecKeys = new HashSet<string>();
             foreach (BarkVector v in vf.vectors)
             {
@@ -294,9 +324,10 @@ namespace FluxVerse
             asserts = 0;
             ResidentBarksFile f = ResidentBarks.Load(true);
             Chk(f != null && f.residents != null && f.residents.Length == ResidentBarks.RosterCount,
-                "fresh-session parse must hold the 12-resident roster");
+                "fresh-session parse must hold the 31-seat narrative roster");
             BarkVectorsFile vf = JsonUtility.FromJson<BarkVectorsFile>(File.ReadAllText(VectorsPath, Encoding.UTF8));
-            Chk(vf != null && vf.vectors != null && vf.vectors.Length == 120, "fresh-session vectors parse");
+            Chk(vf != null && vf.vectors != null && vf.vectors.Length == ResidentBarks.RosterCount * 5 * 2,
+                "fresh-session vectors parse");
             int vecOk = 0;
             foreach (BarkVector v in vf.vectors)
             {

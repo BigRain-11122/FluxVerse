@@ -8,6 +8,10 @@
 # running the half-done stack produced false gate FAILs (16:57 precedent: a
 # probe file renamed mid-round). Such rounds skip scan+verify, log the reason,
 # exit 0 (deliberate skip, not a failure). Fail-open: git errors -> run.
+# v1.3 (2026-09-24 r63, group infra-2 P-43 F-B): PID liveness joins the lock
+# test (scan.lock pattern): a lock only blocks while its owner PID is alive
+# AND fresh (<15 min). A crashed round (dead PID) is taken over at once - no
+# lost round; a hung-but-alive round is still taken over after 15 min.
 # Round: 1) perceptor (state -> .new)  2) verify gate (promotes on PASS)
 #        3) log  4) rotate logs (7 days)
 # Exit 0 = healthy round (or backoff skip); 1 = gate FAIL (old world-state kept).
@@ -19,8 +23,11 @@ if (-not (Test-Path $logsDir)) { New-Item -ItemType Directory -Path $logsDir | O
 
 $lockFile = Join-Path $logsDir 'tick.lock'
 if (Test-Path $lockFile) {
+  $lockPid = (Get-Content $lockFile -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -First 1)
   $lockAge = ((Get-Date) - (Get-Item $lockFile).LastWriteTime).TotalMinutes
-  if ($lockAge -lt 15) { Write-Output 'FluxVerseTick: lock held by another round, skip'; exit 0 }
+  $alive = $false
+  if ("$lockPid" -match '^\d+$') { if (Get-Process -Id ([int]"$lockPid") -ErrorAction SilentlyContinue) { $alive = $true } }
+  if ($alive -and $lockAge -lt 15) { Write-Output 'FluxVerseTick: lock held by a live round, skip'; exit 0 }
 }
 Set-Content -Path $lockFile -Value ([string]$PID)
 

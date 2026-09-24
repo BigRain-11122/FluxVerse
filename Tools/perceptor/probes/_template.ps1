@@ -30,6 +30,15 @@
 #      MERGE (TECH.md 166 -> 97 lines; odd run merges, even run survives).
 #      ASCII-only files are content-immune but keep the flag so a repo-wide grep
 #      audit (Get-Content without -Encoding) stays empty. See TECH sec.9 r53.
+#   8. world\ measurement law (r63, infra-2 P-43): any read of files under
+#      world\ (live stream, archives, state, cursors - for dedup, counts,
+#      audits, any measurement) MUST carry an explicit -Encoding UTF8. The
+#      infra-2 first quantitative pass read the stream with the PS5.1 default
+#      (GBK) and reported 316 phantom PARSE_FAIL rows; a strict UTF-8 re-read
+#      found 0. (.NET [System.IO.File]::ReadAllText/ReadAllLines default to
+#      UTF-8 detection = safe; the Get-Content default is the trap.) Superset
+#      of law 7, kept separate because world\ is the shared bus: one sloppy
+#      read poisons the whole measurement, not just one probe's view.
 
 function Probe-_template {
   param($ctx)

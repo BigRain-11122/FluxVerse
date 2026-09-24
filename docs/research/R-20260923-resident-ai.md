@@ -47,3 +47,15 @@ bm-a（DASHENG 开发机·BigMoney 开发+FluxVerse 承建位）｜bm-b（16 核
 ## 七、验证声明
 
 技术件：Ollama 11434 端口/qwen2.5:7b-instruct 响应 224ms/14token 为本机当日实测；其余承正典（local-first.md/cph4 注册表[本地 LLM 栈=集团既有能力]/BLUEPRINT §四/DESIGN §五/§十六候选）。
+
+## 结论应用表
+
+| 结论 | 落点 | 状态 |
+|---|---|---|
+| 居民 AI v1（5 机器人真实名册+RESIDENT_SAY+45min 冷却） | ①已落地：r24 探针+CityWatch 居民之声（r27 面板/r28 v2）——live 生成 grandfather（转消费端待 BigLife anchor-lines.jsonl·r76 勘定） | 已闭环 |
+| v2 点居民问答/相遇对话 | ①CityWatch spotlight 事实级已接（r28）·引擎气泡 M2 | 接线中 |
+| v3 居民提案（城市议员）/向量记忆 | ①后续消费线（bge-m3 RAG 随 14b 深度线·token-economy §3.1 队列律禁预装） | 接线中 |
+| v4 参观模式聊天（脱敏白名单话题） | ①M4 参观端候选 | 接线中 |
+
+
+> 补表溯源：2026-09-24 r77 存量补表批（P-2026-09-24-65·正典 cph4/research-protocol.md §二）——落点按 TECH §九 在册消费实况回写；接线中项随对应任务线自领。

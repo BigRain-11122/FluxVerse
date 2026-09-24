@@ -123,3 +123,14 @@ public class CityImportPostprocessor : AssetPostprocessor
 - 本审计读样=Art 1 件+music 8 件+SFX 6 件+ArtPacks 1 件 meta 原文+Editor 目录清点——面覆盖非全件逐读；全件核验由 P-36 判据 1 的 meta 全检脚本完成。
 - 官方引证=Unity 2022.3 文档（AudioClipLoadType 两成员原文+AssetPostprocessor 范式原文）；团结 1.10.3=Unity 2022.3 同源（ProjectVersion 2022.3.62t15 实证），Tuanjie 文档站未及单验——以 Unity 同版文档为准，标注同源推定。
 - §三 代码为规格件（未编译验证）——落地时由 DevLoop 在编辑器内编译+3.2 顺序执行+3.3 判据收口；凡与本仓 TECH §九 新法冲突者以实证为准。
+
+## 结论应用表
+
+| 结论 | 落点 | 状态 |
+|---|---|---|
+| 五问题审计（A1-A5）+修复规格 ready-to-paste | ①任务单 P-37（slice 1 r71 已收=Editor 双件+1277 meta 护章·slice 2 刻意修值批待领） | 接线中 |
+| PPU 迁移风险三步序（已消费件场景侧重锚定+渲染断言防回退） | ②P-37 §3.2 安全序在册（施工轮执行） | 接线中 |
+| 补采三包（warped-city-2/city-pixel-tileset/city-icons·CC0） | ②City/Assets 入库毕（r71）+否决三包留痕（§四） | 已闭环 |
+
+
+> 补表溯源：2026-09-24 r77 存量补表批（P-2026-09-24-65·正典 cph4/research-protocol.md §二）——落点按 TECH §九 在册消费实况回写；接线中项随对应任务线自领。

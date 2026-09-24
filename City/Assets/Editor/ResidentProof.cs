@@ -12,10 +12,11 @@
 //  B asset gate: the 12 consumed frames forced to Sprite + Single + Point + PPU24
 //    + no mips (the divisor law for this pack's 48px density; r34 PPU100 speck
 //    disease enforced against, idempotent); rect == 48x48, bounds == 2x2 world.
-//  C CityScene wiring: stale Res* sweep -> 12 GOs from the table (fresh
-//    LoadAssetAtPath per r10 law) -> STAND gate re-derived from the live tilemaps
-//    (feet cell = center.y - 1 must hold a Ground pavement or Roads tile - never
-//    water/roof/air) -> idempotent second sweep+build -> save -> disk round-trip;
+//  C CityScene wiring: stale Res*+ShadowRes* sweep -> 12+12 GOs from the table
+//    (fresh LoadAssetAtPath per r10 law) -> STAND gate re-derived from the live
+//    tilemaps (r87 sec.8: underfoot cell = feet-1 must be Ground pavement,
+//    never grass/road; both body cells clear of Roads/Water/building tiles)
+//    -> idempotent second sweep+build -> save -> disk round-trip;
 //    r36/r35/r34/r31 neighbor regressions (robots 8 persisted, neon signs persisted per NeonRules.Count,
 //    skyline sprites, bed clip, interior, rig, L0 camera, non-empty tilemaps,
 //    runtime-only law).
@@ -158,6 +159,32 @@ namespace FluxVerse
                 }
             }
 
+            // r87 P-69 slice-3 shadow gates (pure core): prefix sweep-isolation
+            // (the Res* sweep must never eat the shadows - and vice versa), native
+            // size law, and per-seat derivation from the feet line.
+            Chk(ResidentRules.ShadowNamePrefix != ResidentRules.NamePrefix
+                && !ResidentRules.ShadowNamePrefix.StartsWith(ResidentRules.NamePrefix)
+                && !ResidentRules.ShadowNamePrefix.StartsWith(RobotRules.NamePrefix)
+                && !ResidentRules.ShadowNamePrefix.StartsWith(NeonRules.NamePrefix)
+                && ResidentRules.ShadowNamePrefix != ResidentTagRules.NamePrefix,
+                "shadow prefix must be sweep-isolated from every owned prefix (r40 law)");
+            Chk(ResidentRules.ShadowOrder == 5, "shadow order must be 5 (Props 4 < shadows 5 < signs 6)");
+            Chk(ResidentRules.ShadowPxW == 48 && ResidentRules.ShadowPxH == 12,
+                "shadow canvas must be 48x12 (2.0x0.5u @ PPU24 native)");
+            Chk(Math.Abs(ResidentRules.ShadowWorldW - 2f) < 1e-5f
+                && Math.Abs(ResidentRules.ShadowWorldH - 0.5f) < 1e-5f,
+                "shadow world size must be 2.0x0.5u (zero-resampling law)");
+            for (int i = 0; i < ResidentRules.Count; i++)
+            {
+                Vector2 sp = ResidentRules.ShadowPos(i);
+                Vector2 rp = ResidentRules.Pos(i);
+                Chk(Math.Abs(sp.x - rp.x) < 1e-5f
+                    && Math.Abs(sp.y - (rp.y - 1f - ResidentRules.ShadowDropY)) < 1e-5f,
+                    "shadow must derive from the resident feet line at " + ResidentRules.Name(i));
+                Chk(sp.y < rp.y - 1f, "shadow center must sit below the feet line at "
+                    + ResidentRules.Name(i) + " (contact-shadow law)");
+            }
+
             // ---- B. asset gate: importer laws on every consumed frame (idempotent) ----
             for (int i = 0; i < ResidentRules.Count; i++)
             {
@@ -170,25 +197,71 @@ namespace FluxVerse
                     "natural bounds != 2x2u (PPU100 shrink disease) at " + ResidentRules.Name(i));
             }
 
+            // grounding shadow asset (r87): the bake-ground-shadows.ps1 ellipse must
+            // import under the same divisor law (residents-crowd/ -> PPU24 table)
+            Sprite shSpr = ForceSprite(ResidentRules.ShadowPath);
+            Chk(shSpr != null, "shadow sprite failed to load: " + ResidentRules.ShadowPath);
+            Chk(Math.Abs(shSpr.rect.width - ResidentRules.ShadowPxW) < 0.5f
+                && Math.Abs(shSpr.rect.height - ResidentRules.ShadowPxH) < 0.5f,
+                "shadow rect != 48x12: " + shSpr.rect.width + "x" + shSpr.rect.height);
+            Chk(Math.Abs(shSpr.bounds.size.x - 2f) < 0.01f
+                && Math.Abs(shSpr.bounds.size.y - 0.5f) < 0.01f,
+                "shadow natural bounds != 2.0x0.5u (PPU table drift)");
+
             // ---- C. CityScene wiring: sweep -> build -> stand gate -> idempotent -> save ----
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             Chk(scene.isLoaded, "CityScene failed to open");
             BuildResidents();
-            BuildResidents();   // idempotency: the second sweep+build must land on exactly 12
+            BuildResidents();   // idempotency: the second sweep+build must land on exactly 12 + 12
             Chk(CountResidents() == 12, "idempotent rebuild count != 12: " + CountResidents());
-            // STAND gate, re-derived from the live tilemaps (never from comments):
-            // the FEET cell (center.y - 1) must hold a Ground pavement or Roads tile.
-            Tilemap ground = TilemapByName("Ground");
-            Tilemap roads = TilemapByName("Roads");
-            Chk(ground != null && roads != null, "Ground/Roads tilemaps missing");
+            Chk(CountShadows() == 12, "idempotent shadow rebuild count != 12: " + CountShadows());
+            // STAND gate, re-derived from the LIVE tilemaps (never from comments):
+            // r87 P-69 slice-3 sec.8 law. The UNDERFOOT cell (feet cell - 1 = the
+            // tile whose top edge the feet line rests on) must hold a GROUND
+            // pavement tile that is NOT grass (greenbelt ban) and NOT a road cell;
+            // BOTH body cells (feet cell, feet cell + 1) must be clear of Roads /
+            // Water / city-block / brain tiles (no lane standing, no bush torso,
+            // no water, no in-building). Checked across every column the 2u sprite
+            // spans, not just the center column.
+            Tilemap ground = TilemapLayer("Ground");
+            Tilemap roads = TilemapLayer("Roads");
+            Tilemap water = TilemapLayer("Water");
+            Tilemap gGame = TilemapLayer("CityGAME");
+            Tilemap gQuant = TilemapLayer("CityQUANT");
+            Tilemap gMedia = TilemapLayer("CityMEDIA");
+            Tilemap brain = TilemapLayer("BrainTower");
+            Chk(ground != null && roads != null && water != null && gGame != null
+                && gQuant != null && gMedia != null && brain != null, "stand-gate tilemaps missing");
             for (int i = 0; i < ResidentRules.Count; i++)
             {
                 Vector2Int feet = ResidentRules.FeetCellOf(i);
-                Vector3Int cell = new Vector3Int(feet.x, feet.y, 0);
-                bool onGround = ground.GetTile(cell) != null;
-                bool onRoad = roads.GetTile(cell) != null;
-                Chk(onGround || onRoad, "resident " + ResidentRules.Name(i) + " floats off street/pavement at feet cell "
-                    + cell + " (water/roof/air)");
+                int colA = Mathf.FloorToInt(ResidentRules.Pos(i).x - 0.99f);
+                int colB = Mathf.FloorToInt(ResidentRules.Pos(i).x + 0.99f);
+                for (int col = colA; col <= colB; col++)
+                {
+                    Vector3Int uc = new Vector3Int(col, feet.y - 1, 0);
+                    TileBase ut = ground.GetTile(uc);
+                    Chk(ut != null, "resident " + ResidentRules.Name(i) + " underfoot cell off the "
+                        + "pavement at " + uc + " (air/water)");
+                    Chk(roads.GetTile(uc) == null, "resident " + ResidentRules.Name(i)
+                        + " underfoot on a road cell at " + uc + " (sec.8 sidewalk-only law)");
+                    string utName = ut != null ? ut.name : "";
+                    Chk(utName != "t_grass_a" && utName != "t_grass_b",
+                        "resident " + ResidentRules.Name(i) + " stands on the greenbelt at "
+                        + uc + " (sec.8 greenbelt ban)");
+                    for (int row = feet.y; row <= feet.y + 1; row++)
+                    {
+                        Vector3Int bc = new Vector3Int(col, row, 0);
+                        Chk(roads.GetTile(bc) == null, "resident " + ResidentRules.Name(i)
+                            + " body over a road lane at " + bc + " (sec.8 lane ban)");
+                        Chk(water.GetTile(bc) == null, "resident " + ResidentRules.Name(i)
+                            + " body over water at " + bc + " (sec.8 water ban)");
+                        Chk(gGame.GetTile(bc) == null && gQuant.GetTile(bc) == null
+                            && gMedia.GetTile(bc) == null && brain.GetTile(bc) == null,
+                            "resident " + ResidentRules.Name(i) + " body over a building tile at "
+                            + bc + " (sec.8 no-in-building law)");
+                    }
+                }
             }
             bool saved = EditorSceneManager.SaveScene(scene);
             Chk(saved, "scene save failed");
@@ -207,6 +280,21 @@ namespace FluxVerse
                     && Math.Abs(go.transform.position.y - p.y) < 1e-4f,
                     "resident position lost: " + ResidentRules.Name(i));
                 Chk(Math.Abs(sr.transform.localScale.x - 1f) < 1e-5f, "resident scale != 1 (native law)");
+            }
+            // shadow round-trip (r87): 12 contact shadows persisted with the cast
+            Chk(CountShadows() == 12, "persisted shadow count != 12: " + CountShadows());
+            for (int i = 0; i < ResidentRules.Count; i++)
+            {
+                GameObject sgo = GameObject.Find(ResidentRules.ShadowName(i));
+                Chk(sgo != null, "shadow missing on disk: " + ResidentRules.ShadowName(i));
+                SpriteRenderer ssr = sgo != null ? sgo.GetComponent<SpriteRenderer>() : null;
+                Chk(ssr != null && ssr.sprite != null, "shadow sprite lost on disk: " + ResidentRules.ShadowName(i));
+                Chk(ssr.sortingOrder == ResidentRules.ShadowOrder, "shadow order lost: " + ResidentRules.ShadowName(i));
+                Vector2 sp = ResidentRules.ShadowPos(i);
+                Chk(Math.Abs(sgo.transform.position.x - sp.x) < 1e-4f
+                    && Math.Abs(sgo.transform.position.y - sp.y) < 1e-4f,
+                    "shadow position lost: " + ResidentRules.ShadowName(i));
+                Chk(Math.Abs(ssr.transform.localScale.x - 1f) < 1e-5f, "shadow scale != 1 (native law)");
             }
             // neighbor regressions (our save must not drop earlier serialized wiring)
             int robotsKept = 0;
@@ -281,16 +369,32 @@ namespace FluxVerse
             Chk(nightLum < duskLum, "night residents must sit under dusk (atmosphere law): "
                 + nightLum.ToString("F3") + " vs " + duskLum.ToString("F3"));
 
+            // ---- D2. r87 P-69 slice-3 record shots (R- sec.3 four-shot rescan set
+            // for the LAB judgment; the slice-3 subset is proven geometrically by
+            // the stand/shadow gates above): L0 day + night, L1 street x2.
+            Shot(cam, "m1-r87-ground-night.png");
+            amb.ApplyAmbient(AmbientTier.Day);
+            Shot(cam, "m1-r87-ground-day.png");
+            Vector3 camPosSaved = cam.transform.position;
+            float camSizeSaved = cam.orthographicSize;
+            cam.orthographicSize = RigMath.L1Size;
+            cam.transform.position = new Vector3(0f, -10f, camPosSaved.z);
+            Shot(cam, "m1-r87-ground-l1-south.png");
+            cam.transform.position = new Vector3(0f, 10f, camPosSaved.z);
+            Shot(cam, "m1-r87-ground-l1-north.png");
+            cam.orthographicSize = camSizeSaved;
+            cam.transform.position = camPosSaved;
+
             UnityEngine.Object.DestroyImmediate(duskBase); UnityEngine.Object.DestroyImmediate(duskOn);
             UnityEngine.Object.DestroyImmediate(nightBase); UnityEngine.Object.DestroyImmediate(nightOn);
 
             return "asserts=" + asserts
                 + " table=12 unique_frames=" + unique
-                + " scene(saved=" + saved + ",12 persisted,stand_gate=feet_street/pavement,robots8_kept,neon" + NeonRules.Count + "_kept,neighbors_ok)"
+                + " scene(saved=" + saved + ",12+12shadow persisted,stand_gate=sec8_underfoot_pavement+body_clear,robots8_kept,neon" + NeonRules.Count + "_kept,neighbors_ok)"
                 + " render(dusk_px=" + duskTot + " worst=" + duskWorst + ":" + duskMin
                 + " night_px=" + nightTot + " worst=" + nightWorst + ":" + nightMin
                 + " lum dusk=" + duskLum.ToString("F3") + " night=" + nightLum.ToString("F3") + ")"
-                + " shots=2";
+                + " shots=6";
         }
 
         static string ReloadProve()
@@ -298,6 +402,7 @@ namespace FluxVerse
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             if (!scene.isLoaded) throw new InvalidOperationException("CityScene failed to load");
             Chk(CountResidents() == 12, "resident count after editor restart != 12: " + CountResidents());
+            Chk(CountShadows() == 12, "shadow count after editor restart != 12: " + CountShadows());
             for (int i = 0; i < ResidentRules.Count; i++)
             {
                 GameObject go = GameObject.Find(ResidentRules.Name(i));
@@ -305,6 +410,10 @@ namespace FluxVerse
                 SpriteRenderer sr = go != null ? go.GetComponent<SpriteRenderer>() : null;
                 Chk(sr != null && sr.sprite != null, "resident sprite unresolved after restart: " + ResidentRules.Name(i));
                 Chk(sr.sortingOrder == ResidentRules.Order, "resident order lost after restart: " + ResidentRules.Name(i));
+                GameObject sgo = GameObject.Find(ResidentRules.ShadowName(i));
+                SpriteRenderer ssr = sgo != null ? sgo.GetComponent<SpriteRenderer>() : null;
+                Chk(ssr != null && ssr.sprite != null, "shadow unresolved after restart: " + ResidentRules.ShadowName(i));
+                Chk(ssr.sortingOrder == ResidentRules.ShadowOrder, "shadow order lost after restart: " + ResidentRules.ShadowName(i));
             }
             int robotsKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
@@ -341,12 +450,13 @@ namespace FluxVerse
                 + " skyline=2/2 neighbors=4 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
         }
 
-        // sweep every root-level Res* GO, then build the 12 from the manifest
-        // (fresh LoadAssetAtPath at every use = r10 fake-null law)
+        // sweep every root-level Res* AND ShadowRes* GO, then build the 12 + 12
+        // from the manifest (fresh LoadAssetAtPath at every use = r10 fake-null law)
         static void BuildResidents()
         {
             foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
-                if (t.parent == null && t.name.StartsWith(ResidentRules.NamePrefix))
+                if (t.parent == null && (t.name.StartsWith(ResidentRules.NamePrefix)
+                    || t.name.StartsWith(ResidentRules.ShadowNamePrefix)))
                     UnityEngine.Object.DestroyImmediate(t.gameObject);
             for (int i = 0; i < ResidentRules.Count; i++)
             {
@@ -359,6 +469,18 @@ namespace FluxVerse
                     throw new InvalidOperationException("resident sprite resolve failed: " + ResidentRules.Path(i));
                 sr.sortingOrder = ResidentRules.Order;
             }
+            Sprite shSprite = AssetDatabase.LoadAssetAtPath<Sprite>(ResidentRules.ShadowPath);
+            if (shSprite == null)
+                throw new InvalidOperationException("shadow sprite resolve failed: " + ResidentRules.ShadowPath);
+            for (int i = 0; i < ResidentRules.Count; i++)
+            {
+                GameObject go = new GameObject(ResidentRules.ShadowName(i));
+                Vector2 p = ResidentRules.ShadowPos(i);
+                go.transform.position = new Vector3(p.x, p.y, 0f);
+                SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = shSprite;
+                sr.sortingOrder = ResidentRules.ShadowOrder;
+            }
         }
 
         static int CountResidents()
@@ -366,6 +488,14 @@ namespace FluxVerse
             int c = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(ResidentRules.NamePrefix)) c++;
+            return c;
+        }
+
+        static int CountShadows()
+        {
+            int c = 0;
+            foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
+                if (sr.name.StartsWith(ResidentRules.ShadowNamePrefix)) c++;
             return c;
         }
 
@@ -391,6 +521,17 @@ namespace FluxVerse
         {
             GameObject go = GameObject.Find(layerName);
             return go != null ? go.GetComponent<Tilemap>() : null;
+        }
+
+        // r87: GameObject.Find is name-first-match - the scene ALSO holds a
+        // "BrainTower" anchor GO (r8 builder MakeAnchor) that shadows the tilemap
+        // of the same name -> the stand gate must resolve tilemaps BY COMPONENT,
+        // never by GO name.
+        static Tilemap TilemapLayer(string layerName)
+        {
+            foreach (Tilemap tm in UnityEngine.Object.FindObjectsOfType<Tilemap>())
+                if (tm.name == layerName) return tm;
+            return null;
         }
 
         static int TileCount(string layerName)

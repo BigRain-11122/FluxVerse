@@ -98,8 +98,11 @@ namespace FluxVerse
             new Veh { name = "VehicleCarQE",    path = "Assets/Art/Vehicles/frames/vehicle-car-r2.png",    pxW = 61,  pxH = 37, x = 5.5f,   groundY = -7.0f,  street = true },
             // 2. south street, east stretch toward MEDIA - third color (faces east)
             new Veh { name = "VehicleCarE",     path = "Assets/Art/Vehicles/frames/vehicle-car-r.png",     pxW = 61,  pxH = 37, x = 16.0f,  groundY = -7.0f,  street = true },
-            // 3. south street, far west - parked camper van (the street's big-west silhouette)
-            new Veh { name = "VehicleCamperW",  path = "Assets/Art/Vehicles/frames/vehicle-camper-r.png",  pxW = 94,  pxH = 56, x = -30.5f, groundY = -7.0f,  street = true },
+            // 3. GAME front plaza, far west edge - parked camper van (plaza class;
+            //     r87 P-69 slice-3 move: the old south-street seat at (-30.5,-7)
+            //     put the 2.33u-tall body over grass row -6 = the sec.8 "van
+            //     crushing the greenbelt" r45 defect; plaza pavement = legal ground)
+            new Veh { name = "VehicleCamperW",  path = "Assets/Art/Vehicles/frames/vehicle-camper-r.png",  pxW = 94,  pxH = 56, x = -28.5f, groundY = -13.0f, street = false },
             // 4. north street, east side - the bus (rows 7/8 band, ground line +8)
             new Veh { name = "VehicleBusN",     path = "Assets/Art/Vehicles/frames/vehicle-bus-r.png",      pxW = 111, pxH = 62, x = 12.0f,  groundY = 8.0f,   street = true },
             // 5. QUANT plaza, east edge - street-food cart (pavement class)

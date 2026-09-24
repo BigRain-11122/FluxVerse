@@ -51,10 +51,15 @@ namespace FluxVerse
         public const string NamePrefix = "NameTag";
         public const int PxW = 46;              // uniform canvas (longest name = 40px tight)
         public const int PxH = 20;
-        public const float GapFromHead = 0.15f; // air between the 2u sprite top and the tag
+        // r87 P-69 slice-3 nameplate-baseline law (city-core-design sec.8): the tag
+        // bottom edge must hover a CONSTANT 8px above the head - in this pack's own
+        // 24px/u density that is 8/24 = 0.3333u (was 0.15u; the r14-l1 screenshot's
+        // uneven "39px vs 70px" reading was sprite-content variance, but the letter
+        // of the law is now 8px and the proof pins it).
+        public const float GapFromHead = 8f / 24f; // air between the 2u sprite top and the tag
 
         // head top (1u) + gap + half tag height
-        public const float OffsetY = 1f + GapFromHead + PxH / (2f * PPU);   // 1.56667
+        public const float OffsetY = 1f + GapFromHead + PxH / (2f * PPU);   // 1.75
 
         public static string Name(int i) { return NamePrefix + i.ToString("00"); }
         public static string Path(int i)

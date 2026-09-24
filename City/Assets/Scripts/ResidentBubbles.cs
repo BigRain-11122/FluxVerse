@@ -53,7 +53,13 @@ namespace FluxVerse
 
         // framing: the WIDEST possible line must still keep every bubble fully
         // inside the L0 view (ortho 20, aspect 16:9) with margin, and inside the
-        // tint band y -16..+14 (an untinted sliver = the r22 edge-band debt).
+        // tint band. r87: the band TOP is +15, not +14 - the r51 tint-quad fix
+        // widened the real quad to y -16..+15 (aligning the painted pavement
+        // top), and the r87 walkway seats (tower-foot plaza, resident y 11) put
+        // the tag+bubble stack top at y+3.82 = 14.82: legal under the +15 quad,
+        // impossible under the stale +14 guard. Every lower family keeps its
+        // own 14 bound (their objects never reach it); only the tallest stack
+        // needs the true ceiling.
         public static bool InView(int i, float worldW, float halfW, float halfH)
         {
             Vector2 p = Pos(i);
@@ -64,7 +70,7 @@ namespace FluxVerse
         public static bool InTintBand(int i)
         {
             Vector2 p = Pos(i);
-            return p.y - WorldH / 2f >= -16f + 0.1f && p.y + WorldH / 2f <= 14f;
+            return p.y - WorldH / 2f >= -16f + 0.1f && p.y + WorldH / 2f <= 15f;
         }
 
         // strict rect overlap (the r40 tag-vs-robot gate: a shared-order pair

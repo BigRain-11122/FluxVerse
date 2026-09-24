@@ -108,7 +108,11 @@ namespace FluxVerse
             Chk(ResidentTagRules.Order == 7, "tag layer order must be 7 (street)");
             Chk(Math.Abs(ResidentTagRules.PPU - 24f) < 1e-5f, "tag PPU must be 24 (r37 divisor law)");
             Chk(ResidentTagRules.PxW == 46 && ResidentTagRules.PxH == 20, "uniform canvas must be 46x20");
-            Chk(Math.Abs(ResidentTagRules.OffsetY - (1f + 0.15f + 20f / 48f)) < 1e-5f,
+            // r87 P-69 slice-3 nameplate-baseline law (sec.8): the tag bottom hovers
+            // a constant 8px (this pack's 24px/u density -> 0.3333u) above the head
+            Chk(Math.Abs(ResidentTagRules.GapFromHead - 8f / 24f) < 1e-5f,
+                "GapFromHead must be 8px/24 (sec.8 nameplate-baseline law)");
+            Chk(Math.Abs(ResidentTagRules.OffsetY - (1f + ResidentTagRules.GapFromHead + 20f / 48f)) < 1e-5f,
                 "OffsetY law broken (head top + gap + half tag)");
             Chk(Math.Abs(ResidentTagRules.WorldW - 46f / 24f) < 1e-5f
                 && Math.Abs(ResidentTagRules.WorldH - 20f / 24f) < 1e-5f,
@@ -126,7 +130,7 @@ namespace FluxVerse
                     "tag y must derive from resident y + OffsetY at " + i);
                 float headTop = r.y + 1f;
                 Chk(Math.Abs((t.y - ResidentTagRules.WorldH / 2f) - (headTop + ResidentTagRules.GapFromHead)) < 1e-4f,
-                    "headroom gap law at " + i + " (tag must hover 0.15u above the 2u sprite top)");
+                    "headroom gap law at " + i + " (tag must hover 8px above the 2u sprite top)");
                 Chk(ResidentTagRules.InView(i, RigMath.L0Size * RigMath.Aspect, RigMath.L0Size),
                     "tag not fully inside the L0 view: " + ResidentTagRules.Name(i));
                 Chk(ResidentTagRules.InTintBand(i), "tag escapes the tint band: " + ResidentTagRules.Name(i));

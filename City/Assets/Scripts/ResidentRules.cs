@@ -18,16 +18,31 @@
 // (48/24 = exactly 2u; localScale stays 1 = zero resampling - the divisor absorbs
 // the pack's pixel density, the world law never moves; NOT the PPU100 speck
 // disease, which is about the DEFAULT, and the proof enforces 24 here).
-// Placement domain (CitySkeletonBuilder geometry): south QUANT plaza pavement rows
-// -16..-9, GAME/MEDIA front plazas, south street pavement row -9, north promenade
-// row 4, north street road row 7. Feet convention: center y = feetRow + 1 (sprite
-// spans [feetRow, feetRow+2]); the proof re-derives "feet stand on a Ground/Roads
-// tile" from the LIVE tilemaps instead of trusting this comment (r36 law).
+// r87 P-69 slice-3 seat law (city-core-design sec.8 NPC grounding whitelist):
+// every seat now stands with the UNDERFOOT cell (the tile whose top edge the
+// feet line touches = feet cell - 1) on GROUND pavement (never grass/road/water)
+// and BOTH body cells (feet cell, feet cell + 1) free of Roads/Water/building
+// tiles - the proof re-derives all of this from the LIVE tilemaps. Placement
+// domain: south QUANT/GAME/MEDIA plazas (pavement rows -16..-9), south street
+// south sidewalk (feet cell -10: 1 row clear of the road band -8..-7 so the
+// 2u body never reads "in the lane" - the r37 street seats had their torso
+// over the road dashes), north walkway (feet cell 9: the rows 9..14 block
+// pavement between the low-rises and the brain tower - tower-foot plaza, the
+// ONLY north spot a 2u body clears the full-width grass rows 5..6; the old
+// promenade seats at center y 5 had torso in the bushes = r45 defect).
+// Feet convention (unchanged): center y = feetY + 1 (sprite spans
+// [feetY, feetY+2]); underfoot cell row = feetY - 1.
+// Grounding shadow (sec.8 check 3): every seat carries a ShadowRes* ellipse
+// (bake-ground-shadows.ps1, 48x12 @ PPU24 = 2.0x0.5u native) at order 5, its
+// center 0.10u below the feet line - the contact shadow the r34/r45 casts
+// lacked; prefix ShadowRes is deliberately NOT the Res prefix so the Resident
+// sweep/rebuild law owns it via its own sweep (sweep-isolation family).
 // Sorting law: street layer order 7 = same layer as the robots (signs 6 < street
-// 7 < tint 8). Clearance laws enforced in the proof: residents >= 2.2u apart,
-// >= 2.0u from every mounted robot, outside every neon-sign rect expanded by the
-// resident half-extent (1.0u) + 0.4u margin. Five-color law untouched: pack
-// clothing colors are ambient scenery. ASCII. No 3D.
+// 7 < tint 8); shadows 5 = above Props 4, below signs 6. Clearance laws enforced
+// in the proof: residents >= 2.2u apart, >= 2.0u from every mounted robot,
+// outside every neon-sign rect expanded by the resident half-extent (1.0u)
+// + 0.4u margin. Five-color law untouched: pack clothing colors are ambient
+// scenery. ASCII. No 3D.
 using UnityEngine;
 
 namespace FluxVerse
@@ -39,6 +54,24 @@ namespace FluxVerse
         public const int Count = 12;
         public const string NamePrefix = "Res";
         public const int PxSide = 48;           // pack frame density (not the 16px world px)
+
+        // grounding-shadow constants (r87 P-69 slice 3, sec.8 check 3)
+        public const string ShadowNamePrefix = "ShadowRes";
+        public const int ShadowOrder = 5;        // Props 4 < shadows 5 < signs 6
+        public const int ShadowPxW = 48;         // 48x12 @ PPU24 = 2.0 x 0.5u native
+        public const int ShadowPxH = 12;
+        public const string ShadowPath =
+            "Assets/ArtPacks/residents-crowd/shadows/shadow-res.png";
+        public const float ShadowDropY = 0.10f;  // shadow center sits this far BELOW the feet line
+
+        public static string ShadowName(int i) { return ShadowNamePrefix + i.ToString("00"); }
+        public static Vector2 ShadowPos(int i)
+        {
+            Person p = Table[i];
+            return new Vector2(p.x, p.y - 1f - ShadowDropY);   // feet at y-1, blob below it
+        }
+        public static float ShadowWorldW { get { return ShadowPxW / PPU; } }
+        public static float ShadowWorldH { get { return ShadowPxH / PPU; } }
 
         public struct Person
         {
@@ -70,8 +103,11 @@ namespace FluxVerse
             return p.y - 1f >= -16f + 0.1f && p.y + 1f <= 14f;
         }
 
-        // feet cell: the tilemap cell the sprite bottom edge rests on (center y - 1).
-        // Pure math half; the tilemap lookup lives in the proof (editor face).
+        // feet cell: the cell the sprite bottom edge lands INSIDE (center y - 1) =
+        // the LOWER BODY cell. The tile visually UNDERFOOT (whose top edge the feet
+        // line rests on) is one row below: underfoot = feet cell - 1 (r87 sec.8
+        // naming; the proof gates BOTH - underfoot must be Ground pavement, the two
+        // body cells must be clear of Roads/Water/buildings).
         public static Vector2Int FeetCellOf(int i)
         {
             Person p = Table[i];
@@ -90,20 +126,33 @@ namespace FluxVerse
             new Person { name = "ResGameFrA",  path = "Assets/ArtPacks/residents-crowd/frames/resident_04_idle_f00.png", frame = 0,  x = -23.0f, y = -14.0f },
             // 4. GAME front plaza east - green-hooded resident
             new Person { name = "ResGameFrB",  path = "Assets/ArtPacks/residents-crowd/frames/resident_12_idle_f00.png", frame = 0,  x = -19.5f, y = -14.0f },
-            // 5. MEDIA front plaza east - pink-haired goggled resident
-            new Person { name = "ResMediaFrA", path = "Assets/ArtPacks/residents-crowd/frames/resident_09_idle_f00.png", frame = 0,  x = 22.0f,  y = -14.0f },
+            // 5. MEDIA front plaza east - pink-haired goggled resident (r87 move:
+            //    x 22 -> 23.5 - the 8px nameplate gap (sec.8) put the plate into the
+            //    RobotMediaFr rect at the old seat; 1.5u east re-clears the pair)
+            new Person { name = "ResMediaFrA", path = "Assets/ArtPacks/residents-crowd/frames/resident_09_idle_f00.png", frame = 0,  x = 23.5f,  y = -14.0f },
             // 6. MEDIA front plaza west - hooded pipe-smoker watching the street
-            new Person { name = "ResMediaFrB", path = "Assets/ArtPacks/residents-crowd/frames/resident_01_idle_f00.png", frame = 0,  x = 16.5f,  y = -13.0f },
-            // 7. south street west pavement - mid-stride resident (I1: upright rest of I0 lean)
-            new Person { name = "ResStWest",    path = "Assets/ArtPacks/residents-crowd/frames/resident_06_idle_f01.png", frame = 1,  x = -15.0f, y = -8.0f },
-            // 8. south street east pavement - red-capped resident
-            new Person { name = "ResStEast",    path = "Assets/ArtPacks/residents-crowd/frames/resident_11_idle_f00.png", frame = 0,  x = 9.0f,   y = -8.0f },
-            // 9. north promenade west - seated meditating resident (grass edge behind)
-            new Person { name = "ResPromW",     path = "Assets/ArtPacks/residents-crowd/frames/resident_07_idle_f00.png", frame = 0,  x = -9.0f,  y = 5.0f },
-            // 10. north promenade center - cloaked resident near the brain-tower axis
-            new Person { name = "ResPromC",     path = "Assets/ArtPacks/residents-crowd/frames/resident_02_idle_f00.png", frame = 0,  x = 4.0f,   y = 5.0f },
-            // 11. north street - busker with guitar (road row = the performance strip)
-            new Person { name = "ResNorthSt",   path = "Assets/ArtPacks/residents-crowd/frames/resident_05_idle_f00.png", frame = 0,  x = -5.0f,  y = 8.0f },
+            //    (r87 move: x 16.5 -> 15.5 clears the vertical-avenue road column
+            //    17 - the sprite edge hung over the avenue, sec.8 sidewalk-only law)
+            new Person { name = "ResMediaFrB", path = "Assets/ArtPacks/residents-crowd/frames/resident_01_idle_f00.png", frame = 0,  x = 15.5f,  y = -13.0f },
+            // 7. south street south sidewalk, west stretch (between GAME and QUANT)
+            //    - mid-stride resident (I1: upright rest of I0 lean); r87 move:
+            //    feet cell -10 (was -9 = torso over the road dashes, sec.8 fix)
+            new Person { name = "ResStWest",    path = "Assets/ArtPacks/residents-crowd/frames/resident_06_idle_f01.png", frame = 1,  x = -14.5f, y = -9.0f },
+            // 8. south street south sidewalk, east stretch - red-capped resident
+            //    (r87 move: same one-row-south law as slot 7)
+            new Person { name = "ResStEast",    path = "Assets/ArtPacks/residents-crowd/frames/resident_11_idle_f00.png", frame = 0,  x = 9.0f,   y = -9.0f },
+            // 9. north walkway, west of the brain-tower axis - seated meditating
+            //    resident (r87 move: promenade seat had torso in the grass bushes,
+            //    sec.8 greenbelt ban; tower-foot plaza = whitelisted ground)
+            new Person { name = "ResPromW",     path = "Assets/ArtPacks/residents-crowd/frames/resident_07_idle_f00.png", frame = 0,  x = -3.5f, y = 11.0f },
+            // 10. north walkway, east of the brain-tower axis - cloaked resident
+            //     (r87 move: same promenade-greenbelt fix as slot 9)
+            new Person { name = "ResPromC",     path = "Assets/ArtPacks/residents-crowd/frames/resident_02_idle_f00.png", frame = 0,  x = 4.5f,  y = 11.0f },
+            // 11. north walkway, east stretch between the MEDIA low-rises - busker
+            //     with guitar (r87 moves: the old road-row-7 seat WAS the sec.8
+            //     lane-standing defect the CEO screenshot caught; first walkway
+            //     pick x 12.5 crowded VehicleBusN (1.78u < 2.8) -> x 20 open stretch)
+            new Person { name = "ResNorthSt",   path = "Assets/ArtPacks/residents-crowd/frames/resident_05_idle_f00.png", frame = 0,  x = 20.0f,  y = 11.0f },
         };
     }
 }

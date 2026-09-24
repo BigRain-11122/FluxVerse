@@ -144,6 +144,32 @@ namespace FluxVerse
                 }
             }
 
+            // r87 P-69 slice-3 shadow gates (pure core): prefix sweep-isolation
+            // ("ShadowBot" must not start with any owned prefix), native size, and
+            // per-seat derivation from the feet line (robots KEEP their street
+            // domain - roads stay legal standing ground for the fleet avatars).
+            Chk(RobotRules.ShadowNamePrefix != RobotRules.NamePrefix
+                && !RobotRules.ShadowNamePrefix.StartsWith(RobotRules.NamePrefix)
+                && !RobotRules.ShadowNamePrefix.StartsWith(ResidentRules.NamePrefix)
+                && !RobotRules.ShadowNamePrefix.StartsWith(NeonRules.NamePrefix),
+                "shadow prefix must be sweep-isolated from every owned prefix (r40 law)");
+            Chk(RobotRules.ShadowOrder == 5, "shadow order must be 5 (Props 4 < shadows 5 < signs 6)");
+            Chk(RobotRules.ShadowPxW == 16 && RobotRules.ShadowPxH == 6,
+                "shadow canvas must be 16x6 (1.0x0.375u @ PPU16 native)");
+            Chk(Math.Abs(RobotRules.ShadowWorldW - 1f) < 1e-5f
+                && Math.Abs(RobotRules.ShadowWorldH - 0.375f) < 1e-5f,
+                "shadow world size must be 1.0x0.375u (zero-resampling law)");
+            for (int i = 0; i < RobotRules.Count; i++)
+            {
+                Vector2 sp = RobotRules.ShadowPos(i);
+                Vector2 rp = RobotRules.Pos(i);
+                Chk(Math.Abs(sp.x - rp.x) < 1e-5f
+                    && Math.Abs(sp.y - (rp.y - 0.5f - RobotRules.ShadowDropY)) < 1e-5f,
+                    "shadow must derive from the robot feet line at " + RobotRules.Name(i));
+                Chk(sp.y < rp.y - 0.5f, "shadow center must sit below the feet line at "
+                    + RobotRules.Name(i) + " (contact-shadow law)");
+            }
+
             // ---- B. asset gate: importer laws on every consumed frame (idempotent) ----
             for (int i = 0; i < RobotRules.Count; i++)
             {
@@ -156,12 +182,24 @@ namespace FluxVerse
                     "natural bounds != 1x1u (PPU100 shrink disease) at " + RobotRules.Name(i));
             }
 
+            // grounding shadow asset (r87): the bake-ground-shadows.ps1 ellipse must
+            // import at the world divisor (tophat-robot/ -> PPU16 table default)
+            Sprite shSpr = ForceSprite(RobotRules.ShadowPath);
+            Chk(shSpr != null, "shadow sprite failed to load: " + RobotRules.ShadowPath);
+            Chk(Math.Abs(shSpr.rect.width - RobotRules.ShadowPxW) < 0.5f
+                && Math.Abs(shSpr.rect.height - RobotRules.ShadowPxH) < 0.5f,
+                "shadow rect != 16x6: " + shSpr.rect.width + "x" + shSpr.rect.height);
+            Chk(Math.Abs(shSpr.bounds.size.x - 1f) < 0.01f
+                && Math.Abs(shSpr.bounds.size.y - 0.375f) < 0.01f,
+                "shadow natural bounds != 1.0x0.375u (PPU table drift)");
+
             // ---- C. CityScene wiring: sweep -> build -> stand gate -> idempotent -> save ----
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             Chk(scene.isLoaded, "CityScene failed to open");
             BuildRobots();
-            BuildRobots();   // idempotency: the second sweep+build must land on exactly 8
+            BuildRobots();   // idempotency: the second sweep+build must land on exactly 8 + 8
             Chk(CountRobots() == 8, "idempotent rebuild count != 8: " + CountRobots());
+            Chk(CountBotShadows() == 8, "idempotent shadow rebuild count != 8: " + CountBotShadows());
             // STAND gate, re-derived from the live tilemaps (never from comments):
             // the cell under every robot must hold a Ground pavement or Roads tile.
             Tilemap ground = TilemapByName("Ground");
@@ -193,6 +231,21 @@ namespace FluxVerse
                     && Math.Abs(go.transform.position.y - p.y) < 1e-4f,
                     "robot position lost: " + RobotRules.Name(i));
                 Chk(Math.Abs(sr.transform.localScale.x - 1f) < 1e-5f, "robot scale != 1 (native law)");
+            }
+            // shadow round-trip (r87): 8 contact shadows persisted with the bots
+            Chk(CountBotShadows() == 8, "persisted shadow count != 8: " + CountBotShadows());
+            for (int i = 0; i < RobotRules.Count; i++)
+            {
+                GameObject sgo = GameObject.Find(RobotRules.ShadowName(i));
+                Chk(sgo != null, "shadow missing on disk: " + RobotRules.ShadowName(i));
+                SpriteRenderer ssr = sgo != null ? sgo.GetComponent<SpriteRenderer>() : null;
+                Chk(ssr != null && ssr.sprite != null, "shadow sprite lost on disk: " + RobotRules.ShadowName(i));
+                Chk(ssr.sortingOrder == RobotRules.ShadowOrder, "shadow order lost: " + RobotRules.ShadowName(i));
+                Vector2 sp = RobotRules.ShadowPos(i);
+                Chk(Math.Abs(sgo.transform.position.x - sp.x) < 1e-4f
+                    && Math.Abs(sgo.transform.position.y - sp.y) < 1e-4f,
+                    "shadow position lost: " + RobotRules.ShadowName(i));
+                Chk(Math.Abs(ssr.transform.localScale.x - 1f) < 1e-5f, "shadow scale != 1 (native law)");
             }
             // neighbor regressions (our save must not drop earlier serialized wiring)
             int neonKept = 0;
@@ -280,6 +333,7 @@ namespace FluxVerse
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             if (!scene.isLoaded) throw new InvalidOperationException("CityScene failed to load");
             Chk(CountRobots() == 8, "robot count after editor restart != 8: " + CountRobots());
+            Chk(CountBotShadows() == 8, "shadow count after editor restart != 8: " + CountBotShadows());
             for (int i = 0; i < RobotRules.Count; i++)
             {
                 GameObject go = GameObject.Find(RobotRules.Name(i));
@@ -287,6 +341,10 @@ namespace FluxVerse
                 SpriteRenderer sr = go != null ? go.GetComponent<SpriteRenderer>() : null;
                 Chk(sr != null && sr.sprite != null, "robot sprite unresolved after restart: " + RobotRules.Name(i));
                 Chk(sr.sortingOrder == RobotRules.Order, "robot order lost after restart: " + RobotRules.Name(i));
+                GameObject sgo = GameObject.Find(RobotRules.ShadowName(i));
+                SpriteRenderer ssr = sgo != null ? sgo.GetComponent<SpriteRenderer>() : null;
+                Chk(ssr != null && ssr.sprite != null, "shadow unresolved after restart: " + RobotRules.ShadowName(i));
+                Chk(ssr.sortingOrder == RobotRules.ShadowOrder, "shadow order lost after restart: " + RobotRules.ShadowName(i));
             }
             int neonKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
@@ -319,12 +377,13 @@ namespace FluxVerse
                 + " skyline=2/2 neighbors=4 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
         }
 
-        // sweep every root-level Robot* GO, then build the 8 from the manifest
-        // (fresh LoadAssetAtPath at every use = r10 fake-null law)
+        // sweep every root-level Robot* AND ShadowBot* GO, then build the 8 + 8
+        // from the manifest (fresh LoadAssetAtPath at every use = r10 fake-null law)
         static void BuildRobots()
         {
             foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
-                if (t.parent == null && t.name.StartsWith(RobotRules.NamePrefix))
+                if (t.parent == null && (t.name.StartsWith(RobotRules.NamePrefix)
+                    || t.name.StartsWith(RobotRules.ShadowNamePrefix)))
                     UnityEngine.Object.DestroyImmediate(t.gameObject);
             for (int i = 0; i < RobotRules.Count; i++)
             {
@@ -337,6 +396,18 @@ namespace FluxVerse
                     throw new InvalidOperationException("robot sprite resolve failed: " + RobotRules.Path(i));
                 sr.sortingOrder = RobotRules.Order;
             }
+            Sprite shSprite = AssetDatabase.LoadAssetAtPath<Sprite>(RobotRules.ShadowPath);
+            if (shSprite == null)
+                throw new InvalidOperationException("shadow sprite resolve failed: " + RobotRules.ShadowPath);
+            for (int i = 0; i < RobotRules.Count; i++)
+            {
+                GameObject go = new GameObject(RobotRules.ShadowName(i));
+                Vector2 p = RobotRules.ShadowPos(i);
+                go.transform.position = new Vector3(p.x, p.y, 0f);
+                SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = shSprite;
+                sr.sortingOrder = RobotRules.ShadowOrder;
+            }
         }
 
         static int CountRobots()
@@ -344,6 +415,14 @@ namespace FluxVerse
             int c = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(RobotRules.NamePrefix)) c++;
+            return c;
+        }
+
+        static int CountBotShadows()
+        {
+            int c = 0;
+            foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
+                if (sr.name.StartsWith(RobotRules.ShadowNamePrefix)) c++;
             return c;
         }
 

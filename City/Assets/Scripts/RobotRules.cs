@@ -29,6 +29,27 @@ namespace FluxVerse
         public const string NamePrefix = "Robot";
         public const int PxSide = 16;           // P-17 item 3: 16x16 street robot
 
+        // grounding-shadow constants (r87 P-69 slice 3, sec.8 check 3). Robots KEEP
+        // their street-walking domain (DESIGN organ table: street robots = fleet
+        // labor; roads stay legal standing ground for them, only residents are
+        // sidewalk-bound) - the shadow is the grounding the r34/r45 casts lacked.
+        public const string ShadowNamePrefix = "ShadowBot";
+        public const int ShadowOrder = 5;        // Props 4 < shadows 5 < signs 6
+        public const int ShadowPxW = 16;          // 16x6 @ PPU16 = 1.0 x 0.375u native
+        public const int ShadowPxH = 6;
+        public const string ShadowPath =
+            "Assets/ArtPacks/tophat-robot/shadows/shadow-bot.png";
+        public const float ShadowDropY = 0.06f;  // shadow center sits this far BELOW the feet line
+
+        public static string ShadowName(int i) { return ShadowNamePrefix + i.ToString("00"); }
+        public static Vector2 ShadowPos(int i)
+        {
+            Bot b = Table[i];
+            return new Vector2(b.x, b.y - PxSide / (PPU * 2f) - ShadowDropY);   // feet at y-0.5
+        }
+        public static float ShadowWorldW { get { return ShadowPxW / PPU; } }
+        public static float ShadowWorldH { get { return ShadowPxH / PPU; } }
+
         public struct Bot
         {
             public string name;    // scene GO name (ASCII)

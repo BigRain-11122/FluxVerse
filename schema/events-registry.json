@@ -1,12 +1,13 @@
 {
   "version": "0.1",
   "desc": "FluxVerse event type registry - probes may only emit types listed here (governance: registry arbitration)",
+  "city_action_map_ref": "docs/design/brain-engine-architecture.md section 4 - CEO canon 10-event performance mapping (P-2026-09-24-41)",
   "events": {
-    "COMMIT":             { "actor": "repo name",  "zone": "any",         "desc": "git commit in any repo" },
+    "COMMIT":             { "actor": "repo name",  "zone": "any",         "desc": "git commit in any repo", "city_action": "data_stream_crosses_river" },
     "PUSH":               { "actor": "machine id", "zone": "any",         "desc": "git push (multi-machine sync) - reserved" },
     "PULL":               { "actor": "machine id", "zone": "any",         "desc": "git pull - reserved" },
-    "TASK_CLAIM":         { "actor": "machine id", "zone": "quant",       "desc": "task claimed on board" },
-    "TASK_DONE":          { "actor": "machine id", "zone": "quant",       "desc": "task finished - reserved" },
+    "TASK_CLAIM":         { "actor": "machine id", "zone": "quant",       "desc": "task claimed on board", "city_action": "building_windows_up_robot_out" },
+    "TASK_DONE":          { "actor": "machine id", "zone": "quant",       "desc": "task finished - reserved", "city_action": "robot_home_windows_down" },
     "HEARTBEAT":          { "actor": "machine id", "zone": "quant",       "desc": "fleet heartbeat seen" },
     "OS_TICK_START":      { "actor": "loop id",    "zone": "any",         "desc": "OS loop round start - reserved" },
     "OS_TICK_DONE":       { "actor": "loop id",    "zone": "any",         "desc": "OS loop round done - reserved" },
@@ -14,8 +15,8 @@
     "GATE_BLOCK":         { "actor": "gate id",    "zone": "quant",       "desc": "gatechain block - reserved" },
     "EVOLUTION_PROPOSE":  { "actor": "evolution",  "zone": "governance",  "desc": "weekly evolution proposal - reserved" },
     "EVOLUTION_LAW":      { "actor": "evolution",  "zone": "governance",  "desc": "law enacted - reserved" },
-    "CEO_ORDER":          { "actor": "CEO",        "zone": "any",         "desc": "CEO order token issued" },
-    "DEPLOY":             { "actor": "repo name",  "zone": "gaming",      "desc": "game build/publish - reserved" },
+    "CEO_ORDER":          { "actor": "CEO",        "zone": "any",         "desc": "CEO order token issued", "city_action": "tower_pulse_white" },
+    "DEPLOY":             { "actor": "repo name",  "zone": "gaming",      "desc": "game build/publish - reserved", "city_action": "game_towers_cyan_flash" },
     "CONTENT_PUBLISH":    { "actor": "media id",   "zone": "media",       "desc": "BigStream content published - reserved" },
     "MACHINE_JOIN":       { "actor": "machine id", "zone": "any",         "desc": "new machine onboard - reserved" },
     "MACHINE_RETIRE":     { "actor": "machine id", "zone": "any",         "desc": "machine retired - reserved" },
@@ -31,7 +32,11 @@
     "HQ_FEEDBACK":        { "actor": "fluxverse",   "zone": "governance", "desc": "FluxVerse feedback row filed to the group up-channel (HQ-FEEDBACK.md, F-YYYYMMDD-NN) - T2 2026-09-24" },
     "MEDIA_OUTPUT":       { "actor": "media id",    "zone": "media",      "desc": "BigStream production artifact dropped on disk into output/renders (render test-piece per their ledger - real production-line render/TTS labor, NOT a publish; the publish face stays CONTENT_PUBLISH, reserved) - T2 2026-09-24, veto window to 2026-10-01" },
     "GAME_STAGE":         { "actor": "game id",    "zone": "gaming",     "desc": "MiniGame game stage transition observed on its live task panel (root state*.json g_projects, the panel their central board itself declares the live-pointer authority; coarse stage token S1/S2.../S4 + U-campaigns - a real production-line stage move or a new WIP registration, panel prose is round detail and never fires; a publish stays DEPLOY, reserved) - T2 2026-09-24, veto window to 2026-10-01" },
-    "DECISION_MADE":      { "actor": "decision id", "zone": "any",       "desc": "group decision row landed in the group decisions ledger (decisions.md D-YYYYMMDD-NN, decision.md chain, any layer L0-L3; zone = owning subsystem or governance) - city face: cyan ruling pulse at the brain tower, distinct from CEO_ORDER white - T2 2026-09-24, veto window to 2026-10-01" },
-    "DECISION_OVERRULED": { "actor": "decision id", "zone": "any",       "desc": "decision overruled back up the decision chain (re-report semantics - resubmit upward) - city face: orange-red pulse returning to the brain tower - T2 2026-09-24, veto window to 2026-10-01" }
+    "DECISION_MADE":      { "actor": "decision id", "zone": "any",       "desc": "group decision row landed in the group decisions ledger (decisions.md D-YYYYMMDD-NN, decision.md chain, any layer L0-L3; zone = owning subsystem or governance) - city face: cyan ruling pulse at the brain tower, distinct from CEO_ORDER white - T2 2026-09-24, veto window to 2026-10-01", "city_action": "tower_top_cyangreen_flash" },
+    "DECISION_OVERRULED": { "actor": "decision id", "zone": "any",       "desc": "decision overruled back up the decision chain (re-report semantics - resubmit upward) - city face: orange-red pulse returning to the brain tower - T2 2026-09-24, veto window to 2026-10-01", "city_action": "tower_pulse_orange_red" },
+    "BACKTEST":           { "actor": "quant system", "zone": "quant",      "desc": "BigMoney strategy backtest round completed - CEO canon map entry - reserved until an emitting probe lands (first-register law) - T2 2026-09-24, veto window to 2026-10-01 (P-2026-09-24-41)", "city_action": "quant_tower_gold_pulse" },
+    "NEW_RESIDENT":       { "actor": "biglife",      "zone": "any",         "desc": "new resident enters the city (BigLife census/genes birth batch or user registration) - CEO canon map entry - reserved until an emitting probe lands - T2 2026-09-24, veto window to 2026-10-01 (P-2026-09-24-41)", "city_action": "plaza_new_light_dot" },
+    "ALERT":              { "actor": "alert source", "zone": "any",         "desc": "group E0-E3 error alert raised on the brain-tower error channel (distinct from WEATHER_ALERT reality link) - CEO canon map entry - reserved until an emitting probe lands - T2 2026-09-24, veto window to 2026-10-01 (P-2026-09-24-41)", "city_action": "building_red_band_flash" },
+    "NIGHT_ROUND":        { "actor": "night round",  "zone": "governance", "desc": "group night-round health sweep completed - CEO canon map entry - reserved until an emitting probe lands - T2 2026-09-24, veto window to 2026-10-01 (P-2026-09-24-41)", "city_action": "tower_data_scan_up" }
   }
 }

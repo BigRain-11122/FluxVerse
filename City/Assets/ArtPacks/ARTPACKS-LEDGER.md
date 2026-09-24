@@ -51,6 +51,22 @@
 - **验图：适配度=低**（多模态判定：俯视 RTS 视角与横版街景冲突·战争烟雾题材偏离）——🟡 留观池：仅取其船体配色/结构为重绘参考，或远期 M4 俯视地图端复用；直接入世界层**不过风格闸**。
 - 用途：黄浦江江面生活感候选素材（需要侧视重绘——DevLoop 定夺）。
 
+## warped-city-2/（1 件·CC0·ansimuz·/content/warped-city-2·批 3 补 2026-09-24）
+
+- 内容：sheet-environment.png（38.4KB 赛博街区环境拼合图——霓虹红粉+青三色·LIFE/R UNIT 招牌·远景天际线层）。
+- **验图：适配度=高·零污染**（多模态：纯像素·无水印无 SCREENSHOT 残留·调色统一——与 warped-city 同作者续作）。
+- 用途：赛博街区环境参考+素材。
+
+## city-pixel-tileset/（3 件·CC0·software_atelier·/content/city-pixel-tileset·批 3 补 2026-09-24）
+
+- 内容：city.png+city_bg.png 图块+license.txt（包内随行）。
+- 用途：城市图块补充池。
+
+## city-icons/（1 件·CC0·thekingphoenix·/content/city-icons·批 3 补 2026-09-24）
+
+- 内容：icons_city.png 图标 sheet。
+- 用途：L3/L4 UI 城市图标候选（M3 UI 壳期）。
+
 ## 已验弃用/否决（诚实律留痕）
 
 | 项 | 判定 | 依据 |

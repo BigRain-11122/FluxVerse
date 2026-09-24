@@ -106,14 +106,22 @@ if (Test-Path $censusFile) {
 $population = $null
 try {
   if ($clines.Count -gt 0) {
-    function Get-FieldCounts([string]$text, [string]$field) {
+    # P-58 honor seats (CEO family cards, census first segment) carry district=""
+    # by design - their seat is at the brain tower, not in any district. Bucket
+    # them under a labeled key so the embedded JSON never holds an empty-string
+    # property (PS5.1 ConvertFrom-Json dies on it) and the panel shows a real
+    # chip. Label built from code points per the encoding law (RONG YU XI).
+    $honorSeat = [string][char]0x8363 + [string][char]0x8A89 + [string][char]0x5E2D
+    function Get-FieldCounts([string]$text, [string]$field, [string]$emptyLabel) {
       $h = @{}
       foreach ($m in [regex]::Matches($text, ('"' + $field + '":\s*"([^"]*)"'))) {
-        $k = $m.Groups[1].Value; $h[$k] = 1 + [int]$h[$k]
+        $k = $m.Groups[1].Value
+        if ($k -eq '' -and $emptyLabel) { $k = $emptyLabel }
+        $h[$k] = 1 + [int]$h[$k]
       }
       return $h
     }
-    $byDistrict = Get-FieldCounts $craw 'district'
+    $byDistrict = Get-FieldCounts $craw 'district' $honorSeat
     $byFaction  = Get-FieldCounts $craw 'faction'
     $bySpecies  = Get-FieldCounts $craw 'species'
     $byGender   = Get-FieldCounts $craw 'gender'
@@ -127,7 +135,9 @@ try {
       $take = [Math]::Min(4, $anchors.Count)
       for ($i = 0; $i -lt $take; $i++) {
         $a = $anchors[($dayIdx + 5 * $i) % $anchors.Count] | ConvertFrom-Json
-        $showcase += @{ id = $a.id; name = $a.name; age = $a.age; profession = $a.profession; district = $a.district; block = $a.block; creed = $a.creed }
+        $aDistrict = [string]$a.district
+        if (-not $aDistrict.Trim()) { $aDistrict = $honorSeat }
+        $showcase += @{ id = $a.id; name = $a.name; age = $a.age; profession = $a.profession; district = $aDistrict; block = $a.block; creed = $a.creed }
       }
     }
     $anchorLayer = 0
@@ -207,7 +217,11 @@ try {
       $mi = [regex]::Match($ln, '"id":\s*"([^"]+)"')
       $md = [regex]::Match($ln, '"district":\s*"([^"]*)"')
       $mp = [regex]::Match($ln, '"profession":\s*"([^"]*)"')
-      if ($mi.Success -and $md.Success -and $mp.Success) { $picks += @{ id = $mi.Groups[1].Value; district = $md.Groups[1].Value; profession = $mp.Groups[1].Value } }
+      if ($mi.Success -and $md.Success -and $mp.Success) {
+        $dv = $md.Groups[1].Value
+        if (-not $dv.Trim()) { $dv = $honorSeat }
+        $picks += @{ id = $mi.Groups[1].Value; district = $dv; profession = $mp.Groups[1].Value }
+      }
     }
     $ids = @($picks | ForEach-Object { $_.id } | Select-Object -Unique)
     if ($ids.Count -ge 3) {

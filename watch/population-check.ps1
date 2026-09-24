@@ -56,8 +56,16 @@ if ($null -ne $DATA -and $null -ne $DATA.population) {
   Assert 'by_gender sums to total'   ((& $sum $P.by_gender)   -eq $P.total)
   Assert 'by_faction sums to total'  ((& $sum $P.by_faction) -eq $P.total)
 
-  # 6. known canon shape (CODEX sec.2/sec.3: 3 species, 6 districts)
-  Assert 'district count == 6' (@($P.by_district.PSObject.Properties).Count -eq 6)
+  # 6. known canon shape (CODEX sec.2/sec.3: 3 species, 6 districts).
+  #    P-58 honor seats (CEO family cards) sit outside all districts: the
+  #    generator buckets their empty district under a labeled honor-seat key,
+  #    so the payload must carry 6 canon keys + (when honor cards exist) exactly
+  #    one labeled bucket - and never an empty-string key (PS5.1 parse crash face).
+  $honorSeat = [string][char]0x8363 + [string][char]0x8A89 + [string][char]0x5E2D
+  $dProps = @($P.by_district.PSObject.Properties)
+  $hasHonor = @($dProps | Where-Object { $_.Name -eq $honorSeat }).Count -gt 0
+  Assert 'no empty-string district key' (@($dProps | Where-Object { $_.Name -eq '' }).Count -eq 0)
+  Assert 'district count == 6 (+1 when honor seats present)' ($dProps.Count -eq (6 + [int]$hasHonor))
   Assert 'species count == 3'  (@($P.by_species.PSObject.Properties).Count -eq 3)
   foreach ($d in @('NS','GM','QT','MD','RV','OR')) { Assert ('district key ' + $d) ($null -ne $P.by_district.$d) }
   foreach ($s in @('carbon','silicon','sprite'))  { Assert ('species key ' + $s)  ($null -ne $P.by_species.$s) }
@@ -68,7 +76,10 @@ if ($null -ne $DATA -and $null -ne $DATA.population) {
   $sc = @($P.showcase)
   Assert 'showcase 1..4 cards' ($sc.Count -ge 1 -and $sc.Count -le 4)
   $okCards = 0
-  foreach ($c in $sc) { if ($c.name -and $c.profession -and $c.creed -and $c.district) { $okCards++ } }
+  foreach ($c in $sc) {
+    $isHonor = ([string]$c.block).Contains($honorSeat)
+    if ($c.name -and $c.profession -and (($c.creed -and $c.district) -or $isHonor)) { $okCards++ }
+  }
   Assert ('showcase cards complete (' + $okCards + '/' + $sc.Count + ')') ($okCards -eq $sc.Count)
   $resCards = 0
   $resDir = Join-Path $repoRoot 'docs\residents'

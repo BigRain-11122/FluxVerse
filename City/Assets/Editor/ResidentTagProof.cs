@@ -1,38 +1,34 @@
-// FluxVerse P-22(2) r40: batch proof for the resident-nameplate layer (presentation
-// slice 1 of the r39 identity pool). Sentinel pattern (r36 style):
+// FluxVerse P-22(2) r40/r99: batch proof for the resident-nameplate layer.
+// Sentinel pattern (r36 style):
 //   pass 1: logs/tags.run         -> FluxVerse.ResidentTagProof.BatchRun   -> logs/tags.done
 //   pass 2: logs/tags-reload.run  -> FluxVerse.ResidentTagProof.ReloadGate -> logs/tags-reload.done
 // Sections:
-//  A pure-core gates (headless): 12-tag manifest derived from ResidentRules,
-//    OffsetY law (head top + gap + half tag), uniform 46x20 canvas, every tag
-//    fully inside the L0 view AND the tint band, strict rect-clearance vs every
-//    mounted robot and neon sign and vs every other tag (two slots sit pixel-
-//    adjacent to robots: ResGameFrA/RobotGameFr x-margin 0.042u,
-//    ResMediaFrA/RobotMediaFr y-margin 0.017u - both clear STRICTLY; the gate
-//    is strict-overlap so any future edit pushing a tag INTO a robot fails
-//    loud instead of z-fighting at the shared street order 7).
-//  A2 identity-coupling gates (the orphan-face law): a plate may only exist
-//    over a live census identity - ResidentIdentity.Load() must yield 12 slots,
-//    slot i go == ResidentRules.Name(i), district == ResidentIdentity.DistrictOf(i),
-//    layer == "narrative" (CODEX sec.1 honesty law), non-empty CJK name.
-//  B asset gate: the 12 baked plates forced to Sprite + Single + Point + PPU24
-//    + no mips (the r37 divisor law for this layer; PPU100 speck disease gated),
-//    rect == 46x20, bounds == 1.917x0.833 world. Null importer (plate not yet
-//    imported) retries once after AssetDatabase.Refresh - fail-loud after that.
-//  C CityScene wiring: stale NameTag* sweep -> 12 GOs from the rules (fresh
-//    LoadAssetAtPath per r10 law) -> idempotent second sweep+build -> save ->
-//    disk round-trip; r37/r38/r36/r35/r34/r31 neighbor regressions (residents
-//    12, robots 8, neon 18, skyline, bed clip, interior, rig, L0 camera,
-//    non-empty tilemaps, runtime-only law).
-//  D render gates (real CityScene, dusk anchor + night): per-tag window delta
-//    vs a tags-hidden baseline (residents stay visible in BOTH renders = clean
+//  A pure-core gates (headless): 32-tag manifest derived from ResidentRules,
+//    OffsetY law (body top + 8px gap + half tag), b1 uniform 66x20 canvas
+//    (2.75x0.833u - the same-row x-spacing law lives in the r99 seat
+//    harness), every tag inside the L0 view AND the tint band, strict
+//    rect-clearance vs every other tag, every mounted robot and neon sign.
+//  A2 identity-coupling gates (orphan-face law): a plate may only exist over
+//    a live roster identity - ResidentIdentity.Load() must yield 32 slots,
+//    slot i go == ResidentRules.Name(i), district == law table, layer law
+//    (narrative everywhere, anchor on slot 26), plateIndex 0..31 unique.
+//  B asset gate: the 32 b1 plates (roster plateIndex -> atlas-row order, r97
+//    bake law) forced to Sprite + Single + Point + PPU24 + no mips; rect
+//    == 66x20, bounds == 2.75x0.833 world.
+//  C CityScene wiring: stale NameTag* sweep -> 32 GOs from the rules (plate
+//    sprite per roster) -> idempotent second sweep+build -> save ->
+//    disk round-trip; neighbor regressions (residents 32 via root-Transform
+//    count - the parts stack carries no Res-prefixed renderer, robots 8,
+//    neon 18, skyline, bed clip, interior, rig, L0 camera, tilemaps,
+//    runtime-only law).
+//  D render gates (dusk anchor + night): per-tag window delta vs a
+//    tags-hidden baseline (residents stay visible in both = clean
 //    attribution), dusk visibility for every tag, night presence, night
-//    luminance < dusk (atmosphere owns the built city; plates are info
-//    scenery, not light sources).
-//  E pass 2: everything survives an editor restart (persisted scene objects +
-//    importer laws + exactly 12, zero duplicates).
+//    luminance < dusk.
+//  E pass 2: everything survives an editor restart.
 // Fail-loud: any broken assumption throws into the .done report. ASCII only. No 3D.
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEditor;
@@ -104,45 +100,45 @@ namespace FluxVerse
         static string Prove()
         {
             // ---- A. pure-core gates on the derived rules ----
-            Chk(ResidentTagRules.Count == 12, "tag count must be 12");
+            Chk(ResidentTagRules.Count == 32, "tag count must be 32");
+            Chk(ResidentTagRules.Count == ResidentRules.Count, "tag count must mirror the manifest");
             Chk(ResidentTagRules.Order == 7, "tag layer order must be 7 (street)");
             Chk(Math.Abs(ResidentTagRules.PPU - 24f) < 1e-5f, "tag PPU must be 24 (r37 divisor law)");
-            Chk(ResidentTagRules.PxW == 46 && ResidentTagRules.PxH == 20, "uniform canvas must be 46x20");
-            // r87 P-69 slice-3 nameplate-baseline law (sec.8): the tag bottom hovers
-            // a constant 8px (this pack's 24px/u density -> 0.3333u) above the head
+            Chk(ResidentTagRules.PxW == 66 && ResidentTagRules.PxH == 20, "b1 canvas must be 66x20 (r97 bake)");
             Chk(Math.Abs(ResidentTagRules.GapFromHead - 8f / 24f) < 1e-5f,
                 "GapFromHead must be 8px/24 (sec.8 nameplate-baseline law)");
-            Chk(Math.Abs(ResidentTagRules.OffsetY - (1f + ResidentTagRules.GapFromHead + 20f / 48f)) < 1e-5f,
-                "OffsetY law broken (head top + gap + half tag)");
-            Chk(Math.Abs(ResidentTagRules.WorldW - 46f / 24f) < 1e-5f
+            Chk(Math.Abs(ResidentTagRules.OffsetY - (ResidentRules.HalfSide + ResidentTagRules.GapFromHead
+                    + ResidentTagRules.PxH / 48f)) < 1e-5f,
+                "OffsetY law broken (body top + gap + half tag)");
+            Chk(Math.Abs(ResidentTagRules.WorldW - 66f / 24f) < 1e-5f
                 && Math.Abs(ResidentTagRules.WorldH - 20f / 24f) < 1e-5f,
-                "world size must be 46x20 px @ PPU24");
-            Chk(ResidentTagRules.Name(0) == "NameTag00" && ResidentTagRules.Name(11) == "NameTag11",
-                "GO naming law NameTag00..11");
+                "world size must be 66x20 px @ PPU24 (2.75x0.833u)");
+            Chk(ResidentTagRules.Name(0) == "NameTag00" && ResidentTagRules.Name(31) == "NameTag31",
+                "GO naming law NameTag00..31");
             for (int i = 0; i < ResidentTagRules.Count; i++)
             {
-                Chk(ResidentTagRules.Path(i) == "Assets/ArtPacks/residents-crowd/nameplates/plate-res-"
-                    + i.ToString("00") + ".png", "tag path law at " + i);
                 Vector2 t = ResidentTagRules.Pos(i);
                 Vector2 r = ResidentRules.Pos(i);
                 Chk(Math.Abs(t.x - r.x) < 1e-5f, "tag x must derive from resident x at " + i);
                 Chk(Math.Abs(t.y - (r.y + ResidentTagRules.OffsetY)) < 1e-5f,
                     "tag y must derive from resident y + OffsetY at " + i);
-                float headTop = r.y + 1f;
-                Chk(Math.Abs((t.y - ResidentTagRules.WorldH / 2f) - (headTop + ResidentTagRules.GapFromHead)) < 1e-4f,
-                    "headroom gap law at " + i + " (tag must hover 8px above the 2u sprite top)");
+                float bodyTop = r.y + ResidentRules.HalfSide;
+                Chk(Math.Abs((t.y - ResidentTagRules.WorldH / 2f) - (bodyTop + ResidentTagRules.GapFromHead)) < 1e-4f,
+                    "headroom gap law at " + i + " (tag must hover 8px above the 1.333u body top)");
                 Chk(ResidentTagRules.InView(i, RigMath.L0Size * RigMath.Aspect, RigMath.L0Size),
                     "tag not fully inside the L0 view: " + ResidentTagRules.Name(i));
                 Chk(ResidentTagRules.InTintBand(i), "tag escapes the tint band: " + ResidentTagRules.Name(i));
             }
-            // tag-vs-tag strict overlap (identical-width rects at derived offsets)
+            // tag-vs-tag strict overlap (2.75u-wide b1 plates: same-row seats
+            // need >= 2.75u x-gap - enforced in the r99 seat harness, gated here)
             for (int i = 0; i < ResidentTagRules.Count; i++)
                 for (int j = i + 1; j < ResidentTagRules.Count; j++)
                 {
                     Vector2 a = ResidentTagRules.Pos(i), b = ResidentTagRules.Pos(j);
                     float dx = Mathf.Abs(a.x - b.x), dy = Mathf.Abs(a.y - b.y);
                     Chk(!(dx < ResidentTagRules.WorldW - 1e-4f && dy < ResidentTagRules.WorldH - 1e-4f),
-                        "tags overlap: " + ResidentTagRules.Name(i) + " vs " + ResidentTagRules.Name(j));
+                        "tags overlap: " + ResidentTagRules.Name(i) + " vs " + ResidentTagRules.Name(j)
+                        + " (dx=" + dx.ToString("F3") + " dy=" + dy.ToString("F3") + ")");
                 }
             // tag-vs-robot strict overlap (robots: 16px @ PPU16 = 1u, center pivot)
             for (int i = 0; i < ResidentTagRules.Count; i++)
@@ -159,7 +155,7 @@ namespace FluxVerse
                         + " (dx=" + dx.ToString("F3") + " dy=" + dy.ToString("F3") + ")");
                 }
             }
-            // tag-vs-neon strict overlap (NeonRules pxW/pxH @ PPU16)
+            // tag-vs-neon strict overlap
             for (int i = 0; i < ResidentTagRules.Count; i++)
             {
                 Vector2 t = ResidentTagRules.Pos(i);
@@ -176,10 +172,11 @@ namespace FluxVerse
 
             // ---- A2. identity-coupling gates (orphan-face law) ----
             ResidentIdentityEntry[] ids = ResidentIdentity.Load(true);
-            Chk(ids != null, "identity file absent/broken - plates would be orphans (r39 substrate must be present)");
+            Chk(ids != null, "roster absent/broken - plates would be orphans (r98 bake must be present)");
+            HashSet<int> plates = new HashSet<int>();
             if (ids != null)
             {
-                Chk(ids.Length == 12, "identity slot count != 12: " + ids.Length);
+                Chk(ids.Length == 32, "identity slot count != 32: " + ids.Length);
                 for (int i = 0; i < ids.Length; i++)
                 {
                     ResidentIdentityEntry e = ids[i];
@@ -189,54 +186,68 @@ namespace FluxVerse
                         + ": " + e.go + " vs " + ResidentRules.Name(i));
                     Chk(e.district == ResidentIdentity.DistrictOf(i),
                         "identity district misaligned at slot " + i + ": " + e.district);
-                    Chk(e.layer == ResidentIdentity.LayerMarker,
-                        "identity layer marker lost at slot " + i + " (CODEX honesty law)");
+                    if (i == ResidentIdentity.AnchorSlot)
+                        Chk(e.layer == ResidentIdentity.AnchorLayer, "anchor layer marker lost at slot " + i);
+                    else
+                        Chk(e.layer == ResidentIdentity.NarrativeLayer, "narrative layer marker lost at slot " + i);
                     Chk(!string.IsNullOrEmpty(e.name) && e.name.Length >= 2, "identity name empty at slot " + i);
+                    Chk(plates.Add(e.plateIndex), "duplicate plateIndex at slot " + i + ": " + e.plateIndex);
+                    Chk(File.Exists(Path.Combine(Application.dataPath,
+                        ResidentTagRules.PlatePath(e.plateIndex).Substring(7))),
+                        "plate file missing for slot " + i + ": " + ResidentTagRules.PlatePath(e.plateIndex));
                 }
             }
 
-            // ---- B. asset gate: importer laws on every baked plate (idempotent) ----
+            // ---- B. asset gate: importer laws on every b1 plate (idempotent) ----
             for (int i = 0; i < ResidentTagRules.Count; i++)
             {
-                Sprite sp = ForceSprite(ResidentTagRules.Path(i));
-                Chk(sp != null, "plate sprite failed to load: " + ResidentTagRules.Path(i));
+                string path = ResidentTagRules.PlatePath(ids[i].plateIndex);
+                Sprite sp = ForceSprite(path);
+                Chk(sp != null, "plate sprite failed to load: " + path);
                 Chk(Math.Abs(sp.rect.width - ResidentTagRules.PxW) < 0.5f
                     && Math.Abs(sp.rect.height - ResidentTagRules.PxH) < 0.5f,
-                    "rect != 46x20 at " + ResidentTagRules.Name(i) + ": " + sp.rect.width + "x" + sp.rect.height);
+                    "rect != 66x20 at " + ResidentTagRules.Name(i) + ": " + sp.rect.width + "x" + sp.rect.height);
                 Chk(Math.Abs(sp.bounds.size.x - ResidentTagRules.WorldW) < 0.01f
                     && Math.Abs(sp.bounds.size.y - ResidentTagRules.WorldH) < 0.01f,
-                    "natural bounds != 1.917x0.833u (PPU100 shrink disease) at " + ResidentTagRules.Name(i));
+                    "natural bounds != 2.75x0.833u (PPU100 shrink disease) at " + ResidentTagRules.Name(i));
             }
 
             // ---- C. CityScene wiring: sweep -> build -> idempotent -> save ----
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             Chk(scene.isLoaded, "CityScene failed to open");
-            BuildTags();
-            BuildTags();   // idempotency: the second sweep+build must land on exactly 12
-            Chk(CountTags() == 12, "idempotent rebuild count != 12: " + CountTags());
+            BuildTags(ids);
+            BuildTags(ids);   // idempotency
+            Chk(CountTags() == ResidentTagRules.Count, "idempotent rebuild count != 32: " + CountTags());
             bool saved = EditorSceneManager.SaveScene(scene);
             Chk(saved, "scene save failed");
 
             Scene reopened = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-            Chk(CountTags() == 12, "persisted tag count != 12: " + CountTags());
+            Chk(CountTags() == ResidentTagRules.Count, "persisted tag count != 32: " + CountTags());
             for (int i = 0; i < ResidentTagRules.Count; i++)
             {
                 GameObject go = GameObject.Find(ResidentTagRules.Name(i));
                 Chk(go != null, "tag missing on disk: " + ResidentTagRules.Name(i));
                 SpriteRenderer sr = go != null ? go.GetComponent<SpriteRenderer>() : null;
                 Chk(sr != null && sr.sprite != null, "tag sprite lost on disk: " + ResidentTagRules.Name(i));
-                Chk(sr.sortingOrder == ResidentTagRules.Order, "tag order lost on disk: " + ResidentTagRules.Name(i));
+                if (sr != null && sr.sprite != null)
+                {
+                    Chk(AssetDatabase.GetAssetPath(sr.sprite) == ResidentTagRules.PlatePath(ids[i].plateIndex),
+                        "tag plate drift at " + ResidentTagRules.Name(i) + ": "
+                        + AssetDatabase.GetAssetPath(sr.sprite));
+                    Chk(sr.sortingOrder == ResidentTagRules.Order, "tag order lost on disk: " + ResidentTagRules.Name(i));
+                }
                 Vector2 p = ResidentTagRules.Pos(i);
                 Chk(Math.Abs(go.transform.position.x - p.x) < 1e-4f
                     && Math.Abs(go.transform.position.y - p.y) < 1e-4f,
                     "tag position lost on disk: " + ResidentTagRules.Name(i));
                 Chk(Math.Abs(sr.transform.localScale.x - 1f) < 1e-5f, "tag scale != 1 (native law)");
             }
-            // neighbor regressions (our save must not drop earlier serialized wiring)
+            // neighbor regressions (residents = root-Transform count: the parts
+            // stack carries no Res-prefixed SpriteRenderer on any root)
             int folkKept = 0;
-            foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
-                if (sr.name.StartsWith(ResidentRules.NamePrefix)) folkKept++;
-            Chk(folkKept == 12, "r37 residents lost after our save: " + folkKept);
+            foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+                if (t.parent == null && t.name.StartsWith(ResidentRules.NamePrefix)) folkKept++;
+            Chk(folkKept == ResidentRules.Count, "r99 residents lost after our save: " + folkKept);
             int robotsKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(RobotRules.NamePrefix)) robotsKept++;
@@ -266,11 +277,11 @@ namespace FluxVerse
             amb.EnsureVisuals();
             amb.ApplyAmbient(AmbientTier.Dusk);
             SpriteRenderer[] tags = CollectTagRenderers();
-            Chk(tags.Length == 12, "renderer collection != 12");
+            Chk(tags.Length == ResidentTagRules.Count, "renderer collection != 32");
             SetTags(tags, false);
             Texture2D duskBase = Shot(cam, null);
             SetTags(tags, true);
-            Texture2D duskOn = Shot(cam, "m1-r40-tags-dusk.png");
+            Texture2D duskOn = Shot(cam, "m1-r99-tags-dusk.png");
             int duskTot = 0; int duskMin = int.MaxValue; string duskWorst = "";
             for (int i = 0; i < ResidentTagRules.Count; i++)
             {
@@ -279,14 +290,14 @@ namespace FluxVerse
                 duskTot += n;
                 if (n < duskMin) { duskMin = n; duskWorst = ResidentTagRules.Name(i); }
             }
-            Chk(duskTot >= 150, "dusk tag delta too sparse: " + duskTot + "px");
+            Chk(duskTot >= 300, "dusk tag delta too sparse: " + duskTot + "px");
             Chk(duskMin >= 10, "dusk invisible tag " + duskWorst + ": " + duskMin + "px");
 
             amb.ApplyAmbient(AmbientTier.Night);
             SetTags(tags, false);
             Texture2D nightBase = Shot(cam, null);
             SetTags(tags, true);
-            Texture2D nightOn = Shot(cam, "m1-r40-tags-night.png");
+            Texture2D nightOn = Shot(cam, "m1-r99-tags-night.png");
             int nightTot = 0; float nightLum = 0f; int nightMin = int.MaxValue; string nightWorst = "";
             for (int i = 0; i < ResidentTagRules.Count; i++)
             {
@@ -304,7 +315,7 @@ namespace FluxVerse
                 duskLumW += lum * n;
             }
             float duskLum = duskTot > 0 ? duskLumW / duskTot : 0f;
-            Chk(nightTot >= 80, "night tag delta too sparse: " + nightTot + "px");
+            Chk(nightTot >= 150, "night tag delta too sparse: " + nightTot + "px");
             Chk(nightMin >= 5, "night invisible tag " + nightWorst + ": " + nightMin + "px");
             Chk(nightLum < duskLum, "night tags must sit under dusk (atmosphere law): "
                 + nightLum.ToString("F3") + " vs " + duskLum.ToString("F3"));
@@ -313,9 +324,9 @@ namespace FluxVerse
             UnityEngine.Object.DestroyImmediate(nightBase); UnityEngine.Object.DestroyImmediate(nightOn);
 
             return "asserts=" + asserts
-                + " table=12 derived(resident_single_source)"
-                + " identity=12coupled narrative_layer_ok"
-                + " scene(saved=" + saved + ",12 persisted,neighbors_ok folk12 robots8 neon" + NeonRules.Count + ")"
+                + " table=32 derived(resident_single_source) canvas=66x20"
+                + " identity=32coupled anchor_layer_ok plates=" + plates.Count + "/32"
+                + " scene(saved=" + saved + ",32 persisted,neighbors_ok folk32 robots8 neon" + NeonRules.Count + ")"
                 + " render(dusk_px=" + duskTot + " worst=" + duskWorst + ":" + duskMin
                 + " night_px=" + nightTot + " worst=" + nightWorst + ":" + nightMin
                 + " lum dusk=" + duskLum.ToString("F3") + " night=" + nightLum.ToString("F3") + ")"
@@ -326,7 +337,9 @@ namespace FluxVerse
         {
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             if (!scene.isLoaded) throw new InvalidOperationException("CityScene failed to load");
-            Chk(CountTags() == 12, "tag count after editor restart != 12: " + CountTags());
+            Chk(CountTags() == ResidentTagRules.Count, "tag count after editor restart != 32: " + CountTags());
+            ResidentIdentityEntry[] ids = ResidentIdentity.Load();
+            Chk(ids != null && ids.Length == ResidentTagRules.Count, "identity substrate lost after restart (orphan-face law)");
             for (int i = 0; i < ResidentTagRules.Count; i++)
             {
                 GameObject go = GameObject.Find(ResidentTagRules.Name(i));
@@ -335,12 +348,10 @@ namespace FluxVerse
                 Chk(sr != null && sr.sprite != null, "tag sprite unresolved after restart: " + ResidentTagRules.Name(i));
                 Chk(sr.sortingOrder == ResidentTagRules.Order, "tag order lost after restart: " + ResidentTagRules.Name(i));
             }
-            ResidentIdentityEntry[] ids = ResidentIdentity.Load();
-            Chk(ids != null && ids.Length == 12, "identity substrate lost after restart (orphan-face law)");
             int folkKept = 0;
-            foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
-                if (sr.name.StartsWith(ResidentRules.NamePrefix)) folkKept++;
-            Chk(folkKept == 12, "residents lost across restart: " + folkKept);
+            foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+                if (t.parent == null && t.name.StartsWith(ResidentRules.NamePrefix)) folkKept++;
+            Chk(folkKept == ResidentRules.Count, "residents lost across restart: " + folkKept);
             int robotsKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(RobotRules.NamePrefix)) robotsKept++;
@@ -349,11 +360,8 @@ namespace FluxVerse
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(NeonRules.NamePrefix)) neonKept++;
             Chk(neonKept == NeonRules.Count, "neon signs lost across restart: " + neonKept);
-            // importer spot check across the restart (three baked plates: 3-CJK, 2-CJK, mixed)
-            string[] spot = {
-                "Assets/ArtPacks/residents-crowd/nameplates/plate-res-00.png",
-                "Assets/ArtPacks/residents-crowd/nameplates/plate-res-08.png",
-                "Assets/ArtPacks/residents-crowd/nameplates/plate-res-10.png" };
+            // importer spot check across the restart (three b1 plates)
+            string[] spot = { ResidentTagRules.PlatePath(0), ResidentTagRules.PlatePath(8), ResidentTagRules.PlatePath(31) };
             foreach (string p in spot)
             {
                 TextureImporter imp = (TextureImporter)TextureImporter.GetAtPath(p);
@@ -371,18 +379,15 @@ namespace FluxVerse
             GameObject camGo = GameObject.Find("CityCamera");
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f, "L0 camera broken after restart");
-            return "reload_gate=OK tags=12/12 persisted folk=12/12 robots=8/8 neon=" + NeonRules.Count + "/" + NeonRules.Count
-                + " identity=12 residentCoupled"
+            return "reload_gate=OK tags=32/32 persisted folk=32/32 robots=8/8 neon=" + NeonRules.Count + "/" + NeonRules.Count
+                + " identity=32 residentCoupled"
                 + " importers=sprite+point+ppu24+nemip"
                 + " skyline=2/2 neighbors=4 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
         }
 
-        // sweep every root-level NameTag* GO, then build the 12 from the rules
-        // (fresh LoadAssetAtPath at every use = r10 fake-null law). The NameTag
-        // prefix is the idempotence contract: ResidentProof sweeps Res* only, so
-        // a resident rebuild never touches tags, and this sweep never touches
-        // residents (both proofs re-assert each other's counts after saving).
-        static void BuildTags()
+        // sweep every root-level NameTag* GO, then build the 32 from the rules +
+        // roster plate (fresh LoadAssetAtPath at every use = r10 fake-null law)
+        static void BuildTags(ResidentIdentityEntry[] ids)
         {
             foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
                 if (t.parent == null && t.name.StartsWith(ResidentTagRules.NamePrefix))
@@ -393,9 +398,10 @@ namespace FluxVerse
                 Vector2 p = ResidentTagRules.Pos(i);
                 go.transform.position = new Vector3(p.x, p.y, 0f);
                 SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(ResidentTagRules.Path(i));
+                sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(ResidentTagRules.PlatePath(ids[i].plateIndex));
                 if (sr.sprite == null)
-                    throw new InvalidOperationException("tag sprite resolve failed: " + ResidentTagRules.Path(i));
+                    throw new InvalidOperationException("tag sprite resolve failed: "
+                        + ResidentTagRules.PlatePath(ids[i].plateIndex));
                 sr.sortingOrder = ResidentTagRules.Order;
             }
         }
@@ -420,7 +426,6 @@ namespace FluxVerse
             return tags;
         }
 
-        // toggle via cached references - GameObject.Find skips INACTIVE objects (r34 law)
         static void SetTags(SpriteRenderer[] tags, bool on)
         {
             foreach (SpriteRenderer sr in tags) sr.gameObject.SetActive(on);
@@ -437,11 +442,9 @@ namespace FluxVerse
             return c;
         }
 
-        // forces Sprite + Single + Point + PPU24 + no mips (idempotent). This layer's
-        // divisor is 24 (46x20 px -> 1.917x0.833u, the residents' own density law);
-        // scale stays 1 = zero resampling (r34 lesson: never trust importer defaults).
-        // A null importer (plate not yet imported by editor startup) retries once
-        // after an explicit AssetDatabase.Refresh - fail-loud after that.
+        // forces Sprite + Single + Point + PPU24 + no mips (idempotent). A null
+        // importer (plate not yet imported) retries once after an explicit
+        // AssetDatabase.Refresh - fail-loud after that.
         static Sprite ForceSprite(string path)
         {
             TextureImporter imp = (TextureImporter)TextureImporter.GetAtPath(path);
@@ -459,6 +462,9 @@ namespace FluxVerse
                 imp.spriteImportMode = SpriteImportMode.Single;
                 imp.filterMode = FilterMode.Point;
                 imp.mipmapEnabled = false;
+                imp.textureCompression = TextureImporterCompression.Uncompressed;
+                imp.npotScale = TextureImporterNPOTScale.None;
+                imp.alphaIsTransparency = true;
                 imp.spritePixelsPerUnit = ResidentTagRules.PPU;
                 imp.SaveAndReimport();
             }
@@ -485,10 +491,8 @@ namespace FluxVerse
             return tex;
         }
 
-        // per-tag window metric: pixels in the tag rect (+0.3u margin) that differ
-        // from the tags-hidden baseline. Only the tags change between the two
-        // renders (residents visible in both) -> clean attribution. y=0 is the
-        // image BOTTOM row (r13 ReadPixels law).
+        // per-tag window metric: pixels in the tag rect (+0.3u margin) that
+        // differ from the tags-hidden baseline. y=0 = image BOTTOM row (r13 law).
         static void WinDelta(Texture2D on, Texture2D off, Camera cam, int i, out int deltaCount, out float avgLum)
         {
             Vector2 c = ResidentTagRules.Pos(i);

@@ -230,10 +230,14 @@ namespace FluxVerse
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
             {
                 if (sr.name.StartsWith(RobotRules.NamePrefix)) robotsKept++;
-                if (sr.name.StartsWith(ResidentRules.NamePrefix)) residentsKept++;
             }
+            // r99: residents are parent GOs with a child parts stack - no root
+            // SpriteRenderer - so the count walks root Transforms (r40 family)
+            foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+                if (t.parent == null && t.name.StartsWith(ResidentRules.NamePrefix)
+                    && t.name.Length == 6) residentsKept++;
             Chk(robotsKept == RobotRules.Count, "r36 robots lost after our save: " + robotsKept);
-            Chk(residentsKept == ResidentRules.Count, "r37 residents lost after our save: " + residentsKept);
+            Chk(residentsKept == ResidentRules.Count, "r99 residents lost after our save: " + residentsKept);
             GameObject camGo = GameObject.Find("CityCamera");
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && cam.orthographic && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f,
@@ -346,8 +350,10 @@ namespace FluxVerse
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
             {
                 if (sr.name.StartsWith(RobotRules.NamePrefix)) robotsKept++;
-                if (sr.name.StartsWith(ResidentRules.NamePrefix)) residentsKept++;
             }
+            foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+                if (t.parent == null && t.name.StartsWith(ResidentRules.NamePrefix)
+                    && t.name.Length == 6) residentsKept++;
             Chk(robotsKept == RobotRules.Count, "robots lost across restart: " + robotsKept);
             Chk(residentsKept == ResidentRules.Count, "residents lost across restart: " + residentsKept);
             return "reload_gate=OK signs=18/18 persisted importers=sprite+point+ppu_manifest+nemip"

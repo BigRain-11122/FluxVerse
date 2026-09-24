@@ -1,27 +1,27 @@
-// FluxVerse P-22(2) r39: engine-side resident identity pool - pure data core.
-// The 12 street residents (ResidentRules sprite face, r37) get real BigLife
-// census identities (citizens-light.jsonl - the CODEX sec.12 contracted export
-// face, read-only). This is the M2 identity pool substrate the r37 window
-// opened; the PRESENTATION faces (nameplates, P-23(2) barks) consume this core
-// in later slices - this file owns no visuals by design.
+// FluxVerse P-22(2) r99: engine-side resident identity pool - pure data core.
+// The r39 substrate (12 census identities, seed/stride pick) is retired by the
+// P-68 batch1 roster: the 32 street residents are census-derived by the GROUP
+// production line (cph4 fa7d951 bake-residents.ps1 -> batch1/manifest.json ->
+// atlas manifest), and the r98 bake (Tools/city/bake-resident-street.ps1)
+// three-source-joined them into Assets/Data/residents-street.json. That file
+// is now the SINGLE identity substrate: this core parses it directly and the
+// old residents-identity.json twin (a copied-table disease) is gone.
 //
-// Data flow: Tools/city/bake-resident-identity.ps1 (deterministic PS bake,
-// district law + carbon filter + seed/stride selection) writes
-// Assets/Data/residents-identity.json; this core parses it with JsonUtility
-// (UTF-8 CJK strings parse fine; the file carries layer:"narrative" on every
-// entry - CODEX sec.1 honesty law: census citizens are the narrative layer and
-// every consumer inherits the marker by construction).
+// Selection law: OWNED BY THE GROUP PRODUCTION LINE (not re-implemented here).
+// The proof's census cross-check verifies every slot's fields against the
+// BigLife census source BY ID (field equality per id) - the law is "the roster
+// is census-true", no local pick logic exists to drift.
 //
-// Slot -> home district law (CODEX sec.3 spatial canon): the census districts
-// ARE the city districts (QT=QUANT / GM=GAME / MD=MEDIA / NS=north governance
-// shore / RV=river+light bridge / OR=outer perception ring). Street slots:
-//   0-2 QUANT plaza -> QT | 3-4 GAME front plaza -> GM | 5-6 MEDIA front -> MD
-//   7 south street west -> GM | 8 south street east -> QT
-//   9-10 north promenade + 11 north street -> NS
-// RV and OR have NO street slots in the visible frame (the river is a pure
-// water band, the outer ring is off-frame) - they join when their visuals
-// land; identities are never invented for districts with no ground.
-// ResidentIdentityProof re-derives this table from the LIVE tilemaps.
+// District law (CODEX sec.3 spatial canon + r96/r98 refinements):
+//   QT=QUANT / GM=GAME / MD=MEDIA / NS=north governance shore for the city
+//   seats; the TOWER anchor seat (C-00001) carries an EMPTY district (honor
+//   seat, r73 law); VISITOR seats carry their REAL home districts (OR outer
+//   perception ring / RV river-lightbridge) while STANDING on the south
+//   street - seat != identity claim (r96 law).
+//
+// Honesty law (CODEX sec.1): layer = "narrative" on every census-derived
+// slot; the anchor seat (C-00001, human-origin disclosure P-58) carries
+// layer = "anchor". Age -1 = census null (undisclosed, the anchor seat).
 //
 // Degrade law (honest absence): missing/broken data file -> Load() returns
 // null; runtime faces read null as "identity absent this build" and stay
@@ -32,24 +32,36 @@ using UnityEngine;
 
 namespace FluxVerse
 {
-    // one street slot's census identity (mirrors the baked JSON fields)
+    // one street slot's full record (mirrors the baked street-JSON fields)
     [Serializable]
     public class ResidentIdentityEntry
     {
-        public int slot;          // 0..11 == ResidentRules index
+        public int slot;          // 0..31 == ResidentRules index
         public string go;         // scene GO name == ResidentRules.Name(slot)
-        public string district;   // home district (CODEX sec.3)
+        public string zone;      // seat zone (QUANT/GAME/MEDIA/NORTH/TOWER/VISITOR)
+        public string district;   // home district ("" on the anchor seat)
         public string id;         // census id C-#####
         public string name;       // CJK name
-        public string species;    // always "carbon" for the human sprite slots
+        public string species;    // carbon / silicon / sprite
         public string gender;
-        public int age;           // bare int (dual-format census law, see bake)
+        public int age;           // -1 = census null (anchor seat, undisclosed)
         public string faction;
         public string block;      // home block inside the district
         public string profession;
         public string axis;       // thought axis ("" when the citizen has none)
         public string creed;      // short creed line
-        public string layer;      // honesty law: always "narrative"
+        public string layer;      // honesty law: "narrative", anchor seat = "anchor"
+        public string hairPart;   // hair-short / hair-long
+        public string eyePart;    // eyes-dot / eyes-led / being (sprite species)
+        public string pantC;      // palette (hex "#RRGGBB"; sprite rows: empty)
+        public string skinC;
+        public string hairC;
+        public string clothC;
+        public string badgeC;
+        public string eyeC;
+        public string coreC;      // sprite core tint (sprite rows: only this set)
+        public int plateIndex;    // b1 nameplate atlas-row order (r97 bake law)
+        public string plateName;  // plate glyph text (leading-CJK-segment law)
     }
 
     [Serializable]
@@ -58,24 +70,25 @@ namespace FluxVerse
         public ResidentIdentityEntry[] slots;
     }
 
-    // pure static core: district law + data-file parse. No MonoBehaviour (the
-    // v0 slice wires nothing into the scene; SEPARATE FILE LAW n/a).
+    // pure static core: district law + data-file parse. No MonoBehaviour.
     public static class ResidentIdentity
     {
-        public const int Count = 12;                       // == ResidentRules.Count
-        public const int Seed = 20260924;                  // P-22(2) window-open date (fixed: a committed roster must not churn daily)
-        public const int Stride = 1999;                    // CityWatch voice-face prime (selection-law family)
-        public const string LayerMarker = "narrative";      // CODEX sec.1
-        public const string DataRelPath = "Data/residents-identity.json";
+        public const int Count = 32;                       // == ResidentRules.Count
+        public const string NarrativeLayer = "narrative";  // CODEX sec.1
+        public const string AnchorLayer = "anchor";        // P-58 human-origin disclosure
+        public const int AnchorSlot = 26;                  // C-00001 tower-flank honor seat
+        public const string DataRelPath = "Data/residents-street.json";
 
+        // slot -> home district (the anchor seat claims none; visitors claim
+        // their real home districts - the SEAT zone never overrides identity)
         static readonly string[] DistrictTable = new string[]
         {
-            "QT", "QT", "QT",      // 0-2 south QUANT plaza
-            "GM", "GM",            // 3-4 GAME front plaza
-            "MD", "MD",            // 5-6 MEDIA front plaza
-            "GM",                  // 7 south street west (nearest GAME block)
-            "QT",                  // 8 south street east (nearest QUANT block)
-            "NS", "NS", "NS"       // 9-10 north promenade, 11 north street
+            "QT", "QT", "QT", "QT", "QT", "QT", "QT", "QT", "QT",   // 0-8  QUANT plaza
+            "GM", "GM", "GM", "GM", "GM", "GM", "GM",               // 9-15 GAME
+            "MD", "MD", "MD", "MD", "MD", "MD", "MD", "MD",         // 16-23 MEDIA
+            "NS", "NS",                                            // 24-25 north walkway
+            "",                                                    // 26 TOWER anchor (empty)
+            "OR", "OR", "OR", "OR", "RV"                            // 27-31 visitors (real homes)
         };
 
         public static string DistrictOf(int i) { return DistrictTable[i]; }
@@ -84,7 +97,7 @@ namespace FluxVerse
 
         public static bool Loaded { get { return loaded != null; } }
 
-        // parse Assets/Data/residents-identity.json. Null = honest absence
+        // parse Assets/Data/residents-street.json. Null = honest absence
         // (missing file / bad JSON / wrong slot count) - never a throw.
         public static ResidentIdentityEntry[] Load(bool force = false)
         {

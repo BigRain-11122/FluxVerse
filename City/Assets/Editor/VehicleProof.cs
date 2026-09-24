@@ -257,13 +257,17 @@ namespace FluxVerse
             {
                 if (sr.name.StartsWith(NeonRules.NamePrefix)) neonKept++;
                 if (sr.name.StartsWith(RobotRules.NamePrefix)) robotKept++;
-                if (sr.name.StartsWith(ResidentRules.NamePrefix)) resKept++;
                 if (sr.name.StartsWith("NameTag")) tagKept++;
             }
+            // r99: residents are parent GOs with a child parts stack - no root
+            // SpriteRenderer - so the count walks root Transforms (r40 family)
+            foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+                if (t.parent == null && t.name.StartsWith(ResidentRules.NamePrefix)
+                    && t.name.Length == 6) resKept++;
             Chk(neonKept == NeonRules.Count, "r35+r38 neon signs lost after our save: " + neonKept);
             Chk(robotKept == RobotRules.Count, "r36 robots lost after our save: " + robotKept);
-            Chk(resKept == ResidentRules.Count, "r37 residents lost after our save: " + resKept);
-            Chk(tagKept == 12, "r40 nameplates lost after our save: " + tagKept);
+            Chk(resKept == ResidentRules.Count, "r99 residents lost after our save: " + resKept);
+            Chk(tagKept == ResidentTagRules.Count, "r99 nameplates lost after our save: " + tagKept);
             GameObject ambGo = GameObject.Find("CityAmbient");
             CityAmbient amb = ambGo != null ? ambGo.GetComponent<CityAmbient>() : null;
             Chk(amb != null, "CityAmbient lost after save");

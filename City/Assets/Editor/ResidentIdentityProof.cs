@@ -1,30 +1,37 @@
-// FluxVerse P-22(2) r39: batch proof for the engine resident-identity pool
-// (BigLife census identities wired to the 12 r37 street-resident slots).
+// FluxVerse P-22(2) r39/r99: batch proof for the engine resident-identity pool
+// (the 32-seat street roster wired to the P-68 batch1 census identities).
 // Sentinel pattern (r36-r38 style):
 //   pass 1: logs/ident.run         -> FluxVerse.ResidentIdentityProof.BatchRun   -> logs/ident.done
 //   pass 2: logs/ident-reload.run  -> FluxVerse.ResidentIdentityProof.ReloadGate -> logs/ident-reload.done
 // Sections:
-//  A law gates: the DistrictOf table is well-formed (QT4/GM3/MD2/NS3, canon
-//    codes only) and Count mirrors the sprite manifest.
+//  A law gates: the DistrictOf table is well-formed (QT9/GM7/MD8/NS2 + one
+//    empty anchor slot + OR4/RV1 visitors - canon codes only) and Count
+//    mirrors the seat manifest; zone law mirrors ResidentRules.ZoneOf.
 //  B live-geometry re-derivation (the scene is trusted, comments are not):
 //    open CityScene READ-ONLY (never saved), read the painted Water rows and
 //    the three city-block x-extents off the LIVE tilemaps, then re-derive the
-//    slot->district law: south-bank slots -> nearest city block, north-bank
-//    slots -> NS governance shore, and NO feet cell may land in the river.
-//    Plus read-only scene integrity (12 residents / 8 robots / neon count)
-//    and a scene-not-dirty gate (this proof writes nothing).
-//  C data gates: Assets/Data/residents-identity.json parses to 12 entries;
-//    slot index / GO name / district match the law tables, ids unique and
-//    C-#####, species carbon, layer narrative (CODEX sec.1 honesty law), CJK
-//    name, plausible age, core fields non-empty.
-//  D census cross-check (dual implementation - the strongest gate): re-run the
-//    SELECTION LAW in C# against the BigLife census source (same seed/stride/
-//    ordinal-id law, same carbon+age eligibility) and demand 12x9 field
-//    equality with the baked file. The PS bake and this C# core are separate
-//    implementations; byte agreement proves the law, not just the artifact.
-//    Absent source repo -> honest skip note (the bake itself is fail-loud).
-//  E file gates: SHA256 recorded for the reload pass, importer .meta present
-//    (r25 meta law - first editor pass generates it, it ships in git).
+//    seat law: city seats -> nearest south block (MINIMAL-TIE law, r99
+//    refinement of the r39 any-tie gate: only the winner must be unique - a
+//    tie between two losers never picks a district); north seats -> NS; the
+//    TOWER anchor seat -> north bank, tower flank (|x| <= 5), empty district;
+//    VISITOR seats -> the south street sidewalk row (feet row -10) with their
+//    REAL home districts OR/RV (seat != identity claim, r96 law); and NO feet
+//    row may land in the river. Plus read-only scene integrity (32 residents
+//    by root-Transform count - the parts stack carries no root renderer -
+//    8 robots, neon count) and a scene-not-dirty gate (writes nothing).
+//  C data gates: Assets/Data/residents-street.json parses to 32 entries; slot
+//    index / GO name / district / zone match the law tables; ids unique and
+//    C-#####; species carbon/silicon/sprite; layer law (narrative everywhere,
+//    anchor on slot 26 - CODEX sec.1 + P-58); CJK name; age law (slot 26 =
+//    -1 census-null, others 1..120); plateIndex 0..31 unique; parts/palette
+//    laws; core fields non-empty.
+//  D census cross-check (dual implementation - the strongest gate): look
+//    every slot's id up in the BigLife census source and demand field
+//    equality (name/gender/age/faction/block/profession/species/district/
+//    axis/creed). The SELECTION law belongs to the group production line
+//    (r84 note) - this gate proves the roster is census-true per id, not a
+//    local re-implementation of the pick. Absent source repo -> honest skip.
+//  E file gates: SHA256 recorded for the reload pass, importer .meta present.
 //  Pass 2: fresh editor session - data gates + census cross again, SHA
 //    stability vs pass 1, scene integrity, meta persisted. Fail-loud.
 // ASCII only. No 3D.
@@ -106,16 +113,22 @@ namespace FluxVerse
         static string Prove()
         {
             // ---- A. law-table gates ----
-            Chk(ResidentIdentity.Count == ResidentRules.Count, "identity count must mirror the sprite manifest");
-            int qt = 0, gm = 0, md = 0, ns = 0;
+            Chk(ResidentIdentity.Count == ResidentRules.Count, "identity count must mirror the seat manifest");
+            int qt = 0, gm = 0, md = 0, ns = 0, empty = 0, or = 0, rv = 0;
             for (int i = 0; i < ResidentIdentity.Count; i++)
             {
                 string d = ResidentIdentity.DistrictOf(i);
-                if (d == "QT") qt++; else if (d == "GM") gm++; else if (d == "MD") md++; else if (d == "NS") ns++;
+                if (d == "QT") qt++; else if (d == "GM") gm++; else if (d == "MD") md++;
+                else if (d == "NS") ns++; else if (d == "") empty++;
+                else if (d == "OR") or++; else if (d == "RV") rv++;
                 else Chk(false, "non-canon district code in the law table: " + d);
+                string z = ResidentRules.ZoneOf(i);
+                Chk(z == "QUANT" || z == "GAME" || z == "MEDIA" || z == "NORTH" || z == "TOWER" || z == "VISITOR",
+                    "non-canon zone code at slot " + i + ": " + z);
             }
-            Chk(qt == 4 && gm == 3 && md == 2 && ns == 3,
-                "district law distribution must be QT4/GM3/MD2/NS3, got QT" + qt + "/GM" + gm + "/MD" + md + "/NS" + ns);
+            Chk(qt == 9 && gm == 7 && md == 8 && ns == 2 && empty == 1 && or == 4 && rv == 1,
+                "district law distribution must be QT9/GM7/MD8/NS2/anchor1/OR4/RV1, got QT" + qt
+                + "/GM" + gm + "/MD" + md + "/NS" + ns + "/empty" + empty + "/OR" + or + "/RV" + rv);
 
             // ---- B. live-geometry re-derivation (read-only scene) ----
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
@@ -134,10 +147,7 @@ namespace FluxVerse
             Tilemap tg = TilemapByName("CityGAME");
             Tilemap tm = TilemapByName("CityMEDIA");
             Chk(tq != null && tg != null && tm != null, "city block tilemaps missing");
-            // south-bank extents ONLY: the CityGAME/CityMEDIA layers also carry
-            // NORTH low-rise blocks (x -9..-7 / 7..9 / 26..28) - measuring against
-            // the whole-layer x-span would swallow south slots into the wrong city
-            // (first run: ResQPlazaA got dg=0 from a north low-rise). Same-bank law.
+            // south-bank extents ONLY (the layers also carry north low-rises)
             int qMin, qMax, gMin, gMax, mMin, mMax;
             SouthXExtent(tq, wMin, out qMin, out qMax);
             SouthXExtent(tg, wMin, out gMin, out gMax);
@@ -146,26 +156,46 @@ namespace FluxVerse
 
             for (int i = 0; i < ResidentIdentity.Count; i++)
             {
-                Vector2Int feet = ResidentRules.FeetCellOf(i);
-                Chk(feet.y < wMin || feet.y > wMax,
+                string zone = ResidentRules.ZoneOf(i);
+                int feetY = ResidentRules.FeetCellOf(i).y;
+                Chk(feetY < wMin || feetY > wMax,
                     "resident stands in the river band: " + ResidentRules.Name(i));
-                if (feet.y < wMin)
+                if (zone == "QUANT" || zone == "GAME" || zone == "MEDIA")
                 {
-                    // south bank: nearest of the three city blocks by horizontal distance
-                    int dq = DistX(feet.x, qMin, qMax);
-                    int dg = DistX(feet.x, gMin, gMax);
-                    int dmm = DistX(feet.x, mMin, mMax);
-                    Chk(!(dq == dg || dq == dmm || dg == dmm),
-                        "nearest-block tie at " + ResidentRules.Name(i) + " - law needs a judge");
-                    string near = (dq < dg && dq < dmm) ? "QT" : (dg < dmm ? "GM" : "MD");
+                    Chk(feetY < wMin, "city seat must be south bank: " + ResidentRules.Name(i));
+                    int feetX = ResidentRules.FeetCellOf(i).x;
+                    int dq = DistX(feetX, qMin, qMax);
+                    int dg = DistX(feetX, gMin, gMax);
+                    int dmm = DistX(feetX, mMin, mMax);
+                    // minimal-tie law (r99): only the WINNER must be unique
+                    int min = Math.Min(dq, Math.Min(dg, dmm));
+                    int winners = (dq == min ? 1 : 0) + (dg == min ? 1 : 0) + (dmm == min ? 1 : 0);
+                    Chk(winners == 1, "nearest-block minimal tie at " + ResidentRules.Name(i)
+                        + " - the law needs a unique winner");
+                    string near = dq == min ? "QT" : (dg == min ? "GM" : "MD");
                     Chk(near == ResidentIdentity.DistrictOf(i),
-                        "district law drift at " + ResidentRules.Name(i) + ": live geometry says " + near
-                        + " (dq" + dq + "/dg" + dg + "/dm" + dmm + ")");
+                        "district law drift at " + ResidentRules.Name(i) + ": live geometry says " + near);
+                }
+                else if (zone == "NORTH")
+                {
+                    Chk(feetY > wMax, "north seat must be north bank: " + ResidentRules.Name(i));
+                    Chk(ResidentIdentity.DistrictOf(i) == "NS", "north seat must be NS: " + ResidentRules.Name(i));
+                }
+                else if (zone == "TOWER")
+                {
+                    Chk(feetY > wMax, "anchor seat must be north bank: " + ResidentRules.Name(i));
+                    Chk(Mathf.Abs(ResidentRules.Pos(i).x) <= 5f,
+                        "anchor seat must flank the brain tower (|x| <= 5): " + ResidentRules.Name(i));
+                    Chk(ResidentIdentity.DistrictOf(i) == "",
+                        "anchor seat claims no district (r73 honor-seat law): " + ResidentRules.Name(i));
                 }
                 else
                 {
-                    Chk(ResidentIdentity.DistrictOf(i) == "NS",
-                        "north-bank slot must be NS: " + ResidentRules.Name(i));
+                    Chk(feetY == -10, "visitor seat must stand on the south street sidewalk row (feet -10): "
+                        + ResidentRules.Name(i) + " feet=" + feetY);
+                    Chk(ResidentIdentity.DistrictOf(i) == "OR" || ResidentIdentity.DistrictOf(i) == "RV",
+                        "visitor seat must carry its REAL home district OR/RV (seat != identity claim, r96 law): "
+                        + ResidentRules.Name(i));
                 }
             }
             Chk(!scene.isDirty, "identity proof must not dirty the scene");
@@ -173,17 +203,17 @@ namespace FluxVerse
             // ---- C. data gates ----
             ResidentIdentityEntry[] e = DataGates();
 
-            // ---- D. census cross-check (dual implementation) ----
+            // ---- D. census cross-check (dual implementation, by id) ----
             string cross = CensusCross(e);
 
             // ---- E. file gates ----
-            Chk(File.Exists(DataPath + ".meta"), "importer meta missing for the identity data (r25 meta law)");
+            Chk(File.Exists(DataPath + ".meta"), "importer meta missing for the roster data (r25 meta law)");
             string sha = Sha256File(DataPath);
             File.WriteAllText(ShaPath, sha);
 
             return "asserts=" + asserts
-                + " law=QT" + qt + "/GM" + gm + "/MD" + md + "/NS" + ns
-                + " data=12 unique_ids=12 live_geometry=12 river_stand=0"
+                + " law=QT" + qt + "/GM" + gm + "/MD" + md + "/NS" + ns + "/anchor" + empty + "/OR" + or + "/RV" + rv
+                + " data=32 unique_ids=32 live_geometry=32 river_stand=0"
                 + " census_cross=" + cross
                 + " sha256=" + sha.Substring(0, 12)
                 + " meta=present scene_clean=true";
@@ -195,11 +225,10 @@ namespace FluxVerse
             Chk(scene.isLoaded, "CityScene failed to load (reload pass)");
             SceneIntegrity(scene);
 
-            // fresh-session parse: identical gates, identical file
             ResidentIdentityEntry[] e = DataGates();
             string cross = CensusCross(e);
 
-            Chk(File.Exists(DataPath + ".meta"), "identity meta lost across restart");
+            Chk(File.Exists(DataPath + ".meta"), "roster meta lost across restart");
             Chk(File.Exists(ShaPath), "pass-1 sha record missing");
             string sha = Sha256File(DataPath);
             Chk(sha == File.ReadAllText(ShaPath).Trim(),
@@ -207,12 +236,12 @@ namespace FluxVerse
             Chk(!scene.isDirty, "reload pass must not dirty the scene");
 
             return "asserts=" + asserts
-                + " data=12 unique_ids=12 census_cross=" + cross
+                + " data=32 unique_ids=32 census_cross=" + cross
                 + " sha_stable=" + sha.Substring(0, 12)
                 + " meta=persisted scene_integrity=ok";
         }
 
-        // C: data gates over the parsed pool (used by both passes)
+        // C: data gates over the parsed roster (used by both passes)
         static ResidentIdentityEntry[] DataGates()
         {
             ResidentIdentity.Unload();
@@ -220,6 +249,7 @@ namespace FluxVerse
             Chk(e != null, "identity pool failed to load (missing/broken data file)");
             Chk(File.Exists(DataPath), "identity data file missing on disk");
             HashSet<string> ids = new HashSet<string>();
+            HashSet<int> plates = new HashSet<int>();
             for (int i = 0; i < ResidentIdentity.Count; i++)
             {
                 ResidentIdentityEntry en = e[i];
@@ -228,27 +258,51 @@ namespace FluxVerse
                 Chk(en.go == ResidentRules.Name(i), "GO name drift at slot " + i + ": " + en.go);
                 Chk(en.district == ResidentIdentity.DistrictOf(i),
                     "district drift at slot " + i + ": " + en.district + " vs law " + ResidentIdentity.DistrictOf(i));
+                Chk(en.zone == ResidentRules.ZoneOf(i), "zone drift at slot " + i + ": " + en.zone);
                 Chk(en.id != null && Regex.IsMatch(en.id, @"^C-\d{5}$"), "bad census id at slot " + i + ": " + en.id);
                 Chk(ids.Add(en.id), "duplicate identity across slots: " + en.id);
-                Chk(en.species == "carbon", "non-carbon identity in a human sprite slot: " + en.id);
-                Chk(en.layer == ResidentIdentity.LayerMarker,
-                    "honesty marker lost (CODEX sec.1 narrative layer): " + en.id);
-                Chk(HasCjk(en.name), "name must carry CJK: " + en.id);
-                Chk(!string.IsNullOrEmpty(en.gender), "empty gender: " + en.id);
-                Chk(en.age >= 1 && en.age <= 120, "implausible age: " + en.id + " age=" + en.age);
-                Chk(!string.IsNullOrEmpty(en.profession), "empty profession: " + en.id);
-                Chk(!string.IsNullOrEmpty(en.faction), "empty faction: " + en.id);
-                Chk(!string.IsNullOrEmpty(en.block), "empty block: " + en.id);
-                Chk((en.axis ?? "").Length <= 30, "axis field suspiciously long: " + en.id);
-                Chk((en.creed ?? "").Length <= 200, "creed field suspiciously long: " + en.id);
+                Chk(en.species == "carbon" || en.species == "silicon" || en.species == "sprite",
+                    "non-canon species at slot " + i + ": " + en.species);
+                if (i == ResidentIdentity.AnchorSlot)
+                {
+                    Chk(en.layer == ResidentIdentity.AnchorLayer, "anchor layer marker lost at slot " + i);
+                    Chk(en.age == -1, "anchor seat age must be -1 (census null, undisclosed)");
+                }
+                else
+                {
+                    Chk(en.layer == ResidentIdentity.NarrativeLayer,
+                        "honesty marker lost (CODEX sec.1 narrative layer) at slot " + i);
+                    Chk(en.age >= 1 && en.age <= 120, "implausible age at slot " + i + ": " + en.age);
+                }
+                Chk(HasCjk(en.name), "name must carry CJK at slot " + i + ": " + en.name);
+                Chk(!string.IsNullOrEmpty(en.gender), "empty gender at slot " + i);
+                Chk(!string.IsNullOrEmpty(en.profession), "empty profession at slot " + i);
+                Chk(!string.IsNullOrEmpty(en.faction), "empty faction at slot " + i);
+                Chk(!string.IsNullOrEmpty(en.block), "empty block at slot " + i);
+                Chk((en.axis ?? "").Length <= 30, "axis field suspiciously long at slot " + i);
+                Chk((en.creed ?? "").Length <= 200, "creed field suspiciously long at slot " + i);
+                Chk(plates.Add(en.plateIndex), "duplicate plateIndex at slot " + i + ": " + en.plateIndex);
+                Chk(en.plateIndex >= 0 && en.plateIndex < ResidentIdentity.Count, "plateIndex out of range at slot " + i);
+                Chk(!string.IsNullOrEmpty(en.plateName), "empty plateName at slot " + i);
+                Chk(en.hairPart == "hair-short" || en.hairPart == "hair-long", "bad hairPart at slot " + i);
+                if (en.species == "sprite")
+                {
+                    Chk(en.eyePart == "being", "sprite row must mount being at slot " + i);
+                    Chk(!string.IsNullOrEmpty(en.coreC), "sprite row missing coreC at slot " + i);
+                }
+                else
+                {
+                    Chk(en.eyePart == "eyes-dot" || en.eyePart == "eyes-led", "bad eyePart at slot " + i);
+                    Chk(!string.IsNullOrEmpty(en.skinC) && !string.IsNullOrEmpty(en.clothC)
+                        && !string.IsNullOrEmpty(en.pantC), "palette missing at slot " + i);
+                }
             }
             return e;
         }
 
-        // D: re-run the selection law in C# against the BigLife census source.
-        // Same eligibility (carbon + parseable age), same ordinal-id sort, same
-        // seed/stride pick as Tools/city/bake-resident-identity.ps1 - the two
-        // implementations must agree on all 12x9 fields or the law is broken.
+        // D: per-id field equality against the BigLife census source. The
+        // selection law belongs to the group production line (r84) - this gate
+        // proves every roster slot is census-true, field by field.
         static string CensusCross(ResidentIdentityEntry[] e)
         {
             string groupRoot = Application.dataPath;
@@ -261,77 +315,76 @@ namespace FluxVerse
             Regex rxId = new Regex("\"id\":\\s*\"(C-\\d{5})\"");
             Regex rxName = new Regex("\"name\":\\s*\"([^\"]*)\"");
             Regex rxGen = new Regex("\"gender\":\\s*\"([^\"]*)\"");
-            Regex rxAge = new Regex("\"age\":\\s*\"?\\s*(\\d+)");   // dual-format law (15 int / 7485 quoted)
+            // age is census-scriped PER SPECIES: carbon "NN 岁" / silicon
+            // "编译纪 NN 年" / sprite "第 NN 数据季" / anchor seat JSON null
+            // (with an age_note explaining the non-disclosure). Capture the
+            // whole VALUE first (null | quoted | bare) - an unbounded prefix
+            // skip would leak across the field boundary into later digits
+            // (first red: the anchor line's age_note/brain_digest digits).
+            Regex rxAgeRaw = new Regex("\"age\":\\s*(null|\"[^\"]*\"|\\d+)");
             Regex rxFac = new Regex("\"faction\":\\s*\"([^\"]*)\"");
             Regex rxBlock = new Regex("\"block\":\\s*\"([^\"]*)\"");
             Regex rxProf = new Regex("\"profession\":\\s*\"([^\"]*)\"");
             Regex rxAxis = new Regex("\"axis\":\\s*\"([^\"]*)\"");
             Regex rxCreed = new Regex("\"creed\":\\s*\"([^\"]*)\"");
 
-            Dictionary<string, Dictionary<string, string>> byId =
-                new Dictionary<string, Dictionary<string, string>>();
-            Dictionary<string, List<string>> idList = new Dictionary<string, List<string>>();
-            foreach (string d in new string[] { "QT", "GM", "MD", "NS" })
-            {
-                byId[d] = new Dictionary<string, string>();
-                idList[d] = new List<string>();
-            }
-
+            Dictionary<string, string> byId = new Dictionary<string, string>();
             string[] lines = File.ReadAllLines(census, Encoding.UTF8);
             foreach (string ln in lines)
             {
-                Match ms = rxSpec.Match(ln);
-                if (!ms.Success || ms.Groups[1].Value != "carbon") continue;
-                if (!rxAge.Match(ln).Success) continue;               // age eligibility (nulls are non-carbon reserved seats)
-                Match md = rxDist.Match(ln);
-                if (!md.Success || !byId.ContainsKey(md.Groups[1].Value)) continue;
                 Match mi = rxId.Match(ln);
                 if (!mi.Success) continue;
-                string d = md.Groups[1].Value;
-                if (byId[d].ContainsKey(mi.Groups[1].Value))
-                    throw new InvalidOperationException("duplicate census id in district " + d + ": " + mi.Groups[1].Value);
-                byId[d][mi.Groups[1].Value] = ln;
-                idList[d].Add(mi.Groups[1].Value);
+                if (byId.ContainsKey(mi.Groups[1].Value))
+                    throw new InvalidOperationException("duplicate census id: " + mi.Groups[1].Value);
+                byId[mi.Groups[1].Value] = ln;
             }
-            foreach (string d in idList.Keys)
-            {
-                Chk(idList[d].Count >= 100, "census district bucket suspiciously small: " + d + "=" + idList[d].Count);
-                idList[d].Sort(StringComparer.Ordinal);
-            }
+            Chk(byId.Count >= 10000, "census source suspiciously small: " + byId.Count);
 
             int fields = 0;
             for (int i = 0; i < ResidentIdentity.Count; i++)
             {
-                string d = ResidentIdentity.DistrictOf(i);
-                string pickId = idList[d][(ResidentIdentity.Seed + i * ResidentIdentity.Stride) % idList[d].Count];
-                string ln = byId[d][pickId];
                 ResidentIdentityEntry en = e[i];
-                Chk(en.id == pickId, "cross id drift at slot " + i + ": baked " + en.id + " vs law " + pickId);
+                string ln;
+                Chk(byId.TryGetValue(en.id, out ln), "roster id not in census at slot " + i + ": " + en.id);
+                if (ln == null) continue;
+                Chk(en.species == Group(rxSpec, ln), "cross species drift at slot " + i);
+                Chk(en.district == GroupSoft(rxDist, ln), "cross district drift at slot " + i);
                 Chk(en.name == Group(rxName, ln), "cross name drift at slot " + i);
                 Chk(en.gender == Group(rxGen, ln), "cross gender drift at slot " + i);
-                Chk(en.age == int.Parse(Group(rxAge, ln)), "cross age drift at slot " + i);
+                Match ma = rxAgeRaw.Match(ln);
+                if (i == ResidentIdentity.AnchorSlot)
+                    Chk(ma.Success && ma.Groups[1].Value == "null",
+                        "anchor seat census age must be null (undisclosed) at slot " + i);
+                else
+                {
+                    Chk(ma.Success && ma.Groups[1].Value != "null",
+                        "census age missing at slot " + i);
+                    Match md = Regex.Match(ma.Groups[1].Value, "\\d+");
+                    Chk(md.Success && en.age == int.Parse(md.Value), "cross age drift at slot " + i);
+                }
                 Chk(en.faction == Group(rxFac, ln), "cross faction drift at slot " + i);
                 Chk(en.block == Group(rxBlock, ln), "cross block drift at slot " + i);
                 Chk(en.profession == Group(rxProf, ln), "cross profession drift at slot " + i);
                 Chk((en.axis ?? "") == GroupSoft(rxAxis, ln), "cross axis drift at slot " + i);
                 Chk((en.creed ?? "") == GroupSoft(rxCreed, ln), "cross creed drift at slot " + i);
-                fields += 9;
+                fields += 10;
             }
-            return "12x" + fields / 12;
+            return "32x" + fields / 32;
         }
 
-        // read-only scene sanity: the r37 sprite layer and its r36/r35+r38
-        // neighbors are still on disk (identity wiring must never touch them)
+        // read-only scene sanity: the r99 sprite layer and its neighbors are on
+        // disk (identity wiring must never touch them)
         static void SceneIntegrity(Scene scene)
         {
             int residents = 0, robots = 0, neon = 0;
+            foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+                if (t.parent == null && t.name.StartsWith(ResidentRules.NamePrefix) && t.name.Length == 6) residents++;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
             {
-                if (sr.name.StartsWith(ResidentRules.NamePrefix)) residents++;
-                else if (sr.name.StartsWith(RobotRules.NamePrefix)) robots++;
+                if (sr.name.StartsWith(RobotRules.NamePrefix)) robots++;
                 else if (sr.name.StartsWith(NeonRules.NamePrefix)) neon++;
             }
-            Chk(residents == 12, "street residents lost: " + residents);
+            Chk(residents == ResidentRules.Count, "street residents lost: " + residents);
             Chk(robots == 8, "street robots lost: " + robots);
             Chk(neon == NeonRules.Count, "neon signs lost: " + neon + " vs canon " + NeonRules.Count);
         }

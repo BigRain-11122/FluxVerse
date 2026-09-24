@@ -36,6 +36,11 @@ public class CityImportPostprocessor : AssetPostprocessor
         if (!string.IsNullOrEmpty(ti.userData)) return;   // already configured - respect manual edits
         ti.textureType = TextureImporterType.Sprite;
         ti.spriteImportMode = SpriteImportMode.Single;   // sheets stay whole until deliberately sliced
+        // r99 P-72 slicing: the 9-cell resident atlas is deliberately Multiple
+        // (ResidentProof writes the spriteSheet metadata); a blank reimport must
+        // never flatten it back to Single and orphan the scene's subsprite refs.
+        if (assetPath == "Assets/ArtPacks/residents-atlas/atlas.png")
+            ti.spriteImportMode = SpriteImportMode.Multiple;
         ti.filterMode = FilterMode.Point;
         ti.textureCompression = TextureImporterCompression.Uncompressed;
         ti.mipmapEnabled = false;

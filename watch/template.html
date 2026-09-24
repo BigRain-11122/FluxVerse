@@ -44,7 +44,6 @@
   footer b{color:var(--cyan)}
   #detail{font-size:12px;line-height:1.8;min-height:120px}
   #detail h4{color:var(--gold);font-size:12px;margin-bottom:4px}
-  .up{color:#ff5f56}.down{color:#2ecc71}
 </style>
 </head>
 <body>
@@ -92,9 +91,9 @@
   <div class="card"><h3>建设进度（大脑开发度）</h3><div id="ms"></div></div>
   <div class="card"><h3>近 24 小时 commits（三司+总控）</h3><div id="commits"></div>
     <h3 style="margin-top:10px">tick 最近轮次</h3><pre id="tick" style="max-height:120px;overflow:auto">--</pre></div>
-  <div class="card"><h3>QUANT 真K线 · 510300 沪深300ETF</h3>
-    <canvas id="kline" width="240" height="80" style="background:#070c16"></canvas>
-    <div class="lbl" style="margin-top:4px"><span id="mk">--</span><span id="mk2"></span></div>
+  <div class="card"><h3>城市脉搏（事件类型 · 真实统计）</h3>
+    <div id="pulse" style="max-height:120px;overflow:auto">--</div>
+    <div class="lbl" style="margin-top:4px"><span>真实事件流分布（禁装饰律：展示的是实际发生的）</span></div>
   </div>
 </div>
 
@@ -137,9 +136,7 @@ document.getElementById('gts').textContent=DATA.generated_ts||'--';
   const el=document.getElementById('reality');
   const chip=(k,v)=>{if(v!==undefined&&v!==null&&v!=='')el.innerHTML+='<span class="chip">'+k+' <b>'+v+'</b></span>'};
   chip('北京',r.beijing_hhmm);chip('相位',r.city_day_phase);chip('天气',(r.weather_kind||'')+' '+r.weather_temp_c+'°C');
-  chip('风',r.weather_wind_ms+'m/s');chip('USD/CNY',r.fx_usdcny);chip('交易日',r.is_trading_day!==undefined?(r.is_trading_day?'开市':'休市'):'--');
-  if(r.market&&r.market.change_pct!==undefined){const c=r.market.change_pct;chip('510300',(c>=0?'+':'')+c+'%')}
-  chip('GitHub生态',r.github_pulse);
+  chip('风',r.weather_wind_ms+'m/s');chip('GitHub生态',r.github_pulse);
 })();
 
 // ---------- clock ----------
@@ -241,23 +238,13 @@ document.getElementById('gts').textContent=DATA.generated_ts||'--';
   document.getElementById('gal').innerHTML=(DATA.images||[]).map(i=>'<div><img src="'+i.src+'" loading="lazy"><div class="cap">'+i.name+' · '+i.ts+'</div></div>').join('')||'<span style="color:#556;font-size:11px">暂无图片（施工截图将随 M1 出现）</span>';
 })();
 
-// ---------- kline ----------
+// ---------- city pulse (event-type distribution; replaced the removed financial chart per CEO order 2026-09-23) ----------
 (function(){
-  const m=S&&S.reality&&S.reality.market;if(!m||!m.bars||!m.bars.length){document.getElementById('mk').textContent='数据待接入';return}
-  const cv=document.getElementById('kline'),g=cv.getContext('2d');const bars=m.bars;
-  let hi=-1e9,lo=1e9;bars.forEach(b=>{hi=Math.max(hi,b[2]);lo=Math.min(lo,b[3])});
-  const W=240,H=80,pad=6,n=bars.length,bw=Math.floor((W-pad*2)/n);
-  for(let i=0;i<n;i++){const b=bars[i];const x=pad+i*bw;const up=b[4]>=b[1];
-    g.strokeStyle=up?'#ff5f56':'#2ecc71';g.fillStyle=up?'#ff5f56':'#2ecc71';
-    g.beginPath();g.moveTo(x+bw/2,pad+(hi-b[2])/(hi-lo)*(H-pad*2));g.lineTo(x+bw/2,pad+(hi-b[3])/(hi-lo)*(H-pad*2));g.stroke();
-    const y1=pad+(hi-Math.max(b[1],b[4]))/(hi-lo)*(H-pad*2),y2=pad+(hi-Math.min(b[1],b[4]))/(hi-lo)*(H-pad*2);
-    g.fillRect(x+1,y1,Math.max(1,bw-2),Math.max(1,y2-y1));
-  }
-  const last=bars[bars.length-1];
-  document.getElementById('mk').textContent='最新 '+last[0]+' 收盘 '+last[4];
-  let cp=m.change_pct;
-  if(cp===undefined||cp===null){cp=bars.length>1?Math.round((bars[bars.length-1][4]-bars[bars.length-2][4])/bars[bars.length-2][4]*10000)/100:0}
-  const el2=document.getElementById('mk2');el2.textContent='涨跌 '+(cp>=0?'+':'')+cp+'%';el2.className=cp>=0?'up':'down';
+  const el=document.getElementById('pulse'); if(!el)return;
+  if(!EV.length){el.textContent='暂无事件——城市感知器启动中';return}
+  const cnt={};EV.forEach(e=>{cnt[e.type]=(cnt[e.type]||0)+1});
+  const max=Math.max(...Object.values(cnt));
+  el.innerHTML=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).map(k=>'<div class="lbl"><span>'+k+'</span><span>'+cnt[k]+'</span></div><div class="bar"><i style="width:'+(cnt[k]/max*100)+'%"></i></div>').join('');
 })();
 
 // ---------- city canvas ----------
@@ -309,12 +296,11 @@ document.getElementById('gts').textContent=DATA.generated_ts||'--';
       g.fillStyle=zst.gaming&&zst.gaming.status==='active'?'rgba(34,211,238,.5)':'rgba(34,211,238,.15)';
       for(let wy=0;wy<h-2;wy+=3)for(let wx=0;wx<3;wx++)if(((i+wy+wx+((t/30)|0))%3)<2)g.fillRect(x+1+wx*2,128-h-1+wy,1,1)}
     // QUANT tower (gold, tall twisted)
-    const mUp=(S&&S.reality&&S.reality.market)||{};const cpc=mUp.change_pct||0;
     for(let y=0;y<46;y++){const x=102+Math.round(Math.sin(y*.15)*1.5);g.fillStyle='#2a2008';g.fillRect(x,82+y,10,1)}
     g.fillStyle='#f5c542';g.fillRect(104,78,4,3);g.fillStyle='rgba(245,197,66,'+(0.3+0.2*Math.sin(t*.08))+')';g.fillRect(102,74,8,4);
-    // K-line mega screen on tower: flicker with real change sign
-    g.fillStyle=cpc>=0?'rgba(255,95,86,.5)':'rgba(46,204,113,.5)';g.fillRect(102,88,10,8);
-    for(let i=0;i<5;i++){g.fillStyle=cpc>=0?'#ff5f56':'#2ecc71';g.fillRect(103+i*2,92-((Math.sin(t*.1+i*2)+1)*3|0),1,4)}
+    // QUANT tower data screen: neutral gold shimmer (financial visuals removed per CEO order 2026-09-23)
+    g.fillStyle='rgba(245,197,66,.26)';g.fillRect(102,88,10,8);
+    for(let i=0;i<5;i++){g.fillStyle='rgba(245,197,66,'+(0.35+0.3*Math.sin(t*.12+i*1.7))+')';g.fillRect(103+i*2,92-((Math.sin(t*.1+i*2)+1)*3|0),1,4)}
     // MEDIA twin balls (magenta)
     [[156,104],[159,116]].forEach((p,i)=>{g.fillStyle='#3a0c28';g.fillRect(p[0]-1,p[1]-1,8,8);g.fillStyle='rgba(244,91,176,'+(0.35+0.25*Math.sin(t*.05+i*2))+')';g.fillRect(p[0],p[1],6,6)});
     // signal ripple from MEDIA
@@ -350,11 +336,11 @@ document.getElementById('gts').textContent=DATA.generated_ts||'--';
     for(const k in ZONES){const z=ZONES[k];if(x>=z.x-6&&x<=z.x+z.w+6&&y>=z.y-6&&y<=z.y+z.h+6)return k}return null}
   cv.addEventListener('mousemove',e=>{const k=pick(e);if(k){tip.style.display='block';tip.style.left=e.clientX+14+'px';tip.style.top=e.clientY+10+'px';tip.textContent=ZONES[k].name}else tip.style.display='none'});
   cv.addEventListener('click',e=>{const k=pick(e);if(!k)return;const d=document.getElementById('detail');
-    const tasks=(S&&S.tasks)||[];const fl=(S&&S.fleet)||[];const rt=(S&&S.reality)||{};
+    const tasks=(S&&S.tasks)||[];const fl=(S&&S.fleet)||[];
     if(k==='tower'){const pend=(S&&S.governance&&S.governance.ceo_orders_pending)||[];
       d.innerHTML='<h4>超体脑塔 · 治理中枢</h4>五层：塔顶 CEO 光点 / 皮层治理晶片 / 脑深层 CPH4 Labs / 中枢枢纽 / 塔基编年史<br>待办令牌：'+(pend.length?pend.join(' · '):'无')+'<br>进化轮开放提案：'+((S&&S.governance&&S.governance.evolution&&S.governance.evolution.open_proposals)||0)+' 项<br>面壁者架构：城内全透明，唯一黑箱=CEO。';}
-    else if(k==='quant'){const m=rt.market||{};const bars=m.bars||[];
-      d.innerHTML='<h4>QUANT 城 · BigMoney</h4>状态 '+(zst.quant?zst.quant.status:'--')+' · 活跃度 '+(zst.quant?zst.quant.activity:'--')+'<br>510300 沪深300ETF：'+(bars.length?('收盘 '+bars[bars.length-1][4]+' · 涨跌 '+(m.change_pct>=0?'+':'')+m.change_pct+'% · '+(m.is_trading_day?'开市中':'休市')):'数据待接')+'<br>任务：'+(tasks.filter(x=>x.zone==='quant').map(x=>x.id+'('+x.status+')').join(' ')||'--')+'<br>机队：'+fl.filter(x=>x.id==='bm-a'||x.id==='bm-b').map(x=>x.id).join(' · ');}
+    else if(k==='quant'){
+      d.innerHTML='<h4>QUANT 城 · BigMoney</h4>状态 '+(zst.quant?zst.quant.status:'--')+' · 活跃度 '+(zst.quant?zst.quant.activity:'--')+'<br>8 流派 35 策略研究院 · 回测门禁 G1/G2 · 双节点循环（bm-a 开发 ∥ bm-b 回测）<br>任务：'+(tasks.filter(x=>x.zone==='quant').map(x=>x.id+'('+x.status+')').join(' ')||'--')+'<br>机队：'+fl.filter(x=>x.id==='bm-a'||x.id==='bm-b').map(x=>x.id).join(' · ');}
     else if(k==='gaming'){d.innerHTML='<h4>GAME 城 · Biggame/MiniGame</h4>状态 '+(zst.gaming?zst.gaming.status:'--')+' · 活跃度 '+(zst.gaming?zst.gaming.activity:'--')+'<br>居民：首席制作人 盛永康（虚拟人设）<br>P01-P08 游戏楼 · X026Gate 城门 · G 系灯塔<br>机队：'+fl.filter(x=>(x.company==='biggame'||(x.id||'').indexOf('bg')===0||x.id==='BG-A'||x.id==='BG-B'||x.id==='BG-C')).map(x=>x.id).join(' · ');}
     else{d.innerHTML='<h4>MEDIA 城 · BigStream</h4>状态 '+(zst.media?zst.media.status:'--')+' · 活跃度 '+(zst.media?zst.media.activity:'--')+'<br>信号塔阵 · M0-M6 生产线 · 居民待 CEO 命名<br>发布动态见事件流（CONTENT_PUBLISH=信号波纹）。';}
   });

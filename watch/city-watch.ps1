@@ -158,7 +158,7 @@ try {
     $cards = @(Get-ChildItem $cardsDir -Filter *.md | Sort-Object Name)
     $rotFile = Join-Path $outDir 'welcome-rotate.txt'
     $rot = 0
-    if (Test-Path $rotFile) { $r = [string](Get-Content $rotFile -Raw); try { $rot = [int]$r } catch {} }
+    if (Test-Path $rotFile) { $r = [string](Get-Content $rotFile -Raw -Encoding UTF8); try { $rot = [int]$r } catch {} }
     $chosen = $cards[$rot % $cards.Count]
     [System.IO.File]::WriteAllText($rotFile, [string](($rot + 1) % 1000), (New-Object System.Text.UTF8Encoding($false)))
 

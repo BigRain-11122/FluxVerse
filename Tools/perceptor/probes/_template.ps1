@@ -23,6 +23,13 @@
 #        try { ...capture... } finally {
 #          if ($null -ne $prevEnc) { try { [Console]::OutputEncoding = $prevEnc } catch {} } }
 #      See probes/git.ps1 (r32) and TECH.md section 9 law line.
+#   7. Data-file encoding law (r53): every UTF-8 file read MUST carry an explicit
+#      -Encoding UTF8. PS5.1 Get-Content without it decodes a no-BOM UTF-8 file
+#      as GBK; beyond mojibake, a line whose trailing CJK run has an odd number of
+#      bytes gets its LF swallowed by the GBK pair consumer => lines silently
+#      MERGE (TECH.md 166 -> 97 lines; odd run merges, even run survives).
+#      ASCII-only files are content-immune but keep the flag so a repo-wide grep
+#      audit (Get-Content without -Encoding) stays empty. See TECH sec.9 r53.
 
 function Probe-_template {
   param($ctx)

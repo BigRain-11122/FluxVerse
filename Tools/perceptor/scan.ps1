@@ -36,7 +36,7 @@ $registryFile = Join-Path $repoRoot 'schema\events-registry.json'
 # ---------- single-writer lock (P-11): one scan at a time owns the stream ----------
 $lockFile = Join-Path $worldDir 'scan.lock'
 if (Test-Path $lockFile) {
-  $lockPid = (Get-Content $lockFile -ErrorAction SilentlyContinue | Select-Object -First 1)
+  $lockPid = (Get-Content $lockFile -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -First 1)
   $lockAge = ((Get-Date) - (Get-Item $lockFile).LastWriteTime).TotalMinutes
   $alive = $false
   if ("$lockPid" -match '^\d+$') { if (Get-Process -Id ([int]"$lockPid") -ErrorAction SilentlyContinue) { $alive = $true } }

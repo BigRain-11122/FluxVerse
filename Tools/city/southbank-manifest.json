@@ -1,0 +1,94 @@
+{
+  "protocol": "fluxverse-southbank/0.1",
+  "baked_round": 103,
+  "sources": [
+    "TECH.md sec9 r101 budget table + r102 handover",
+    "cph4/research/R-20260924-m1-visual-fix.md sec2-2 + sec3",
+    "docs/design/city-core-design.md sec1/sec3/sec5"
+  ],
+  "law": {
+    "band_cell_rows": [-16, -9],
+    "band_world_y": [-16.0, -8.0],
+    "front_edge_world_y": -8.0,
+    "legal_top_edge": "building world top edge must be <= -8.0 (top cell row <= -9): zero road press, zero river soak",
+    "x_law": "zone X positions preserved (QUANT -2..2 / MEDIA 19..24 / GAME family west) - vcol roads -18,-17,17,18 untouched, pavement tiles stay under band"
+  },
+  "water": {
+    "cell_rows": [-3, 2],
+    "world_y": [-3.0, 3.0],
+    "l0_nominal_pct": 15.0,
+    "criterion_pct": [12, 15],
+    "measure": "r104 sec3 rescan measures water-texture pixel rows in the L0 frame (1920x1080), not nominal rows"
+  },
+  "masses": [
+    {
+      "id": "QUANT",
+      "tilemap": "CityQUANT",
+      "cells": [-2, 2, -16, 8],
+      "world": [-2.0, -16.0, 3.0, -8.0],
+      "px_h": 128,
+      "role": "twist tower, center commanding height, 96-160px landmark band, south-bank highest (128 > brain 96)"
+    },
+    {
+      "id": "MEDIA",
+      "tilemap": "CityMEDIA",
+      "cells": [19, 24, -14, 6],
+      "world": [19.0, -14.0, 25.0, -8.0],
+      "px_h": 96,
+      "role": "pearl dual-sphere, waterside front rank, second height"
+    },
+    {
+      "id": "GAME_MAIN",
+      "tilemap": "CityGAME",
+      "cells": [-23, -19, -16, 5],
+      "world": [-23.0, -16.0, -18.0, -11.0],
+      "px_h": 80,
+      "role": "square-tower array main, rear rank (top edge -11 = 3u behind front line)"
+    },
+    {
+      "id": "GAME_ANNEX",
+      "tilemap": "CityGAME",
+      "cells": [-26, -25, -16, 3],
+      "world": [-26.0, -16.0, -24.0, -13.0],
+      "px_h": 48,
+      "role": "square-tower array annex, staggered, 1u alley gap to main"
+    }
+  ],
+  "skyline_order_px": [["QUANT", 128], ["MEDIA", 96], ["GAME_MAIN", 80], ["GAME_ANNEX", 48], ["BRAIN_NORTH", 96]],
+  "signs": [
+    { "name": "NeonQuantL",    "x": -1.45, "y": -12.5,    "ppu": 16, "px": [19, 48], "mount": "facade", "building": "QUANT" },
+    { "name": "NeonQuantR",    "x": 1.45,  "y": -12.5,    "ppu": 16, "px": [19, 48], "mount": "facade", "building": "QUANT" },
+    { "name": "NeonBigmoney",  "x": 0.5,   "y": -10.3,    "ppu": 16, "px": [76, 20], "mount": "facade", "building": "QUANT" },
+    { "name": "NeonAntenna",   "x": 0.0,   "y": -6.0,     "ppu": 16, "px": [22, 96], "mount": "exempt", "building": "QUANT" },
+    { "name": "NeonGameWest",  "x": -22.5, "y": -13.5,    "ppu": 32, "px": [19, 48], "mount": "facade", "building": "GAME_MAIN" },
+    { "name": "NeonGameWest2", "x": -19.7, "y": -13.5,    "ppu": 48, "px": [19, 76], "mount": "facade", "building": "GAME_MAIN" },
+    { "name": "NeonBiggame",   "x": -20.5, "y": -10.25,   "ppu": 16, "px": [68, 28], "mount": "roof",   "building": "GAME_MAIN" },
+    { "name": "NeonMediaEast", "x": 20.2,  "y": -11.0,    "ppu": 32, "px": [19, 48], "mount": "facade", "building": "MEDIA" },
+    { "name": "NeonMediaRoof", "x": 22.4,  "y": -7.59375, "ppu": 16, "px": [36, 13], "mount": "roof",   "building": "MEDIA" }
+  ],
+  "anchors": [
+    ["Zone_QUANT", 0.5, -12.0],
+    ["Zone_GAME", -20.5, -11.0],
+    ["Zone_MEDIA", 22.0, -11.0],
+    ["BrainTower", 0.0, 11.0]
+  ],
+  "move_census": {
+    "blocked_seats": ["ResQ04", "ResQ06", "ResQ03", "ResG01", "ResG02", "ResM01", "ResM04", "ResM08"],
+    "blocked_robots": ["RobotPlazaS", "RobotGameFr", "RobotMediaFr"],
+    "reason": "1.333u/1u body squares intersect new mass footprints (detector positive-control asserted)",
+    "method": "r104 reruns the r99 seat-harness family (sec8 standing + clearances + tag rects) with the new mass rects to pick new cells; quotas 9/7/8/2/1/5 unchanged",
+    "unmoved_clear": "all 8 vehicles, 5 visitor seats, kiosk sign, remaining 24 seats, remaining 5 robots assert zero overlap vs new footprints"
+  },
+  "coupled_updates_r104": [
+    "CitySkeletonBuilder: Block() south calls + MakeAnchor table (this manifest = the one geometry source)",
+    "NeonRules.Buildings rects 4/5/6 + sign Table y (9 re-anchors above)",
+    "InteriorRouter/CityInterior: QUANT hit rect -> world [-2,-16,3,-8]",
+    "CameraProof quant L1 street-view baselines: QUANT face plane dy=-7",
+    "AmbientProof tint band -16..+15 unchanged (all masses inside band)",
+    "IdentityProof district tiles: X law unchanged, live tilemap re-derivation self-adapts",
+    "office-ladder condo/slab consumption = follow-up slice AFTER seat re-anchor (clear windows derive from the census); dims source logs/devloop-r101-landmark-scan.json"
+  ],
+  "north_bank": "unchanged in this slice; brain-tower v2.0 wedge reshape = separate slice (tower-brain-design v2.0)",
+  "pin_yardstick": "pin-formation readable = three city centroids non-collinear (front-east MEDIA / full-center QUANT / rear-west GAME)",
+  "token_gate": "L1 deterministic math, zero generation touchpoints"
+}

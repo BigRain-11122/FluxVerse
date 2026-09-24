@@ -113,8 +113,8 @@ namespace FluxVerse
                 throw new InvalidOperationException("A3: residents Idle baseline expected PPU100 (as-audited default)");
             if (before[2].IndexOf("textureCompression: 1") < 0)
                 throw new InvalidOperationException("A3: CleanCity baseline expected compression 1 (A2 as-audited)");
-            if (before[3].IndexOf("loadType: 0") < 0)
-                throw new InvalidOperationException("A3: music baseline expected loadType 0 (A3 as-audited)");
+            if (before[3].IndexOf("loadType: 2") < 0 || before[3].IndexOf("userData: fvimport:v1") < 0)
+                throw new InvalidOperationException("A3: music baseline expected Streaming+stamp (r81 audio stock cured state; pre-r81 as-audited loadType 0 fixed by AudioStockProof)");
 
             // ---- A1 fresh stones (truly fresh import = DeleteAsset purge + restore) ----
             string[] stones = {

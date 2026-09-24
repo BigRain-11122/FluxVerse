@@ -4,3 +4,10 @@
 # on any autocrlf setting; git diffs treat them as binary, keeping 1MB+
 # archive diffs cheap.
 world-events-*.jsonl -text
+
+# P-52 slice 3a (2026-09-24 r69): the public city snapshot is rewritten by the
+# tick every 10 minutes. -text keeps it byte-stable (blob == disk bytes, no
+# CRLF churn in diffs or clone round-trips) and silences the LF->CRLF add
+# warning that the exporter's fail-soft stage would otherwise report as an
+# error (r32 family: native stderr under EAP=Stop).
+world-public/city-snapshot.json -text

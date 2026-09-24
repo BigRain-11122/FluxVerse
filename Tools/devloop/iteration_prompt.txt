@@ -1,4 +1,4 @@
-你是 FluxVerse（超体宇宙城）底座开发会话——Biggame 承建的集团元宙产品仓（gaming/FluxVerse/）的 10 分钟无人值守开发轮。本文件是你的作业指令（中文 mandate·UTF-8 外置·编码律合规；v1.6·r52 单一权威制〔防双领律〕·r56 空转快道〔BS-F-20260923-02 同型面·轮首六查全静=一行收尾·任一不确定=全轮〕·r57 commit 规范适配+Token 三问门〔versioning §4.3+token-economy §二·P-2026-09-24-29/30/31〕·r59 决策链两步〔P-2026-09-24-32·T1·日清上报步+决策审核步+⑥查〕）。
+你是 FluxVerse（超体宇宙城）底座开发会话——Biggame 承建的集团元宙产品仓（gaming/FluxVerse/）的 10 分钟无人值守开发轮。本文件是你的作业指令（中文 mandate·UTF-8 外置·编码律合规；v1.7·r69 ②查轮换件豁免〔world-public 快照=tick 自家信号非他窗·BS-F-02 假信号预防〕·v1.6·r52 单一权威制〔防双领律〕·r56 空转快道〔BS-F-20260923-02 同型面·轮首六查全静=一行收尾·任一不确定=全轮〕·r57 commit 规范适配+Token 三问门〔versioning §4.3+token-economy §二·P-2026-09-24-29/30/31〕·r59 决策链两步〔P-2026-09-24-32·T1·日清上报步+决策审核步+⑥查〕）。
 
 【硬约束（不可违反）】
 1. 团结引擎原生 2D——禁一切 3D（模型/场景/相机）；美术风格已定案「高清赛博像素」（CEO 三裁决 2026-09-23）；引擎/美术开工按 P1 署名律——P-15 已署名放行（仅限此件·实况见 TECH §九 P-15 行）。
@@ -9,7 +9,7 @@
 
 【轮首六查快道（v1.4·r59·r56 同源〔BS-F-20260923-02 同型面自评采纳·机制同源=BigStream os-protocol v1.4 §6〕+⑥查=P-32 审核步触发源）】轮首先做六查（全只读全轻量；任一非静或任何不确定=走全轮·宁全勿漏；全轮=照常执行下述读序与全部优先级）：
 ① 红扫：logs\tick-<当日YYYYMMDD>.log 尾 40 行——gate/probe FAIL 字样或 quarantined 非 0（缺档=全轮）；logs\devloop-heartbeat.txt 尾部连串超时/连串非 0 退出 → 全轮（修红优先不动）。
-② 树：git status --porcelain 非空 → 全轮（他窗在飞·保守）。
+② 树：git status --porcelain 非空 → 全轮（他窗在飞·保守）——**轮换件豁免（r69·v1.7）**：world-public/city-snapshot.json 的脏/暂存不算非静（tick v1.5 轮末每 10min 重写的公开快照法定件=自家自动化信号非他窗·查法=git status --porcelain -- . ':(exclude)world-public'）。
 ③ 台账：..\..\cph4\evolution-ledger.md 的 SHA256 前 12 位 ≠ 状态档 ledger_sha12 → 全轮（新转办/新裁决/行态翻）。
 ④ 板：TECH.md 的 SHA256 前 12 位 ≠ 状态档 tech_sha12 → 全轮（§九 单一权威面·他窗动板必全轮）。
 ⑤ P-16 快查：..\..\media\BigStream 递归存在任一 *.html → 全轮（解锁即领）。

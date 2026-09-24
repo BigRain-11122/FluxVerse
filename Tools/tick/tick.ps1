@@ -24,8 +24,15 @@
 # skips, an empty/unreadable lock gets 6 beats (~1.5s) before crash-takeover,
 # and the release unlinks only if the on-disk PID is still ours (an overage
 # takeover may have replaced the lock mid-round).
+# v1.5 (2026-09-24 r69, P-2026-09-24-52 slice 3a): new round-end step - the
+# public snapshot export (export-public-snapshot.ps1): whitelist-sanitized
+# city snapshot for the visitor read API over the git read-only channel.
+# Runs even on backoff rounds (it reads the last-good state, never the
+# half-edited stack). Fail-soft by design: an export problem logs 'pub:'
+# lines and never fails the round; an AC-5 gate FAIL keeps the last-good
+# snapshot on disk (two-phase promote inside the exporter).
 # Round: 1) perceptor (state -> .new)  2) verify gate (promotes on PASS)
-#        3) log  4) rotate logs (7 days)
+#        2.5) public snapshot export  3) log  4) rotate logs (7 days)
 # Exit 0 = healthy round (or backoff skip); 1 = gate FAIL (old world-state kept).
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')       # -> gaming/FluxVerse
@@ -92,6 +99,14 @@ try {
     foreach ($l in $verifyOut) { $lines += ('  gate: ' + $l) }
     $lines += ('  gate: ' + $(if ($gate -eq 0) { 'PASS' } else { 'FAIL' }))
   }
+
+  # 2.5 public snapshot export (r69, P-52 slice 3a): visitor-face package for
+  #     the server read API. Fail-soft: the round's health stays the verify
+  #     gate; the exporter keeps the last-good snapshot on any AC-5 FAIL.
+  try {
+    $expOut = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'export-public-snapshot.ps1') 2>&1
+    foreach ($l in $expOut) { $lines += ('  pub: ' + ([string]$l)) }
+  } catch { $lines += ('  pub: export crashed (fail-soft): ' + ($_.Exception.Message -replace "[\r\n]", ' ')) }
 
   # 3. write log (UTF-8 no BOM)
   $utf8 = New-Object System.Text.UTF8Encoding($false)

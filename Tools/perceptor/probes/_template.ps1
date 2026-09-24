@@ -23,6 +23,15 @@
 #        try { ...capture... } finally {
 #          if ($null -ne $prevEnc) { try { [Console]::OutputEncoding = $prevEnc } catch {} } }
 #      See probes/git.ps1 (r32) and TECH.md section 9 law line.
+#      Git-specific belt (r92, D-20260925-04): any git call whose output can
+#      carry CJK (log/show/diff subjects) ALSO passes
+#      -c i18n.logOutputEncoding=UTF-8, e.g.
+#        & git -C $d -c i18n.logOutputEncoding=UTF-8 log ...
+#      git then re-encodes subjects to UTF-8 no matter what repo/global
+#      i18n config says, keeping the byte stream deterministic under the
+#      UTF8 console swap (the swap stays the load-bearing decoder fix; the
+#      -c closes the hostile-config hole where git would emit GBK bytes and
+#      the swap would then mis-decode them).
 #   7. Data-file encoding law (r53): every UTF-8 file read MUST carry an explicit
 #      -Encoding UTF8. PS5.1 Get-Content without it decodes a no-BOM UTF-8 file
 #      as GBK; beyond mojibake, a line whose trailing CJK run has an odd number of

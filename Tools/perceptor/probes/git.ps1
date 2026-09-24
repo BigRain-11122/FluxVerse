@@ -5,6 +5,9 @@
 # is the system codepage (GBK) under the tick's hidden console -> mojibake in
 # event summaries (CityWatch rendering proof). Law: save/swap/restore around
 # the probe body; ASCII outputs (hash/count/date) are decode-invariant.
+# r92 (D-20260925-04): tool-side belt - the log call also carries
+# -c i18n.logOutputEncoding=UTF-8 so git itself always emits UTF-8 subjects
+# even under a hostile repo/global i18n config (belt + swap = decision pair).
 
 function Probe-git {
   param($ctx)
@@ -32,7 +35,7 @@ function Probe-git {
       $out = & git -C $d rev-list --count HEAD 2>$null
       if ($LASTEXITCODE -eq 0 -and $out) { $cnt = [int]$out }
       $commitStats[$name] = $cnt
-      $lines = @(& git -C $d log -50 --pretty='%H|%aI|%s' 2>$null)
+      $lines = @(& git -C $d -c i18n.logOutputEncoding=UTF-8 log -50 --pretty='%H|%aI|%s' 2>$null)
       $fresh = @()
       foreach ($ln in $lines) {
         if (-not $ln) { continue }

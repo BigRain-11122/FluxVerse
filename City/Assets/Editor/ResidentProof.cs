@@ -410,17 +410,17 @@ namespace FluxVerse
             Chk(nightLum < duskLum, "night residents must sit under dusk (atmosphere law): "
                 + nightLum.ToString("F3") + " vs " + duskLum.ToString("F3"));
 
-            // ---- D2. r99 record set (R- sec.3 four-shot family): L0 night + day, L1 south + north
-            Shot(cam, "m1-r99-swap-night.png");
+            // ---- D2. r104 record set (R- sec.3 four-shot family): L0 night + day, L1 south + north
+            Shot(cam, "m1-r104-south-night.png");
             amb.ApplyAmbient(AmbientTier.Day);
-            Shot(cam, "m1-r99-swap-day.png");
+            Shot(cam, "m1-r104-south-day.png");
             Vector3 camPosSaved = cam.transform.position;
             float camSizeSaved = cam.orthographicSize;
             cam.orthographicSize = RigMath.L1Size;
             cam.transform.position = new Vector3(0f, -10f, camPosSaved.z);
-            Shot(cam, "m1-r99-swap-l1-south.png");
+            Shot(cam, "m1-r104-south-l1-south.png");
             cam.transform.position = new Vector3(0f, 10f, camPosSaved.z);
-            Shot(cam, "m1-r99-swap-l1-north.png");
+            Shot(cam, "m1-r104-south-l1-north.png");
             cam.orthographicSize = camSizeSaved;
             cam.transform.position = camPosSaved;
 
@@ -569,9 +569,15 @@ namespace FluxVerse
         static void BuildResidents(Dictionary<string, Sprite> cells, Sprite being, Sprite shadow)
         {
             foreach (Transform tr in UnityEngine.Object.FindObjectsOfType<Transform>())
+            {
+                // r104: destroying a parent also destroys its parts-stack children,
+                // which stay in this snapshot - a destroyed Transform must be
+                // skipped BEFORE any member access (MissingReferenceException law)
+                if (tr == null) continue;
                 if (tr.parent == null && (tr.name.StartsWith(ResidentRules.NamePrefix)
                     || tr.name.StartsWith(ResidentRules.ShadowNamePrefix)))
                     UnityEngine.Object.DestroyImmediate(tr.gameObject);
+            }
             ResidentIdentityEntry[] roster = ResidentIdentity.Load(true);
             if (roster == null || roster.Length != ResidentRules.Count)
                 throw new InvalidOperationException("roster unavailable for the build");

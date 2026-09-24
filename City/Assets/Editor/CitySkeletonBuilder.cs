@@ -267,10 +267,12 @@ public static class CitySkeletonBuilder
         Block(cityGame, -9, -7, 9, 3, "t_wall_gray_c", "t_wall_gray_a", "t_roof_b");
         Block(cityMedia, 7, 9, 9, 3, "t_wall_gray_b", "t_wall_gray_c", "t_roof_b");
         Block(cityMedia, 26, 28, 9, 3, "t_wall_gray_a", "t_wall_gray_c", "t_roof_b");
-        // south three cities (pin formation): QUANT tall center, GAME west, MEDIA east
-        Block(cityQuant, -2, 2, -9, 8, "t_wall_gray_b", "t_wall_gray_c", "t_roof_a");
-        Block(cityGame, -24, -19, -9, 4, "t_wall_gray_a", "t_wall_gray_a", "t_roof_b");
-        Block(cityMedia, 19, 24, -9, 4, "t_wall_gray_b", "t_wall_gray_b", "t_roof_b");
+        // south three cities (r104 southbank-manifest geometry: QUANT twist tower
+        // 8 rows = 128px landmark band = south-bank commanding height, MEDIA
+        // dual-sphere waterside front rank 6 rows, GAME_MAIN rear 5 + staggered
+        // GAME_ANNEX 3 = pin formation; all top edges <= -8 = zero road press,
+        // zero river soak; X law preserved, vcol roads untouched)
+        PaintSouth(cityGame, cityQuant, cityMedia);
 
         // props (semantic names approximate: 132/133 glow-props, 136 post, 296 box-on-ledge)
         foreach (int x in new int[] { -30, -24, -12, -6, 6, 12, 24, 30 })
@@ -284,11 +286,11 @@ public static class CitySkeletonBuilder
         foreach (int x in new int[] { -12, 9 }) props.SetTile(new Vector3Int(x, 8, 0), RT("t_prop_box"));
         foreach (int x in new int[] { -10, 14 }) props.SetTile(new Vector3Int(x, -8, 0), RT("t_prop_box"));
 
-        // event-routing anchors (future P-15 r11+)
+        // event-routing anchors (future P-15 r11+; r104 southbank-manifest anchors)
         MakeAnchor("BrainTower", 0f, 11f);
-        MakeAnchor("Zone_GAME", -21.5f, -10f);
-        MakeAnchor("Zone_QUANT", 0f, -12f);
-        MakeAnchor("Zone_MEDIA", 21.5f, -10f);
+        MakeAnchor("Zone_GAME", -20.5f, -11f);
+        MakeAnchor("Zone_QUANT", 0.5f, -12f);
+        MakeAnchor("Zone_MEDIA", 22f, -11f);
 
         // camera: L0 panorama profile (P-17: ortho, size 20, night base)
         GameObject camGo = new GameObject("CityCamera");
@@ -342,5 +344,104 @@ public static class CitySkeletonBuilder
     {
         GameObject go = new GameObject(name);
         go.transform.position = new Vector3(x, y, 0f);
+    }
+
+    // ---- r104 south-bank re-lay (P-69 slice 1+2 merge; geometry source =
+    // Tools/city/southbank-manifest.json, the r103 sandbox verdict) ----
+    // In-place repaint of the SAVED scene: clears every south cell (y < 3) on the
+    // three city layers, re-Blocks per the manifest, repositions the three Zone_
+    // anchors. Full BatchBuild (NewScene) would wipe every serialized neighbor
+    // (residents/signs/robots/vehicles/rig/interior wiring) and force a complete
+    // re-bootstrap; the in-place path keeps the single-writer neighborhood intact
+    // and lets each entity proof sweep-rebuild its own family from the rules
+    // tables (r90 sign-move precedent).
+    static string SouthPath { get { return Path.Combine(RepoRoot, "logs", "south.run"); } }
+    static string SouthDonePath { get { return Path.Combine(RepoRoot, "logs", "south.done"); } }
+
+    // batchmode entry: Tuanjie.exe -batchmode -quit -projectPath <City> -executeMethod CitySkeletonBuilder.BatchSouth
+    public static void BatchSouth()
+    {
+        if (!File.Exists(SouthPath))
+        {
+            File.WriteAllText(SouthDonePath, "SKIP no sentinel ts=" + System.DateTime.UtcNow.ToString("o"));
+            return;
+        }
+        try
+        {
+            string report = SouthInPlace();
+            File.WriteAllText(SouthDonePath, "OK " + report + " ts=" + System.DateTime.UtcNow.ToString("o"));
+        }
+        catch (System.Exception e)
+        {
+            File.WriteAllText(SouthDonePath, "FAIL " + e.GetType().Name + ": " + e.Message + " | " + e.StackTrace + " ts=" + System.DateTime.UtcNow.ToString("o"));
+        }
+        finally
+        {
+            if (File.Exists(SouthPath)) File.Delete(SouthPath);
+        }
+    }
+
+    static void PaintSouth(Tilemap cityGame, Tilemap cityQuant, Tilemap cityMedia)
+    {
+        // QUANT twist tower: cells x -2..2, yBase -16, 8 rows -> world top -8 (128px band)
+        Block(cityQuant, -2, 2, -16, 8, "t_wall_gray_b", "t_wall_gray_c", "t_roof_a");
+        // GAME_MAIN rear rank: cells x -23..-19, yBase -16, 5 rows -> world top -11
+        Block(cityGame, -23, -19, -16, 5, "t_wall_gray_a", "t_wall_gray_a", "t_roof_b");
+        // GAME_ANNEX staggered west: cells x -26..-25, yBase -16, 3 rows (1u alley)
+        Block(cityGame, -26, -25, -16, 3, "t_wall_gray_a", "t_wall_gray_a", "t_roof_b");
+        // MEDIA dual-sphere waterside front rank: cells x 19..24, yBase -14, 6 rows
+        Block(cityMedia, 19, 24, -14, 6, "t_wall_gray_b", "t_wall_gray_b", "t_roof_b");
+    }
+
+    static int ClearSouth(Tilemap tm)
+    {
+        int cleared = 0;
+        foreach (Vector3Int p in tm.cellBounds.allPositionsWithin)
+            if (p.y < 3 && tm.GetTile(p) != null) { tm.SetTile(p, null); cleared++; }
+        return cleared;
+    }
+
+    static Tilemap TilemapGO(string name)
+    {
+        GameObject go = GameObject.Find(name);   // tilemap GOs: unique names (no anchor collision)
+        Tilemap tm = go != null ? go.GetComponent<Tilemap>() : null;
+        if (tm == null) throw new System.InvalidOperationException("tilemap missing: " + name);
+        return tm;
+    }
+
+    static void MoveAnchor(string name, float x, float y)
+    {
+        GameObject go = GameObject.Find(name);
+        if (go == null) { MakeAnchor(name, x, y); return; }
+        go.transform.position = new Vector3(x, y, 0f);
+    }
+
+    static int CountSouth(Tilemap tm)
+    {
+        int c = 0;
+        foreach (Vector3Int p in tm.cellBounds.allPositionsWithin)
+            if (p.y < 3 && tm.GetTile(p) != null) c++;
+        return c;
+    }
+
+    static string SouthInPlace()
+    {
+        Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+        if (!scene.isLoaded) throw new System.InvalidOperationException("CityScene failed to open");
+        Tilemap cityGame = TilemapGO("CityGAME");
+        Tilemap cityQuant = TilemapGO("CityQUANT");
+        Tilemap cityMedia = TilemapGO("CityMEDIA");
+        int cleared = ClearSouth(cityGame) + ClearSouth(cityQuant) + ClearSouth(cityMedia);
+        PaintSouth(cityGame, cityQuant, cityMedia);
+        MoveAnchor("Zone_QUANT", 0.5f, -12f);
+        MoveAnchor("Zone_GAME", -20.5f, -11f);
+        MoveAnchor("Zone_MEDIA", 22f, -11f);
+        // fail-loud: exact south cell counts per the manifest (40/31/36)
+        int q = CountSouth(cityQuant), g = CountSouth(cityGame), m = CountSouth(cityMedia);
+        if (q != 40 || g != 31 || m != 36)
+            throw new System.InvalidOperationException("SOUTH COUNT DRIFT q=" + q + " g=" + g + " m=" + m);
+        bool saved = EditorSceneManager.SaveScene(scene);
+        if (!saved) throw new System.InvalidOperationException("scene save failed");
+        return "cleared=" + cleared + " south q=" + q + "/g=" + g + "/m=" + m + " saved=" + saved;
     }
 }

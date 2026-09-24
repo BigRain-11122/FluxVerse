@@ -99,15 +99,19 @@ namespace FluxVerse
             // 1. south QUANT plaza, east side - standing idle twin frame
             new Bot { name = "RobotPlazaE",  path = "Assets/ArtPacks/tophat-robot/frames/robot_f08.png", frame = 8,  x = 5.5f,   y = -13.5f },
             // 2. south QUANT plaza, tower front center - leg-together pose
-            new Bot { name = "RobotPlazaS",  path = "Assets/ArtPacks/tophat-robot/frames/robot_f05.png", frame = 5,  x = -0.5f,  y = -14.5f },
+            //    (r104: SW of the new tower footprint; tower front center is now wall)
+            new Bot { name = "RobotPlazaS",  path = "Assets/ArtPacks/tophat-robot/frames/robot_f05.png", frame = 5,  x = -2.5f,  y = -15.0f },
             // 3. south street west stretch (between GAME and QUANT) - stride step
             new Bot { name = "RobotStWest",  path = "Assets/ArtPacks/tophat-robot/frames/robot_f04.png", frame = 4,  x = -12.5f, y = -7.5f },
             // 4. south street east stretch (between QUANT and MEDIA) - opposite-phase stride
             new Bot { name = "RobotStEast",  path = "Assets/ArtPacks/tophat-robot/frames/robot_f06.png", frame = 6,  x = 12.5f,  y = -7.5f },
             // 5. GAME city front plaza - leg-together pose
-            new Bot { name = "RobotGameFr",  path = "Assets/ArtPacks/tophat-robot/frames/robot_f07.png", frame = 7,  x = -21.5f, y = -11.5f },
+            //    (r104: GAME_MAIN north face row - the old front plaza cell is now
+            //    inside the tower; street robots keep the road-legal stand domain)
+            new Bot { name = "RobotGameFr",  path = "Assets/ArtPacks/tophat-robot/frames/robot_f07.png", frame = 7,  x = -21.5f, y = -8.0f },
             // 6. MEDIA city front plaza - stride step
-            new Bot { name = "RobotMediaFr", path = "Assets/ArtPacks/tophat-robot/frames/robot_f01.png", frame = 1,  x = 21.5f,  y = -11.5f },
+            //    (r104: west of the new dual-sphere footprint, vcol road cell)
+            new Bot { name = "RobotMediaFr", path = "Assets/ArtPacks/tophat-robot/frames/robot_f01.png", frame = 1,  x = 18.5f,  y = -11.5f },
             // 7. north promenade east (pavement row 4) - wide stride
             new Bot { name = "RobotPromE",   path = "Assets/ArtPacks/tophat-robot/frames/robot_f12.png", frame = 12, x = 14.5f,  y = 4.5f },
         };

@@ -56,8 +56,14 @@ namespace FluxVerse
         // changes). CJK filename is built from code points (script ASCII law).
         // MEDIA row waits until a real BigStream panel exists on disk (today the
         // whole BigStream repo has no html panel - register nothing, guess no path).
-        // GAME bounds mirror CitySkeletonBuilder south block (cells x -24..-19,
-        // y -9..-6 -> world x -24.5..-18.0, y -9.5..-5.0 with tile-anchor margin).
+        // r104 southbank: both south hit rects mirror the CitySkeletonBuilder south
+        // blocks they must follow (QUANT cells x -2..2, rows y -16..-9 -> world
+        // [-2..3]x[-16..-8]; GAME_MAIN cells x -23..-19, rows y -16..-12 -> world
+        // [-23..-18]x[-16..-11]). The r103 manifest coupled-list named only the
+        // QUANT rect, but the GAME block moved with it - leaving the GAME row at
+        // its old cell would strand the interior row over empty road and open a
+        // false-positive road-click zone (science-judgment extension, see TECH
+        // sec9 r104 row).
         public static List<InteriorTarget> DefaultRegistry()
         {
             List<InteriorTarget> list = new List<InteriorTarget>();
@@ -66,14 +72,14 @@ namespace FluxVerse
                 zone = "QUANT",
                 company = "BigMoney",
                 panelRelPath = "quant/bigmoney/bigmoney.html",
-                bounds = new Rect(-2.5f, -9.5f, 5.5f, 18.5f)
+                bounds = new Rect(-2f, -16f, 5f, 8f)
             });
             list.Add(new InteriorTarget
             {
                 zone = "GAME",
                 company = "Biggame",
                 panelRelPath = "gaming/MiniGame/\u50CF\u7D20\u5C0F\u9547\u770B\u677F.html",
-                bounds = new Rect(-24.5f, -9.5f, 6.5f, 4.5f)
+                bounds = new Rect(-23f, -16f, 5f, 5f)
             });
             return list;
         }

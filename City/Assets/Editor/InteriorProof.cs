@@ -135,7 +135,7 @@ namespace FluxVerse
                 if (root.name == "InteriorBanner") bannerCount++;
             Chk(bannerCount == 0, "reload: InteriorBanner must never be saved into the scene (runtime-only law)");
             // adapter really resolves the live panel on this machine
-            string url = interior.Core.ResolveUrl(interior.Core.Hit(new Vector2(0f, -2f)));
+            string url = interior.Core.ResolveUrl(interior.Core.Hit(new Vector2(0.5f, -12f)));
             Chk(url != null && url.EndsWith("bigmoney.html", StringComparison.Ordinal),
                 "reload: adapter core must resolve bigmoney.html from the real group layout");
             // cold-start visuals + one render as live evidence (gate is read-only)
@@ -159,25 +159,28 @@ namespace FluxVerse
             r.AddDefaultRegistry();
 
             // A1 registry: v0 = exactly one target (P-16: connect bigmoney.html first)
-            InteriorTarget qt = r.Hit(new Vector2(0f, -2f));
+            InteriorTarget qt = r.Hit(new Vector2(0.5f, -12f));
             Chk(qt != null && qt.zone == "QUANT" && qt.company == "BigMoney",
                 "QUANT block center must hit the BigMoney target");
             Chk(qt.panelRelPath.EndsWith("bigmoney.html", StringComparison.Ordinal),
                 "target panel must be bigmoney.html");
 
-            // A2 bounds edges (mirror of builder block: cells x -2..2, y -9..8)
-            Chk(r.Hit(new Vector2(-2.4f, -9.4f)) != null, "SW corner (inside margin) must hit");
-            Chk(r.Hit(new Vector2(-2.7f, 0f)) == null, "west of the block must miss");
-            Chk(r.Hit(new Vector2(0f, 8.9f)) != null, "top row of the block must hit");
-            Chk(r.Hit(new Vector2(0f, 9.1f)) == null, "tower row above must miss (no bleed)");
+            // A2 bounds edges (mirror of builder south blocks: QUANT cells x -2..2,
+            // rows y -16..-9 -> world [-2..3)x[-16..-8); r104 southbank)
+            Chk(r.Hit(new Vector2(-1.9f, -15.9f)) != null, "SW corner (inside) must hit");
+            Chk(r.Hit(new Vector2(-2.1f, -12f)) == null, "west of the block must miss");
+            Chk(r.Hit(new Vector2(0.5f, -8.5f)) != null, "top row of the block must hit");
+            Chk(r.Hit(new Vector2(0.5f, -7.5f)) == null, "row above must miss (no bleed)");
+            Chk(r.Hit(new Vector2(0.5f, -16.5f)) == null, "row below must miss (no south bleed)");
             // r20: GAME city is registered (Biggame board at its source repo);
             // MEDIA stays unregistered until a real BigStream panel lands on disk.
-            InteriorTarget gt = r.Hit(new Vector2(-21.25f, -7.25f));
+            InteriorTarget gt = r.Hit(new Vector2(-20.5f, -13.5f));
             Chk(gt != null && gt.zone == "GAME" && gt.company == "Biggame",
                 "GAME block center must hit the Biggame target");
-            Chk(r.Hit(new Vector2(-24.4f, -9.4f)) != null, "GAME SW corner (inside margin) must hit");
-            Chk(r.Hit(new Vector2(-21f, -4.9f)) == null, "above the GAME block must miss (top edge)");
-            Chk(r.Hit(new Vector2(21f, -5f)) == null, "MEDIA city must stay unregistered until its panel lands");
+            Chk(r.Hit(new Vector2(-22.9f, -15.9f)) != null, "GAME SW corner (inside) must hit");
+            Chk(r.Hit(new Vector2(-20.5f, -10.5f)) == null, "above the GAME block must miss (top edge)");
+            Chk(r.Hit(new Vector2(-17.9f, -13.5f)) == null, "east of the GAME block must miss (vcol side)");
+            Chk(r.Hit(new Vector2(22f, -11f)) == null, "MEDIA city must stay unregistered until its panel lands");
             Chk(r.Hit(new Vector2(0f, 11f)) == null, "brain tower click must miss");
             Chk(r.Hit(new Vector2(30f, -15f)) == null, "river click must miss");
 
@@ -221,11 +224,11 @@ namespace FluxVerse
             Chk(opened.Count == beforeCalls, "missing panel must NOT fire the opener");
 
             // A6 open dispatch + per-zone cooldown
-            Chk(r.Open(new Vector2(0f, -2f), 10f), "open on a hit with live file must succeed");
+            Chk(r.Open(new Vector2(0.5f, -12f), 10f), "open on a hit with live file must succeed");
             Chk(opened.Count == 1 && opened[0] == url, "opener must receive exactly the resolved URL");
-            Chk(!r.Open(new Vector2(0f, -2f), 13f), "second open inside the cooldown window must be gated");
+            Chk(!r.Open(new Vector2(0.5f, -12f), 13f), "second open inside the cooldown window must be gated");
             Chk(opened.Count == 1, "cooldown-gated open must not fire");
-            Chk(r.Open(new Vector2(0f, -2f), 18.05f), "open after the cooldown window must succeed");
+            Chk(r.Open(new Vector2(0.5f, -12f), 18.05f), "open after the cooldown window must succeed");
             Chk(opened.Count == 2, "post-cooldown open must fire once more");
             Chk(r.LastUrl.EndsWith("bigmoney.html", StringComparison.Ordinal), "LastUrl must track the panel");
 
@@ -234,9 +237,9 @@ namespace FluxVerse
             Chk(opened.Count == 2, "non-hit click must not fire the opener");
 
             // A7b r20 GAME dispatch: independent zone cooldown (QUANT window irrelevant)
-            Chk(r.Open(new Vector2(-21.25f, -7.25f), 101f), "GAME open must succeed (independent zone)");
+            Chk(r.Open(new Vector2(-20.5f, -13.5f), 101f), "GAME open must succeed (independent zone)");
             Chk(opened.Count == 3 && opened[2] == gurl, "GAME opener must receive the resolved URL");
-            Chk(!r.Open(new Vector2(-21.25f, -7.25f), 102f), "GAME second open inside its cooldown must be gated");
+            Chk(!r.Open(new Vector2(-20.5f, -13.5f), 102f), "GAME second open inside its cooldown must be gated");
             Chk(opened.Count == 3, "gated GAME open must not fire");
 
             // A8 baked CJK text chain (r18): strings data file + GDI+ bake exist, decode
@@ -290,7 +293,7 @@ namespace FluxVerse
             amb.ApplyWeather("clear", 0f, 0);
             amb.StepWeather(0.1f);
             rig.Advance(0f);                                     // adopt persisted profile
-            rig.FocusOn(new Vector2(0f, -12f));                  // drill down to QUANT street
+            rig.FocusOn(new Vector2(0.5f, -12f));                 // drill down to QUANT street
             for (int i = 0; i < 27; i++) rig.Advance(0.05f);      // 1.35s > 1.2s switch
             Chk(Mathf.Abs(rig.SizeNow - 9f) < 0.01f, "must land at L1 size 9");
             float baseBri, baseWarm, baseDark; int bbPx, bwPx, baseBrightCnt;

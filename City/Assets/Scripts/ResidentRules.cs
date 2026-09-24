@@ -124,33 +124,37 @@ namespace FluxVerse
 
         static readonly Person[] Table = new Person[]
         {
-            // QUANT 9 (south QUANT plaza + plaza-edge pavement)
+            // QUANT 9 (south QUANT plaza + plaza-edge pavement; r104: Q02/Q03/Q04/
+            // Q06 relocated by the r104 seat-move harness - the new tower footprint
+            // and the re-anchored sign envelopes closed their old cells)
             new Person { name = "ResQ01", x = -8.0f,  y = -12.0f },
-            new Person { name = "ResQ02", x = -3.0f,  y = -13.0f },
-            new Person { name = "ResQ03", x = 2.0f,   y = -14.0f },
-            new Person { name = "ResQ04", x = -2.0f,  y = -10.0f },
+            new Person { name = "ResQ02", x = -3.2f,  y = -9.0f },
+            new Person { name = "ResQ03", x = 4.5f,   y = -11.0f },
+            new Person { name = "ResQ04", x = -3.5f,  y = -12.0f },
             new Person { name = "ResQ05", x = -6.0f,  y = -9.0f },
-            new Person { name = "ResQ06", x = 0.0f,   y = -11.0f },
+            new Person { name = "ResQ06", x = 6.2f,   y = -9.0f },
             new Person { name = "ResQ07", x = 10.0f,  y = -14.0f },
             new Person { name = "ResQ08", x = -10.0f, y = -13.0f },
             new Person { name = "ResQ09", x = -5.0f,  y = -14.0f },
-            // GAME 7 (GAME front plaza + west mid-stretch)
-            new Person { name = "ResG01", x = -23.0f, y = -14.0f },
-            new Person { name = "ResG02", x = -19.5f, y = -14.0f },
+            // GAME 7 (GAME front plaza + west mid-stretch; r104: G01/G02 out of the
+            // new GAME_MAIN/ANNEX footprints, G07 out of the NeonBiggame envelope)
+            new Person { name = "ResG01", x = -24.5f, y = -9.0f },
+            new Person { name = "ResG02", x = -12.0f, y = -11.0f },
             new Person { name = "ResG03", x = -15.0f, y = -14.0f },
             new Person { name = "ResG04", x = -14.0f, y = -12.0f },
             new Person { name = "ResG05", x = -12.0f, y = -14.0f },
             new Person { name = "ResG06", x = -14.5f, y = -9.0f },
-            new Person { name = "ResG07", x = -19.0f, y = -10.0f },
-            // MEDIA 8 (MEDIA front plaza + east mid-stretch)
-            new Person { name = "ResM01", x = 23.5f,  y = -14.0f },
+            new Person { name = "ResG07", x = -31.5f, y = -13.0f },
+            // MEDIA 8 (MEDIA front plaza + east mid-stretch; r104: M01/M04/M08 out
+            // of the new dual-sphere footprint x 19..24, rows -14..-9)
+            new Person { name = "ResM01", x = 26.0f,  y = -14.0f },
             new Person { name = "ResM02", x = 15.5f,  y = -14.0f },
             new Person { name = "ResM03", x = 28.0f,  y = -13.0f },
-            new Person { name = "ResM04", x = 25.0f,  y = -12.0f },
+            new Person { name = "ResM04", x = 27.0f,  y = -11.0f },
             new Person { name = "ResM05", x = 12.5f,  y = -11.0f },
             new Person { name = "ResM06", x = 16.0f,  y = -11.0f },
             new Person { name = "ResM07", x = 30.0f,  y = -11.0f },
-            new Person { name = "ResM08", x = 23.0f,  y = -10.0f },
+            new Person { name = "ResM08", x = 29.0f,  y = -9.0f },
             // NORTH 2 (north walkway, tower-foot plaza)
             new Person { name = "ResN01", x = -3.5f,  y = 11.0f },
             new Person { name = "ResN02", x = 20.0f,  y = 11.0f },

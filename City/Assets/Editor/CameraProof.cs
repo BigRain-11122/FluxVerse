@@ -167,12 +167,12 @@ namespace FluxVerse
             Chk(RigMath.SwitchSeconds == 1.2f, "switch duration must be 1.2s");
 
             // ---- A3. focus clamping into the painted band (Zone anchor table) ----
-            Chk(V2Eq(RigMath.ClampFocus(new Vector2(0f, -12f), 9f, 16f), new Vector2(0f, -7f), 1e-4f),
-                "Zone_QUANT anchor must clamp to (0,-7)");
+            Chk(V2Eq(RigMath.ClampFocus(new Vector2(0.5f, -12f), 9f, 16f), new Vector2(0.5f, -7f), 1e-4f),
+                "Zone_QUANT anchor must clamp to (0.5,-7)");
             Chk(V2Eq(RigMath.ClampFocus(new Vector2(0f, 11f), 9f, 16f), new Vector2(0f, 5f), 1e-4f),
                 "BrainTower anchor must clamp to (0,5)");
-            Chk(V2Eq(RigMath.ClampFocus(new Vector2(-21.5f, -10f), 9f, 16f), new Vector2(-21.5f, -7f), 1e-4f),
-                "Zone_GAME anchor must clamp to (-21.5,-7)");
+            Chk(V2Eq(RigMath.ClampFocus(new Vector2(-20.5f, -11f), 9f, 16f), new Vector2(-20.5f, -7f), 1e-4f),
+                "Zone_GAME anchor must clamp to (-20.5,-7)");
             Chk(V2Eq(RigMath.ClampFocus(new Vector2(60f, 30f), 9f, 16f), new Vector2(34f, 5f), 1e-4f),
                 "far NE click must clamp into the band corner");
             Chk(V2Eq(RigMath.ClampFocus(new Vector2(-60f, -30f), 9f, 16f), new Vector2(-34f, -7f), 1e-4f),
@@ -298,7 +298,7 @@ namespace FluxVerse
             Chk(s0bot >= 80 && s0bot <= 140, "L0 bottom sky strip out of range: " + s0bot + " (expect ~108)");
 
             // ---- C2. focus Zone_QUANT: mid-flight gate, then street-level gates ----
-            rig.FocusOn(new Vector2(0f, -12f));                  // Zone_QUANT anchor
+            rig.FocusOn(new Vector2(0.5f, -12f));                 // Zone_QUANT anchor (r104 southbank)
             Chk(rig.Level == CamLevel.L1Street, "FocusOn must switch to L1");
             for (int i = 0; i < 12; i++) rig.Advance(0.05f);     // 0.6s = half of 1.2s
             Chk(rig.PosNow.y > -4.2f && rig.PosNow.y < -2.8f,
@@ -309,7 +309,7 @@ namespace FluxVerse
             Texture2D midShot = Shot(cam, "m1-r14-mid.png");      // in-flight evidence
             for (int i = 0; i < 15; i++) rig.Advance(0.05f);      // finish the 1.2s
             Chk(Mathf.Abs(rig.SizeNow - 9f) < 0.01f, "L1 size must land at 9");
-            Chk(V2Eq(rig.PosNow, new Vector2(0f, -7f), 0.01f),
+            Chk(V2Eq(rig.PosNow, new Vector2(0.5f, -7f), 0.01f),
                 "L1 center must be the clamped anchor: " + rig.PosNow.ToString("F2"));
             Texture2D l1Shot = Shot(cam, "m1-r14-l1-quant.png");
             int s1top = SkyRowsPx(l1Shot, cam, 13f, true);
@@ -317,7 +317,7 @@ namespace FluxVerse
             Chk(s1top <= 30, "L1 street view must fill the frame with city (top sky: " + s1top + ")");
             Chk(s1bot <= 30, "L1 street view must fill the frame with city (bottom sky: " + s1bot + ")");
             float quantBri, quantWarm;
-            BoxMetrics(l1Shot, cam, 0f, -5.5f, out quantBri, out quantWarm);
+            BoxMetrics(l1Shot, cam, 0f, -12.5f, out quantBri, out quantWarm);   // r104: face plane moved dy=-7
             Chk(quantWarm > 0.10f, "QUANT gold face missing in street view: " + quantWarm.ToString("F3"));
             DestroyShot(midShot);
 

@@ -160,6 +160,13 @@ foreach ($rk in @('city_day_phase','beijing_hhmm','market_phase','market_calenda
   if ($stateParts.ContainsKey('reality_' + $rk)) { $reality[$rk] = $stateParts['reality_' + $rk] }
 }
 
+# r47: BigStream render output face (probe bigstream_output) - additive section
+# (protocol 0.1: adding fields is free, engine ignores what it does not map)
+$mediaOut = @{}
+foreach ($mk in @('renders_total','renders_bytes','last_render','last_render_utc')) {
+  if ($stateParts.ContainsKey('mediaout_' + $mk)) { $mediaOut[$mk] = $stateParts['mediaout_' + $mk] }
+}
+
 # resident minds (probe residents.ps1): latest AI line per resident -> state.residents
 $residents = @{}
 if ($stateParts.ContainsKey('residents')) { $residents = $stateParts.residents }
@@ -192,6 +199,7 @@ $state = [ordered]@{
   }
   history = @{ commits_total = $total; last_commit_ts = $lastC }
   reality = $reality
+  media_outputs = $mediaOut
   residents = $residents
 }
 

@@ -17,6 +17,17 @@
 #   fail-soft; .gitignore whitelist-inverts so world-events-*.jsonl archives
 #   are tracked while the live stream / state / cursors stay ignored). The
 #   archive is the tower-base chronicle: commit/push = cloud backup.
+# v0.7 2026-09-24 (r65, group transfer P-43 case 2): fleet inbox ingest - probes/
+#   inbox.ps1 read-only consolidates multi-machine spontaneous events from each
+#   repo's inbox/ batch files through the same registry gate. Add-WorldEvent
+#   gains an optional event ts so an emitter's own timestamp survives (scan
+#   stamps now when the line carries none). Day-1 observe window: while the
+#   tracked flag Tools/perceptor/inbox-live.flag is absent the probe only
+#   counts (no stream writes, no cursor stamps); a later round commits the
+#   flag to go live. The cursor key inbox:<repo>/<file> is the consumption
+#   ledger - the brief's move-to-processed step is left to emitter-side hygiene
+#   on purpose: a scan-side move writes the sibling repo and dirties its tree
+#   (ledger P-2026-09-23-09 pull-lane disease).
 # Consolidated 2026-09-23 (CEO audit fix F1/F2/F3/S2, dual-session merge - single executor):
 #   - F1: unregistered/malformed events are QUARANTINED at write time
 #     (world-events.quarantine.jsonl, forensic trail kept), never into the live stream;
@@ -38,19 +49,61 @@ $outFile    = Join-Path $worldDir 'world-state.json'        # promoted by verify
 $newFile    = Join-Path $worldDir 'world-state.json.new'    # scan target (pre-gate)
 $registryFile = Join-Path $repoRoot 'schema\events-registry.json'
 
-# ---------- single-writer lock (P-11): one scan at a time owns the stream ----------
+# ---------- single-writer lock (P-11 + r65 atomic acquire): one scan at a time
+# owns the stream. The v0.5 check-then-act (Test-Path then Set-Content) let two
+# same-second launches BOTH pass the check and race the round (r65 AC-A live
+# proof: both scans ran, one lost its .new write; 185 exact duplicate rows had
+# already accumulated in the stream from earlier windows). CreateNew is the
+# atomic gate: the kernel allows exactly one creator per path. Loser re-checks
+# liveness and skips. PID + age semantics preserved: live owner <15min -> skip;
+# dead PID -> instant takeover; live but >15min hung -> overage takeover (no
+# handle is kept on the lock, so the unlink always succeeds). LAW: the owner
+# handle is CLOSED right after the PID write - [IO.File]::ReadAllText hardcodes
+# FileShare.Read, which cannot read a file held open for Write, so a lingering
+# owner handle made every challenger's read throw -> read as empty -> the
+# empty-takeover path fired on a healthy owner (isolated repro r65: second
+# acquirer at iter=6 while the owner held). An empty/unreadable lock gets a
+# few beats before being treated as a crashed creator - a healthy creator
+# writes+flushes+closes its PID microseconds after CreateNew, so 6 empty
+# sightings over ~1.5s means the creator died.
 $lockFile = Join-Path $worldDir 'scan.lock'
-if (Test-Path $lockFile) {
-  $lockPid = (Get-Content $lockFile -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -First 1)
-  $lockAge = ((Get-Date) - (Get-Item $lockFile).LastWriteTime).TotalMinutes
-  $alive = $false
-  if ("$lockPid" -match '^\d+$') { if (Get-Process -Id ([int]"$lockPid") -ErrorAction SilentlyContinue) { $alive = $true } }
-  if ($alive -and $lockAge -lt 15) {
-    Write-Output 'perceptor: scan lock held by a live scan, skip (single writer)'
-    exit 0
+$lockFs = $null
+$acquired = $false
+$emptySeen = 0
+for ($i = 0; $i -lt 60 -and -not $acquired; $i++) {
+  if (Test-Path $lockFile) {
+    $lockPid = ''
+    try { $lockPid = [string]([System.IO.File]::ReadAllText($lockFile)).Trim() } catch {}
+    if ($lockPid -match '^\d+$') {
+      $lockAge = ((Get-Date) - (Get-Item $lockFile).LastWriteTime).TotalMinutes
+      $alive = $false
+      if (Get-Process -Id ([int]$lockPid) -ErrorAction SilentlyContinue) { $alive = $true }
+      if ($alive -and $lockAge -lt 15) {
+        Write-Output 'perceptor: scan lock held by a live scan, skip (single writer)'
+        exit 0
+      }
+      # dead PID or overage (>15min hung round) -> fail-open takeover
+      Remove-Item $lockFile -Force -ErrorAction SilentlyContinue
+    } else {
+      $emptySeen++
+      if ($emptySeen -ge 6) { Remove-Item $lockFile -Force -ErrorAction SilentlyContinue }
+    }
+    Start-Sleep -Milliseconds 250
   }
+  try {
+    $lockFs = [System.IO.File]::Open($lockFile, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, ([System.IO.FileShare]::Read -bor [System.IO.FileShare]::Delete))
+    $pidBytes = [System.Text.Encoding]::ASCII.GetBytes(([string]$PID))
+    $lockFs.Write($pidBytes, 0, $pidBytes.Length)
+    $lockFs.Flush()
+    $lockFs.Close()
+    $lockFs = $null
+    $acquired = $true
+  } catch { Start-Sleep -Milliseconds 250 }
 }
-Set-Content -Path $lockFile -Value ([string]$PID)
+if (-not $acquired) {
+  Write-Output 'perceptor: scan lock not acquirable this round, skip (single writer)'
+  exit 0
+}
 
 $now = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
 $events = @()
@@ -67,14 +120,17 @@ try {
 if ($knownTypes.Count -eq 0) { $debug += 'registry EMPTY - all events quarantined (fail-safe)' }
 
 # F1+S2: gate at the outlet; quarantine (not drop) so forensics survive
-function Add-WorldEvent([string]$type,[string]$actor,[string]$repo,[string]$zone,[string]$summary) {
+# r65: optional 6th param ts - fleet inbox lines keep the emitter's own timestamp
+# (R-20260924-infra-2 single-writer consolidation); absent/malformed -> scan now.
+function Add-WorldEvent([string]$type,[string]$actor,[string]$repo,[string]$zone,[string]$summary,[string]$ts) {
+  if (-not $ts) { $ts = $script:now }
   if (-not $script:knownTypes.ContainsKey($type)) {
     $script:blocked++
-    [System.IO.File]::AppendAllText($script:quarFile, ('{"ts_utc":"' + $script:now + '","type":"' + $type + '","reason":"unregistered"}' + "`n"), $script:utf8)
+    [System.IO.File]::AppendAllText($script:quarFile, ('{"ts_utc":"' + $ts + '","type":"' + $type + '","reason":"unregistered"}' + "`n"), $script:utf8)
     $script:debug += ('QUARANTINED unregistered event: ' + $type)
     return
   }
-  $e = [ordered]@{ ts_utc=$script:now; type=$type; actor=$actor; repo=$repo; zone=$zone; summary=$summary }
+  $e = [ordered]@{ ts_utc=$ts; type=$type; actor=$actor; repo=$repo; zone=$zone; summary=$summary }
   $script:events += ($e | ConvertTo-Json -Compress)
 }
 
@@ -90,7 +146,7 @@ if (Test-Path $cursorFile) {
 
 # ---------- probe context ----------
 $ctx = @{ root = $root.Path; now = $now; cursor = $cursor; worldDir = $worldDir;
-  AddEvent = { param($type,$actor,$repo,$zone,$summary) Add-WorldEvent $type $actor $repo $zone $summary } }
+  AddEvent = { param($type,$actor,$repo,$zone,$summary,$ts) Add-WorldEvent $type $actor $repo $zone $summary $ts } }
 
 # ---------- load + run probes ----------
 $stateParts = @{}
@@ -188,6 +244,12 @@ if ($stateParts.ContainsKey('gametasks_items')) {
 $residents = @{}
 if ($stateParts.ContainsKey('residents')) { $residents = $stateParts.residents }
 
+# r65: fleet inbox ingest face (probe inbox, P-43 case 2) - additive counters
+$inboxSec = @{}
+foreach ($ik in @('mode','batches','files','lines','events','bad_lines','replayed')) {
+  if ($stateParts.ContainsKey('inbox_' + $ik)) { $inboxSec[$ik] = $stateParts['inbox_' + $ik] }
+}
+
 $state = [ordered]@{
   protocol = 'fluxverse/0.1'
   ts_utc = $now
@@ -222,6 +284,9 @@ $state = [ordered]@{
   game_tasks = $gameTasks
   residents = $residents
 }
+# r65: fleet inbox ingest face - additive section; absent entirely while no repo
+# carries an inbox/ dir (zero consumer impact when the feature is idle)
+if ($inboxSec.Count -gt 0) { $state['inbox'] = $inboxSec }
 
 # ---------- write outputs (state -> .new, verify promotes on PASS) ----------
 [System.IO.File]::WriteAllText($newFile, ($state | ConvertTo-Json -Depth 6), $utf8)
@@ -299,6 +364,12 @@ $curLines = @()
 foreach ($k in $cursor.Keys) { $curLines += ($k + '=' + $cursor[$k]) }
 [System.IO.File]::WriteAllText($cursorFile, ($curLines -join "`n") + "`n", $utf8)
 
-Remove-Item $lockFile -Force -ErrorAction SilentlyContinue   # release (stale takeover covers hard crashes)
-Write-Output ('perceptor v0.6.1 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
+# release (r65): unlink only if the lock on disk is still ours - an overage
+# takeover may have unlinked/replaced it mid-round; the old unconditional
+# remove would have deleted a successor's lock
+try {
+  $ownLockPid = [string]([System.IO.File]::ReadAllText($lockFile)).Trim()
+  if ($ownLockPid -eq ([string]$PID)) { Remove-Item $lockFile -Force -ErrorAction SilentlyContinue }
+} catch {}
+Write-Output ('perceptor v0.7 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
 $debug | ForEach-Object { Write-Output ('  ' + $_) }

@@ -156,36 +156,57 @@ try {
   }
 } catch { $population = $null }   # census missing/broken => panel hides, snapshot still ships
 
-# ---------- welcome line: a resident greets the CEO on every open (local LLM) ----------
-# CEO order 2026-09-23 (open-world NPC AI): the city greets its master on arrival.
-# The fact "the CEO just opened CityWatch" IS a real event - honest to use.
-# Rotates the greeter via watch\out\welcome-rotate.txt (gitignored area only).
+# ---------- welcome line: a resident greets the CEO on every open ----------
+# P-54(2) slice 2 (r75): consumption wiring for the pre-baked greeting library
+# watch\greetings.json (baked r70 via a local Ollama batch). The live per-open
+# LLM call is RETIRED - local-compute max order: batch offline -> deterministic
+# data file -> deterministic pick (r41 bake-resident-barks paradigm).
+# Pick law mirrors the voice card / draw.py standard tier exactly:
+#   key  = id|date|s<slot>|<ctx>  (slot = 45-min slot 0..31, date = yyyy-MM-dd)
+#   pick = md5(key) first 8 hex chars as uint % bucket len
+# Byte-stable inside one slot, rotating across slots. ctx = the phase canon
+# key - the one situation dimension these lines were baked for. Phase = clock
+# probe four-tier law (dawn 05-08 / day 09-16 / dusk 17-19 / night else,
+# Beijing wall time). Greeter still rotates per open via
+# watch\out\welcome-rotate.txt (r27 rotation law). P-40 AI-gen badge stays on
+# the template face: lines are model-baked (qwen2.5:7b, tone only - zero
+# facts / zero digits, BigLife cognition layer-2 honesty law).
+# Degrade law: library missing/broken => no greeting, snapshot still ships.
 $welcome = $null
 try {
-  $cardsDir = Join-Path $repoRoot 'docs\residents'
-  $welcomePromptFile = Join-Path $PSScriptRoot 'welcome-prompt.txt'
-  if ((Test-Path $cardsDir) -and (Test-Path $welcomePromptFile) -and $events.Count -gt 0) {
-    $cards = @(Get-ChildItem $cardsDir -Filter *.md | Sort-Object Name)
-    $rotFile = Join-Path $outDir 'welcome-rotate.txt'
-    $rot = 0
-    if (Test-Path $rotFile) { $r = [string](Get-Content $rotFile -Raw -Encoding UTF8); try { $rot = [int]$r } catch {} }
-    $chosen = $cards[$rot % $cards.Count]
-    [System.IO.File]::WriteAllText($rotFile, [string](($rot + 1) % 1000), (New-Object System.Text.UTF8Encoding($false)))
+  $libFile = Join-Path $PSScriptRoot 'greetings.json'
+  if (Test-Path $libFile) {
+    $libRaw = [string](Get-Content $libFile -Raw -Encoding UTF8)
+    $lib = $libRaw | ConvertFrom-Json
+    $cards = @($lib.cards)
+    if ($cards.Count -gt 0) {
+      $rotFile = Join-Path $outDir 'welcome-rotate.txt'
+      $rot = 0
+      if (Test-Path $rotFile) { $r = [string](Get-Content $rotFile -Raw -Encoding UTF8); try { $rot = [int]$r } catch {} }
+      $card = $cards[$rot % $cards.Count]
+      [System.IO.File]::WriteAllText($rotFile, [string](($rot + 1) % 1000), (New-Object System.Text.UTF8Encoding($false)))
 
-    $facts = @()
-    foreach ($ln in ($events | Select-Object -Last 6)) {
-      try { $e = $ln | ConvertFrom-Json; $facts += ('- [' + [string]$e.type + '] ' + [string]$e.summary) } catch {}
+      $now = Get-Date
+      $h = $now.Hour
+      if ($h -ge 5 -and $h -le 8) { $dp = 'dawn' }
+      elseif ($h -ge 9 -and $h -le 16) { $dp = 'day' }
+      elseif ($h -ge 17 -and $h -le 19) { $dp = 'dusk' }
+      else { $dp = 'night' }
+      $slot = [int][math]::Floor((($h * 60) + $now.Minute) / 45)
+
+      $bucket = @()
+      foreach ($p in @($card.phases)) { if ([string]$p.phase -eq $dp) { $bucket = @($p.lines); break } }
+      if ($bucket.Count -gt 0) {
+        $key = [string]$card.id + '|' + $now.ToString('yyyy-MM-dd') + '|s' + $slot + '|' + $dp
+        $md5 = [System.Security.Cryptography.MD5]::Create()
+        $seed = ([System.BitConverter]::ToString($md5.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($key)))).Replace('-','').ToLower()
+        $idx = [int]([Convert]::ToUInt32($seed.Substring(0, 8), 16) % [uint32]$bucket.Count)
+        $wline = [string]$bucket[$idx]
+        if ($wline.Trim().Length -gt 0) { $welcome = @{ id = [string]$card.id; line = $wline } }
+      }
     }
-    $card = [string](Get-Content $chosen.FullName -Raw -Encoding UTF8)
-    $tmpl = [string](Get-Content $welcomePromptFile -Raw -Encoding UTF8)
-    $wprompt = $tmpl.Replace('__CARD__', $card).Replace('__EVENTS__', ($facts -join "`n")).Replace('__NOW__', (Get-Date).ToString('HH:mm'))
-    $wbody = @{ model = 'qwen2.5:7b-instruct'; prompt = $wprompt; stream = $false; options = @{ num_predict = 40; temperature = 0.75 } } | ConvertTo-Json -Depth 4
-    $wresp = Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/generate' -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($wbody)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 20
-    $wline = ([string]$wresp.response).Trim() -replace "`r`n", ' ' -replace "`n", ' '
-    if ($wline.Length -gt 60) { $wline = $wline.Substring(0, 60) }
-    if ($wline) { $welcome = @{ id = $chosen.BaseName; line = $wline } }
   }
-} catch { $welcome = $null }   # Ollama down => no greeting, snapshot still ships
+} catch { $welcome = $null }   # library missing/broken => no greeting, snapshot still ships
 
 # ---------- voice v2 (P-23 claim: BigLife cognition layers 2+3 -> CityWatch) ----------
 # Situation bubbles = zero LLM: BigLife draw.py --tier standard derives the

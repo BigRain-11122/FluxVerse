@@ -103,7 +103,7 @@ namespace FluxVerse
         static readonly Sign[] Table = new Sign[]
         {
             // 0. rooftop plate on the NW low-rise (hotel) - legs sink 0.2u into the roof
-            new Sign { name = "NeonHotel",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/hotel-sign.png",                 pxW = 68, pxH = 35, x = -27.0f,  y = 12.347f, ppu = 32f, mount = MountRoof, b = 0 },
+            new Sign { name = "NeonHotel",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/hotel-sign.png",                 pxW = 68, pxH = 35, x = -26.9f,  y = 12.347f, ppu = 32f, mount = MountRoof, b = 0 },
             // 1. GAME west facade (block x -24..-19): vertical neon at half block height (P-69)
             new Sign { name = "NeonGameWest",  path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-1.png",   pxW = 19, pxH = 48, x = -22.5f,  y = -7.0f, ppu = 32f, mount = MountFacade, b = 5 },
             // 2. GAME west facade 2nd slot: parallelogram neon, third-height tier (P-69)
@@ -126,17 +126,17 @@ namespace FluxVerse
             // 11. QUANT rooftop lattice antenna: rises from the roof edge (-1) to +4 against the sky
             new Sign { name = "NeonAntenna",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/antenna.png",                     pxW = 22, pxH = 96, x = 0.0f,    y = 1.0f, ppu = 16f, mount = MountExempt, b = -1 },
             // 12. brain-tower facade header: group brand FLUX (CEO white core, superbody-blue glow)
-            new Sign { name = "NeonFlux",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-flux.png",      pxW = 44, pxH = 20, x = 0.0f,    y = 12.75f, ppu = 16f, mount = MountFacade, b = 7 },
+            new Sign { name = "NeonFlux",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-flux.png",      pxW = 44, pxH = 20, x = 0.5f,    y = 12.75f, ppu = 16f, mount = MountFacade, b = 7 },
             // 13. brain-tower facade below the brand: CPH4 evolution-engine plate (deep-layer blue)
-            new Sign { name = "NeonCPH4",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-cph4.png",      pxW = 44, pxH = 20, x = 0.0f,    y = 10.5f, ppu = 16f, mount = MountFacade, b = 7 },
+            new Sign { name = "NeonCPH4",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-cph4.png",      pxW = 44, pxH = 20, x = 0.5f,    y = 10.5f, ppu = 16f, mount = MountFacade, b = 7 },
             // 14. GAME west roofline standing plate (data cyan; legs sink 0.125u into the roof)
-            new Sign { name = "NeonBiggame",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-biggame.png",   pxW = 68, pxH = 28, x = -22.6f,  y = -4.25f, ppu = 16f, mount = MountRoof, b = 5 },
+            new Sign { name = "NeonBiggame",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-biggame.png",   pxW = 68, pxH = 28, x = -21.5f,  y = -4.25f, ppu = 16f, mount = MountRoof, b = 5 },
             // 15. QUANT tower facade crown under the roof edge: capital gold
-            new Sign { name = "NeonBigmoney",  path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-bigmoney.png",  pxW = 76, pxH = 20, x = 0.0f,    y = -3.3f, ppu = 16f, mount = MountFacade, b = 4 },
+            new Sign { name = "NeonBigmoney",  path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-bigmoney.png",  pxW = 76, pxH = 20, x = 0.5f,    y = -3.3f, ppu = 16f, mount = MountFacade, b = 4 },
             // 16. north-east MEDIA low-rise rooftop: flow magenta (clear of the scroll tip between the legs)
-            new Sign { name = "NeonBigstream", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-bigstream.png", pxW = 84, pxH = 28, x = 27.0f,   y = 12.3125f, ppu = 32f, mount = MountRoof, b = 3 },
+            new Sign { name = "NeonBigstream", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-bigstream.png", pxW = 84, pxH = 28, x = 27.5f,   y = 12.3125f, ppu = 32f, mount = MountRoof, b = 3 },
             // 17. north-west-mid low-rise rooftop: BIGLIFE residents company (warm amber, ambient)
-            new Sign { name = "NeonBiglife",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-biglife.png",   pxW = 68, pxH = 28, x = -8.0f,   y = 12.3125f, ppu = 32f, mount = MountRoof, b = 1 },
+            new Sign { name = "NeonBiglife",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-biglife.png",   pxW = 68, pxH = 28, x = -7.9f,   y = 12.3125f, ppu = 32f, mount = MountRoof, b = 1 },
         };
     }
 }

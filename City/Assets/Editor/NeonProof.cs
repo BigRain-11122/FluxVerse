@@ -10,7 +10,9 @@
 //    Props 4 and tint 8.
 //  A2 P-69 slice-1 proportion gates (r89): 16 mounted signs must sit at <= half
 //    their building's height (facade inside the face, roof plate sunk and <= half
-//    visible); street kiosk + tower antenna exempt by precedent.
+//    visible); street kiosk + tower antenna exempt by precedent. r90 adds the
+//    horizontal containment law (facade + roof fully inside the building width,
+//    r89 A2 survey: 7 plates overhung their facades 0.06-0.73u west).
 //  B asset gate: the 17 consumed sprites forced to Sprite + Single + Point +
 //    manifest PPU tier (16/32/48) + no mips (r34 importer-default-PPU100 law,
 //    idempotent); rect == table px exactly.
@@ -121,7 +123,9 @@ namespace FluxVerse
             //      their buildings - a facade sign sits inside the face at <= half
             //      its height, a roof plate sinks into the roofline and rises at
             //      most half the building height; street furniture + the tower
-            //      antenna are exempt (r87 precedent). ----
+            //      antenna are exempt (r87 precedent). r90 horizontal law: every
+            //      mounted sign (facade AND roof) must sit fully inside its
+            //      building's width - no west-edge overhang (r89 survey debt). ----
             int propGated = 0;
             for (int i = 0; i < NeonRules.Count; i++)
             {
@@ -130,6 +134,7 @@ namespace FluxVerse
                 NeonRules.Building bld = NeonRules.BuildingAt(s.b);
                 float bh = bld.y1 - bld.y0;
                 float hh = NeonRules.WorldH(i) / 2f;
+                float hw = NeonRules.WorldW(i) / 2f;
                 float top = s.y + hh, bot = s.y - hh;
                 Chk(bh > 0f, "degenerate building rect at sign " + s.name);
                 if (s.mount == NeonRules.MountFacade)
@@ -138,6 +143,8 @@ namespace FluxVerse
                         "P-69 sign taller than half the facade: " + s.name);
                     Chk(bot >= bld.y0 - 0.05f && top <= bld.y1 + 0.05f,
                         "P-69 facade sign escapes its building: " + s.name);
+                    Chk(s.x - hw >= bld.x0 - 0.05f && s.x + hw <= bld.x1 + 0.05f,
+                        "P-69 facade sign overhangs its building horizontally (r90): " + s.name);
                 }
                 else
                 {
@@ -145,6 +152,8 @@ namespace FluxVerse
                     Chk(top >= bld.y1 - 0.05f, "P-69 roof sign buried in the building: " + s.name);
                     Chk(top - bld.y1 <= bh * 0.5f + 0.01f,
                         "P-69 roof sign upstages its building: " + s.name);
+                    Chk(s.x - hw >= bld.x0 - 0.05f && s.x + hw <= bld.x1 + 0.05f,
+                        "P-69 roof sign overhangs its building horizontally (r90): " + s.name);
                 }
                 propGated++;
             }

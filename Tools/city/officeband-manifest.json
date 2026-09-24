@@ -1,0 +1,117 @@
+{
+  "protocol": "fluxverse-officeband/0.1",
+  "baked_round": 111,
+  "sources": [
+    "TECH.md sec9 r110 row remainder face: street office band (office-ladder consumption) + tile ladder",
+    "Tools/city/southbank-manifest.json r103 (current geometry law, masses/signs/anchors)",
+    "logs/devloop-r101-landmark-scan.json (component survey, px dims evidence)",
+    "City/Assets/ArtPacks/office-ladder/ r102 direct-copy stock (74 png)",
+    "City/Assets/ArtPacks/ARTPACKS-LEDGER.md office-ladder section (r102 provenance)",
+    "docs/design/city-core-design.md sec5 proportion law + cph4/research/R-20260924-m1-visual-fix.md sec2-1"
+  ],
+  "law": {
+    "office_band": "street-front mid-rise condos 4u tall (P-17 office 4-6 tile, low tier); zero landmark competition: every building shorter than QUANT 8u / MEDIA 6u / brain 6u",
+    "north_cap": "north low-rise law: top edge <= 13.0 (4u max on walkway rows 9..14; brain tower top 15 stays the sole north commanding height)",
+    "south_band_rows": [-16, -9],
+    "south_top_edge_max": -8.0,
+    "north_rows": [9, 14],
+    "view_frame": "fully inside the static L0 frame: |x| <= 35.256 (halfW 35.556 - 0.3 margin, same law family as seats/robots/signs)",
+    "vcol_roads_protected": [-18, -17, 17, 18],
+    "river_rows_protected": [-3, 2],
+    "tint_band": [-16, 15],
+    "identity_protection": "buildings are a SPRITE family (Office* GOs, sorting order 3, pivot center, GO pos = rect center, localScale 1) - NEVER painted into CityGAME/CityQUANT/CityMEDIA tilemaps: IdentityProof district derivation and every sec8 feet cell stay untouched (r103-4 condo-law correction)",
+    "zero_move": "v1 places 5 buildings with ZERO seat/robot/vehicle/sign moves (unlike the r103 move_census): every window derived from the post-r105 live tables",
+    "mechanism": "OfficeRules.cs pure table + OfficeProof idempotent swept rebuild (r90 sign precedent), r104-style pipeline 14th pass; mirror variety via the r93 pixel-exact mirror law (NearestNeighbor negative-width flip, zero resampling)",
+    "style_gate": "AA-016 daytime-flat family = r26 conditional pass; ambient tint quad multiplies (r44 vehicle law, order 3 < tint 8); r112 harmony check vs art-target-dusk anchor - FAIL fallback = per-sprite desat tint or swap-out, never a silent keep",
+    "sort_order": 3,
+    "side_adjacency_allowed": ["N4|NeonRules.Buildings[3] at x=29 (zero-gap impossible east under the frame law)"]
+  },
+  "placements": [
+    {
+      "id": "E1", "name": "Office01",
+      "asset": "Assets/ArtPacks/office-ladder/ME_Singles_Generic_Building_48x48_Condo_4_24.png",
+      "px": [144, 96], "ppu": 24,
+      "cells": [29, 34, -16, -13],
+      "world": [29.0, -16.0, 35.0, -12.0],
+      "mirror": false, "bank": "south",
+      "role": "east-outer street-front office closing the east frame below MEDIA; M07/M03 stand clear in front (0.33u+ gaps)"
+    },
+    {
+      "id": "N3", "name": "Office02",
+      "asset": "Assets/ArtPacks/office-ladder/ME_Singles_Generic_Building_48x48_Condo_4_24.png",
+      "px": [144, 96], "ppu": 24,
+      "cells": [-35, -30, 9, 12],
+      "world": [-35.0, 9.0, -29.0, 13.0],
+      "mirror": false, "bank": "north",
+      "role": "north west-outer office; 1u gap to NeonRules.Buildings[0] (NW low-rise)"
+    },
+    {
+      "id": "N1", "name": "Office03",
+      "asset": "Assets/ArtPacks/office-ladder/ME_Singles_Generic_Building_48x48_Condo_4_24.png",
+      "px": [144, 96], "ppu": 24,
+      "cells": [-24, -19, 9, 12],
+      "world": [-24.0, 9.0, -18.0, 13.0],
+      "mirror": false, "bank": "north",
+      "role": "north west-central office fronting the vcol -18 road; 1u gap to NW low-rise"
+    },
+    {
+      "id": "N2", "name": "Office04",
+      "asset": "Assets/ArtPacks/office-ladder/ME_Singles_Generic_Building_48x48_Condo_4_24.png",
+      "px": [144, 96], "ppu": 24,
+      "cells": [-16, -11, 9, 12],
+      "world": [-16.0, 9.0, -10.0, 13.0],
+      "mirror": true, "bank": "north",
+      "role": "north central office fronting the vcol -17 road; 1u gap to NW-mid low-rise, N01 5.8u clear"
+    },
+    {
+      "id": "N4", "name": "Office05",
+      "asset": "Assets/ArtPacks/office-ladder/ME_Singles_Generic_Building_48x48_Condo_4_24.png",
+      "px": [144, 96], "ppu": 24,
+      "cells": [29, 34, 9, 12],
+      "world": [29.0, 9.0, 35.0, 13.0],
+      "mirror": true, "bank": "north",
+      "role": "north east-outer office, side-adjacent to NeonRules.Buildings[3] at x=29; NeonNEScroll/NeonBigstream stay clear west of 29"
+    }
+  ],
+  "verdict_windows": {
+    "rejected": [
+      {
+        "window": "south west-outer cols -35..-30 rows -16..-13",
+        "blocker": "ResG07 body cols -33..-31 rows -14..-13 intersects every 6-col x-variant",
+        "note": "zero-move principle keeps G07; west-outer south stays open v1 (camper + G07 animate it)"
+      },
+      {
+        "window": "north east-central cols 10..16 rows 9..12",
+        "blocker": "VehicleBusN body top y=10.58 kills rows 9..10 across x 9.6..14.4; ResN02 body cols 19..21 kills the eastern half",
+        "note": "bus + stop sign + N02 animate the stretch; N4 east-outer taken instead"
+      },
+      {
+        "window": "south central cols 3..16 deep rows -16..-13",
+        "blocker": "NeonKiosk at x 3.54..4.86 rows -15..-14 blocks the west half; seat scatter (Q03/Q07/M05/M02/M06) blocks the rest; the plaza heart is the residents' living room",
+        "note": "seat-move windows for 3-cell/5-cell/6-cell condos + the Ground/Middle/Roof ladder assembly = v2 slice via the r104 seat-harness precedent"
+      },
+      {
+        "window": "12_HH hotel/hospital landmark sprites",
+        "blocker": "comps=1 single-connected giant canvases 34-54u wide (r101 verdict)",
+        "note": "M2 medical-district candidate, not office-band stock"
+      },
+      {
+        "window": "Ground/Middle/Roof floor-column ladder assembly",
+        "blocker": "on-disk measurement: boards are VERTICAL slabs 2x6/2x8/2x12u (48x144/48x192/48x288 px), not horizontal strips - no v1 window fits a 12u column and 12u would breach the landmark band",
+        "note": "r101 '1x3/1x4/1x6' read as w-x-h was orientation-blind; tile-ladder stepped assembly = v2 slice with a clear 6u south window + height review"
+      }
+    ]
+  },
+  "proof_window_rederivations": [
+    "AmbientProof far-shore strip rows 925..938 = world y +14.26..+14.74 x -24.4..+23.7 (NORTH top edge, r51 disease site) - re-derived: every v1 top edge <= 13.0 south of the window, zero overlap, gate untouched",
+    "CameraProof L1-north baseline: N1/N2 sit inside a brain-area L1 view span (32x18u) - re-derive after landing (r104 dy=-7 precedent); L1-quant view unaffected (E1 29u clear)"
+  ],
+  "coupled_updates_r112": [
+    "City/Assets/Scripts/OfficeRules.cs: pure static table (5 entries: name Office01..05, asset path, px, world rect, mirror, order 3) - VehicleRules idiom, person/city data stays out (r10 stale-copy law)",
+    "City/Assets/Editor/OfficeProof.cs: idempotent swept rebuild + gates mirroring this sandbox's math (C# proof-mirror law, r103): band/frame/vcol/river, zero-encroachment census vs buildings8/seats32/robots8/vehicles8/signs18/anchors4/props/interior, hierarchy (north top 13 < brain 15; E1 4u < MEDIA 6u), mirror asset presence, tint band, no-tilemap-delta assertion (south counts 40/31/36 unchanged)",
+    "pipeline: 14th pass in the r104-style orchestration + four screenshots m1-r112-officeband-{day,night,l1-south,l1-north} + sec3 rescan + multimodal harmony check vs art-target-dusk (r44 law)",
+    "render-gate baselines re-derive where windows include the new masses (r51 drift law); CameraProof L1-north baseline per proof_window_rederivations",
+    "ARTPACKS-LEDGER office-ladder section: add the r112 consumption line (5 placements, 1 asset, 2 mirrored)"
+  ],
+  "token_gate": "L1 deterministic math + on-disk checks, zero generation touchpoints"
+}

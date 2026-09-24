@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 120" width="340" height="120">
-  <!-- FluxVerse logo - 超体宇宙城 (reference: Lucy 2014 - transformation-blue halo around the white CEO light)
+  <!-- FluxVerse logo - 超体宇宙城 (superbody-blue halo around the white CEO light; film reference removed 2026-09-24)
        Design law (BRAND §6 + DESIGN §二): 一个点辐射出流线 = 脑塔神经线向全城辐射 = 城的俯视图。
        Five-color law: 数据青 #22d3ee / 资金金 #f5c542 / 流量品红 #f45bb0 / 警示红 #ff4d4d / CEO 纯白 #ffffff.
-       Chao-ti blue (Lucy): #1b4fb8 / #2e7cff / #4da3ff / #5dbbff - tower halo only (DESIGN light rule).
+       Chao-ti blue (superbody): #1b4fb8 / #2e7cff / #4da3ff / #5dbbff - tower halo only (DESIGN light rule).
        Pure 2D pixel blocks (rects only) - 全 2D 铁律. 2026-09-23 CPH4 Labs. -->
   <rect x="4" y="12" width="96" height="96" rx="12" fill="#070b14" stroke="#1a2334" stroke-width="2"/>
   <!-- stars -->
   <rect x="14" y="22" width="1" height="1" fill="#ffffff" opacity=".7"/><rect x="88" y="18" width="1" height="1" fill="#ffffff" opacity=".6"/>
   <rect x="76" y="30" width="1" height="1" fill="#ffffff" opacity=".5"/><rect x="24" y="34" width="1" height="1" fill="#ffffff" opacity=".4"/>
-  <!-- brain tower: white CEO light + Lucy transformation-blue energy halo (DESIGN light rule: chao-ti blue = tower halo) + cyan body -->
+  <!-- brain tower: white CEO light + superbody-blue energy halo (DESIGN light rule: chao-ti blue = tower halo) + cyan body -->
   <rect x="36" y="12" width="28" height="4" fill="#1b4fb8" opacity=".16"/>
   <rect x="39" y="15" width="22" height="8" fill="#2e7cff" opacity=".28"/>
   <rect x="42" y="17" width="16" height="7" fill="#4da3ff" opacity=".42"/>

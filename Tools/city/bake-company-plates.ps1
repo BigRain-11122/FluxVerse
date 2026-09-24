@@ -15,7 +15,7 @@
 #   rooftop plates : canvas W x 28 px (20 px body + 8 px legs) - legs 3 px wide at
 #                    center +/-12 px, leg tips sink 0.125 u below the roof surface
 #   W = len(text) * 8 + 12 (6 px side pad; PressStart2P advance = 8 px at size 8)
-# Colors: five-color law placement - FLUX CEO white + Lucy-blue glow (tower canon),
+# Colors: five-color law placement - FLUX CEO white + superbody-blue glow (tower canon),
 # CPH4 deep-layer blue, BIGGAME data cyan, BIGMONEY capital gold, BIGSTREAM flow
 # magenta, BIGLIFE warm amber (ambient scenery channel, not a functional light).
 # Determinism: same inputs -> byte-identical PNGs; the script re-bakes and compares

@@ -9,7 +9,7 @@
 // on the GAME west roofline, BIGMONEY crown plate under the QUANT tower roof,
 // BIGSTREAM standing on the north-east MEDIA low-rise, BIGLIFE standing on the
 // north-west-mid low-rise. Plate colors follow the five-color placement law
-// (CEO white / Lucy blue / data cyan / capital gold / flow magenta; BIGLIFE amber =
+// (CEO white / superbody blue / data cyan / capital gold / flow magenta; BIGLIFE amber =
 // ambient scenery channel, never a functional light). Pure static manifest = single
 // source of truth for the scene wiring (NeonProof builds the scene objects from this
 // table; RobotProof/ResidentProof consume the same rects for their clearance gates).
@@ -94,7 +94,7 @@ namespace FluxVerse
             new Sign { name = "NeonKiosk",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/monitorface/monitor-face-1.png",  pxW = 21, pxH = 18, x = 4.5f,    y = -10.6f },
             // 11. QUANT rooftop lattice antenna: rises from the roof edge (-2) to +4 against the sky
             new Sign { name = "NeonAntenna",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/antenna.png",                     pxW = 22, pxH = 96, x = 0.0f,    y = 1.0f },
-            // 12. brain-tower facade header: group brand FLUX (CEO white core, Lucy-blue glow)
+            // 12. brain-tower facade header: group brand FLUX (CEO white core, superbody-blue glow)
             new Sign { name = "NeonFlux",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-flux.png",      pxW = 44, pxH = 20, x = 0.0f,    y = 12.75f },
             // 13. brain-tower facade below the brand: CPH4 evolution-engine plate (deep-layer blue)
             new Sign { name = "NeonCPH4",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-cph4.png",      pxW = 44, pxH = 20, x = 0.0f,    y = 10.5f },

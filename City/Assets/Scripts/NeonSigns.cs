@@ -22,8 +22,13 @@
 //   x 19..24 (rows y -9..-6), QUANT plaza pavement rows y -16..-9.
 // Sorting law: mounting layer order 6 = above Props 4, below the ambient tint 8 -
 // the atmosphere owns the built city; functional lights (alert band 9, event
-// pulses 10) punch above it. Scale law: native PPU16, scale 1 everywhere -> zero
-// resampling, point filter, no integer-scale debate at all. Five-color law
+// pulses 10) punch above it. Scale law: localScale stays 1 everywhere -> zero
+// resampling, point filter; world size comes from a PER-SIGN importer PPU tier
+// (P-69 slice 1 proportion law, 2026-09-24 r89: oversized signs render at
+// PPU32/PPU48 = half/third world height - the r37 PPU24 tier mechanism applied
+// to signs, never a transform scale; NeonProof B enforces the manifest tier on
+// every consumed sprite and the A2 gate asserts sign height <= half the mounting
+// building, no escape past the facade top or roofline). Five-color law
 // untouched: pack neon pink/teal is AMBIENT scenery (DESIGN section 9: pink only
 // ever ambient), never a functional light. ASCII comments. No 3D.
 using UnityEngine;
@@ -33,9 +38,15 @@ namespace FluxVerse
     public static class NeonRules
     {
         public const int Order = 6;            // mounting layer: Props 4 < signs 6 < tint 8
-        public const float PPU = 16f;           // world law (r13); importer enforced, never assumed
+        public const float PPU = 16f;           // default world law (r13); per-sign ppu tier overrides
         public const int Count = 18;
         public const string NamePrefix = "Neon";
+
+        // P-69 slice 1 mount types: facade sign sits inside the building face at
+        // <= half its height; roof plate sinks into the roofline and rises at
+        // most half the building height; street furniture stands on the pavement
+        // band; exempt = tower antenna structure (r87 precedent, not a shop sign).
+        public const int MountFacade = 0, MountRoof = 1, MountStreet = 2, MountExempt = 3;
 
         public struct Sign
         {
@@ -43,14 +54,34 @@ namespace FluxVerse
             public string path;    // project-relative asset path (Assets/...)
             public int pxW, pxH;   // native sprite pixels (asset gate)
             public float x, y;     // world center at scale 1 (sprite pivot = center)
+            public float ppu;      // importer tier for THIS sprite (world law r13 per-asset)
+            public int mount;      // Mount* constant above
+            public int b;          // mounting building index into Buildings, -1 = none
         }
+
+        // mounting buildings (world rects mirroring the CitySkeletonBuilder Block()
+        // calls - the one geometry source; cell span [x0..x1] x [y0..y1-1] becomes
+        // world rect [x0, x1+1] x [y0, y1]). The NeonProof A2 gate reads these.
+        public struct Building { public float x0, y0, x1, y1; }
+        static readonly Building[] Buildings = new Building[]
+        {
+            new Building { x0 = -28f, y0 = 9f,   x1 = -25f, y1 = 12f },  // 0 NW low-rise (3u)
+            new Building { x0 = -9f,  y0 = 9f,   x1 = -6f,  y1 = 12f },  // 1 NW-mid low-rise (3u)
+            new Building { x0 = 7f,   y0 = 9f,   x1 = 10f,  y1 = 12f },  // 2 NE-mid low-rise (3u)
+            new Building { x0 = 26f,  y0 = 9f,   x1 = 29f,  y1 = 12f },  // 3 NE low-rise (3u)
+            new Building { x0 = -2f,  y0 = -9f,  x1 = 3f,   y1 = -1f },  // 4 QUANT tower (8u)
+            new Building { x0 = -24f, y0 = -9f,  x1 = -18f, y1 = -5f },  // 5 GAME west (4u)
+            new Building { x0 = 19f,  y0 = -9f,  x1 = 25f,  y1 = -5f },  // 6 MEDIA east (4u)
+            new Building { x0 = -1f,  y0 = 9f,   x1 = 2f,   y1 = 15f },  // 7 brain tower (6u)
+        };
+        public static Building BuildingAt(int i) { return Buildings[i]; }
 
         public static Sign At(int i) { return Table[i]; }
         public static string Name(int i) { return Table[i].name; }
         public static string Path(int i) { return Table[i].path; }
         public static Vector2 Pos(int i) { return new Vector2(Table[i].x, Table[i].y); }
-        public static float WorldW(int i) { return Table[i].pxW / PPU; }
-        public static float WorldH(int i) { return Table[i].pxH / PPU; }
+        public static float WorldW(int i) { return Table[i].pxW / Table[i].ppu; }
+        public static float WorldH(int i) { return Table[i].pxH / Table[i].ppu; }
 
         // framing: every sign fully inside the L0 view (ortho 20, aspect 16:9) with
         // margin, and inside the tint band y -16..+14 (an untinted sign sliver would
@@ -58,54 +89,54 @@ namespace FluxVerse
         public static bool InView(int i, float halfW, float halfH)
         {
             Sign s = Table[i];
-            float hw = s.pxW / (PPU * 2f), hh = s.pxH / (PPU * 2f);
+            float hw = s.pxW / (s.ppu * 2f), hh = s.pxH / (s.ppu * 2f);
             return Mathf.Abs(s.x) + hw <= halfW - 0.3f && Mathf.Abs(s.y) + hh <= halfH - 0.3f;
         }
 
         public static bool InTintBand(int i)
         {
             Sign s = Table[i];
-            float hh = s.pxH / (PPU * 2f);
+            float hh = s.pxH / (s.ppu * 2f);
             return s.y - hh >= -16f + 0.1f && s.y + hh <= 14f;
         }
 
         static readonly Sign[] Table = new Sign[]
         {
             // 0. rooftop plate on the NW low-rise (hotel) - legs sink 0.2u into the roof
-            new Sign { name = "NeonHotel",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/hotel-sign.png",                 pxW = 68, pxH = 35, x = -27.0f,  y = 12.85f },
-            // 1. GAME west facade (block x -24..-19): vertical neon, full block height
-            new Sign { name = "NeonGameWest",  path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-1.png",   pxW = 19, pxH = 48, x = -22.5f,  y = -7.5f },
-            // 2. GAME west facade 2nd slot: parallelogram neon, bracket overhang by design
-            new Sign { name = "NeonGameWest2", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-side/banner-side-1.png",   pxW = 19, pxH = 76, x = -19.7f,  y = -7.1f },
+            new Sign { name = "NeonHotel",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/hotel-sign.png",                 pxW = 68, pxH = 35, x = -27.0f,  y = 12.347f, ppu = 32f, mount = MountRoof, b = 0 },
+            // 1. GAME west facade (block x -24..-19): vertical neon at half block height (P-69)
+            new Sign { name = "NeonGameWest",  path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-1.png",   pxW = 19, pxH = 48, x = -22.5f,  y = -7.0f, ppu = 32f, mount = MountFacade, b = 5 },
+            // 2. GAME west facade 2nd slot: parallelogram neon, third-height tier (P-69)
+            new Sign { name = "NeonGameWest2", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-side/banner-side-1.png",   pxW = 19, pxH = 76, x = -19.7f,  y = -7.0f, ppu = 48f, mount = MountFacade, b = 5 },
             // 3. MEDIA east facade (block x 19..24)
-            new Sign { name = "NeonMediaEast", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-2.png",   pxW = 19, pxH = 48, x = 20.2f,   y = -7.5f },
-            // 4. MEDIA east parapet: horizontal shop sign sitting on the roofline (top edge -5)
-            new Sign { name = "NeonMediaRoof", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-sushi/banner-sushi-1.png",  pxW = 36, pxH = 13, x = 22.4f,   y = -4.59f },
+            new Sign { name = "NeonMediaEast", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-2.png",   pxW = 19, pxH = 48, x = 20.2f,   y = -7.0f, ppu = 32f, mount = MountFacade, b = 6 },
+            // 4. MEDIA east parapet: horizontal shop sign sitting on the roofline (bottom edge -5)
+            new Sign { name = "NeonMediaRoof", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-sushi/banner-sushi-1.png",  pxW = 36, pxH = 13, x = 22.4f,   y = -4.59f, ppu = 16f, mount = MountRoof, b = 6 },
             // 5/6. QUANT tower flanks (tower x -2..2, rows y -9..-2), mid-facade
-            new Sign { name = "NeonQuantL",    path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-3.png",   pxW = 19, pxH = 48, x = -1.45f,  y = -5.5f },
-            new Sign { name = "NeonQuantR",    path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-4.png",   pxW = 19, pxH = 48, x = 1.45f,   y = -5.5f },
+            new Sign { name = "NeonQuantL",    path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-3.png",   pxW = 19, pxH = 48, x = -1.45f,  y = -5.5f, ppu = 16f, mount = MountFacade, b = 4 },
+            new Sign { name = "NeonQuantR",    path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-4.png",   pxW = 19, pxH = 48, x = 1.45f,   y = -5.5f, ppu = 16f, mount = MountFacade, b = 4 },
             // 7. NE low-rise facade: narrow hanging scroll (fits the 3-row block)
-            new Sign { name = "NeonNEScroll",  path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-scroll/banner-scroll-1.png", pxW = 13, pxH = 47, x = 27.0f,   y = 10.5f },
+            new Sign { name = "NeonNEScroll",  path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-scroll/banner-scroll-1.png", pxW = 13, pxH = 47, x = 27.0f,   y = 10.3f, ppu = 32f, mount = MountFacade, b = 3 },
             // 8. north GAME mid low-rise: orange OPEN door sign
-            new Sign { name = "NeonNOpen",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-open.png",                 pxW = 14, pxH = 44, x = -8.0f,   y = 10.4f },
+            new Sign { name = "NeonNOpen",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-open.png",                 pxW = 14, pxH = 44, x = -8.0f,   y = 10.3f, ppu = 32f, mount = MountFacade, b = 1 },
             // 9. north MEDIA mid low-rise: neon frame reuse (distinct flicker phase = free variety)
-            new Sign { name = "NeonNMids",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-1.png",   pxW = 19, pxH = 48, x = 8.0f,    y = 10.4f },
+            new Sign { name = "NeonNMids",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-1.png",   pxW = 19, pxH = 48, x = 8.0f,    y = 10.5f, ppu = 32f, mount = MountFacade, b = 2 },
             // 10. QUANT plaza street kiosk: monitor face standing on the pavement
-            new Sign { name = "NeonKiosk",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/monitorface/monitor-face-1.png",  pxW = 21, pxH = 18, x = 4.5f,    y = -10.6f },
-            // 11. QUANT rooftop lattice antenna: rises from the roof edge (-2) to +4 against the sky
-            new Sign { name = "NeonAntenna",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/antenna.png",                     pxW = 22, pxH = 96, x = 0.0f,    y = 1.0f },
+            new Sign { name = "NeonKiosk",     path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/monitorface/monitor-face-1.png",  pxW = 21, pxH = 18, x = 4.5f,    y = -10.6f, ppu = 16f, mount = MountStreet, b = -1 },
+            // 11. QUANT rooftop lattice antenna: rises from the roof edge (-1) to +4 against the sky
+            new Sign { name = "NeonAntenna",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/antenna.png",                     pxW = 22, pxH = 96, x = 0.0f,    y = 1.0f, ppu = 16f, mount = MountExempt, b = -1 },
             // 12. brain-tower facade header: group brand FLUX (CEO white core, superbody-blue glow)
-            new Sign { name = "NeonFlux",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-flux.png",      pxW = 44, pxH = 20, x = 0.0f,    y = 12.75f },
+            new Sign { name = "NeonFlux",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-flux.png",      pxW = 44, pxH = 20, x = 0.0f,    y = 12.75f, ppu = 16f, mount = MountFacade, b = 7 },
             // 13. brain-tower facade below the brand: CPH4 evolution-engine plate (deep-layer blue)
-            new Sign { name = "NeonCPH4",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-cph4.png",      pxW = 44, pxH = 20, x = 0.0f,    y = 10.5f },
+            new Sign { name = "NeonCPH4",      path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-cph4.png",      pxW = 44, pxH = 20, x = 0.0f,    y = 10.5f, ppu = 16f, mount = MountFacade, b = 7 },
             // 14. GAME west roofline standing plate (data cyan; legs sink 0.125u into the roof)
-            new Sign { name = "NeonBiggame",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-biggame.png",   pxW = 68, pxH = 28, x = -22.6f,  y = -4.25f },
+            new Sign { name = "NeonBiggame",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-biggame.png",   pxW = 68, pxH = 28, x = -22.6f,  y = -4.25f, ppu = 16f, mount = MountRoof, b = 5 },
             // 15. QUANT tower facade crown under the roof edge: capital gold
-            new Sign { name = "NeonBigmoney",  path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-bigmoney.png",  pxW = 76, pxH = 20, x = 0.0f,    y = -3.3f },
+            new Sign { name = "NeonBigmoney",  path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-bigmoney.png",  pxW = 76, pxH = 20, x = 0.0f,    y = -3.3f, ppu = 16f, mount = MountFacade, b = 4 },
             // 16. north-east MEDIA low-rise rooftop: flow magenta (clear of the scroll tip between the legs)
-            new Sign { name = "NeonBigstream", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-bigstream.png", pxW = 84, pxH = 28, x = 27.0f,   y = 12.75f },
+            new Sign { name = "NeonBigstream", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-bigstream.png", pxW = 84, pxH = 28, x = 27.0f,   y = 12.3125f, ppu = 32f, mount = MountRoof, b = 3 },
             // 17. north-west-mid low-rise rooftop: BIGLIFE residents company (warm amber, ambient)
-            new Sign { name = "NeonBiglife",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-biglife.png",   pxW = 68, pxH = 28, x = -8.0f,   y = 12.75f },
+            new Sign { name = "NeonBiglife",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-biglife.png",   pxW = 68, pxH = 28, x = -8.0f,   y = 12.3125f, ppu = 32f, mount = MountRoof, b = 1 },
         };
     }
 }

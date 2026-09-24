@@ -8,8 +8,12 @@
 //    company plates), paths under the pack, native px sizes, every sign fully inside
 //    the L0 view AND the tint band, pairwise min spacing, order 6 sits between
 //    Props 4 and tint 8.
-//  B asset gate: the 17 consumed sprites forced to Sprite + Single + Point + PPU16 +
-//    no mips (r34 importer-default-PPU100 law, idempotent); rect == table px exactly.
+//  A2 P-69 slice-1 proportion gates (r89): 16 mounted signs must sit at <= half
+//    their building's height (facade inside the face, roof plate sunk and <= half
+//    visible); street kiosk + tower antenna exempt by precedent.
+//  B asset gate: the 17 consumed sprites forced to Sprite + Single + Point +
+//    manifest PPU tier (16/32/48) + no mips (r34 importer-default-PPU100 law,
+//    idempotent); rect == table px exactly.
 //  C CityScene wiring: stale Neon* sweep -> 18 sign GOs from the table (fresh
 //    LoadAssetAtPath per r10 law) -> idempotent second sweep+build -> save -> disk
 //    round-trip; r34/r31/r36/r37 neighbor regressions (skyline sprites, bed clip,
@@ -108,11 +112,43 @@ namespace FluxVerse
                 Chk(s.path.StartsWith("Assets/ArtPacks/warped-city/ENVIRONMENT/props/"),
                     "sign path outside the pack: " + s.path);
                 Chk(s.pxW > 0 && s.pxH > 0, "native px missing at " + i);
-                Chk(Math.Abs(NeonRules.WorldW(i) - s.pxW / 16f) < 1e-5f, "world width math off at " + i);
+                Chk(Math.Abs(NeonRules.WorldW(i) - s.pxW / s.ppu) < 1e-5f, "world width math off at " + i);
                 Chk(NeonRules.InView(i, RigMath.L0Size * RigMath.Aspect, RigMath.L0Size),
                     "sign not fully inside the L0 view: " + s.name);
                 Chk(NeonRules.InTintBand(i), "sign escapes the tint band (r22 edge-band kin): " + s.name);
             }
+            // ---- A2. P-69 slice-1 proportion law (r89): mounted signs must respect
+            //      their buildings - a facade sign sits inside the face at <= half
+            //      its height, a roof plate sinks into the roofline and rises at
+            //      most half the building height; street furniture + the tower
+            //      antenna are exempt (r87 precedent). ----
+            int propGated = 0;
+            for (int i = 0; i < NeonRules.Count; i++)
+            {
+                NeonRules.Sign s = NeonRules.At(i);
+                if (s.mount == NeonRules.MountStreet || s.mount == NeonRules.MountExempt) continue;
+                NeonRules.Building bld = NeonRules.BuildingAt(s.b);
+                float bh = bld.y1 - bld.y0;
+                float hh = NeonRules.WorldH(i) / 2f;
+                float top = s.y + hh, bot = s.y - hh;
+                Chk(bh > 0f, "degenerate building rect at sign " + s.name);
+                if (s.mount == NeonRules.MountFacade)
+                {
+                    Chk(NeonRules.WorldH(i) <= bh * 0.5f + 0.01f,
+                        "P-69 sign taller than half the facade: " + s.name);
+                    Chk(bot >= bld.y0 - 0.05f && top <= bld.y1 + 0.05f,
+                        "P-69 facade sign escapes its building: " + s.name);
+                }
+                else
+                {
+                    Chk(bot <= bld.y1 + 0.05f, "P-69 roof sign floats off the roofline: " + s.name);
+                    Chk(top >= bld.y1 - 0.05f, "P-69 roof sign buried in the building: " + s.name);
+                    Chk(top - bld.y1 <= bh * 0.5f + 0.01f,
+                        "P-69 roof sign upstages its building: " + s.name);
+                }
+                propGated++;
+            }
+            Chk(propGated == 16, "P-69 mounted-sign count != 16: " + propGated);
             float minDist = float.MaxValue;
             for (int i = 0; i < NeonRules.Count; i++)
                 for (int j = i + 1; j < NeonRules.Count; j++)
@@ -127,17 +163,22 @@ namespace FluxVerse
             for (int i = 0; i < NeonRules.Count; i++)
             {
                 bool seen = false;
-                for (int j = 0; j < i; j++) if (NeonRules.Path(j) == NeonRules.Path(i)) { seen = true; break; }
+                for (int j = 0; j < i; j++) if (NeonRules.Path(j) == NeonRules.Path(i))
+                {
+                    Chk(Math.Abs(NeonRules.At(j).ppu - NeonRules.At(i).ppu) < 0.01f,
+                        "shared sprite with conflicting ppu tiers: " + NeonRules.Path(i));
+                    seen = true; break;
+                }
                 if (seen) continue;
                 unique++;
-                Sprite sp = ForceSprite(NeonRules.Path(i));
+                Sprite sp = ForceSprite(NeonRules.Path(i), NeonRules.At(i).ppu);
                 Chk(sp != null, "sprite failed to load: " + NeonRules.Path(i));
                 Chk(Math.Abs(sp.rect.width - NeonRules.At(i).pxW) < 0.5f
                     && Math.Abs(sp.rect.height - NeonRules.At(i).pxH) < 0.5f,
                     "rect != manifest px at " + NeonRules.Name(i) + ": " + sp.rect.width + "x" + sp.rect.height);
                 Chk(Math.Abs(sp.bounds.size.x - NeonRules.WorldW(i)) < 0.01f
                     && Math.Abs(sp.bounds.size.y - NeonRules.WorldH(i)) < 0.01f,
-                    "natural bounds != px/16 (PPU100 shrink disease) at " + NeonRules.Name(i));
+                    "natural bounds != px/ppu (importer tier disease) at " + NeonRules.Name(i));
             }
             Chk(unique == 17, "expected 17 unique consumed sprites, got " + unique);
 
@@ -201,7 +242,7 @@ namespace FluxVerse
             SetSigns(signs, false);
             Texture2D duskBase = Shot(cam, null);
             SetSigns(signs, true);
-            Texture2D duskOn = Shot(cam, "m1-r38-plates-dusk.png");
+            Texture2D duskOn = Shot(cam, "m1-r69-signs-dusk.png");
             int duskTot = 0; float duskLum = 0f; int duskMin = int.MaxValue; string duskWorst = "";
             for (int i = 0; i < NeonRules.Count; i++)
             {
@@ -217,7 +258,7 @@ namespace FluxVerse
             SetSigns(signs, false);
             Texture2D nightBase = Shot(cam, null);
             SetSigns(signs, true);
-            Texture2D nightOn = Shot(cam, "m1-r38-plates-night.png");
+            Texture2D nightOn = Shot(cam, "m1-r69-signs-night.png");
             int nightTot = 0; float nightLum = 0f; int nightMin = int.MaxValue; string nightWorst = "";
             for (int i = 0; i < NeonRules.Count; i++)
             {
@@ -247,6 +288,7 @@ namespace FluxVerse
 
             return "asserts=" + asserts
                 + " table=18 unique_sprites=" + unique
+                + " p69_prop=" + propGated + "/16"
                 + " scene(saved=" + saved + ",18 persisted,robots8+residents12_kept,neighbors_ok)"
                 + " render(dusk_px=" + duskTot + " worst=" + duskWorst + ":" + duskMin
                 + " night_px=" + nightTot + " worst=" + nightWorst + ":" + nightMin
@@ -266,19 +308,21 @@ namespace FluxVerse
                 SpriteRenderer sr = go != null ? go.GetComponent<SpriteRenderer>() : null;
                 Chk(sr != null && sr.sprite != null, "sign sprite unresolved after restart: " + NeonRules.Name(i));
             }
-            // importer spot check across the restart (hotel / neon frame / antenna / plate)
+            // importer spot check across the restart (hotel / neon frame / antenna /
+            // plate) - expected tier per manifest (P-69: hotel + neon frame = 32)
             string[] spot = {
                 "Assets/ArtPacks/warped-city/ENVIRONMENT/props/hotel-sign.png",
                 "Assets/ArtPacks/warped-city/ENVIRONMENT/props/banner-neon/banner-neon-1.png",
                 "Assets/ArtPacks/warped-city/ENVIRONMENT/props/antenna.png",
                 "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-flux.png" };
-            foreach (string p in spot)
+            float[] spotPpu = { 32f, 32f, 16f, 16f };
+            for (int k = 0; k < spot.Length; k++)
             {
-                TextureImporter imp = (TextureImporter)TextureImporter.GetAtPath(p);
-                Chk(imp != null && imp.textureType == TextureImporterType.Sprite, "importer type lost: " + p);
-                Chk(imp.filterMode == FilterMode.Point, "point filter lost: " + p);
-                Chk(Math.Abs(imp.spritePixelsPerUnit - 16f) < 0.01f, "PPU16 lost: " + p);
-                Chk(!imp.mipmapEnabled, "mips re-enabled: " + p);
+                TextureImporter imp = (TextureImporter)TextureImporter.GetAtPath(spot[k]);
+                Chk(imp != null && imp.textureType == TextureImporterType.Sprite, "importer type lost: " + spot[k]);
+                Chk(imp.filterMode == FilterMode.Point, "point filter lost: " + spot[k]);
+                Chk(Math.Abs(imp.spritePixelsPerUnit - spotPpu[k]) < 0.01f, "manifest PPU tier lost: " + spot[k]);
+                Chk(!imp.mipmapEnabled, "mips re-enabled: " + spot[k]);
             }
             GameObject ambGo = GameObject.Find("CityAmbient");
             CityAmbient amb = ambGo != null ? ambGo.GetComponent<CityAmbient>() : null;
@@ -297,7 +341,7 @@ namespace FluxVerse
             }
             Chk(robotsKept == RobotRules.Count, "robots lost across restart: " + robotsKept);
             Chk(residentsKept == ResidentRules.Count, "residents lost across restart: " + residentsKept);
-            return "reload_gate=OK signs=18/18 persisted importers=sprite+point+ppu16+nemip"
+            return "reload_gate=OK signs=18/18 persisted importers=sprite+point+ppu_manifest+nemip"
                 + " skyline=2/2 robots=" + robotsKept + "/" + RobotRules.Count
                 + " residents=" + residentsKept + "/" + ResidentRules.Count
                 + " neighbors=3 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
@@ -360,26 +404,28 @@ namespace FluxVerse
             return c;
         }
 
-        // forces Sprite + Single + Point + PPU16 + no mips (idempotent). The importer
-        // default PPU is 100 = the r34 speck disease; the 16-PPU world law (r13) is
-        // enforced here, never assumed.
-        static Sprite ForceSprite(string path)
+        // forces Sprite + Single + Point + manifest PPU tier + no mips (idempotent).
+        // The importer default PPU is 100 = the r34 speck disease; the per-sign tier
+        // (16 default / 32 / 48, P-69 proportion law r89) is enforced here, never
+        // assumed. The userData-mark guard in CityImportPostprocessor respects
+        // these deliberate values on any future reimport.
+        static Sprite ForceSprite(string path, float ppu)
         {
             TextureImporter imp = (TextureImporter)TextureImporter.GetAtPath(path);
             if (imp == null) throw new InvalidOperationException("importer missing: " + path);
             if (imp.textureType != TextureImporterType.Sprite || imp.spriteImportMode != SpriteImportMode.Single
                 || imp.filterMode != FilterMode.Point || imp.mipmapEnabled
-                || Math.Abs(imp.spritePixelsPerUnit - 16f) > 0.01f)
+                || Math.Abs(imp.spritePixelsPerUnit - ppu) > 0.01f)
             {
                 imp.textureType = TextureImporterType.Sprite;
                 imp.spriteImportMode = SpriteImportMode.Single;
                 imp.filterMode = FilterMode.Point;
                 imp.mipmapEnabled = false;
-                imp.spritePixelsPerUnit = 16f;
+                imp.spritePixelsPerUnit = ppu;
                 imp.SaveAndReimport();
             }
             if (imp.textureType != TextureImporterType.Sprite || imp.filterMode != FilterMode.Point
-                || Math.Abs(imp.spritePixelsPerUnit - 16f) > 0.01f)
+                || Math.Abs(imp.spritePixelsPerUnit - ppu) > 0.01f)
                 throw new InvalidOperationException("importer fix did not stick: " + path);
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }

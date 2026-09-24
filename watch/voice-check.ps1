@@ -65,6 +65,14 @@ Assert 'template has voice panel div'  ($tpl -match 'id="voice"')
 Assert 'template renders DATA.voice'   ($tpl -match 'DATA\.voice')
 Assert 'template has spotlight reveal wiring' ($tpl -match 'spot')
 
+# 1b. P-40 AI-content label law (2025-09-01 explicit-labeling regulation): the
+#     AI surfaces (welcome line / residents card / voice bubbles / spotlight)
+#     must carry the explicit "AI 生成" badge. ASCII law: the Chinese literal is
+#     built from code points, never typed into the script body.
+$aiLabel = -join @([char]0x41,[char]0x49,[char]0x20,[char]0x751F,[char]0x6210)
+$aiBadge = '<span class="aitag">' + $aiLabel + '</span>'
+Assert 'template wires AI-gen badge on 3+ surfaces (P-40)' (([regex]::Matches($tpl, [regex]::Escape($aiBadge))).Count -ge 3)
+
 # 2. build a fresh snapshot (same generator CityWatch.bat uses)
 & (Join-Path $PSScriptRoot 'city-watch.ps1') | Out-Null
 $outFile = Join-Path $repoRoot 'watch\out\city-watch.html'
@@ -81,6 +89,7 @@ if ($m.Success) {
 }
 Assert 'payload parses as json' ($null -ne $DATA)
 Assert 'html embeds voice card' ($html -match 'id="voice"')
+Assert 'snapshot html carries AI-gen label (P-40)' ($html.Contains($aiBadge))
 
 $V = $null
 if ($null -ne $DATA) { $V = $DATA.voice }

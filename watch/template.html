@@ -18,6 +18,7 @@
   .card h3{font-size:12px;color:var(--cyan);letter-spacing:1px;margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:6px}
   canvas{image-rendering:pixelated;width:100%;border-radius:6px;display:block}
   #tip{position:fixed;pointer-events:none;background:#000c;padding:3px 8px;border:1px solid var(--cyan);border-radius:4px;font-size:11px;display:none;z-index:9}
+  .aitag{display:inline-block;margin-left:8px;padding:1px 7px;border:1px solid var(--cyan);border-radius:4px;background:rgba(34,211,238,.10);color:var(--cyan);font-size:10px;letter-spacing:1px;vertical-align:1px}
   .row{display:flex;gap:8px;flex-wrap:wrap}
   .chip{border:1px solid var(--line);border-radius:6px;padding:5px 9px;font-size:11px;background:#070c16}
   .chip b{color:var(--cyan)}
@@ -99,7 +100,7 @@
 
 <div class="grid" style="grid-template-columns:1fr 1fr">
   <div class="card"><h3>事件流回放（真实事件 · 最近 40 条）</h3><div id="evs" style="max-height:260px;overflow:auto"></div></div>
-  <div class="card"><h3>居民之声（AI 台词 · 锚定真实事件 · 本地大脑）</h3><div id="residents" style="max-height:260px;overflow:auto"></div></div>
+  <div class="card"><h3>居民之声（AI 台词 · 锚定真实事件 · 本地大脑）<span class="aitag">AI 生成</span></h3><div id="residents" style="max-height:260px;overflow:auto"></div></div>
 </div>
 
 <div class="grid" style="grid-template-columns:2fr 1fr">
@@ -108,7 +109,7 @@
 </div>
 
 <div class="grid" style="grid-template-columns:1fr">
-  <div class="card"><h3>万民之声 · 情境气泡（叙事市民层 · BigLife 台词池 · 真实情境零LLM抽词 · 点居民看聚光灯应答）</h3><div id="voice"></div></div>
+  <div class="card"><h3>万民之声 · 情境气泡（叙事市民层 · BigLife 台词池 · 真实情境零LLM抽词 · 点居民看聚光灯应答）<span class="aitag">AI 生成</span></h3><div id="voice"></div></div>
 </div>
 
 <div class="grid" style="grid-template-columns:1fr 1fr">
@@ -147,7 +148,7 @@ document.getElementById('gts').textContent=DATA.generated_ts||'--';
   const w=DATA.welcome; if(!w||!w.line)return;
   const el=document.getElementById('welcome');
   el.style.display='block';
-  el.innerHTML='<b style="color:#22d3ee">'+w.id+'</b> 对城主说：<span style="color:#f0f6ff">「'+w.line+'」</span>';
+  el.innerHTML='<b style="color:#22d3ee">'+w.id+'</b> 对城主说：<span style="color:#f0f6ff">「'+w.line+'」</span><span class="aitag">AI 生成</span>';
 })();
 
 // ---------- milestones ----------
@@ -227,7 +228,7 @@ document.getElementById('gts').textContent=DATA.generated_ts||'--';
   const CN={morning:'晨光时段',dusk:'黄昏时段',night:'夜晚时段',weekend:'周末',rain:'落雨',typhoon:'台风',heatwave:'酷暑',coldsnap:'寒潮',market_open:'开市钟',market_close:'收市钟',ceo_order:'城主令',festival:'城市节日'};
   const SN={event:'真实事件',weather:'实况天气',clock:'真实时段'};
   let h='<div class="lbl" style="margin-bottom:6px"><span>真实情境（'+(SN[V.src]||V.src)+'激活 · 事实门）</span><span>'+(CN[V.context]||V.context)+' · 45 分钟槽 '+(V.slot+1)+'/32 · 同槽逐字节稳定</span></div>';
-  h+=V.citizens.map((c,i)=>'<div class="ev" style="border-left-color:#a6f;cursor:pointer" id="vb'+i+'"><span class="t">'+c.id+'</span><b style="color:#cde">'+c.name+'</b> <span style="color:#557">'+((DI[c.district]||c.district)+(c.profession?' · '+c.profession:''))+'</span><br><span style="color:#9ab">「'+c.line+'」</span><div id="vd'+i+'" style="display:none;margin-top:4px;border-top:1px dashed #141c2c;padding-top:4px"><span style="color:#f5c542">聚光灯（事实级 · 本地大脑）：'+(c.spot?('「'+c.spot+'」'):'（本轮未应答——本地大脑离线或超时；诚实律=喂什么说什么，无喂不答）')+'</span></div></div>').join('');
+  h+=V.citizens.map((c,i)=>'<div class="ev" style="border-left-color:#a6f;cursor:pointer" id="vb'+i+'"><span class="t">'+c.id+'</span><b style="color:#cde">'+c.name+'</b> <span style="color:#557">'+((DI[c.district]||c.district)+(c.profession?' · '+c.profession:''))+'</span><br><span style="color:#9ab">「'+c.line+'」</span><div id="vd'+i+'" style="display:none;margin-top:4px;border-top:1px dashed #141c2c;padding-top:4px"><span style="color:#f5c542">聚光灯（事实级 · 本地大脑）：<span class="aitag">AI 生成</span>'+(c.spot?('「'+c.spot+'」'):'（本轮未应答——本地大脑离线或超时；诚实律=喂什么说什么，无喂不答）')+'</span></div></div>').join('');
   h+='<div style="color:#556;font-size:10px;margin-top:6px;line-height:1.6">诚实律（BigLife cognition 契约）：气泡=情境口气零事实（台词池 648 条·桶由真实事件&gt;天气&gt;时段激活——池句只带口气不带事实）；点居民展开聚光灯=事实级应答（本地 LLM·只提所喂真实事件与自身日常·≤40 字）。叙事市民层与实锚层（居民之声卡）互不冒充。</div>';
   el.innerHTML=h;
   V.citizens.forEach((c,i)=>{const b=document.getElementById('vb'+i);if(b)b.addEventListener('click',()=>{const d=document.getElementById('vd'+i);if(d)d.style.display=(d.style.display==='none')?'block':'none'})});

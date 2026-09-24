@@ -95,3 +95,10 @@ AA-016.02 车辆 / AA-034 光效粒子 193 PNG / FT-011 缝合像素（霓虹中
 - 来源：**集团产线自产**（bake-residents.ps1+atlas-residents.ps1·BigLife census 只读确定性派生·P-68 批 1/P-72 部件化正典·CEO 图集浪费纠正令 09-24 ~21:10）——非外采件·零外部许可义务；身份数据契约=BigLife CODEX §十二（导出面在册）。
 - **零 per-resident 图件律**（CEO 令正体）：32 只个体 PNG 径已由 fa7d951 设计性作废（勿消费 batch1/manifest.json 的 file 字段）；伴生件 36 件同批落位=名牌 b1 组 32（residents-crowd/nameplates/plate-res-b1-*.png·66×20 画布·CJK 主名形律）+接地影子 shadow-res32.png（residents-crowd/shadows/·32×8@PPU24=1.33×0.33u·对 1.33u 身）。
 - 消费实况（r97 预置）：**引擎挂装待 r98**——ResidentRules 32 席表+部件栈挂装+ResidentProof 证明门（见 TECH §九 r97 行）；.meta 随首个编辑器轮导入生成（P-27⑤ 先例·CityImportPostprocessor PPU 表已增 residents-atlas→24 行）。
+
+## office-ladder/（74 件·S 库直采·AA-016.02 Modern_Exteriors 48x48·r102 入仓）
+
+- 内容：**P-69① tile 阶梯办公层货源**（r101 施工件清单③④兑现）——整栋单体 11 件三档体：Condo_4_11=5×3 格（240×144px=10×6u）／Condo_4_16·19·20·21=6×3（288×144=12×6u）／Condo_3_10·11·12+Condo_4_23=3×3（144×144=6×6u）／Condo_4_24=3×2（144×96=6×4u）／Condo_3_5=5×2（240×96=10×4u）+楼层板族 63 件（Ground_Floor_Condo_Modular_1..24=1×3 48×144／Middle_Floor_Modular_1..30=1×4 48×192／Roof_Modular_1..9=1×6 48×288·r101 连通域实测全单连通板）；共 74 件 73,203B。
+- 来源：**AA-016.02 S 库 L2 直用**（MiniGame Art Assets 只读拷贝零改动·源目录计数前后不变 109/343 实证）——授权闸=2026-09-22 用户全量确认购置合法在册+U121 轻档（M1/M2=S0-S2 研发期）·四闸+P-21 消费链在册·非新采购零新许可义务。
+- 风格闸（r101 ⑦ 随行）：AA-016 日间平涂系入城走 r44 车辆同律——环境 tint 乘性重映射（r13 四档色轮罩城带）+五色律光色归位（QUANT 金/GAME 青/MEDIA 品红）引擎施工轮随证；48px@PPU24=2u/层（P-17 办公楼 4-6 tile=2-3 层判据）。
+- 消费实况（r102 预置）：**引擎布设待 r103 编辑器施工轮**（r101 预算表：南岸分区重排+扭塔制高+双球滨水前排+方塔群后列成阵=③清单三档体复用成阵+楼层板组装补办公层）；.meta 随首个编辑器轮导入生成（P-27⑤ 先例·CityImportPostprocessor PPU 表已增 office-ladder→24 行）。

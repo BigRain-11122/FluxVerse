@@ -25,6 +25,8 @@ public class CityImportPostprocessor : AssetPostprocessor
         if (path.StartsWith("Assets/ArtPacks/residents-crowd/")) return 24;
         // r97 batch1 pool: 32px parts @ 24 = 1.33u body (P-69(1) single-source law)
         if (path.StartsWith("Assets/ArtPacks/residents-atlas/")) return 24;
+        // r102 office ladder: 48px boards @ 24 = 2u/floor (P-69(1) tile ladder, r101 list)
+        if (path.StartsWith("Assets/ArtPacks/office-ladder/")) return 24;
         return 16;
     }
 

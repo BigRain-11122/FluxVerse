@@ -1,0 +1,4 @@
+dawn=清晨
+day=白天
+dusk=黄昏
+night=夜晚

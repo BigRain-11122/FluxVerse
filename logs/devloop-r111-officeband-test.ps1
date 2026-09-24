@@ -223,7 +223,8 @@ foreach ($p in $m.placements) {
 }
 $packDir = Join-Path $cityRoot 'Assets\ArtPacks\office-ladder'
 $pngCount = (Get-ChildItem $packDir -Filter '*.png' -ErrorAction SilentlyContinue).Count
-OK ($pngCount -eq 74) 'A5 pack 74 png (r102 record)'
+# r112: 74 stock (r102 record) + 1 pre-baked pixel-exact mirror (bake-office-mirror.ps1)
+OK ($pngCount -eq 75) 'A5 pack 75 png (74 stock r102 + 1 r112 mirror)'
 $ledgerPath = Join-Path $cityRoot 'Assets\ArtPacks\ARTPACKS-LEDGER.md'
 $ledgerHit = @(Get-Content $ledgerPath -Encoding UTF8 | Where-Object { $_ -match 'office-ladder' })
 OK ($ledgerHit.Count -ge 1) 'A5 ledger office-ladder section'

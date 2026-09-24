@@ -108,7 +108,7 @@
   ],
   "coupled_updates_r112": [
     "City/Assets/Scripts/OfficeRules.cs: pure static table (5 entries: name Office01..05, asset path, px, world rect, mirror, order 3) - VehicleRules idiom, person/city data stays out (r10 stale-copy law)",
-    "City/Assets/Editor/OfficeProof.cs: idempotent swept rebuild + gates mirroring this sandbox's math (C# proof-mirror law, r103): band/frame/vcol/river, zero-encroachment census vs buildings8/seats32/robots8/vehicles8/signs18/anchors4/props/interior, hierarchy (north top 13 < brain 15; E1 4u < MEDIA 6u), mirror asset presence, tint band, no-tilemap-delta assertion (south counts 40/31/36 unchanged)",
+    "City/Assets/Editor/OfficeProof.cs: idempotent swept rebuild + gates mirroring this sandbox's math (C# proof-mirror law, r103): band/frame/vcol/river, zero-encroachment census vs buildings8/seats32/robots8/vehicles8/signs18/anchors4/props/interior, hierarchy (north top 13 < brain 15; E1 4u < MEDIA 6u), mirror asset presence, tint band, no-tilemap-delta assertion (south whole-layer counts 40/49/54 - r113 live-derivation correction; the authored 40/31/36 was the r105 repaint batch tally, not layer totals)",
     "pipeline: 14th pass in the r104-style orchestration + four screenshots m1-r112-officeband-{day,night,l1-south,l1-north} + sec3 rescan + multimodal harmony check vs art-target-dusk (r44 law)",
     "render-gate baselines re-derive where windows include the new masses (r51 drift law); CameraProof L1-north baseline per proof_window_rederivations",
     "ARTPACKS-LEDGER office-ladder section: add the r112 consumption line (5 placements, 1 asset, 2 mirrored)"

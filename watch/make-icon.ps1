@@ -1,6 +1,6 @@
-# FluxVerse CityWatch desktop icon generator (CEO order 2026-09-23 ~21:47: logo, reference Lucy, desktop shortcut, fleet-wide).
+# FluxVerse CityWatch desktop icon generator (CEO order 2026-09-23 ~21:47: logo, desktop shortcut, fleet-wide).
 # ASCII-only body (encoding law: PS5.1 no-BOM UTF-8 body is read as GBK - Chinese lives in data files only).
-# Design = logo law "one point radiates flows": white CEO-light core + Lucy transformation-blue halo
+# Design = logo law "one point radiates flows": white CEO-light core + superbody-blue halo
 # (DESIGN.md light-color rule: chao-ti blue belongs to brain-tower halo) + three city flows (cyan/gold/magenta).
 # Output: fluxverse.ico - multi-size (16/32/48 BMP entries + 256 PNG entry), pixel-crisp at every scale.
 
@@ -17,9 +17,9 @@ $grid = New-Object 'UInt32[]' ($W * $H)
 
 function C([string]$hex) { [Convert]::ToUInt32($hex, 16) }   # PS5.1: 0xFFFFFFFF literal overflows int32 - parse instead
 $C_WHITE  = C 'FFFFFFFF'   # CEO pure white core (AARRGGBB)
-$C_INNER  = C 'FF4DA3FF'   # lucy-blue inner halo
-$C_MID    = C 'FF2E7CFF'   # lucy-blue mid halo
-$C_DEEP   = C 'FF1B4FB8'   # lucy-blue deep accent
+$C_INNER  = C 'FF4DA3FF'   # superbody-blue inner halo
+$C_MID    = C 'FF2E7CFF'   # superbody-blue mid halo
+$C_DEEP   = C 'FF1B4FB8'   # superbody-blue deep accent
 $C_CYAN   = C 'FF22D3EE'   # GAME data-cyan
 $C_GOLD   = C 'FFF5C542'   # QUANT gold
 $C_MAG    = C 'FFF45BB0'   # MEDIA magenta

@@ -161,10 +161,20 @@ foreach ($rk in @('city_day_phase','beijing_hhmm','market_phase','market_calenda
 }
 
 # r47: BigStream render output face (probe bigstream_output) - additive section
-# (protocol 0.1: adding fields is free, engine ignores what it does not map)
+# (protocol 0.1: adding fields are free, engine ignores what it does not map)
 $mediaOut = @{}
 foreach ($mk in @('renders_total','renders_bytes','last_render','last_render_utc')) {
   if ($stateParts.ContainsKey('mediaout_' + $mk)) { $mediaOut[$mk] = $stateParts['mediaout_' + $mk] }
+}
+
+# r48: MiniGame live task panel (probe minigame_tasks) - additive section
+# (protocol 0.1: adding fields is free, engine ignores what it does not map)
+$gameTasks = @{}
+if ($stateParts.ContainsKey('gametasks_items')) {
+  $gameTasks['items'] = $stateParts['gametasks_items']
+  foreach ($gk in @('total','active','review','blocked')) {
+    if ($stateParts.ContainsKey('gametasks_' + $gk)) { $gameTasks[$gk] = $stateParts['gametasks_' + $gk] }
+  }
 }
 
 # resident minds (probe residents.ps1): latest AI line per resident -> state.residents
@@ -200,6 +210,7 @@ $state = [ordered]@{
   history = @{ commits_total = $total; last_commit_ts = $lastC }
   reality = $reality
   media_outputs = $mediaOut
+  game_tasks = $gameTasks
   residents = $residents
 }
 

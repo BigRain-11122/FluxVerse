@@ -24,6 +24,13 @@
 # skips, an empty/unreadable lock gets 6 beats (~1.5s) before crash-takeover,
 # and the release unlinks only if the on-disk PID is still ours (an overage
 # takeover may have replaced the lock mid-round).
+# v1.6 (2026-09-25 r94, P-12 slices 1+2 / D-20260925-02): the '[stamp] round
+#   end' marker was appended to $lines AFTER WriteAllText - it never reached the
+#   log file (harmless legacy bug, caught while wiring OS_TICK_DONE emission).
+#   The marker now lands in the file right before the log write: the perceptor
+#   probe ticklog.ps1 (new, same round) reads complete round blocks off this
+#   log on the NEXT scan (10-min delayed, zero new stream writer - P-43
+#   single-writer law). No round-order change; exit semantics untouched.
 # v1.5 (2026-09-24 r69, P-2026-09-24-52 slice 3a): new round-end step - the
 # public snapshot export (export-public-snapshot.ps1): whitelist-sanitized
 # city snapshot for the visitor read API over the git read-only channel.
@@ -108,6 +115,11 @@ try {
     foreach ($l in $expOut) { $lines += ('  pub: ' + ([string]$l)) }
   } catch { $lines += ('  pub: export crashed (fail-soft): ' + ($_.Exception.Message -replace "[\r\n]", ' ')) }
 
+  # 2.6 round-end marker (v1.6, r94): stamp the block end BEFORE the log write
+  #     so the marker actually lands in the file (old code appended it after
+  #     WriteAllText = never written; the ticklog probe reads blocks by it)
+  $lines += ('[' + (Get-Date).ToString('yyyy-MM-dd HH:mm:ss') + '] round end')
+
   # 3. write log (UTF-8 no BOM)
   $utf8 = New-Object System.Text.UTF8Encoding($false)
   $old = ''
@@ -116,8 +128,6 @@ try {
 
   # 4. rotate logs older than 7 days
   Get-ChildItem $logsDir -Filter 'tick-*.log' | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-7) } | Remove-Item -Force -ErrorAction SilentlyContinue
-
-  $lines += ('[' + (Get-Date).ToString('yyyy-MM-dd HH:mm:ss') + '] round end')
   if ($skip) {
     Write-Output 'FluxVerseTick: backoff (perceptor tree dirty), round skipped'
     exit 0

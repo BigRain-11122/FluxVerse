@@ -1,5 +1,12 @@
 # Probe: fleet tasks (BigMoney task board) -> tasks entities
-# Events: TASK_CLAIM / TASK_DONE (registered; v0.1 emits TASK_CLAIM on new/changed task)
+# Events: TASK_CLAIM / TASK_DONE (both registered; P-12 slice 2 r94 splits the
+# transition into its true type - v0.1 fired TASK_CLAIM for EVERY change, so a
+# task flipping to done pulsed a claim: wrong direction for the city map
+# (TASK_DONE = robot-goes-home edge). done-family status -> TASK_DONE, the
+# terminal fact wins when owner and status both move; a new/changed owner ->
+# TASK_CLAIM; an ownerless board move stays silent (a registration without a
+# claim has no robot to animate). Claim-first board: a task that first appears
+# already claimed+done emits only TASK_DONE.)
 
 function Probe-fleet_tasks {
   param($ctx)
@@ -21,7 +28,12 @@ function Probe-fleet_tasks {
       $curVal = ''
       if ($ctx.cursor.ContainsKey($curKey)) { $curVal = $ctx.cursor[$curKey] }
       if ($curVal -ne ($ow + '|' + $st)) {
-        if ($ow) { & $ctx.AddEvent 'TASK_CLAIM' $ow 'bigmoney' 'quant' ($tid + ' -> ' + $st) }
+        $isDone = ($st -match '^(done|complete|completed|closed)$')
+        if ($ow -and $isDone) {
+          & $ctx.AddEvent 'TASK_DONE' $ow 'bigmoney' 'quant' ($tid + ' -> done')
+        } elseif ($ow) {
+          & $ctx.AddEvent 'TASK_CLAIM' $ow 'bigmoney' 'quant' ($tid + ' -> ' + $st)
+        }
         $ctx.cursor[$curKey] = ($ow + '|' + $st)
       }
     }

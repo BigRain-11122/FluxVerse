@@ -16,8 +16,11 @@
 .env
 .env.*
 
-# Perceptor runtime data (world-state.json / world-events.jsonl)
-world/
+# Perceptor runtime data (live stream / state / cursors stay untracked)
+world/*
+# P-43 chronicle backup: daily archives ARE git-tracked (world-events-YYYYMMDD.jsonl,
+# staged by the rotation; commit/push = tower-base chronicle cloud backup)
+!world/world-events-*.jsonl
 
 # Codely runtime (P-14: whole dir - auto-saves were the untracked-noise source)
 .codely-cli/

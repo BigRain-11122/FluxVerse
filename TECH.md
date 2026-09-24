@@ -70,7 +70,7 @@ Tools/perceptor/
 2. 事件流**自愈**：坏行（不可解析/未登记类型/缺 ts_utc）移入 `world-events.quarantine.jsonl` 并从主流剔除——门禁隔离坏死行，**永不因坏行永久卡死**；
 3. **游标增量**：`world/verify-state.txt` 记已验行数，只验新增行——verify 成本 O(增量)，文件再大也不变慢；**游标自检（r3）**：游标越界（轮转/截断后游标>行数）或游标档不可读 → WARN+回零全量重验收敛，永不静默信任坏游标；
 4. 写侧双保险（scan v0.3）：事件出产即校验（未登记类型当场隔离·不落主流）+ `ConvertTo-Json -Compress` 全转义；
-5. **按日轮转（scan v0.4·r3）**：scan 写事件前若活流跨日——昨日流整体归档 `world/world-events-<YYYYMMDD>.jsonl`（编年史留盘·引擎 L2 回放可读），活流只含当日；同日存档已存在则追加合并不覆盖（时钟回拨安全）；verify 游标自检负责轮转后再收敛；
+5. **按日轮转（scan v0.4·r3）**：scan 写事件前若活流跨日——昨日流整体归档 `world/world-events-<YYYYMMDD>.jsonl`（编年史留盘·引擎 L2 回放可读），活流只含当日；同日存档已存在则追加合并不覆盖（时钟回拨安全）；verify 游标自检负责轮转后再收敛；**P-43 编年史入 git（2026-09-24·r62）**：日档案解除 ignore（`.gitignore` 改 `world/*`+`!world/world-events-*.jsonl` 白名单反转——git 律：父目录被整目录排除时子件无法 re-include）+轮转段定向 `git add` 接线（fail-soft·暂存后随下一 commit 入史）+`.gitattributes` `-text` 行（档案字节稳定·blob=盘上字节·AC-G hash 审计友好）——编年史=塔基档案库·commit/push 即云备份（案 2 定案·infra-2 §4 P0-F-A·首档 09-23 已入册）；
 6. **隔离区 7 天生命周期（scan v0.6·r7·集团审计 P-14）**：quarantine 文件两梯清理——7 天未动整文件清空（mtime 判据=全部内容必过期）+行级 ts_utc>7d 修剪（retention.md R4 垃圾级·期满即清）；**fail-keep**：不可龄行（坏 JSON/缺 ts）永不静默毁证，留待整档陈旧梯收口——隔离区取证价值期内永不清、期满不再无限生长；
 7. 退出码：0=PASS（含自愈告警），1=FAIL（仅结构性问题：state 坏/registry 坏；tick 据此报警）。
 
@@ -111,7 +111,7 @@ gaming/FluxVerse/
 │   ├── perceptor/ (scan.ps1 + probes/ + verify.ps1)
 │   ├── tick/ (tick.ps1 + mandate.txt)
 │   └── city/ (bake-banner-text.ps1 · 引擎侧烘焙工具·ASCII 律)
-├── world/    # 运行时数据（gitignored）
+├── world/    # 运行时数据（gitignored·P-43 例外：world-events-*.jsonl 日档案入 git）
 ├── logs/     # tick 日志（gitignored）
 └── City/     # 团结引擎 2D 工程（M1 点火 r8：Tuanjie 1.10.3 内置 2D 模板·Assets/Packages/ProjectSettings 入库·Library/Temp/Logs gitignored）
 ```
@@ -173,6 +173,9 @@ gaming/FluxVerse/
 - [✅ 2026-09-24·r60 声明收口·回执 F-20260924-03] **P-2026-09-24-35/36 分层级决策/审查层位声明**（合流一次落·一周窗内·decision.md §8 四层+review.md 审查链·全部引用既有实例零新建）：本司决策面=**L0 团队面=TECH §九 自领池**（修红优先+每轮 1-2 小步·r50/r51 勘注收口先例）+**L1 部门面=门禁自审**（本司单线无部门层·以沙盒断言门+证明三门代行——探针 _template 契约+verify 两阶段晋升）——L2/L3 引用集团既有（L2=§九 单一权威制+T2 7 天否决窗+P1 署名律；L3=进化/决策轮只读+HQ-FEEDBACK 回执面〔r59 日清上报步+决策审核步〕）；本司审查面=轮内自审（六查快道+科学判断令）→L1=verify.ps1 门禁+scan+verify 双绿+EncodingGate 同源→L2=沙盒独立断言+跨会话 reload 门+多模态验图→L3 引用（集团夜轮四审计器+周轮抽审+决策回执核销）；Token 三问=L1（声明=既有机制指针·零生成触点）
 - [✅ 2026-09-24·r61 收口·回执 F-20260924-04] 集团转办件 **P-2026-09-24-40 AI 生成内容标识接线**（ledger 09-24 行·CEO 令「AI 生成内容标识 2025-09-01 已立法·直播/UGC/居民台词必须显著标注 AI 生成」——《人工智能生成合成内容标识办法》合规生死线·P2 小改搭车件·勿专轮抢建城车道）：**①三面角标落地**=template.html 增 .aitag 徽标（青色描边小 pill·纯文本件零美术）四处——欢迎线（Ollama 生成尾标）+居民之声卡头（AI 台词）+万民之声气泡卡头（台词池）+聚光灯行内（本地 LLM 事实级应答·点开即见）；中文「AI 生成」全在 template.html=UTF-8 数据件（编码律·脚本零中文字面量）；**②M2 barks 气泡层预留标识位**=规格随 P-22/P-23 消费线（M2 渲染层施工时同律落位）；**③直播推流角标位**=infra-5 推流链设计面预留（只登记不建）；**④判据双证**=voice-check 增标门两枚（模板徽标接线 ≥3 面+成品 html 含徽标串·中文字面量 [char]0x751F/0x6210 码位构造）+Edge 无头渲染截图 docs/citywatch-r61-ailabel.png 多模态验图绿（欢迎线/居民之声/万民之声三面徽标可见+整页零塌陷）；双门复跑=voice-check 24 断言+population-check 31 断言全绿；Token 三问=零新触点（静态标识·存量呈现面 grandfather）
 - [P1·转办件·新入册 2026-09-24·r61 登记（台账 SHA 变轮普查捕获）] 集团转办件 **P-2026-09-24-41 脑塔↔团结引擎架构 v1.0 正典化+事件映射对齐**（ledger P-2026-09-24-41·CEO 亲拟件=docs/design/brain-engine-architecture.md·commit 3e96252 原样保全——脑塔=大脑[感知/决策/写事件·不碰场景]/引擎=身体[读事件/渲染/回传状态·不做决策]/world-events.jsonl=神经总线+单向律+十事件→演出映射表+city_action 映射字段）：**①事件路由器映射对齐 CEO 正典表**——CEO_ORDER 现实现=塔基金晕金（r12）·CEO 正典=天线白光脉冲（五色律 CEO 纯白）=对齐升格项+补齐八型映射（DECISION 切顶蓝绿/TASK_CLAIM 窗灯亮/TASK_DONE 机器人回家窗灯灭/COMMIT 过江光流/BACKTEST 扭塔金脉冲/DEPLOY 方塔青闪/NEW_RESIDENT 基座光点/NIGHT_ROUND 扫描带）；②events-registry 十类型登记 city_action 字段+映射表引用架构件（TECH §五 加字段任意·零 T2）；③判据=十事件各一演出实证截图+CEO_ORDER 白光实测（断言=白色系非金色系）——**r61 只登记不施工**（防双领·引擎侧需整轮编辑器预算·下轮候选）；Token 三问=L1（registry 字段=确定性 schema 编辑·零 LLM）
+
+- [P1·转办件·新入册 2026-09-24·r62 登记（台账 SHA 变轮普查捕获）+**①P0 切片同轮收口**] 集团转办件 **P-2026-09-24-43 world-events 内部总线定案+P0 编年史备份**（ledger P-2026-09-24-43·正典=cph4/research/R-20260924-infra-2-events.md·案 2「单写者收编」定案=异机禁直写 world/、自发事件走各自仓 inbox 文件→bm-a scan 合并装配单流·T2 否决窗 7 天）：**①P0 部分已收口（r62·勿重领）**=编年史日档案入 git——`.gitignore` 精修（`world/`→`world/*`+`!world/world-events-*.jsonl` 白名单反转·git 律=父目录整排除时子件无法 re-include）+scan v0.6.1 轮转段定向 add 接线（`git add -- <档案>`·fail-soft try/catch·覆盖创建/时钟回拨合并两径·暂存后随下一 commit 入史=轮转后首个非静轮自动收档）+`.gitattributes` `-text` 行（档案字节稳定·blob=盘上字节·autocrlf=true 实勘下防行尾突变）+TECH §四登记行+首档种子入册（world-events-20260923.jsonl 实测 1,841 行/1,325,662B——clone 可重建起点成立）；**诚实注记**：台账行估「~150-400KB/日」vs infra-2 实测 1.2-1.9MB/日（09-23 高强度日 1.33MB）——按定案执行不重开裁决·实测数入册供周轮复核；fail-soft 边界=git add 失败档案仍留盘不丢（暂存延迟至下轮）；沙盒断言=logs/devloop-r62-chronicle-test.ps1（gitignore 语义 10 例+轮转暂存/合并再暂存/失败不拖垮轮/恢复补暂存/无轮转零动作）+真机 scan+verify 双绿；**余面待领（勿每轮重推导）**：②案 2 ingest 步（~40 行·`inbox:<batch>` 游标+processed/ 收编+registry 两步律+上线先「只记日志」观察 1 天）③tick.lock 补 PID 判活（对齐 scan.lock·~5 行）④测量律=world\ 读取一律显式 UTF-8（探针契约第 8 律·GBK 误读曾报 316 条假 PARSE_FAIL）；验收=infra-2 §5 AC-A/B/F+档案入 git 后 clone 可重建；Token 三问=L1（git/gitignore/PS 确定性操作·零生成触点）
+- [P2·转办件·新入册 2026-09-24·r62 登记（台账 SHA 变轮普查捕获）·**只登记不施工（P2·不抢城建车道=CEO 同令）**] 集团转办件 **P-2026-09-24-45 直播推流全链路 FluxVerse 切片**（ledger P-2026-09-24-45·正典=cph4/research/R-20260924-infra-5-stream.md·三平台通道异构=B站先行→视频号→抖音 P3 默认关）：①City 常驻播放器 build（当前只有编辑器批跑=R-5 待证清单之首）②采集端选型实证（引擎 ReadPixels 管道 vs ddagrab 前台捕获）③NVENC 编码+一源三推工程件（GPU 车道与回测动员 CPU 无争用）④DANMAKU 四型 T2 登记（DANMAKU_MSG/GIFT/ENTER/LIKE·规格 R-5 §4）⑤AI 生成标识角标位=P-40 已在册勿重领；账号资质=CEO 物理件已入 orders ③ 区（禁代办）；分阶段验收=infra-5 §4（P0 单平台最小闭环→P3 24h 编排·发布锚律=先 tag 后播）；Token 三问=L1（工程件+登记=确定性·零生成触点）
 
 ## 十、溯源
 

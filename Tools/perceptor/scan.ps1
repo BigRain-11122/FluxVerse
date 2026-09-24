@@ -12,6 +12,11 @@
 #   is archived whole as world/world-events-<YYYYMMDD>.jsonl (chronicle stays on
 #   disk for engine L2 replay); the live stream only ever holds today's events.
 #   verify.ps1 cursor self-check detects the shrink and rebases events_verified.
+# v0.6.1 2026-09-24 (r62, group transfer P-43 P0): chronicle backup - the daily
+#   rotation now git-stages the archive right where it happens (targeted add,
+#   fail-soft; .gitignore whitelist-inverts so world-events-*.jsonl archives
+#   are tracked while the live stream / state / cursors stay ignored). The
+#   archive is the tower-base chronicle: commit/push = cloud backup.
 # Consolidated 2026-09-23 (CEO audit fix F1/F2/F3/S2, dual-session merge - single executor):
 #   - F1: unregistered/malformed events are QUARANTINED at write time
 #     (world-events.quarantine.jsonl, forensic trail kept), never into the live stream;
@@ -242,6 +247,15 @@ if (Test-Path $eventsFile) {
       Move-Item $eventsFile $archive
     }
     $debug += ('rotation: live stream archived to ' + [System.IO.Path]::GetFileName($archive))
+    # P-43 chronicle backup (r62): the archive is the city chronicle - stage it
+    # right here (targeted add, never -A) so the next commit carries it into
+    # git history. Fail-soft: a git hiccup must never kill the scan round; the
+    # archive stays on disk, the next rotation/round retries the pickup.
+    try {
+      & git -C $repoRoot add -- $archive 2>$null
+      if ($LASTEXITCODE -eq 0) { $debug += ('chronicle backup: staged ' + [System.IO.Path]::GetFileName($archive)) }
+      else { $debug += 'chronicle backup: git add failed (fail-soft)' }
+    } catch { $debug += 'chronicle backup: git add error (fail-soft)' }
   }
 }
 # r7/P-14: quarantine 7-day lifecycle (retention.md R4 - expired rows are garbage)
@@ -282,5 +296,5 @@ foreach ($k in $cursor.Keys) { $curLines += ($k + '=' + $cursor[$k]) }
 [System.IO.File]::WriteAllText($cursorFile, ($curLines -join "`n") + "`n", $utf8)
 
 Remove-Item $lockFile -Force -ErrorAction SilentlyContinue   # release (stale takeover covers hard crashes)
-Write-Output ('perceptor v0.6 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
+Write-Output ('perceptor v0.6.1 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
 $debug | ForEach-Object { Write-Output ('  ' + $_) }

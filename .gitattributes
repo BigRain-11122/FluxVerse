@@ -1,0 +1,6 @@
+# P-43 chronicle backup (2026-09-24): daily event archives are byte-stable
+# data files. -text disables EOL conversion (blob == disk bytes, LF) so the
+# chronicle stays hash-stable for audit (infra-2 AC-G) and survives clones
+# on any autocrlf setting; git diffs treat them as binary, keeping 1MB+
+# archive diffs cheap.
+world-events-*.jsonl -text

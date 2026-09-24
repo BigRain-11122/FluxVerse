@@ -13,6 +13,16 @@
 # Expected-size manifest fails loud: a variant silhouette drift breaks the bake,
 # not the scene. Deterministic derivative of a licensed pack asset; consumption
 # provenance rows live in TECH sec.9 (P-21(3) ledger line, r44).
+# r93 adds the animated-strip tier (P-69 slice-1 vehicle systematization face,
+# TECH sec.9 P-69 row r93): the singles-tier sedan frames (61x37, 1.65:1 =
+# the R-20260924-m1-visual-fix "short and tall" defect) are retired from the
+# scene in favor of the 3/4-view strip sedans (tight 78x36 incl. the pack's
+# baked opaque ground-shadow band, 2.17:1, wheels verified) plus the animated
+# bus row sprite (115x62, pure side elevation, tires+hubcaps verified). The
+# r91 survey estimate "65x20 / 125x65" does not survive component-level
+# measurement (78x36 / 115x62 actual) - manifest pins the measured rects and
+# fails loud on drift. Mirrored west-facing sedan = pixel-exact horizontal
+# flip (NearestNeighbor, negative dest width), a standard pack-asset transform.
 # ASCII-only per PS5.1 encoding law (no CJK anywhere in this body).
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing
@@ -80,3 +90,62 @@ foreach ($kv in $manifest.GetEnumerator()) {
     Write-Output ("$outName <- $single tight=$got")
 }
 Write-Output ("cropped " + $manifest.Count + " vehicle frames -> $framesDir")
+
+# ---- r93: animated-strip tier (P-69 slice-1 vehicle face) ----
+# name -> @{ sheet = strip file stem; dir = subfolder; rect = "x,y,w,h"; mirror = bool }
+# rects = measured component bounds (logs/devloop-r93-vehicleframescan.ps1);
+# any pack revision that drifts the sprite layout breaks the bake, not the scene.
+$stripManifest = [ordered]@{
+    "vehicle-car2-w.png"  = @{ sheet = "Car_2_complete_1"; dir = "Cars_16x16";  rect = "17,124,78,36";  mirror = $true }
+    "vehicle-car2-qe.png" = @{ sheet = "Car_2_complete_3"; dir = "Cars_16x16";  rect = "17,124,78,36";  mirror = $false }
+    "vehicle-car2-e.png"  = @{ sheet = "Car_2_complete_5"; dir = "Cars_16x16";  rect = "17,124,78,36";  mirror = $false }
+    "vehicle-bus2-r.png"  = @{ sheet = "Buses_1";          dir = "Buses_16x16"; rect = "157,114,115,62"; mirror = $false }
+}
+$animDir = Join-Path $a02.FullName "Modern_Exteriors_16x16\Animated_16x16\Vehicles_16x16"
+if (-not (Test-Path $animDir)) { throw "animated vehicles dir not found: $animDir" }
+
+foreach ($kv in $stripManifest.GetEnumerator()) {
+    $outName = $kv.Key
+    $sheet = $kv.Value.sheet
+    $sub = $kv.Value.dir
+    $rxry = $kv.Value.rect.Split(',')
+    $rx = [int]$rxry[0]; $ry = [int]$rxry[1]; $rw = [int]$rxry[2]; $rh = [int]$rxry[3]
+    $mirror = [bool]$kv.Value.mirror
+    $srcPath = Join-Path (Join-Path $animDir $sub) ($sheet + ".png")
+    if (-not (Test-Path $srcPath)) { throw "strip sheet missing: $sheet" }
+    $bmp = [System.Drawing.Bitmap]::FromFile($srcPath)
+    $frame = New-Object System.Drawing.Bitmap ($rw, $rh)
+    $g = [System.Drawing.Graphics]::FromImage($frame)
+    $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+    $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
+    $srcRect = New-Object System.Drawing.Rectangle ($rx, $ry, $rw, $rh)
+    if ($mirror) {
+        # pixel-exact horizontal flip: negative dest width (right edge -> 0)
+        $dstRect = New-Object System.Drawing.Rectangle ($rw, 0, -$rw, $rh)
+    } else {
+        $dstRect = New-Object System.Drawing.Rectangle (0, 0, $rw, $rh)
+    }
+    $g.DrawImage($bmp, $dstRect, $srcRect, [System.Drawing.GraphicsUnit]::Pixel)
+    $g.Dispose()
+    # tight-bounds verify: the crop must be exactly opaque-edge to opaque-edge
+    $minx = 9999; $miny = 9999; $maxx = -1; $maxy = -1
+    for ($y = 0; $y -lt $frame.Height; $y++) {
+        for ($x = 0; $x -lt $frame.Width; $x++) {
+            if ($frame.GetPixel($x, $y).A -gt 16) {
+                if ($x -lt $minx) { $minx = $x }
+                if ($x -gt $maxx) { $maxx = $x }
+                if ($y -lt $miny) { $miny = $y }
+                if ($y -gt $maxy) { $maxy = $y }
+            }
+        }
+    }
+    if ($minx -ne 0 -or $miny -ne 0 -or $maxx -ne ($rw - 1) -or $maxy -ne ($rh - 1)) {
+        throw ("strip rect not tight for " + $sheet + ": opaque " + $minx + "," + $miny + " " + ($maxx - $minx + 1) + "x" + ($maxy - $miny + 1) + " vs rect " + $rw + "x" + $rh + " - pack layout drifted, fix the manifest")
+    }
+    $outPath = Join-Path $framesDir $outName
+    $frame.Save($outPath, [System.Drawing.Imaging.ImageFormat]::Png)
+    $frame.Dispose()
+    $bmp.Dispose()
+    Write-Output ("$outName <- $sheet rect=$rx,$ry ${rw}x${rh} mirror=$mirror tight=ok")
+}
+Write-Output ("cropped " + $stripManifest.Count + " strip-tier frames -> $framesDir")

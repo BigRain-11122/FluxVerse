@@ -1,19 +1,25 @@
-// FluxVerse P-28(3) pool-coverage face (r44) + vertical-avenue facings (r45):
+// FluxVerse P-28(3) pool-coverage face (r44) + r93 vehicle systematization
+// (P-69 slice-1):
 // batch proof for the parked-vehicle layer (AA-016.02 S-library direct-use,
-// provenance = TECH sec.9 P-21(3) r44/r45). Sentinel pattern (r35..r43 style):
+// provenance = TECH sec.9 P-21(3) r44/r45 + P-69 r93 rows). Sentinel pattern (r35..r43 style):
 //   pass 1: logs/vehicle.run         -> FluxVerse.VehicleProof.BatchRun   -> logs/vehicle.done
 //   pass 2: logs/vehicle-reload.run  -> FluxVerse.VehicleProof.ReloadGate -> logs/vehicle-reload.done
 // Sections:
-//  A pure-core gates (VehicleRules, headless): 10-entry manifest, paths under
-//    Art/Vehicles/frames/, 10 DISTINCT files (r35 free-variety law), world sizes
+//  A pure-core gates (VehicleRules, headless): 8-entry manifest (r93: the two
+//    32x57 avenue front/rear placeholder blocks are retired), paths under
+//    Art/Vehicles/frames/, 8 DISTINCT files (r35 free-variety law), world sizes
 //    == px/PPU24 exact, every vehicle fully inside the L0 view AND the tint
-//    band, pairwise vehicle spacing >= 2.6u, clearance vs robots >= 2.6u,
+//    band, r93 vehicle-systematization gates (R-20260924-m1-visual-fix
+//    sec.2-1: sedan strip frames pinned 78x36 at aspect >= 2.0 and height
+//    <= 1.6u so a sedan never towers over the 1.33u residents; bus pinned
+//    115x62 at aspect >= 1.75; retired avenue placeholder paths banned from
+//    the table), pairwise vehicle spacing >= 2.6u, clearance vs robots >= 2.6u,
 //    vs residents >= 2.8u (r37 spacing family), no overlap with any mounted
 //    neon-sign rect expanded by 0.4u (r35 law), street-layer order 7.
 //  B asset gate: the 10 consumed frames forced to Sprite + Single + Point +
 //    PPU24 + no mips (r34 importer-default-PPU disease law, PPU24 variant);
 //    rect == manifest px, bounds == manifest world size (r37 zero-floating kin).
-//  C CityScene wiring: stale Vehicle* sweep -> 10 GOs from the table (fresh
+//  C CityScene wiring: stale Vehicle* sweep -> 8 GOs from the table (fresh
 //    LoadAssetAtPath per r10 law) -> FEET stand gate re-derived from the live
 //    tilemaps (Street class = Roads cell at the feet point, Plaza class =
 //    Ground pavement cell - never water/roof/air) -> idempotent second
@@ -26,7 +32,7 @@
 //    for every vehicle, night presence under the tint, night luminance < dusk
 //    (atmosphere owns the built city; parked paint is scenery, not light).
 //  E pass 2: everything survives an editor restart (persisted scene objects +
-//    importer settings + exactly 10, zero duplicates).
+//    importer settings + exactly 8, zero duplicates).
 // Fail-loud: any broken assumption throws into the .done report. ASCII only. No 3D.
 using System;
 using System.IO;
@@ -100,7 +106,7 @@ namespace FluxVerse
         static string Prove()
         {
             // ---- A. pure-core gates on the manifest ----
-            Chk(VehicleRules.Count == 10, "manifest must hold 10 vehicles");
+            Chk(VehicleRules.Count == 8, "manifest must hold 8 vehicles (r93: two avenue placeholder blocks retired)");
             Chk(VehicleRules.Order == 7, "street layer order must be 7 (signs 6 < street < tint 8)");
             Chk(VehicleRules.PPU == 24f, "PPU24 divisor law (r37 density law)");
             int unique = 0;
@@ -111,6 +117,29 @@ namespace FluxVerse
                 Chk(v.path.StartsWith("Assets/Art/Vehicles/frames/"),
                     "vehicle path outside the frames dir: " + v.path);
                 Chk(v.pxW > 0 && v.pxH > 0, "bad px size at " + v.name);
+                Chk(v.path != "Assets/Art/Vehicles/frames/vehicle-car-up.png"
+                    && v.path != "Assets/Art/Vehicles/frames/vehicle-car-down.png",
+                    "retired avenue placeholder block back in the table (r93 law): " + v.name);
+                // r93 systematization gates (R- sec.2-1: elongated side views with
+                // wheels; pack-measured pins catch any strip-layout drift)
+                bool sedan = v.name == "VehicleCarW" || v.name == "VehicleCarQE" || v.name == "VehicleCarE";
+                bool bus = v.name == "VehicleBusN";
+                float aspect = (float)v.pxW / (float)v.pxH;
+                if (sedan)
+                {
+                    Chk(v.pxW == 78 && v.pxH == 36, "sedan frame drift (pack strip layout changed): " + v.name
+                        + " " + v.pxW + "x" + v.pxH);
+                    Chk(aspect >= 2.0f, "sedan not elongated (r93 side-view law, retired singles were 1.65): "
+                        + v.name + " aspect=" + aspect.ToString("F2"));
+                    Chk(VehicleRules.WorldH(i) <= 1.6f, "sedan towers over the 1.33u residents (r93 law): "
+                        + v.name + " h=" + VehicleRules.WorldH(i).ToString("F2"));
+                }
+                if (bus)
+                {
+                    Chk(v.pxW == 115 && v.pxH == 62, "bus frame drift (pack sheet layout changed): " + v.name
+                        + " " + v.pxW + "x" + v.pxH);
+                    Chk(aspect >= 1.75f, "bus not elongated (r93 law): aspect=" + aspect.ToString("F2"));
+                }
                 Chk(Math.Abs(VehicleRules.WorldW(i) - v.pxW / 24f) < 1e-5f
                     && Math.Abs(VehicleRules.WorldH(i) - v.pxH / 24f) < 1e-5f,
                     "world size != px/PPU24 at " + v.name);
@@ -122,7 +151,7 @@ namespace FluxVerse
                 Chk(!seen, "clone row: file reused at " + VehicleRules.Name(i) + " (r35 free-variety law)");
                 if (!seen) unique++;
             }
-            Chk(unique == 10, "expected 10 distinct frame files, got " + unique);
+            Chk(unique == 8, "expected 8 distinct frame files, got " + unique);
             // vehicle-vs-vehicle spacing (center distance law)
             for (int i = 0; i < VehicleRules.Count; i++)
                 for (int j = i + 1; j < VehicleRules.Count; j++)
@@ -179,8 +208,8 @@ namespace FluxVerse
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             Chk(scene.isLoaded, "CityScene failed to open");
             BuildVehicles();
-            BuildVehicles();   // idempotency: the second sweep+build must land on exactly 10
-            Chk(CountVehicles() == 10, "idempotent rebuild count != 10: " + CountVehicles());
+            BuildVehicles();   // idempotency: the second sweep+build must land on exactly Count
+            Chk(CountVehicles() == VehicleRules.Count, "idempotent rebuild count != table: " + CountVehicles());
             // FEET stand gate, re-derived from the live tilemaps (never comments):
             // Street class feet cell must hold a Roads tile; Plaza class a Ground tile.
             Tilemap ground = TilemapByName("Ground");
@@ -208,7 +237,7 @@ namespace FluxVerse
             Chk(saved, "scene save failed");
 
             Scene reopened = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-            Chk(CountVehicles() == 10, "persisted vehicle count != 10: " + CountVehicles());
+            Chk(CountVehicles() == VehicleRules.Count, "persisted vehicle count != table: " + CountVehicles());
             for (int i = 0; i < VehicleRules.Count; i++)
             {
                 GameObject go = GameObject.Find(VehicleRules.Name(i));
@@ -261,11 +290,11 @@ namespace FluxVerse
             amb.EnsureVisuals();
             amb.ApplyAmbient(AmbientTier.Dusk);
             SpriteRenderer[] veh = CollectVehicleRenderers();
-            Chk(veh.Length == 10, "renderer collection != 10");
+            Chk(veh.Length == VehicleRules.Count, "renderer collection != table");
             SetVehicles(veh, false);
             Texture2D duskBase = Shot(cam, null);
             SetVehicles(veh, true);
-            Texture2D duskOn = Shot(cam, "m1-r45-avenues-dusk.png");
+            Texture2D duskOn = Shot(cam, "m1-r69-vehicles-dusk.png");
             int duskTot = 0; int duskMin = int.MaxValue; string duskWorst = "";
             for (int i = 0; i < VehicleRules.Count; i++)
             {
@@ -281,7 +310,7 @@ namespace FluxVerse
             SetVehicles(veh, false);
             Texture2D nightBase = Shot(cam, null);
             SetVehicles(veh, true);
-            Texture2D nightOn = Shot(cam, "m1-r45-avenues-night.png");
+            Texture2D nightOn = Shot(cam, "m1-r69-vehicles-night.png");
             int nightTot = 0; float nightLum = 0f; int nightMin = int.MaxValue; string nightWorst = "";
             for (int i = 0; i < VehicleRules.Count; i++)
             {
@@ -308,8 +337,8 @@ namespace FluxVerse
             UnityEngine.Object.DestroyImmediate(nightBase); UnityEngine.Object.DestroyImmediate(nightOn);
 
             return "asserts=" + asserts
-                + " table=10 unique_files=" + unique
-                + " scene(saved=" + saved + ",10 persisted,feet_gate=roads/pavement,neon" + NeonRules.Count
+                + " table=" + VehicleRules.Count + " unique_files=" + unique
+                + " scene(saved=" + saved + "," + VehicleRules.Count + " persisted,feet_gate=roads/pavement,neon" + NeonRules.Count
                 + "_kept,neighbors_ok)"
                 + " render(dusk_px=" + duskTot + " worst=" + duskWorst + ":" + duskMin
                 + " night_px=" + nightTot + " worst=" + nightWorst + ":" + nightMin
@@ -321,7 +350,7 @@ namespace FluxVerse
         {
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             if (!scene.isLoaded) throw new InvalidOperationException("CityScene failed to load");
-            Chk(CountVehicles() == 10, "vehicle count after editor restart != 10: " + CountVehicles());
+            Chk(CountVehicles() == VehicleRules.Count, "vehicle count after editor restart != table: " + CountVehicles());
             for (int i = 0; i < VehicleRules.Count; i++)
             {
                 GameObject go = GameObject.Find(VehicleRules.Name(i));
@@ -334,13 +363,14 @@ namespace FluxVerse
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(NeonRules.NamePrefix)) neonKept++;
             Chk(neonKept == NeonRules.Count, "neon signs lost across restart: " + neonKept);
-            // importer spot check across the restart (sedan / bus / cart / sign / avenue car)
+            // importer spot check across the restart (mirrored sedan / sedan /
+            // bus / cart / sign - all live table files, r93 set)
             string[] spot = {
-                "Assets/Art/Vehicles/frames/vehicle-car-l.png",
-                "Assets/Art/Vehicles/frames/vehicle-bus-r.png",
+                "Assets/Art/Vehicles/frames/vehicle-car2-w.png",
+                "Assets/Art/Vehicles/frames/vehicle-car2-e.png",
+                "Assets/Art/Vehicles/frames/vehicle-bus2-r.png",
                 "Assets/Art/Vehicles/frames/vehicle-cart-food.png",
-                "Assets/Art/Vehicles/frames/vehicle-stop-sign.png",
-                "Assets/Art/Vehicles/frames/vehicle-car-up.png" };
+                "Assets/Art/Vehicles/frames/vehicle-stop-sign.png" };
             foreach (string p in spot)
             {
                 TextureImporter imp = (TextureImporter)TextureImporter.GetAtPath(p);
@@ -360,7 +390,7 @@ namespace FluxVerse
             GameObject camGo = GameObject.Find("CityCamera");
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f, "L0 camera broken after restart");
-            return "reload_gate=OK vehicles=10/10 persisted neon=" + NeonRules.Count + "/" + NeonRules.Count
+            return "reload_gate=OK vehicles=" + CountVehicles() + "/" + VehicleRules.Count + " persisted neon=" + NeonRules.Count + "/" + NeonRules.Count
                 + " importers=sprite+point+ppu24+nemip"
                 + " skyline=2/2 neighbors=6 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
         }

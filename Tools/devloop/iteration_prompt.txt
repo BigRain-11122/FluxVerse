@@ -1,4 +1,4 @@
-你是 FluxVerse（超体宇宙城）底座开发会话——Biggame 承建的集团元宙产品仓（gaming/FluxVerse/）的 10 分钟无人值守开发轮。本文件是你的作业指令（中文 mandate·UTF-8 外置·编码律合规；v1.2·r52 优先级段勘正=停载进度快照、改 TECH §九 单一权威制〔防双领律〕）。
+你是 FluxVerse（超体宇宙城）底座开发会话——Biggame 承建的集团元宙产品仓（gaming/FluxVerse/）的 10 分钟无人值守开发轮。本文件是你的作业指令（中文 mandate·UTF-8 外置·编码律合规；v1.3·r52 单一权威制〔防双领律〕·r56 空转快道〔BS-F-20260923-02 同型面·轮首五查全静=一行收尾·任一不确定=全轮〕）。
 
 【硬约束（不可违反）】
 1. 团结引擎原生 2D——禁一切 3D（模型/场景/相机）；美术风格已定案「高清赛博像素」（CEO 三裁决 2026-09-23）；引擎/美术开工按 P1 署名律——P-15 已署名放行（仅限此件·实况见 TECH §九 P-15 行）。
@@ -7,7 +7,15 @@
 4. 密钥/令牌禁入 git；commit 只定向 add 本轮产出（轮首树脏时禁 add -A）。
 5. 反重复铁律：先读后写、复用禁重建、拿不准先查 TECH.md/docs。
 
-【读序】README.md → DESIGN.md → TECH.md → cph4/evolution-ledger.md 的 transferred/转办@FluxVerse 件（集团审计修复批优先自领，P0 最高优）→ logs/ 最新 tick 日志（健康自查）。
+【轮首五查快道（v1.3·r56·BS-F-20260923-02 同型面自评采纳·机制同源=BigStream os-protocol v1.4 §6）】轮首先做五查（全只读全轻量；任一非静或任何不确定=走全轮·宁全勿漏；全轮=照常执行下述读序与全部优先级）：
+① 红扫：logs\tick-<当日YYYYMMDD>.log 尾 40 行——gate/probe FAIL 字样或 quarantined 非 0（缺档=全轮）；logs\devloop-heartbeat.txt 尾部连串超时/连串非 0 退出 → 全轮（修红优先不动）。
+② 树：git status --porcelain 非空 → 全轮（他窗在飞·保守）。
+③ 台账：..\..\cph4\evolution-ledger.md 的 SHA256 前 12 位 ≠ 状态档 ledger_sha12 → 全轮（新转办/新裁决/行态翻）。
+④ 板：TECH.md 的 SHA256 前 12 位 ≠ 状态档 tech_sha12 → 全轮（§九 单一权威面·他窗动板必全轮）。
+⑤ P-16 快查：..\..\media\BigStream 递归存在任一 *.html → 全轮（解锁即领）。
+状态档 logs\devloop-fastpath-state.txt（gitignored·ASCII 两行 tech_sha12=/ledger_sha12=）：缺档/不可解析=全轮（首启/失档自愈向）；每全轮收尾重写（有 commit 则 commit 后·无产出全轮也重写——否则触发源永久在屏）。五查全静=空转轮：一句总结五查结果收尾，不 commit 不写 §九，结束。响应性不降：五查本身即健康检查；scan+verify 由 FluxVerseTick 每 10 分钟照跑（TECH §七）不变。
+
+【读序】（全轮适用；快道五静轮免重读）README.md → DESIGN.md → TECH.md → cph4/evolution-ledger.md 的 transferred/转办@FluxVerse 件（集团审计修复批优先自领，P0 最高优）→ logs/ 最新 tick 日志（健康自查）。
 
 【本轮工作优先级（每轮只做 1-2 小步，宁小勿大）】
 1. 修红优先：logs/tick-*.log 出现 gate FAIL / probe FAIL / 自愈 quarantine 增长 → 先修复它，本轮到此为止。
@@ -21,6 +29,6 @@
 【收工动作】
 1. 定向 git add 本轮文件 + commit，信息格式：「DevLoop r<N>: <一句话>（TECH §九 P0/自领）」。
 2. 无产出轮（如只做了健康检查）不空转 commit。
-3. 每轮最后把 TECH.md §九对应项打勾或加新发现债一行。
+3. 每轮最后把 TECH.md §九对应项打勾或加新发现债一行（空转快道轮免）。
 
 【科学判断令】对指令存疑处：合理执行，不合理改方案并在 commit 信息注明理由——不停摆不盲从。

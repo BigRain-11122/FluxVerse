@@ -33,14 +33,14 @@
 **自动化正法**（Unity Scripting API·AssetPostprocessor 官方范式原文：「Add this function to a subclass to get a notification just before the texture importer is run. This lets you set up default values for the import settings.」）：
 - `OnPreprocessTexture()` / `OnPreprocessAudio()` 子类回调=导入前设默认值的官方通道——一次落码，全批受益（治 A5）。
 
-## §三 修复规格（P-36·ready-to-paste·DevLoop 落地）
+## §三 修复规格（P-37·ready-to-paste·DevLoop 落地·P-36 已被并行窗占用顺延）
 
 ### 3.1 导入管线脚本（新建 `Assets/Editor/CityImportPostprocessor.cs`）
 
 **先例吸收**：DevLoop 已在消费面逐件手工执法「导入器四律」（point/PPU/透明底/nemip——r34 PPU100 显微陷阱律+r37 PPU24 分档变体实证），本管线=把已证四律**自动化为工程默认**，治 A5（未消费件与未来批次的裸奔面）；PPU 用**分档表**（世界律不动·除数吸收包像素密度——r37 法的正典化）。
 
 ```csharp
-// FluxVerse asset import pipeline v1 - P-36 (CEO order 2026-09-24)
+// FluxVerse asset import pipeline v1 - P-37 (CEO order 2026-09-24)
 // Policy: set defaults ONCE at import; userData marker guards manual overrides.
 using UnityEditor;
 using UnityEngine;

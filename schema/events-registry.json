@@ -22,7 +22,7 @@
     "MACHINE_RETIRE":     { "actor": "machine id", "zone": "any",         "desc": "machine retired - reserved" },
     "LINE_OPEN":          { "actor": "line id",    "zone": "any",         "desc": "five-step open-line progress - reserved" },
     "LINE_CLOSE":         { "actor": "line id",    "zone": "any",         "desc": "line closed - reserved" },
-    "TRANSFER":           { "actor": "machine id", "zone": "any",         "desc": "fleet bulk transfer - reserved" },
+    "TRANSFER":           { "actor": "machine id", "zone": "any",         "desc": "fleet bulk data transfer manifest landed (probe transfers r95 P-12 slice 3: paired sender/receiver manifests from transfer_manifest.ps1, one event per leg; actor = transfer id - the face carries no machine id, honesty law) - emitting since 2026-09-25 (P-12 slice 3, D-20260925-02)" },
     "MARKET_OPEN":        { "actor": "clock",       "zone": "quant",       "desc": "reality link: Shanghai exchange session opens (09:30 am / 13:00 pm) - T2 2026-09-23" },
     "MARKET_CLOSE":       { "actor": "clock",       "zone": "quant",       "desc": "reality link: Shanghai exchange session closes (11:30 lunch / 15:00 day close) - T2 2026-09-23" },
     "WEATHER_ALERT":      { "actor": "weather",     "zone": "any",         "desc": "reality link: Shanghai extreme weather (gale wind / heavy rain-snow / thunderstorm) - T2 2026-09-23" },

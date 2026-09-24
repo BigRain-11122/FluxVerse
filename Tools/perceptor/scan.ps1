@@ -132,6 +132,7 @@ foreach ($k in @($za.Keys)) {
 }
 $ordersPending = @(); if ($stateParts.ContainsKey('ceo_orders_pending')) { $ordersPending = $stateParts.ceo_orders_pending }
 $evOpen = 0; if ($stateParts.ContainsKey('evolution_open')) { $evOpen = [int]$stateParts.evolution_open }
+$hqfbOpen = 0; if ($stateParts.ContainsKey('hq_feedback_open')) { $hqfbOpen = [int]$stateParts.hq_feedback_open }   # r46: HQ feedback face (probe hq_feedback)
 $fleet = @(); if ($stateParts.ContainsKey('fleet')) { $fleet = $stateParts.fleet }
 if ($stateParts.ContainsKey('fleet_biggame')) { $fleet += $stateParts.fleet_biggame }   # F2: biggame machines join the city
 $tasks = @(); if ($stateParts.ContainsKey('tasks')) { $tasks = $stateParts.tasks }
@@ -186,6 +187,7 @@ $state = [ordered]@{
   )
   governance = @{
     ceo_orders_pending = $ordersPending
+    hq_feedback_open = $hqfbOpen
     evolution = @{ next_tick = 'SUN 09:17'; open_proposals = $evOpen }
   }
   history = @{ commits_total = $total; last_commit_ts = $lastC }

@@ -27,6 +27,7 @@
     "WEATHER_ALERT":      { "actor": "weather",     "zone": "any",         "desc": "reality link: Shanghai extreme weather (gale wind / heavy rain-snow / thunderstorm) - T2 2026-09-23" },
     "FX_TICK":            { "actor": "fx",         "zone": "quant",       "desc": "reality link: USDCNY reference rate changed (ECB via frankfurter) - T2 2026-09-23" },
     "GITHUB_EVENT":       { "actor": "github",      "zone": "any",         "desc": "reality link: public GitHub activity of group account (ecosystem pulse) - T2 2026-09-23" },
-    "RESIDENT_SAY":       { "actor": "resident id", "zone": "any",        "desc": "city resident AI line (local Ollama LLM, grounded in real events) - T2 2026-09-23 (CEO resident-AI order; plan=R-20260923-resident-ai.md)" }
+    "RESIDENT_SAY":       { "actor": "resident id", "zone": "any",        "desc": "city resident AI line (local Ollama LLM, grounded in real events) - T2 2026-09-23 (CEO resident-AI order; plan=R-20260923-resident-ai.md)" },
+    "HQ_FEEDBACK":        { "actor": "fluxverse",   "zone": "governance", "desc": "FluxVerse feedback row filed to the group up-channel (HQ-FEEDBACK.md, F-YYYYMMDD-NN) - T2 2026-09-24" }
   }
 }

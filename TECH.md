@@ -32,6 +32,7 @@ Tools/perceptor/
 │   ├── fx.ps1          # frankfurter ECB 汇率 → USDCNY+FX_TICK（资金道流量计·M1.5·零 key）
 │   ├── git.ps1         # 5 仓 git → COMMIT 事件+zones 活跃度+history
 │   ├── github_events.ps1 # GitHub 公共事件 → GITHUB_EVENT（数据道生态脉冲·M1.5·零 key）
+│   ├── hq_feedback.ps1  # 本仓根 HQ-FEEDBACK.md → HQ_FEEDBACK+governance.hq_feedback_open（向上反馈通道可视化·r46）
 │   ├── market.ps1      # akshare 交易日历+510300ETF 日线 → reality.market（fetcher=market_fetch.py·BigMoney 同源链·M1.5·零 key）
 │   ├── orders.ps1      # BigMoney fleet orders → CEO_ORDER（quant 面）
 │   ├── orders_bs.ps1   # BigStream/orders → CEO_ORDER（media 面）
@@ -119,7 +120,7 @@ gaming/FluxVerse/
 - [✅ 2026-09-23·r3] jsonl 按日轮转归档（scan v0.4：跨日活流整体归档 world-events-<日期>.jsonl·同日重档追加合并不覆盖·真机实证 353 行 142KB 转档；并发实证=他窗手动 scan 同窗竞跑零重复零丢·源级游标去重有效）
 - [✅ 2026-09-23·r3] verify 游标异常自检（v0.4：游标越界/不可读→WARN+回零全量重验收敛——实证 353>3 警告回零；孤儿旧游标件 world/verify-cursor.txt 已清·现行唯一游标=verify-state.txt）
 - [P2] MiniGame 任务面板/BigStream 产出探针
-- [P2] HQ-FEEDBACK 感知探针（向上反馈通道可视化）
+- [✅ 2026-09-24·r46] **HQ-FEEDBACK 感知探针**（向上反馈通道可视化·evolution §7 面制本仓回执面的感知正体）：新探针 `probes/hq_feedback.ps1`（本仓根 HQ-FEEDBACK.md·**本仓自有件零跨仓读**·探针六律全符）+ 新事件型 **HQ_FEEDBACK** T2 登记（actor=fluxverse·zone=governance·**否决窗至 2026-10-01**·先登记后产出律）；游标=**内容寻址** `hqfb:<F-ID>/<现象列前30字>`（r6 hqorder 同式·'=' 剥离防游标行断键）——实体编辑（现象变更）一键重发=新信号、状态翻转（open→done）零重发只动 open 计数；**迁移语义**=当日未脉冲行一次性补齐（去重权威=活流）+历史行静默种子禁旧史重放（r6 同律）；state 面=`governance.hq_feedback_open`（scan 装配加性字段·协议 0.1 加字段自由·verify 只断言 ceo_orders_pending 在位故无破坏）；沙盒 25 断言全绿（logs/devloop-r46-hqfb-test.ps1：当日恰发 3/历史静默种子/幂等零发/活流去重/编辑恰重发 1/状态翻转零发+open 计数动/缺档静默/'='剥除+k=v 往返/60 字截断/**真件当日零爆**〔4 行全 F-20260923 昨日件·游标 4 键静默〕）+真机 scan+verify 双绿（**16 探针 OK**·quarantined=0·governance.hq_feedback_open=4 实证）；**诚实律两面**=引擎侧映射留否决窗后/首个真发事件时再接（今日零实发=无映射可证·禁假事件）、音频行按 r30 三交集律（流内实发型×R- §1.1 表×在盘资产）暂无行；**沙盒夹具复发实证 r32 A10 律**：`(Col-Count -eq 0)` 被解析为函数带参调用（-eq 0 进 $args 被吞·表达式直通返回计数·[bool] 强转 0=假红）——首跑 3 假红全在夹具零在探针（探针经独立诊断复证 run2 fired=0）·法=函数调用自括号包裹再比较 `((Col-Count) -eq 0)`
 - [✅ 2026-09-23·r19] 城市美术资产管线概念稿收口（M0 全闭）：黄昏档+夜档概念稿=**真引擎出图** `docs/design/m0-city-concept-{dusk,night}.png`（城市即概念稿——ConceptProof 哨兵批渲染·只读场景零保存·artifact 回读门 15 断言绿：dusk 地平暖 +0.54 与 r13 逐位同源/紫顶 −0.07/夜顶 0.037/双图城市带防空白门 215000·133885 采样 px+多模态四项双绿〔一江两岸完整/暖紫金黄昏/夜蓝黑有灯/零伪影/纯 2D〕；后续美术扩容统一走 P-21 消费链，风格锚=art-target-dusk+1 号高清赛博像素正典）
 - [✅ 2026-09-23·r1] 现实链接首批五探针（CEO 新令「要和现实产生链接和互动」·通道台账与视觉映射=docs/research/R-20260923-reality-link.md + DESIGN §十五）：clock/weather/fx/github_events 四针已落地（全零 key·静默降级·游标增量），**market+calendar 一针剩余**（akshare 依赖 BigMoney 同源·交易日历可修 clock 的节假日近似——下轮候选）
 - [✅ 2026-09-23·r1] 新事件登记 MARKET_OPEN/MARKET_CLOSE/WEATHER_ALERT（T2·7 天否决窗）——实际登记五型（+FX_TICK/GITHUB_EVENT），否决窗至 2026-09-30

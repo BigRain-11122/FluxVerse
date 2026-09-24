@@ -1,0 +1,16 @@
+# FluxVerse DevLoop r101 landmark/ladder sheet scan list (UTF-8 data file; reader script is ASCII-only)
+# Line kinds: d:<repo-relative dir>  = scan every *.png inside (sorted by name)
+#             f:<repo-relative file> = scan one file
+#             optional suffix |cells=N1,N2 overrides cell grids (default: 48)
+# Consumer: Tools/city/scan-landmark-sheets.ps1 (P-69 pre-construction survey, r93 frame-bag method)
+d:..\MiniGame\Art Assets\AA-016_SceneBG背景_现代像素城镇全套_宁静城镇\AA-016.02_SceneBG背景_现代室外图块三档_modernexteriors-win\Modern_Exteriors_48x48\ME_Theme_Sorter_48x48\12_Hotel_and_Hospital_Singles_48x48
+d:..\MiniGame\Art Assets\AA-016_SceneBG背景_现代像素城镇全套_宁静城镇\AA-016.02_SceneBG背景_现代室外图块三档_modernexteriors-win\Modern_Exteriors_48x48\ME_Theme_Sorter_48x48\5_Floor_Modular_Building_Singles_48x48
+d:..\MiniGame\Art Assets\AA-016_SceneBG背景_现代像素城镇全套_宁静城镇\AA-016.02_SceneBG背景_现代室外图块三档_modernexteriors-win\Modern_Exteriors_48x48\ME_Theme_Sorter_48x48\4_Generic_Building_Singles_48x48
+d:..\MiniGame\Art Assets\AA-016_SceneBG背景_现代像素城镇全套_宁静城镇\AA-016.02_SceneBG背景_现代室外图块三档_modernexteriors-win\Modern_Exteriors_48x48\ME_Theme_Sorter_48x48\7_Villas_Singles_48x48
+d:..\MiniGame\Art Assets\AA-016_SceneBG背景_现代像素城镇全套_宁静城镇\AA-016.02_SceneBG背景_现代室外图块三档_modernexteriors-win\Modern_Exteriors_48x48\ME_Theme_Sorter_48x48\9_Shopping_Center_and_Markets_Singles_48x48
+d:..\MiniGame\Art Assets\AA-016_SceneBG背景_现代像素城镇全套_宁静城镇\AA-016.02_SceneBG背景_现代室外图块三档_modernexteriors-win\Modern_Exteriors_48x48\ME_Theme_Sorter_48x48\13_School_Singles_48x48
+d:..\MiniGame\Art Assets\AA-016_SceneBG背景_现代像素城镇全套_宁静城镇\AA-016.02_SceneBG背景_现代室外图块三档_modernexteriors-win\Modern_Exteriors_48x48\ME_Theme_Sorter_48x48\14_Swimming_Pool_Singles_48x48
+d:..\MiniGame\Art Assets\AA-016_SceneBG背景_现代像素城镇全套_宁静城镇\AA-016.02_SceneBG背景_现代室外图块三档_modernexteriors-win\Modern_Exteriors_48x48\ME_Theme_Sorter_48x48\15_Police_Station_Singles_48x48
+f:..\MiniGame\Art Assets\AA-016_SceneBG背景_现代像素城镇全套_宁静城镇\AA-016.02_SceneBG背景_现代室外图块三档_modernexteriors-win\Modern_Exteriors_48x48\ME_Theme_Sorter_48x48\16_Office_48x48.png|cells=48
+f:..\MiniGame\Art Assets\AA-016_SceneBG背景_现代像素城镇全套_宁静城镇\AA-016.02_SceneBG背景_现代室外图块三档_modernexteriors-win\Modern_Exteriors_48x48\ME_Theme_Sorter_48x48\Old_Sorting\3_Buildings_48x48.png|cells=48
+f:City\Assets\ArtPacks\modern-city-extension\city_extension_facade_kit.png|cells=48,32,16

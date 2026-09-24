@@ -11,6 +11,9 @@
 #   G2 whitelist fields - parsed output must walk the declared whitelist tree
 #   G3 forbidden words  - sensitive-face terms, ASCII list + CJK via code points
 #   G4 size             - 0 < bytes < 1MB
+#   G5 metadata scan    - local machine path + username leak, raw and
+#                         JSON-escaped backslash forms (P-66 release-gate
+#                         section 3.3, added r80)
 # FAIL = the candidate .new is deleted, the last-good snapshot on disk is kept
 # (verify-style FAIL-blocks-promote), exit 2. Success = two-phase promote
 # (unique-per-PID candidate -> atomic rename) + fail-soft git staging (r62
@@ -116,6 +119,18 @@ $FW_CJK = @(
   (CJK @(0x4ED3,0x4F4D)),      # cang-wei (position)
   (CJK @(0x7B56,0x7565)),      # ce-lue (strategy)
   (CJK @(0x884C,0x60C5))       # hang-qing (market quotes)
+)
+# local machine path + username leak patterns (G5, P-66 release-gate section
+# 3.3 metadata check): 'C:\Users' and 'Desktop\FluxGroup' are listed twice -
+# once with single backslashes (raw values text) and once with doubled
+# backslashes (the JSON-escaped serialized text). 'sjs20' = username net.
+$META_PATTERNS = @(
+  'C:\Users',
+  'C:\\Users',
+  'Desktop\FluxGroup',
+  'Desktop\\FluxGroup',
+  '/home/',
+  'sjs20'
 )
 
 $outLines = New-Object System.Collections.ArrayList
@@ -243,6 +258,13 @@ try {
   foreach ($w in $FW_CJK) {
     if ($contentText.Contains($w)) { throw ('G3 forbidden-word hit (CJK): ' + $w) }
   }
+  # G5: metadata / local-path leak (P-66 release-gate section 3.3; the pattern
+  # pair covers the raw values text and the JSON-escaped serialized text)
+  foreach ($txt in @($contentText, $snapText)) {
+    foreach ($w in $META_PATTERNS) {
+      if ($txt -match [regex]::Escape($w)) { throw ('G5 metadata-path hit: ' + $w) }
+    }
+  }
   # G4: size cap
   $bytes = (Get-Item $newPath).Length
   if ($bytes -le 0) { throw 'G4 size: candidate is empty' }
@@ -252,7 +274,7 @@ try {
   Move-Item -Force $newPath $finalPath
 
   [void]$outLines.Add(('export: city-snapshot.json bytes=' + $bytes + ' zones=' + @($zonesPub).Count + ' flows=' + @($flowsPub).Count + ' events_tail=' + @($tail).Count + '/' + $scanned))
-  [void]$outLines.Add('pubgate: G1 secrets 0 / G2 whitelist OK / G3 words 0 / G4 size OK')
+  [void]$outLines.Add('pubgate: G1 secrets 0 / G2 whitelist OK / G3 words 0 / G4 size OK / G5 meta OK')
   if (-not $NoGit) {
     # r32 law: native stderr under EAP=Stop throws on the first stderr line
     # (git's LF->CRLF notice etc.) - swap to Continue around the call.

@@ -7,15 +7,17 @@
 > 架构：感知器独立只读扫描（world-state.json + world-events.jsonl，只读不破跨仓写禁令）→ 引擎侧只读轮询渲染（每 ~10s）；零服务器零预算（MiniGame 红线）；协议草案 = `docs/design/fluxverse-protocol-draft.md`。
 > 治理：FluxGroup governance.md §2 登记簿；BRAND §8 locked；对集团层反馈 = 本仓根 HQ-FEEDBACK.md；门禁链同源（X026Gate / EncodingGate / NameCheck 随建随接）。
 
-## 状态（onboarding）
+## 状态（r54 勘正·工作项实况唯一权威 = `TECH.md` §九·此处只载门面事实）
 
-- **M0 收口中**：设定书已立（`DESIGN.md`）· 风格待 CEO 点选（探索稿六式 = `docs/design/fluxverse-styles.html`·1/3/4 为主力）· 数据协议草案 v0.1 已定
-- remote 待建：CEO 物理件（GitHub 私库 `BigRain-11122/FluxVerse`，可与 BigStream 一并建），建好后 `git remote add origin … && git push -u`
-- M1 起点：团结引擎 2D 工程 + 感知器骨架（快照扫描 → world-state.json）+ 脑塔骨架场景
+- **M0 全闭**：设定书 v3.1·风格已定案=1 号高清赛博像素（CEO 三裁决 2026-09-23·`DESIGN.md` §九）·概念稿双档 `docs/design/m0-city-concept-{dusk,night}.png`
+- **M1 全判据已证（2026-09-24 r26）**：`City/` 团结引擎原生 2D 工程在仓（四档环境色轮+天气粒子+事件路由器+内景窗+相机双档+UI 壳）·M1.5 现实链接感知侧落地（clock/weather/fx/market/github_events 五探针）
+- **观城台**：`watch/` = CityWatch 零引擎依赖面板（人口普查+居民之声）+ 桌面快捷方式安装器（P-26 分发批）
+- **remote**：origin 已配（`git@github.com:BigRain-11122/FluxVerse.git`）·首推未落（CEO 物理件 GitHub 私库就绪后 `git push -u origin main`）
 
 ## 读序
 
 1. 本 README
 2. `DESIGN.md` —— 超体宇宙城设定书（概念 / 城市 / 行为映射 / 视觉律 / 里程碑）
-3. `docs/design/fluxverse-styles.html` —— 六风格探索稿（CEO 挑选中）
-4. `docs/design/fluxverse-protocol-draft.md` —— 数据协议草案 v0.1
+3. `TECH.md` —— 技术基建白皮书（探针架构/协议宪法/验证门禁/§九 backlog 唯一权威）
+4. `docs/design/fluxverse-styles.html` —— 六风格探索稿（历史探索件·定案=1 号高清赛博像素）
+5. `docs/design/fluxverse-protocol-draft.md` —— 数据协议草案 v0.1

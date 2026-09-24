@@ -5,14 +5,18 @@
 // Sections:
 //  A pure-rule gates: constants, Pos derived from the nameplate top (single
 //    source, zero copied coordinates), every resident's bubble inside the tint
-//    band, and inside the L0 view even at the WIDEST manifest width.
-//  B bake-manifest gates (dual implementation): manifest parses (576 entries,
-//    unique keys, ppu24/pxH36/padX12); every pool line (residents-barks.json,
+//    band, and - r110 MountX law - a WIDEST manifest-width bubble clamped to
+//    the static L0 window stays fully in view at every seat, while seats
+//    already inside the horizon never move.
+//  B bake-manifest gates (dual implementation): manifest parses (1080 entries
+//    at the v1.8 water level; the count is derived from the pool, never pinned -
+//    r109 bake law), unique keys, ppu24/pxH36/padX12); every pool line
+//    (residents-barks.json,
 //    re-collected here) has an entry whose key == ResidentBarks.LineKey(line)
 //    BYTE-FOR-BYTE (the PS bake and the C# core are separate implementations
 //    of the same md5 law - agreement proves the law, r39 pattern) and whose
 //    file exists; manifest set == pool set exactly.
-//  C byte-path gates: all 576 textures load via CityBubbles.LoadBubbleSprite
+//  C byte-path gates: every manifest texture loads via CityBubbles.LoadBubbleSprite
 //    (File.ReadAllBytes+LoadImage, r18 BannerData law), natural bounds ==
 //    manifest w/24 x 1.5u, point filter; 3 spot files get deep pixel gates
 //    (text band lit / tail column / frame corners / dark-glass interior /
@@ -170,6 +174,7 @@ namespace FluxVerse
                     throw new InvalidOperationException("picked line has no manifest width: ctx=" + ctx + " id=" + ids[k]);
                 float w = wpx / ResidentBubbleRules.PPU;
                 Vector2 c = ResidentBubbleRules.Pos(idx);
+                c.x = ResidentBubbleRules.MountX(idx, w, RigMath.L0Size * RigMath.Aspect);
                 Rect r = new Rect(c.x - w / 2f, c.y - ResidentBubbleRules.WorldH / 2f, w, ResidentBubbleRules.WorldH);
                 bool clash = false;
                 for (int j = 0; j < rects.Count; j++)
@@ -207,11 +212,10 @@ namespace FluxVerse
                 Chk(ResidentBubbleRules.InTintBand(i), "bubble escapes the tint band at " + i);
             }
 
-            // ---- B. manifest gates (dual implementation, 576 keys) ----
+            // ---- B. manifest gates (dual implementation, pool-count keys) ----
             BubbleManifest m = LoadManifest();
             Chk(m.law == "resident-bubble-bake/1", "manifest law tag");
             Chk(m.ppu == 24 && m.pxH == 36 && m.padX == 12, "manifest canvas law ppu24/pxH36/padX12");
-            Chk(m.files.Length == 576, "manifest entries != 576: " + m.files.Length);
             Dictionary<string, int> widthByKey = new Dictionary<string, int>();
             Dictionary<string, string> lineByKey = new Dictionary<string, string>();
             int maxW = 0;
@@ -234,21 +238,34 @@ namespace FluxVerse
             HashSet<string> pool = new HashSet<string>();
             Dictionary<string, int> roster = new Dictionary<string, int>();
             CollectPool(f, pool, roster);
-            Chk(pool.Count == 576, "unique pool lines != 576: " + pool.Count);
-            Chk(roster.Count == 12, "roster != 12");
+            Chk(pool.Count > 0, "pool empty");
+            Chk(m.files.Length == pool.Count, "manifest entries != unique pool lines (v1.8 water level): "
+                + m.files.Length + " vs " + pool.Count);
+            Chk(roster.Count == ResidentBarks.RosterCount, "roster != " + ResidentBarks.RosterCount
+                + " narrative street seats: " + roster.Count);
             foreach (string line in pool)
                 Chk(lineByKey.ContainsKey(ResidentBarks.LineKey(line)), "pool line missing from manifest bake");
             foreach (BubbleManifestEntry e in m.files)
                 Chk(pool.Contains(e.line), "manifest line not in pool (bake/pool drift)");
-            // widest-line framing: every resident keeps the view even at maxW
+            // widest-line framing (r110 MountX law): a widest bubble CLAMPED to
+            // the static L0 window stays fully in view at every seat; seats
+            // already inside the horizon keep their exact seat x (the clamp
+            // never moves a bubble that already fits). InView remains the
+            // seat-level horizon classifier (raw seat position).
             float widest = maxW / ResidentBubbleRules.PPU;
+            float halfW0 = RigMath.L0Size * RigMath.Aspect;
+            int displaced = 0;
             for (int i = 0; i < ResidentRules.Count; i++)
             {
-                Chk(ResidentBubbleRules.InView(i, widest, RigMath.L0Size * RigMath.Aspect, RigMath.L0Size),
-                    "widest bubble escapes the L0 view at " + i);
+                float mx = ResidentBubbleRules.MountX(i, widest, halfW0);
+                Chk(Math.Abs(mx) + widest / 2f <= halfW0 - 0.29f,
+                    "clamped widest bubble escapes the L0 view at " + i);
+                if (ResidentBubbleRules.InView(i, widest, halfW0, RigMath.L0Size))
+                    Chk(mx == ResidentBubbleRules.Pos(i).x, "clamp displaced an in-view seat at " + i);
+                else displaced++;
             }
 
-            // ---- C. byte-path gates (all 576 + deep pixel spots) ----
+            // ---- C. byte-path gates (all manifest keys + deep pixel spots) ----
             int loaded = 0;
             List<string> keysSorted = new List<string>(widthByKey.Keys);
             keysSorted.Sort(StringComparer.Ordinal);
@@ -263,7 +280,7 @@ namespace FluxVerse
                 Chk(sp.texture.filterMode == FilterMode.Point, "point filter lost at " + key);
                 loaded++;
             }
-            Chk(loaded == 576, "loaded != 576: " + loaded);
+            Chk(loaded == m.files.Length, "loaded != manifest count: " + loaded + " vs " + m.files.Length);
             // deep pixel gates on 3 spots (first/middle/last by ordinal key)
             string[] spots = { keysSorted[0], keysSorted[keysSorted.Count / 2], keysSorted[keysSorted.Count - 1] };
             foreach (string key in spots)
@@ -349,8 +366,15 @@ namespace FluxVerse
             cb.Refresh(today, "morning", slotNow);
             Chk(cb.BubbleCount == exp.Count, "adapter count != law count: " + cb.BubbleCount + " vs " + exp.Count);
             for (int i = 0; i < exp.Count; i++)
+            {
                 Chk(cb.MountedLine(i) == exp[i].line, "adapter line != law line at " + i + " (coupling)");
-            Texture2D duskOn = Shot(cam, "m1-r42-bubbles-dusk.png");
+                Rect mr = cb.MountedRect(i);
+                Chk(Math.Abs(mr.xMin - (exp[i].center.x - exp[i].w / 2f)) < 1e-3f
+                    && Math.Abs(mr.yMin - (exp[i].center.y - ResidentBubbleRules.WorldH / 2f)) < 1e-3f
+                    && Math.Abs(mr.width - exp[i].w) < 1e-3f,
+                    "adapter mount rect != law rect at " + i + " (MountX coupling)");
+            }
+            Texture2D duskOn = Shot(cam, "m1-r110-bubbles-dusk.png");
             int duskTot = 0; float duskLum = 0f;
             int duskMin = int.MaxValue; string duskWorst = "";
             for (int i = 0; i < exp.Count; i++)
@@ -369,7 +393,7 @@ namespace FluxVerse
             Texture2D nightBase = Shot(cam, null);
             cb.Refresh(today, "morning", slotNow);
             Chk(cb.BubbleCount == exp.Count, "adapter count drifted at night");
-            Texture2D nightOn = Shot(cam, "m1-r42-bubbles-night.png");
+            Texture2D nightOn = Shot(cam, "m1-r110-bubbles-night.png");
             int nightTot = 0; float nightLum = 0f;
             int nightMin = int.MaxValue; string nightWorst = "";
             for (int i = 0; i < exp.Count; i++)
@@ -426,11 +450,12 @@ namespace FluxVerse
 
             // ---- sha record for the reload gate ----
             string maniSha = Sha256File(ManifestPath());
-            File.WriteAllText(ShaPath, "manifest=" + maniSha + " entries=576");
+            File.WriteAllText(ShaPath, "manifest=" + maniSha + " entries=" + m.files.Length);
 
             return "asserts=" + asserts
-                + " manifest=576 dual_impl_keys=576/576 pool=576 widest_px=" + maxW
-                + " bytes_loaded=576 point_ok"
+                + " manifest=" + m.files.Length + " dual_impl_keys=" + m.files.Length + "/" + pool.Count
+                + " widest_px=" + maxW + " mountx_displaced_seats=" + displaced
+                + " bytes_loaded=" + loaded + " point_ok"
                 + " mount(policy_ok ctx=12 slots=32 rotation=" + rot.Count + ")"
                 + " scene(saved=" + saved + ",runtime_only_law_ok,neighbors_ok)"
                 + " render(dusk_px=" + duskTot + " min=" + duskMin + " night_px=" + nightTot
@@ -453,8 +478,15 @@ namespace FluxVerse
             NeighborRegressions();
 
             // manifest + key law stable across sessions (fresh parse, no cache)
+            ResidentBarksFile f = ResidentBarks.Load(true);
+            Chk(f != null, "barks substrate lost after restart");
+            DateTime now = DateTime.Now;
+            Dictionary<string, int> roster = new Dictionary<string, int>();
+            HashSet<string> pool = new HashSet<string>();
+            CollectPool(f, pool, roster);
             BubbleManifest m = LoadManifest();
-            Chk(m.files.Length == 576, "manifest entries != 576 after restart: " + m.files.Length);
+            Chk(m.files.Length == pool.Count, "manifest entries != pool after restart: "
+                + m.files.Length + " vs " + pool.Count);
             int keyOk = 0;
             Dictionary<string, int> widthByKey = new Dictionary<string, int>();
             foreach (BubbleManifestEntry e in m.files)
@@ -464,10 +496,10 @@ namespace FluxVerse
                 widthByKey[e.key] = e.w;
                 keyOk++;
             }
-            Chk(keyOk == 576, "key law gates after restart: " + keyOk);
+            Chk(keyOk == m.files.Length, "key law gates after restart: " + keyOk + "/" + m.files.Length);
             string[] shaLines = File.Exists(ShaPath) ? File.ReadAllLines(ShaPath) : new string[0];
             Chk(shaLines.Length == 1 && shaLines[0].StartsWith("manifest="), "sha record missing");
-            Chk(("manifest=" + Sha256File(ManifestPath()) + " entries=576") == shaLines[0],
+            Chk(("manifest=" + Sha256File(ManifestPath()) + " entries=" + m.files.Length) == shaLines[0],
                 "manifest bytes drifted across sessions");
 
             // spot byte loads after restart (first/mid/last)
@@ -488,11 +520,6 @@ namespace FluxVerse
 
             // adapter alive after restart: a refresh through the persisted
             // component mounts the same law set (data path + rules resolve)
-            ResidentBarksFile f = ResidentBarks.Load(true);
-            Chk(f != null, "barks substrate lost after restart");
-            DateTime now = DateTime.Now;
-            Dictionary<string, int> roster = new Dictionary<string, int>();
-            CollectPool(f, new HashSet<string>(), roster);
             List<Mounted> exp = ExpectedSet(f, widthByKey, roster, now.ToString("yyyy-MM-dd"), "morning",
                 (now.Hour * 60 + now.Minute) / 45);
             cb.Release();
@@ -500,14 +527,20 @@ namespace FluxVerse
             Chk(cb.BubbleCount == exp.Count, "adapter count != law count after restart: "
                 + cb.BubbleCount + " vs " + exp.Count);
             for (int i = 0; i < exp.Count; i++)
+            {
                 Chk(cb.MountedLine(i) == exp[i].line, "adapter line drift after restart at " + i);
+                Rect mr = cb.MountedRect(i);
+                Chk(Math.Abs(mr.xMin - (exp[i].center.x - exp[i].w / 2f)) < 1e-3f,
+                    "adapter rect drift after restart at " + i + " (MountX coupling)");
+            }
             cb.Release();
             Chk(cb.BubbleCount == 0, "release broken after restart");
 
             GameObject camGo = GameObject.Find("CityCamera");
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f, "L0 camera broken after restart");
-            return "reload_gate=OK manifest=576 keys=576/576 sha_stable spots=3/3"
+            return "reload_gate=OK manifest=" + m.files.Length + " keys=" + m.files.Length + "/" + m.files.Length
+                + " sha_stable spots=3/3"
                 + " adapter_coupling=" + exp.Count + " runtime_only=0_persisted cam_L0="
                 + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
         }
@@ -533,9 +566,9 @@ namespace FluxVerse
         static void NeighborRegressions()
         {
             int folkKept = 0;
-            foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
-                if (sr.name.StartsWith(ResidentRules.NamePrefix)) folkKept++;
-            Chk(folkKept == 12, "r37 residents lost: " + folkKept);
+            foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+                if (t.parent == null && t.name.StartsWith(ResidentRules.NamePrefix) && t.name.Length == 6) folkKept++;
+            Chk(folkKept == ResidentRules.Count, "r99 residents lost: " + folkKept);
             int robotsKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(RobotRules.NamePrefix)) robotsKept++;
@@ -547,7 +580,7 @@ namespace FluxVerse
             int tagsKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(ResidentTagRules.NamePrefix)) tagsKept++;
-            Chk(tagsKept == 12, "r40 nameplates lost: " + tagsKept);
+            Chk(tagsKept == ResidentTagRules.Count, "r40 nameplates lost: " + tagsKept);
             GameObject ambGo = GameObject.Find("CityAmbient");
             CityAmbient amb = ambGo != null ? ambGo.GetComponent<CityAmbient>() : null;
             Chk(amb != null, "CityAmbient lost");

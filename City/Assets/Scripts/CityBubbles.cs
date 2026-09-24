@@ -100,6 +100,7 @@ namespace FluxVerse
                 Sprite sp = SpriteFor(line);
                 if (sp == null) continue;   // bubble texture absent: honest silence
                 Vector2 c = ResidentBubbleRules.Pos(idx);
+                c.x = ResidentBubbleRules.MountX(idx, sp.bounds.size.x, RigMath.L0Size * RigMath.Aspect);
                 Rect r = new Rect(c.x - sp.bounds.size.x / 2f, c.y - sp.bounds.size.y / 2f,
                     sp.bounds.size.x, sp.bounds.size.y);
                 bool clash = false;

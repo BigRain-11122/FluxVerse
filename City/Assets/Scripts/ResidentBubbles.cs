@@ -67,6 +67,24 @@ namespace FluxVerse
                 && Mathf.Abs(p.y) + WorldH / 2f <= halfH - 0.3f;
         }
 
+        // r110 MountX framing law: the r104/r105 seat moves pushed three far
+        // seats (G07 x=-31.5, M07 x=30, M08 x=29) past the "widest line fully
+        // in view" horizon (halfW 35.56 - 0.3 margin - widest half 7.10 =
+        // 28.15), so a widest bubble there would clip its text at the frame
+        // edge. The mounted x may slide INWARD along x (y never moves) until
+        // THIS line's width fits the static L0 window - the same view frame
+        // every other L0 gate uses. Seats already inside the horizon never
+        // move (identity law, gated). Narrow lines displace less or not at
+        // all: the clamp is width-driven, so the bubble stays over its
+        // speaker whenever the text fits.
+        public static float MountX(int i, float worldW, float halfW)
+        {
+            float x = Pos(i).x;
+            float lim = halfW - 0.3f - worldW / 2f;
+            if (lim < 0f) return x;   // degenerate window: law abstains
+            return Mathf.Clamp(x, -lim, lim);
+        }
+
         public static bool InTintBand(int i)
         {
             Vector2 p = Pos(i);

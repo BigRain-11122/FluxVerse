@@ -52,16 +52,32 @@ namespace FluxVerse
         public const float HitTop = 2.0f;           // head top (1u) + nameplate (~0.98u)
         public const float TopMargin = 0.5f;        // air below the view top edge
 
-        // person+nameplate rect hit test; first-match wins (deterministic)
+        // person+nameplate rect cover test (the hit law, per-seat)
+        public static bool Covers(int i, Vector2 w)
+        {
+            Vector2 p = ResidentRules.Pos(i);
+            return Mathf.Abs(w.x - p.x) <= HitHalfW && w.y >= p.y - 1f && w.y <= p.y + HitTop;
+        }
+
+        // r110 nearest-covering law: the r99/r105 street STACKS seats vertically
+        // (plaza rows 3u apart, 2u step pairs), so a click point can sit inside
+        // MORE THAN ONE rect - and the r43 first-match rule then popped the card
+        // of the lower INDEX even when another resident stood visibly nearer
+        // (sandbox: M08's own center hit M07 by index order). Among every
+        // covering seat the NEAREST center wins; ties go to the lower index
+        // (strict <) - deterministic. Clicks covered by nobody answer -1.
         public static int HitTest(Vector2 w)
         {
+            int best = -1;
+            float bestD = float.MaxValue;
             for (int i = 0; i < ResidentRules.Count; i++)
             {
+                if (!Covers(i, w)) continue;
                 Vector2 p = ResidentRules.Pos(i);
-                if (Mathf.Abs(w.x - p.x) <= HitHalfW && w.y >= p.y - 1f && w.y <= p.y + HitTop)
-                    return i;
+                float d = (w.x - p.x) * (w.x - p.x) + (w.y - p.y) * (w.y - p.y);
+                if (d < bestD) { bestD = d; best = i; }
             }
-            return -1;
+            return best;
         }
 
         // camera-anchored top-center (UI band artifact - hugs the live view top

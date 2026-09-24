@@ -5,15 +5,18 @@
 // Sections:
 //  A pure-rule gates: canvas law (168x136 @PPU24 = 7x5.6667u), UI-band orders
 //    (40<41<42<43, above the banner band 20..23), prefix sweep-isolation (NOT
-//    Res/NameTag/BarkBubble/Robot/Neon), hit law (12 residents hit at center /
-//    head-top / tag-zone; robot slots, bubble centers, below-feet and x-miss
-//    all -1), CardPos camera-anchor math, life 8s.
-//  B manifest-identity coupling: manifest parses (12 entries, ppu24, 168x136);
-//    every entry's slot/go/id/name/district/block/profession/faction/species/
-//    age/layer is BYTE-EQUAL to ResidentIdentity (the r39 file is the single
-//    source; the bake copies, agreement proves no invented content) and
-//    layer == "narrative" on every slot (CODEX sec.1 honesty law).
-//  C byte-path gates: all 12 textures load via CityResidentCard.LoadCardSprite
+//    Res/NameTag/BarkBubble/Robot/Neon), hit law (r110 nearest-covering on the
+//    stacked street: center = self; head/plate columns covered by my rect and
+//    answered by SOMEONE - an upstairs neighbor may legitimately win; x-miss /
+//    below-feet / bubble zones never hit SELF; robot slots hit nobody),
+//    CardPos camera-anchor math, life 8s.
+//  B manifest-identity coupling: manifest parses (32 entries, ppu24,
+//    168x136); every entry's slot/go/id/name/district/block/profession/faction/
+//    species/age/layer is BYTE-EQUAL to ResidentIdentity (the street canon
+//    residents-street.json is the single source; the bake copies, agreement
+//    proves no invented content); layer law = "narrative" on every slot except
+//    EXACTLY ONE anchor card at slot 26 (P-58 human-origin disclosure).
+//  C byte-path gates: all 32 textures load via CityResidentCard.LoadCardSprite
 //    (r18 bytes law), natural bounds 7x5.6667, point filter; deep pixel spots
 //    on two cards under the PNG ROW-FLIP law (r42: GetPixel y=0 = image
 //    bottom, the GDI+ name band lives at tex y 101..125): gold name band,
@@ -135,12 +138,24 @@ namespace FluxVerse
             for (int i = 0; i < ResidentRules.Count; i++)
             {
                 Vector2 p = ResidentRules.Pos(i);
+                // center: nearest-covering is always self (nothing beats distance 0)
                 Chk(ResidentCardRules.HitTest(p) == i, "center hit " + i);
-                Chk(ResidentCardRules.HitTest(new Vector2(p.x, p.y + 1.9f)) == i, "head-top hit " + i);
-                Chk(ResidentCardRules.HitTest(new Vector2(p.x, p.y + 1.567f)) == i, "nameplate hit " + i);
-                Chk(ResidentCardRules.HitTest(new Vector2(p.x + 1.5f, p.y)) == -1, "x-miss must not hit " + i);
-                Chk(ResidentCardRules.HitTest(new Vector2(p.x, p.y - 1.3f)) == -1, "below-feet must not hit " + i);
-                Chk(ResidentCardRules.HitTest(ResidentBubbleRules.Pos(i)) == -1, "bubble zone must not hit " + i);
+                // r110 stacked street: the head/nameplate COLUMN of seat i is
+                // covered by i's own rect (the click-zone law), but an upstairs
+                // neighbor may stand nearer that exact point and legitimately
+                // win the nearest-covering contest - so the column gates are
+                // "my rect covers" + "someone answers", not "the answer is me".
+                Vector2 head = new Vector2(p.x, p.y + 1.9f);
+                Chk(ResidentCardRules.Covers(i, head), "head column must cover " + i);
+                Chk(ResidentCardRules.HitTest(head) >= 0, "head column click must answer " + i);
+                Vector2 plate = new Vector2(p.x, p.y + 1.567f);
+                Chk(ResidentCardRules.Covers(i, plate), "plate column must cover " + i);
+                Chk(ResidentCardRules.HitTest(plate) >= 0, "plate column click must answer " + i);
+                // self-exclusion family: probes clearly OUTSIDE my rect never
+                // pop MY card (a different covering seat answering is correct)
+                Chk(ResidentCardRules.HitTest(new Vector2(p.x + 1.5f, p.y)) != i, "x-miss must not hit " + i);
+                Chk(ResidentCardRules.HitTest(new Vector2(p.x, p.y - 1.3f)) != i, "below-feet must not hit " + i);
+                Chk(ResidentCardRules.HitTest(ResidentBubbleRules.Pos(i)) != i, "bubble zone must not hit " + i);
             }
             for (int r = 0; r < RobotRules.Count; r++)
                 Chk(ResidentCardRules.HitTest(RobotRules.Pos(r)) == -1, "robot slot must not pop a card " + r);
@@ -153,11 +168,13 @@ namespace FluxVerse
             string mpath = Path.Combine(CardDir, ResidentCardRules.ManifestName);
             Chk(File.Exists(mpath), "manifest missing");
             CardManifest m = JsonUtility.FromJson<CardManifest>(File.ReadAllText(mpath, System.Text.Encoding.UTF8));
-            Chk(m != null && m.files != null && m.files.Length == 12, "manifest 12 entries");
+            Chk(m != null && m.files != null && m.files.Length == ResidentIdentity.Count,
+                "manifest must hold all street seats: " + (m == null || m.files == null ? -1 : m.files.Length));
             Chk(m.law == "resident-cards/0.1", "manifest law tag");
             Chk(m.ppu == 24 && m.pxW == 168 && m.pxH == 136, "manifest geometry");
             ResidentIdentityEntry[] ids = ResidentIdentity.Load(true);
-            Chk(ids != null && ids.Length == 12, "identity file loads");
+            Chk(ids != null && ids.Length == ResidentIdentity.Count, "identity file loads");
+            int anchorCards = 0;
             for (int i = 0; i < m.files.Length; i++)
             {
                 CardManifestEntry e = m.files[i];
@@ -166,14 +183,18 @@ namespace FluxVerse
                 Chk(e.go == d.go && e.id == d.id && e.name == d.name, "manifest identity core " + i);
                 Chk(e.district == d.district && e.block == d.block && e.profession == d.profession, "manifest identity rows " + i);
                 Chk(e.faction == d.faction && e.species == d.species && e.age == d.age, "manifest identity ascii " + i);
-                Chk(e.layer == "narrative" && d.layer == "narrative", "honesty marker on " + i);
+                Chk(e.layer == d.layer && (e.layer == ResidentIdentity.NarrativeLayer
+                    || e.layer == ResidentIdentity.AnchorLayer), "layer law on " + i);
+                if (e.layer == ResidentIdentity.AnchorLayer) anchorCards++;
                 Chk(e.file == ResidentCardRules.FileName(i), "manifest file name " + i);
                 Chk(File.Exists(Path.Combine(CardDir, e.file)), "card file on disk " + i);
             }
+            Chk(anchorCards == 1 && m.files[ResidentIdentity.AnchorSlot].layer == ResidentIdentity.AnchorLayer,
+                "exactly one anchor card, at street slot " + ResidentIdentity.AnchorSlot + " (P-58 law): " + anchorCards);
 
             // ---- C. byte-path loads + deep pixel spots + degrade ----
             int loaded = 0;
-            for (int i = 0; i < 12; i++)
+            for (int i = 0; i < ResidentIdentity.Count; i++)
             {
                 Sprite sp = CityResidentCard.LoadCardSprite(CardDir, i);
                 if (sp == null) throw new InvalidOperationException("card load fail " + i);
@@ -183,8 +204,8 @@ namespace FluxVerse
                 loaded++;
                 UnityEngine.Object.DestroyImmediate(sp.texture);
             }
-            Chk(loaded == 12, "all 12 byte-loaded");
-            for (int i = 0; i < 12; i += 9)   // slots 0 and 9: name bands 268..514 gold px
+            Chk(loaded == ResidentIdentity.Count, "all street cards byte-loaded: " + loaded);
+            for (int i = 0; i < ResidentIdentity.Count; i += 9)   // spots 0/9/18/27 (narrative seats): name band gold px
             {
                 Sprite sp = CityResidentCard.LoadCardSprite(CardDir, i);
                 Texture2D t = sp.texture;
@@ -331,7 +352,7 @@ namespace FluxVerse
             cc3.Dismiss();
             Texture2D duskBase = Shot(camF, null);
             cc3.Show(0);
-            Texture2D duskOn = Shot(camF, "m1-r43-card-dusk.png");
+            Texture2D duskOn = Shot(camF, "m1-r110-card-dusk.png");
             int duskN; float duskLum;
             WinDelta(duskOn, duskBase, camF, cardC, ResidentCardRules.WorldW, ResidentCardRules.WorldH, out duskN, out duskLum);
             // threshold note: with the shell anchored the glass body dominates
@@ -351,7 +372,7 @@ namespace FluxVerse
             cc3.Dismiss();
             Texture2D nightBase = Shot(camF, null);
             cc3.Show(0);
-            Texture2D nightOn = Shot(camF, "m1-r43-card-night.png");
+            Texture2D nightOn = Shot(camF, "m1-r110-card-night.png");
             int nightN; float nightLum;
             WinDelta(nightOn, nightBase, camF, cardC, ResidentCardRules.WorldW, ResidentCardRules.WorldH, out nightN, out nightLum);
             Chk(nightN >= 600, "night card delta too sparse: " + nightN);
@@ -377,8 +398,10 @@ namespace FluxVerse
             Chk(UnityEngine.Object.FindObjectsOfType<CityResidentCard>().Length == 1, "card adapter lost after renders");
 
             File.WriteAllText(ShaPath, Sha256File(mpath));
-            return "asserts=" + asserts + " manifest=12 identity_coupling=12/12 bytes_loaded=12"
-                + " hit(pos=12 head=12 robot_neg=8 bubble_neg=12)"
+            return "asserts=" + asserts + " manifest=" + m.files.Length + " anchor_cards=" + anchorCards
+                + " identity_coupling=" + m.files.Length + "/" + ids.Length + " bytes_loaded=" + loaded
+                + " hit(pos=" + ResidentRules.Count + " head=" + ResidentRules.Count
+                + " robot_neg=" + RobotRules.Count + " bubble_neg=" + ResidentRules.Count + ")"
                 + " mount(orders=40..43 shell_anchor=law swap=clean timer=8s hug=law)"
                 + " render(dusk=" + duskN + " gold=" + duskGold + " glass=" + gDusk.ToString("F3")
                 + " night=" + nightN + " gold_n=" + nightGold + " glass_n=" + gNight.ToString("F3")
@@ -399,16 +422,16 @@ namespace FluxVerse
             string sha = Sha256File(mpath);
             Chk(File.Exists(ShaPath) && File.ReadAllText(ShaPath).Trim() == sha, "reload: manifest SHA drift across sessions");
             CardManifest m = JsonUtility.FromJson<CardManifest>(File.ReadAllText(mpath, System.Text.Encoding.UTF8));
-            Chk(m != null && m.files != null && m.files.Length == 12, "reload: manifest 12");
+            Chk(m != null && m.files != null && m.files.Length == ResidentIdentity.Count, "reload: manifest count");
             int loaded = 0;
-            for (int i = 0; i < 12; i++)
+            for (int i = 0; i < ResidentIdentity.Count; i++)
             {
                 Sprite sp = CityResidentCard.LoadCardSprite(CardDir, i);
                 if (sp == null) throw new InvalidOperationException("reload card load fail " + i);
                 UnityEngine.Object.DestroyImmediate(sp.texture);
                 loaded++;
             }
-            Chk(loaded == 12, "reload: 12 textures re-load");
+            Chk(loaded == ResidentIdentity.Count, "reload: textures re-load: " + loaded);
 
             cc.Show(3);
             Chk(cc.CardVisible && cc.CurrentSlot == 3, "reload: Show(3) works after restart");
@@ -423,11 +446,11 @@ namespace FluxVerse
             int tagsKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(ResidentTagRules.NamePrefix)) tagsKept++;
-            Chk(tagsKept == 12, "reload: nameplates kept");
+            Chk(tagsKept == ResidentTagRules.Count, "reload: nameplates kept");
             Chk(UnityEngine.Object.FindObjectsOfType<CityBubbles>().Length == 1, "reload: CityBubbles kept");
             Chk(UnityEngine.Object.FindObjectsOfType<CityResidentCard>().Length == 1, "reload: adapter kept");
             Chk(Mathf.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f, "reload: cam L0");
-            return "reload_gate=OK asserts=" + asserts + " adapter_resolved sha_stable bytes_loaded=12"
+            return "reload_gate=OK asserts=" + asserts + " adapter_resolved sha_stable bytes_loaded=" + loaded
                 + " show_after_restart=slot3 timer_ok cam_L0=" + cam.orthographicSize.ToString("F1");
         }
 
@@ -452,9 +475,9 @@ namespace FluxVerse
         static void NeighborRegressions()
         {
             int folkKept = 0;
-            foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
-                if (sr.name.StartsWith(ResidentRules.NamePrefix)) folkKept++;
-            Chk(folkKept == 12, "r37 residents lost: " + folkKept);
+            foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+                if (t.parent == null && t.name.StartsWith(ResidentRules.NamePrefix) && t.name.Length == 6) folkKept++;
+            Chk(folkKept == ResidentRules.Count, "r99 residents lost: " + folkKept);
             int robotsKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(RobotRules.NamePrefix)) robotsKept++;
@@ -466,7 +489,7 @@ namespace FluxVerse
             int tagsKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(ResidentTagRules.NamePrefix)) tagsKept++;
-            Chk(tagsKept == 12, "r40 nameplates lost: " + tagsKept);
+            Chk(tagsKept == ResidentTagRules.Count, "r40 nameplates lost: " + tagsKept);
             GameObject ambGo = GameObject.Find("CityAmbient");
             CityAmbient amb = ambGo != null ? ambGo.GetComponent<CityAmbient>() : null;
             Chk(amb != null, "CityAmbient lost");

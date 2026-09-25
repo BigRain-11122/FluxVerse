@@ -289,26 +289,36 @@ namespace FluxVerse
             for (int i = 0; i < 16; i++) face.Tick(0.1f);
             if (face.BreathAlive) throw new InvalidOperationException("breath survived DONE in scene test");
 
-            // C2b gate release stream: cyan dots crossing the gate box brighten the tower foot.
-            // r133 OPEN RED - two window attempts both failed (gatePos r30 -> 0.030;
-            // this +0.12 r34 -> 0.024; threshold 0.03 NOT weakened). Ground truth so far:
-            // camera derived from antenna landmarks = (0.13,-0.05); the box lands at PNG
-            // rows 288..356 cols 939..1007; PNG census finds NO teal dot discs at the
-            // assumed (0.61,8) cluster - only STATIC teal window streaks on the plinth
-            // (x -0.64..1.84, y 7.7..10.6, in both renders = cancels in delta). The dots'
-            // true on-screen position is NOT yet pinned; next round must census the DOT
-            // color family (r .30 g .95 b 1.0 - b-g is tiny, do not filter on b-g) and
-            // re-anchor this box to the measured dots before touching GatePos itself.
-            float gateBoxX = gatePos.x + 0.12f;
+            // C2b gate release stream: cyan dots sweeping the gate line brighten the tower
+            // foot. r134 CLOSED (r133 open red): the metric box re-anchors to the MEASURED
+            // dot cluster (r51 window-follows-content law), not an assumed x offset. Census
+            // = DIFF law over a generous gate-area window (radius 64px): a dot pixel =
+            // brightened 0.10+ vs the baseline AND strong-cool in the flow frame (dot
+            // family r .30 g .95 b 1.0 -- b-g is tiny, NEVER filter on b-g; r133 census
+            // error). Static teal plinth streaks inside the window (x -0.6..1.8, y 7.7..10.6)
+            // cancel in the diff. Three fail-loud gates:
+            //   1) census count >= 30 diff-cyan px (a stream, not a stray pixel);
+            //   2) census centroid within 1.6u of GatePos (semantic anchor: a face that
+            //      renders somewhere else still fails; GatePos itself untouched);
+            //   3) brightness delta >= 0.03 (NOT weakened) over a 16px box centered on
+            //      the BRIGHTEST measured dot (peak dot core, r115 box law re-anchored).
             Texture2D g0 = Shot(cam, null, false);
-            float g0Bri, g0Warm; BoxMetrics(g0, cam, gateBoxX, gatePos.y, out g0Bri, out g0Warm, 34);
             face.TriggerDirect("GATE_PASS");
-            for (int i = 0; i < 10; i++) face.Tick(0.1f);   // 1.0s: mid-flow, three dots inside the box
+            for (int i = 0; i < 10; i++) face.Tick(0.1f);   // 1.0s: mid-flow, three dots on the line
             Texture2D g1 = Shot(cam, "m1-r115-p12-gatepass.png", true);
-            float g1Bri, g1Warm; BoxMetrics(g1, cam, gateBoxX, gatePos.y, out g1Bri, out g1Warm, 34);
+            Vector2 gatePeak, gateCentroid;
+            int gateDots = GateDotCensus(g0, g1, cam, gatePos.x, gatePos.y, 64, out gatePeak, out gateCentroid);
+            if (gateDots < 30)
+                throw new InvalidOperationException("gate release dots not found near the gate line: px=" + gateDots);
+            float gateAnchorDist = Vector2.Distance(gateCentroid, new Vector2(gatePos.x, gatePos.y));
+            if (gateAnchorDist > 1.6f)
+                throw new InvalidOperationException("gate dot cluster off the gate line: dist=" + gateAnchorDist.ToString("F2")
+                    + " centroid=(" + gateCentroid.x.ToString("F2") + "," + gateCentroid.y.ToString("F2") + ")");
+            float g0Bri, g0Warm; BoxMetrics(g0, cam, gatePeak.x, gatePeak.y, out g0Bri, out g0Warm, 16);
+            float g1Bri, g1Warm; BoxMetrics(g1, cam, gatePeak.x, gatePeak.y, out g1Bri, out g1Warm, 16);
             float gateBriDelta = g1Bri - g0Bri;
             if (gateBriDelta < 0.03f)
-                throw new InvalidOperationException("gate release stream not visible: delta=" + gateBriDelta.ToString("F3"));
+                throw new InvalidOperationException("gate release stream not visible at the measured dots: delta=" + gateBriDelta.ToString("F3"));
             UnityEngine.Object.DestroyImmediate(g0);
             UnityEngine.Object.DestroyImmediate(g1);
             for (int i = 0; i < 30; i++) face.Tick(0.1f);   // drain (3.0s > 2.72s flow life)
@@ -579,10 +589,16 @@ namespace FluxVerse
             if (sandbox.EffectsCount != 1) throw new InvalidOperationException("decision face count=" + sandbox.EffectsCount);
             GameObject topBand = GameObject.Find("DecisionTopFlash");
             if (topBand == null) throw new InvalidOperationException("decision top band missing in sandbox scene");
-            if (Mathf.Abs(topBand.transform.position.x) > 0.01f
-                || Mathf.Abs(topBand.transform.position.y - 14.45f) > 0.01f)
+            // r134: expected position derives from the router function itself (single
+            // source). r132 tower-v2 moved the cut-top offset 3.45 -> 4.5; the old
+            // hardcoded 14.45 was the stale r120 law -- sandbox anchor law (0,11).
+            Vector3 stubAnchor = new Vector3(0f, 11f, 0f);
+            Vector3 bandCanon = FluxEventRouter.DecisionTopPos(stubAnchor);
+            if (Mathf.Abs(topBand.transform.position.x - bandCanon.x) > 0.01f
+                || Mathf.Abs(topBand.transform.position.y - bandCanon.y) > 0.01f)
                 throw new InvalidOperationException("decision band misanchored: "
-                    + topBand.transform.position.x.ToString("F2") + "," + topBand.transform.position.y.ToString("F2"));
+                    + topBand.transform.position.x.ToString("F2") + "," + topBand.transform.position.y.ToString("F2")
+                    + " canon=" + bandCanon.x.ToString("F2") + "," + bandCanon.y.ToString("F2"));
             SpriteRenderer topSr = topBand.GetComponent<SpriteRenderer>();
             if (topSr.color.g < 0.9f || topSr.color.r > 0.4f)
                 throw new InvalidOperationException("decision band not cyan-green: " + topSr.color.ToString("F2"));
@@ -603,8 +619,11 @@ namespace FluxVerse
             if (sandbox.EffectsCount != 1) throw new InvalidOperationException("overrule face count=" + sandbox.EffectsCount);
             GameObject op = GameObject.Find("DecisionPulse");
             if (op == null) throw new InvalidOperationException("overrule pulse missing in sandbox scene");
-            if (Mathf.Abs(op.transform.position.x) > 0.01f || Mathf.Abs(op.transform.position.y - 11.5f) > 0.01f)
-                throw new InvalidOperationException("overrule pulse misanchored: y=" + op.transform.position.y.ToString("F2"));
+            Vector3 bodyCanon = FluxEventRouter.DecisionBodyPos(stubAnchor);
+            if (Mathf.Abs(op.transform.position.x - bodyCanon.x) > 0.01f
+                || Mathf.Abs(op.transform.position.y - bodyCanon.y) > 0.01f)
+                throw new InvalidOperationException("overrule pulse misanchored: y=" + op.transform.position.y.ToString("F2")
+                    + " canon=" + bodyCanon.y.ToString("F2"));
             SpriteRenderer opSr = op.GetComponent<SpriteRenderer>();
             if (opSr.color.r < 0.9f || opSr.color.b > 0.3f)
                 throw new InvalidOperationException("overrule pulse not orange-red: " + opSr.color.ToString("F2"));
@@ -623,7 +642,7 @@ namespace FluxVerse
                 + " anchor=(" + anchorPos.x.ToString("F1") + "," + anchorPos.y.ToString("F1") + ")"
                 + " ceo(alpha " + alpha.ToString("F2") + ", warm=" + peakWarm.ToString("F3") + " (white law <=0.06), bri d=" + briDelta.ToString("F3") + ")"
                 + " breath(warm d=" + breathWarmDelta.ToString("F3") + ")"
-                + " gatepass(bri d=" + gateBriDelta.ToString("F3") + ")"
+                + " gatepass(px=" + gateDots + ", c=(" + gateCentroid.x.ToString("F2") + "," + gateCentroid.y.ToString("F2") + "), d=" + gateBriDelta.ToString("F3") + ")"
                 + " gateblock(warm d=" + blockWarmDelta.ToString("F3") + ")"
                 + " transfer(bri d=" + transBriDelta.ToString("F3") + ", cool d=" + transCoolDelta.ToString("F3")
                     + ", bandY=" + TransferBand.BandY.ToString("F1") + ")"
@@ -727,6 +746,47 @@ namespace FluxVerse
                     float bri = (c.r + c.g + c.b) / 3f;
                     if (bri > 0.62f && (c.r - c.b) < -0.22f) count++;
                 }
+            return count;
+        }
+
+        // r134 C2b: diff-census the gate dots (identity = the DOT family, not the
+        // b-g channel -- r133 census error). Scans a gate-area window and collects
+        // pixels that BRIGHTENED vs the baseline frame and are strong-cool in the
+        // flow frame; static teal plinth streaks cancel in the diff. Returns the
+        // collected sample count; out peak = world pos of the brightest diff pixel,
+        // out centroid = world pos of the collected cloud (same ortho projection as
+        // BoxMetrics; texture rows run bottom-up, r13 law).
+        static int GateDotCensus(Texture2D before, Texture2D after, Camera cam,
+            float wx, float wy, int radius, out Vector2 peak, out Vector2 centroid)
+        {
+            float halfH = cam.orthographicSize;
+            float halfW = halfH * (1920f / 1080f);
+            int cx = (int)(((wx - cam.transform.position.x) / (2f * halfW) + 0.5f) * 1920f);
+            int cy = (int)(((wy - cam.transform.position.y) / (2f * halfH) + 0.5f) * 1080f);
+            int count = 0;
+            double sumX = 0, sumY = 0;
+            float bestD = -1f; int bestX = cx, bestY = cy;
+            for (int y = cy - radius; y <= cy + radius; y += 2)
+                for (int x = cx - radius; x <= cx + radius; x += 2)
+                {
+                    if (x < 0 || x >= 1920 || y < 0 || y >= 1080) continue;
+                    Color a = after.GetPixel(x, y);
+                    Color b = before.GetPixel(x, y);
+                    float aBri = (a.r + a.g + a.b) / 3f;
+                    float d = aBri - (b.r + b.g + b.b) / 3f;
+                    if (d < 0.10f || aBri < 0.45f || (a.r - a.b) > -0.30f) continue;
+                    count++;
+                    sumX += x; sumY += y;
+                    if (d > bestD) { bestD = d; bestX = x; bestY = y; }
+                }
+            peak = new Vector2(
+                cam.transform.position.x + ((bestX + 0.5f) / 1920f - 0.5f) * 2f * halfW,
+                cam.transform.position.y + ((bestY + 0.5f) / 1080f - 0.5f) * 2f * halfH);
+            centroid = count == 0
+                ? new Vector2(wx, wy)
+                : new Vector2(
+                    cam.transform.position.x + ((float)(sumX / count) / 1920f - 0.5f) * 2f * halfW,
+                    cam.transform.position.y + ((float)(sumY / count) / 1080f - 0.5f) * 2f * halfH);
             return count;
         }
 

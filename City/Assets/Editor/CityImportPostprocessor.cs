@@ -32,6 +32,8 @@ public class CityImportPostprocessor : AssetPostprocessor
         if (path.StartsWith("Assets/ArtPacks/office-ladder/")) return 24;
         // r140 lab glass (P-39(1) labs): 48px-cell pods @ 24 = 2u/cell, pods capped 3u (r139)
         if (path.StartsWith("Assets/ArtPacks/lab-glass/")) return 24;
+        // r149 canopies (D-09 route B): 48px-tier awning crops @ 24 = street shading law (r37 divisor)
+        if (path.StartsWith("Assets/ArtPacks/canopies/")) return 24;
         return 16;
     }
 

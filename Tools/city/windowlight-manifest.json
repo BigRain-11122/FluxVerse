@@ -1,0 +1,86 @@
+{
+  "protocol": "fluxverse-windowlight/0.1",
+  "baked_round": 159,
+  "sources": {
+    "spec": "cph4/research/R-20260925-water-daynight.md sec.II-2 (D2 window lights = real activity)",
+    "city_core": "docs/design/city-core-design.md sec.VI warm-yellow human windows / L29 north historical facades",
+    "tiles": "City/Assets/Art/CleanCityv3/Tiles/GuttyKreum_CleanCity_{035,057,074}.png",
+    "geometry": "City/Assets/Editor/CitySkeletonBuilder.cs Block() calls (single geometry writer)",
+    "state": "world/world-state.json zones[].activity (live, [0,1], 2dp)"
+  },
+  "laws": {
+    "tier_alpha": { "day": 0.0, "dawn": 0.0, "dusk": 0.55, "night": 1.0 },
+    "tier_note": "mirrors the r155 water-fx tier closed set; dusk 0.55 / night 1.0; day+dark hours zero",
+    "fill_rgb": [255, 212, 130],
+    "core_rgb": [255, 236, 180],
+    "core_rows": "windows with h >= 6 get the middle 2 rows drawn in core_rgb (soft interior glow)",
+    "order": 3,
+    "z": -0.5,
+    "z_note": "same-order z-toward-camera trick (r155 water / r158 light-fx family): renders above the order-3 city tilemaps at z 0, below props 4 / signs 6 / street 7 / tint 8",
+    "ppu": 16,
+    "hash": "fnv1a32(bid + '|' + date + '|' + widx) mod 10000 < round(activity * 10000)",
+    "hash_note": "date = Beijing calendar date (day-stable, cross-day variety, same-input-same-output per day); widx = window scan order (row-major cells, family rect order)",
+    "zone_rate": "QUANT->quant, GAME_MAIN+GAME_ANNEX->gaming, MEDIA->media; north bank -> 'city' = round(mean(gaming,quant,media), 2)",
+    "activity_note": "activity is LIVE from world-state (scan floors: gaming 0.5 when any biggame machine online, media 0.4 with bs orders). Zero static baked numbers.",
+    "rebuild_on": "date | tier | per-zone activity (2dp)",
+    "poll_seconds": 10,
+    "rect_math": "window world rect = cell [cx,cx+1]x[cy,cy+1] with art offsets: x = cx + ax/16, y_top = (cy+1) - ay/16, h = ah/16 downward"
+  },
+  "window_families": {
+    "t_wall_gray_c": {
+      "mode": "art",
+      "mode_note": "extracted from GuttyKreum_CleanCity_074.png glass px (77,146,239): two windows x7-8 / x10-11, y5-12 (mullion rows y6-7 inside)",
+      "rects": [
+        { "x": 7, "y": 5, "w": 2, "h": 8 },
+        { "x": 10, "y": 5, "w": 2, "h": 8 }
+      ],
+      "windows_per_cell": 2
+    },
+    "t_wall_gray_a": {
+      "mode": "rhythm",
+      "mode_note": "tile 035 is the eave-transition wall (zero glass px, sandbox-asserted); the tileset ships no window variant for it - windows are RHYTHM-DRAWN at the exact gray_c art positions so the city-wide window rhythm stays one law",
+      "rects": [
+        { "x": 7, "y": 5, "w": 2, "h": 8 },
+        { "x": 10, "y": 5, "w": 2, "h": 8 }
+      ],
+      "windows_per_cell": 2
+    },
+    "t_wall_gray_b": {
+      "mode": "plank-slit",
+      "mode_note": "tile 057 is the vertical plank wall (plank faces x1-3/5-7/9-11/13-15, seams x0/4/8/12 - sandbox-asserted); 1px vertical window slits on plank-face centers x2/6/10/14, same y5-12 band",
+      "rects": [
+        { "x": 2, "y": 5, "w": 1, "h": 8 },
+        { "x": 6, "y": 5, "w": 1, "h": 8 },
+        { "x": 10, "y": 5, "w": 1, "h": 8 },
+        { "x": 14, "y": 5, "w": 1, "h": 8 }
+      ],
+      "windows_per_cell": 4
+    }
+  },
+  "block_law": {
+    "top_row": "roof (no windows)",
+    "walls": "((cell_x + cell_y) & 1) == 0 ? wall_a : wall_b",
+    "wall_rows": "y_base .. y_base + rows - 2"
+  },
+  "buildings": [
+    { "id": "WLQuant",   "zone": "quant",  "cells_x": [ -2, 2 ],   "y_base": -16, "rows": 8, "wall_a": "t_wall_gray_b", "wall_b": "t_wall_gray_c", "roof": "t_roof_a", "rect": [ -2, -16, 3, -8 ],    "expected_windows": 106 },
+    { "id": "WLGameMain", "zone": "gaming", "cells_x": [ -23, -19 ], "y_base": -16, "rows": 5, "wall_a": "t_wall_gray_a", "wall_b": "t_wall_gray_a", "roof": "t_roof_b", "rect": [ -23, -16, -18, -11 ], "expected_windows": 40 },
+    { "id": "WLGameAnnex", "zone": "gaming", "cells_x": [ -26, -25 ], "y_base": -16, "rows": 3, "wall_a": "t_wall_gray_a", "wall_b": "t_wall_gray_a", "roof": "t_roof_b", "rect": [ -26, -16, -24, -13 ], "expected_windows": 8 },
+    { "id": "WLMedia",   "zone": "media",  "cells_x": [ 19, 24 ],  "y_base": -14, "rows": 6, "wall_a": "t_wall_gray_b", "wall_b": "t_wall_gray_b", "roof": "t_roof_b", "rect": [ 19, -14, 25, -8 ],   "expected_windows": 120 },
+    { "id": "WLNw",      "zone": "city",   "cells_x": [ -28, -26 ], "y_base": 9, "rows": 3, "wall_a": "t_wall_gray_a", "wall_b": "t_wall_gray_b", "roof": "t_roof_b", "rect": [ -28, 9, -25, 12 ],   "expected_windows": 18 },
+    { "id": "WLNwMid",   "zone": "city",   "cells_x": [ -9, -7 ],   "y_base": 9, "rows": 3, "wall_a": "t_wall_gray_c", "wall_b": "t_wall_gray_a", "roof": "t_roof_b", "rect": [ -9, 9, -6, 12 ],     "expected_windows": 12 },
+    { "id": "WLNeMid",   "zone": "city",   "cells_x": [ 7, 9 ],     "y_base": 9, "rows": 3, "wall_a": "t_wall_gray_b", "wall_b": "t_wall_gray_c", "roof": "t_roof_b", "rect": [ 7, 9, 10, 12 ],      "expected_windows": 18 },
+    { "id": "WLNe",      "zone": "city",   "cells_x": [ 26, 28 ],   "y_base": 9, "rows": 3, "wall_a": "t_wall_gray_a", "wall_b": "t_wall_gray_c", "roof": "t_roof_b", "rect": [ 26, 9, 29, 12 ],     "expected_windows": 12 }
+  ],
+  "excluded": [
+    { "id": "brain_tower", "why": "CEO white + superbody-blue family (city-core sec.VI); t_wall_glass shaft + glow bands + indicator lights = its own light vocabulary" },
+    { "id": "office_band_six", "why": "v1 candidate: AA-016 sprite shutter bays need their own art survey (r136 contact sheets) - deferred, not forgotten" },
+    { "id": "labs_glass", "why": "pods glow by design (r140 superbody-blue bake)" }
+  ],
+  "honest_notes": [
+    "gray_a/gray_b windows are rhythm-drawn because the tileset ships no window variant for those walls; the rhythm is anchored to the gray_c ART windows and the LIGHTING is 100 percent live-data (fnv1a subset < activity) - zero static baked numbers (stale honesty law)",
+    "roof rows carry no windows (roof_a/roof_b have no window art; the roof_b corner glint is roof furniture, not a window)",
+    "north bank zone 'city' = mean of the three live zone activities (the historical-facade strip belongs to no single company)",
+    "facades coupling: when the P-38(2) facade skins mount (deferred engine round), the facade landing round must re-anchor this family to the facade micro-window grid - manifest update + proof regression, not a silent drift"
+  ]
+}

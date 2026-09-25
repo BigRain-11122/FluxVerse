@@ -1,5 +1,6 @@
 // FluxVerse P-15 r12 (split r14; gate widened r30; five city-core faces r115
-// P-12 slice 4; canon faces r116 P-41 slice 1; task faces r117 P-41 slice 2):
+// P-12 slice 4; canon faces r116 P-41 slice 1; task faces r117 P-41 slice 2;
+// decision faces r120 P-41 slice 3):
 // event router pure logic core — poll/cursor/parse/route.
 // CEO_ORDER -> WHITE ANTENNA pulse (r116 canon map: middle-antenna white light
 // pulse; five-color law CEO=pure white, replacing the r12 gold that belonged
@@ -100,9 +101,13 @@ namespace FluxVerse
         // joins the list (windows-down face, no audio row). TASK_CLAIM stays OUT
         // with COMMIT: audio-mapped (Robot_Activated_00, r30) it reached the gate
         // through the map long ago; its r117 windows face rides the same dispatch.
+        // r120 (P-41 slice 3): the two DECISION types join -- cut-top flash +
+        // body-pulse faces, no audio rows (r30 law: R- 1.1 has no clip rows for
+        // them; sound needs a new research batch first).
         public static readonly string[] VisualTypes =
         {
-            "OS_TICK_START", "OS_TICK_DONE", "GATE_PASS", "GATE_BLOCK", "TRANSFER", "TASK_DONE"
+            "OS_TICK_START", "OS_TICK_DONE", "GATE_PASS", "GATE_BLOCK", "TRANSFER", "TASK_DONE",
+            "DECISION_MADE", "DECISION_OVERRULED"
         };
 
         static readonly string[] gateTokens = BuildGateTokens();
@@ -193,6 +198,44 @@ namespace FluxVerse
             return AntennaPos(a);
         }
 
+        // r120 P-41 slice 3: decision light family (five-color law). MADE =
+        // cyan-green flash (decision face, distinct from data cyan and the CEO
+        // pure white); OVERRULED = orange-red (re-submit warning, distinct from
+        // GATE_BLOCK's foot-band red (1, 0.22, 0.16)).
+        public static readonly Color DecisionMadeColor = new Color(0.25f, 0.95f, 0.72f);
+        public static readonly Color DecisionOverruleColor = new Color(1f, 0.55f, 0.20f);
+
+        // r120 P-41 slice 3: DECISION_MADE flashes the tower's cut-top face --
+        // the top tile row just under the roofline (canon "tower cut-top
+        // cyan-green flash"; builder Block(brain,-1,1,9,6): top row y 14..15).
+        // v0 rides the current tower's top row; the tower-brain v2.0 wedge
+        // rebuild re-anchors here to its physical cut face.
+        public static Vector3 DecisionTopPos(Vector3 anchorPos)
+        {
+            return anchorPos + new Vector3(0f, 3.45f, 0f);
+        }
+
+        Vector3 DecisionTopPos()
+        {
+            Vector3 a = AnchorPos();
+            return DecisionTopPos(a);
+        }
+
+        // r120: DECISION_OVERRULED lands on the tower body -- the decision
+        // bounces back into the brain (canon "overrule pulse returns to the
+        // tower", re-submit semantics). Body slot stays distinct from the CEO
+        // antenna above (r116) and the gate foot below (r115).
+        public static Vector3 DecisionBodyPos(Vector3 anchorPos)
+        {
+            return anchorPos + new Vector3(0f, 0.5f, 0f);
+        }
+
+        Vector3 DecisionBodyPos()
+        {
+            Vector3 a = AnchorPos();
+            return DecisionBodyPos(a);
+        }
+
         void Dispatch(FluxEvent ev)
         {
             // r115 P-12(4): five city-core types now carry mapped faces (DESIGN 7
@@ -233,6 +276,12 @@ namespace FluxVerse
                     break;
                 case "TASK_DONE":                  // r117: robot home + windows down + one pulse
                     fx.Add(new TaskDoneFace(ev.zone));
+                    break;
+                case "DECISION_MADE":              // r120 P-41 slice 3: cut-top cyan-green flash
+                    fx.Add(new BandFlash(DecisionTopPos(), DecisionMadeColor, 4.6f, 0.8f, 12, "DecisionTopFlash"));
+                    break;
+                case "DECISION_OVERRULED":         // r120: orange-red pulse back to the tower body
+                    fx.Add(new DecisionPulseFace(DecisionBodyPos(), DecisionOverruleColor));
                     break;
             }
             if (EventSink != null) EventSink(ev);   // P-27 r25: same event, second presenter (audio)
@@ -933,6 +982,68 @@ namespace FluxVerse
             float pA = t >= PulseLife ? 0f : Mathf.Sin(t / PulseLife * Mathf.PI);
             pulseSr.color = new Color(winColor.r, winColor.g, winColor.b, 0.75f * pA);
             if (t >= Life) { KillGo(parent); return false; }
+            return true;
+        }
+    }
+
+    // r120 (P-41 slice 3): DECISION_OVERRULED canon face -- an orange-red
+    // radial pulse returns to the tower body (canon "overrule pulse returns to
+    // the tower", the re-submit semantics; five-color law: warning family,
+    // distinct from GATE_BLOCK's foot-band red). Same envelope as the CEO
+    // antenna pulse but a member of the FX list with its own GO name: the
+    // glow-pulse channel stays CEO-only (pulse-list purity, r30 law -- the C
+    // section's LastPulseAlpha gate reads the pulse list and must never see
+    // another face).
+    public class DecisionPulseFace : TransientFx
+    {
+        const float Life = 2.4f;
+        const float PeakAt = 0.25f;
+        const float MaxAlpha = 0.95f;
+
+        readonly GameObject go;
+        readonly SpriteRenderer sr;
+        readonly Color color;
+        float t;
+
+        public float Alpha { get; private set; }
+
+        public DecisionPulseFace(Vector3 pos, Color c)
+        {
+            color = c;
+            go = new GameObject("DecisionPulse");
+            go.transform.position = pos;
+            sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = GlowPulse.SharedGlow();
+            sr.sortingOrder = 10;
+            sr.color = new Color(c.r, c.g, c.b, 0f);
+            go.transform.localScale = new Vector3(0.8f, 0.8f, 1f);
+        }
+
+        public override bool Advance(float dt)
+        {
+            t += dt;
+            float a, scale;
+            if (t < PeakAt)
+            {
+                float k = t / PeakAt;
+                a = Mathf.SmoothStep(0f, 1f, k);
+                scale = Mathf.Lerp(0.8f, 1.7f, k);
+            }
+            else if (t < Life)
+            {
+                float k = (t - PeakAt) / (Life - PeakAt);
+                a = 1f - k * k;
+                scale = Mathf.Lerp(1.7f, 3.4f, k);
+            }
+            else
+            {
+                a = 0f;
+                scale = 3.4f;
+            }
+            Alpha = a;
+            sr.color = new Color(color.r, color.g, color.b, MaxAlpha * a);
+            go.transform.localScale = new Vector3(scale, scale, 1f);
+            if (t >= Life) { KillGo(go); return false; }
             return true;
         }
     }

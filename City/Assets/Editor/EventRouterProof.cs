@@ -7,6 +7,10 @@
 // r117 (P-41 slice 2) extension: TASK_CLAIM / TASK_DONE task faces -- zone-building
 //     window census + robot-lamp walk (sandbox state machine + manifest-rect law +
 //     render census gates; TASK_DONE windows-off law = return-to-baseline census).
+// r120 (P-41 slice 3) extension: DECISION canon faces -- DECISION_MADE cut-top
+//     cyan-green band flash (green-identity census; band rides the top tile row
+//     under the roofline) + DECISION_OVERRULED orange-red body pulse (warm
+//     census; fx-list membership keeps the glow-pulse channel CEO-only).
 // Proves, fail-loud:
 //  A. stream logic end-to-end on a SANDBOX file under logs/ (never touches world/ — engine reads world only):
 //     seed 3 lines -> SeekToEnd -> poll=0 (no history replay); append 1 CEO_ORDER + 1 noise -> poll fires exactly 1;
@@ -18,6 +22,9 @@
 //  A4. task-faces sandbox (r117): TASK_CLAIM gaming rect law (manifest containment) + windows
 //     stagger + robot walk-out; TASK_DONE quant windows lit-at-spawn -> off sweep (the
 //     windows-off law) + robot walk-home + pulse; both faces drain, zero glow pulses.
+//  A5. decision-faces sandbox (r120): DECISION_MADE band (top-row anchor + cyan-green
+//     family + peak + drain) + DECISION_OVERRULED body pulse (fx-list purity + peak
+//     + drain); both stay pulse-silent (CEO-only pulse channel, r30 law).
 //  B. real scene: wire the persistent router, save. C. CEO_ORDER -> WHITE ANTENNA pulse RENDERS over
 //     the tower top (r116 canon law: brightness up + warmth neutral; gold family = fail). C2. the four
 //     r115 faces each RENDER with a metric gate (r12 box law):
@@ -27,13 +34,15 @@
 //     C2e (r116): COMMIT river stream renders in the water box (brightness delta + cyan core-pixel census).
 //     C2f/C2g (r117): TASK_CLAIM windows census + robot cyan census on the avenue; TASK_DONE lit
 //     census at spawn fading back to baseline (windows-off law).
+//     C2h/C2i (r120): DECISION_MADE green-identity census over the cut-top row;
+//     DECISION_OVERRULED warm census over the tower body.
 //  D. no presenter GO survives (runtime-only law, nothing saved).
 //  Pass 2 (separate editor session) = ReloadGate: cross-session scene persistence (r14 stub disease law).
 // Sentinel: <repo>/logs/eventrouter.run -> proof -> <repo>/logs/eventrouter.done (OK/FAIL report).
 //           <repo>/logs/eventrouter-reload.run -> <repo>/logs/eventrouter-reload.done
 // All comments ASCII. No 3D. Shots: docs/design/m1-r116-p41-ceo-{before,white}.png
 //           + m1-r115-p12-{breath,gatepass,gateblock,transfer}.png + m1-r116-p41-commit.png
-//           + m1-r117-p41-{claim,done}.png
+//           + m1-r117-p41-{claim,done}.png + m1-r120-p41-decision-{made,overruled}.png
 using System;
 using System.IO;
 using UnityEngine;
@@ -54,7 +63,7 @@ namespace FluxVerse
         static string SandboxPath { get { return Path.Combine(RepoRoot, "logs", "eventrouter-sandbox.jsonl"); } }
         static string ScenePath { get { return "Assets/Scenes/CityScene.unity"; } }
 
-        static readonly string[] LeakNames = { "EventPulse", "TowerBreath", "GateDot", "GateBlockBand", "TransferBand", "CommitDot", "TaskClaim", "TaskDone", "TaskRobot", "TaskPulse", "TaskWindow" };
+        static readonly string[] LeakNames = { "EventPulse", "TowerBreath", "GateDot", "GateBlockBand", "TransferBand", "CommitDot", "TaskClaim", "TaskDone", "TaskRobot", "TaskPulse", "TaskWindow", "DecisionTopFlash", "DecisionPulse" };
 
         [InitializeOnLoadMethod]
         static void Hook()
@@ -408,6 +417,43 @@ namespace FluxVerse
             for (int i = 0; i < 8; i++) face.Tick(0.1f);   // drain (3.7s > 2.6s face life)
             if (face.EffectsCount != 0) throw new InvalidOperationException("done face leak in scene");
 
+            // C2h decision made (r120 P-41 slice 3): cyan-green flash across the
+            // tower cut-top row (canon "tower cut-top cyan-green flash"). Identity
+            // census on the band's own pixels (r116 C2e law) -- GREEN identity:
+            // the band pushes g-r far past any baseline, separating it from the
+            // CEO's white antenna pulse and the ambient blue family.
+            Vector3 topPos = FluxEventRouter.DecisionTopPos(anchorPos);
+            Texture2D w0 = Shot(cam, null, false);
+            int w0Green = GreenCensus(w0, cam, topPos.x, topPos.y, 40);
+            face.TriggerDirect("DECISION_MADE");
+            for (int i = 0; i < 7; i++) face.Tick(0.1f);   // 0.7s: band peak (Life 1.4 / 2)
+            Texture2D w1 = Shot(cam, "m1-r120-p41-decision-made.png", true);
+            int madeGreenDelta = GreenCensus(w1, cam, topPos.x, topPos.y, 40) - w0Green;
+            UnityEngine.Object.DestroyImmediate(w0);
+            UnityEngine.Object.DestroyImmediate(w1);
+            if (madeGreenDelta < 40)
+                throw new InvalidOperationException("decision cut-top flash not visible: green d=" + madeGreenDelta);
+            for (int i = 0; i < 10; i++) face.Tick(0.1f);   // drain (1.7s > 1.4s band life)
+            if (face.EffectsCount != 0) throw new InvalidOperationException("decision band leak in scene");
+
+            // C2i decision overruled (r120): orange-red pulse on the tower body
+            // (canon "overrule pulse returns to the tower" -- re-submit
+            // semantics). Warm census (r117 C2f law): the pulse pushes r-b far
+            // past the tower-glass baseline.
+            Vector3 bodyPos = FluxEventRouter.DecisionBodyPos(anchorPos);
+            Texture2D v0 = Shot(cam, null, false);
+            int v0Warm = WarmCensus(v0, cam, bodyPos.x, bodyPos.y, 50);
+            face.TriggerDirect("DECISION_OVERRULED");
+            for (int i = 0; i < 3; i++) face.Tick(0.1f);   // 0.3s: pulse peak (peak-at 0.25s)
+            Texture2D v1 = Shot(cam, "m1-r120-p41-decision-overruled.png", true);
+            int overWarmDelta = WarmCensus(v1, cam, bodyPos.x, bodyPos.y, 50) - v0Warm;
+            UnityEngine.Object.DestroyImmediate(v0);
+            UnityEngine.Object.DestroyImmediate(v1);
+            if (overWarmDelta < 60)
+                throw new InvalidOperationException("overrule pulse not visible on the tower body: warm d=" + overWarmDelta);
+            for (int i = 0; i < 38; i++) face.Tick(0.1f);   // drain (4.1s > 2.4s pulse life)
+            if (face.EffectsCount != 0) throw new InvalidOperationException("overrule pulse leak in scene");
+
             // ---- D. leak sweep: nothing presenter-ish survives in the open scene ----
             foreach (string n in LeakNames)
                 if (GameObject.Find(n) != null) throw new InvalidOperationException("scene GO residue: " + n);
@@ -504,6 +550,60 @@ namespace FluxVerse
 
             foreach (string n in LeakNames)
                 if (GameObject.Find(n) != null) throw new InvalidOperationException("boot-scene GO residue: " + n);
+
+            // ---- A5. decision-faces sandbox (r120 P-41 slice 3) ----
+            // DECISION_MADE -> cyan-green band flash on the tower cut-top row;
+            // DECISION_OVERRULED -> orange-red radial pulse on the tower body.
+            // Both ride the fx list: the glow-pulse channel stays CEO-only
+            // (pulse-list purity, r30 law). Sandbox anchor law = (0,11).
+            File.AppendAllText(SandboxPath,
+                "{\"ts_utc\":\"2026-09-23T10:19:00Z\",\"type\":\"DECISION_MADE\",\"zone\":\"governance\",\"summary\":\"decision batch\"}\n" +
+                "{\"ts_utc\":\"2026-09-23T10:20:00Z\",\"type\":\"FX_TICK\",\"summary\":\"noise\"}\n");
+            int f9 = sandbox.PollOnce();
+            if (f9 != 1) throw new InvalidOperationException("DECISION_MADE poll fired=" + f9 + " (expected 1)");
+            if (sandbox.PulseCount != 0)
+                throw new InvalidOperationException("DECISION_MADE must stay pulse-silent (fx face, r30 pulse-list law)");
+            if (sandbox.EffectsCount != 1) throw new InvalidOperationException("decision face count=" + sandbox.EffectsCount);
+            GameObject topBand = GameObject.Find("DecisionTopFlash");
+            if (topBand == null) throw new InvalidOperationException("decision top band missing in sandbox scene");
+            if (Mathf.Abs(topBand.transform.position.x) > 0.01f
+                || Mathf.Abs(topBand.transform.position.y - 14.45f) > 0.01f)
+                throw new InvalidOperationException("decision band misanchored: "
+                    + topBand.transform.position.x.ToString("F2") + "," + topBand.transform.position.y.ToString("F2"));
+            SpriteRenderer topSr = topBand.GetComponent<SpriteRenderer>();
+            if (topSr.color.g < 0.9f || topSr.color.r > 0.4f)
+                throw new InvalidOperationException("decision band not cyan-green: " + topSr.color.ToString("F2"));
+            for (int i = 0; i < 7; i++) sandbox.Tick(0.1f);   // 0.7s: band peak (Life 1.4 / 2)
+            if (topSr.color.a < 0.5f)
+                throw new InvalidOperationException("decision band never peaked: a=" + topSr.color.a.ToString("F3"));
+            for (int i = 0; i < 9; i++) sandbox.Tick(0.1f);   // 1.6s > 1.4s band life
+            if (sandbox.EffectsCount != 0) throw new InvalidOperationException("decision band leak: " + sandbox.EffectsCount);
+            if (GameObject.Find("DecisionTopFlash") != null) throw new InvalidOperationException("decision band GO survived its life");
+
+            File.AppendAllText(SandboxPath,
+                "{\"ts_utc\":\"2026-09-23T10:21:00Z\",\"type\":\"DECISION_OVERRULED\",\"zone\":\"governance\",\"summary\":\"overruled, re-submit\"}\n" +
+                "{\"ts_utc\":\"2026-09-23T10:22:00Z\",\"type\":\"FX_TICK\",\"summary\":\"noise\"}\n");
+            int f10 = sandbox.PollOnce();
+            if (f10 != 1) throw new InvalidOperationException("DECISION_OVERRULED poll fired=" + f10 + " (expected 1)");
+            if (sandbox.PulseCount != 0)
+                throw new InvalidOperationException("DECISION_OVERRULED rides the fx list; router pulse list must stay CEO-only");
+            if (sandbox.EffectsCount != 1) throw new InvalidOperationException("overrule face count=" + sandbox.EffectsCount);
+            GameObject op = GameObject.Find("DecisionPulse");
+            if (op == null) throw new InvalidOperationException("overrule pulse missing in sandbox scene");
+            if (Mathf.Abs(op.transform.position.x) > 0.01f || Mathf.Abs(op.transform.position.y - 11.5f) > 0.01f)
+                throw new InvalidOperationException("overrule pulse misanchored: y=" + op.transform.position.y.ToString("F2"));
+            SpriteRenderer opSr = op.GetComponent<SpriteRenderer>();
+            if (opSr.color.r < 0.9f || opSr.color.b > 0.3f)
+                throw new InvalidOperationException("overrule pulse not orange-red: " + opSr.color.ToString("F2"));
+            for (int i = 0; i < 3; i++) sandbox.Tick(0.1f);   // 0.3s: past peak-at (0.25s)
+            if (opSr.color.a < 0.85f)
+                throw new InvalidOperationException("overrule pulse peak alpha low: a=" + opSr.color.a.ToString("F3"));
+            for (int i = 0; i < 37; i++) sandbox.Tick(0.1f);   // 4.0s > 2.4s pulse life
+            if (sandbox.EffectsCount != 0) throw new InvalidOperationException("overrule pulse leak: " + sandbox.EffectsCount);
+            if (GameObject.Find("DecisionPulse") != null) throw new InvalidOperationException("overrule pulse GO survived its life");
+
+            foreach (string n in LeakNames)
+                if (GameObject.Find(n) != null) throw new InvalidOperationException("boot-scene GO residue: " + n);
             if (File.Exists(SandboxPath)) File.Delete(SandboxPath);   // clean sandbox evidence file
             return "sandbox(f0=" + f0 + ",f1=" + f1 + ",f2=" + f2 + ",f3=" + f3 + ",f4=" + f4 + ",f5=" + f5 + ",f6=" + f6 + ",leaks=0)"
                 + " router_saved=" + routerSaved
@@ -517,7 +617,8 @@ namespace FluxVerse
                 + " commit(bri d=" + commitBriDelta.ToString("F3") + ", cyan core=" + commitCyanCore + ")"
                 + " task(f7=" + f7 + ",f8=" + f8 + ", claim_lit=" + claimLitDelta + ", claim_cyan=" + claimCyanDelta
                     + ", done_lit=" + doneLitDelta + ", done_drain=" + doneDrainDelta + ")"
-                + " shots=9";
+                + " decision(f9=" + f9 + ",f10=" + f10 + ", made_green=" + madeGreenDelta + ", overrule_warm=" + overWarmDelta + ")"
+                + " shots=11";
         }
 
         static string ReloadProve()
@@ -635,6 +736,28 @@ namespace FluxVerse
                     Color c = tex.GetPixel(x, y);
                     float bri = (c.r + c.g + c.b) / 3f;
                     if (bri > 0.50f && (c.r - c.b) > 0.38f) count++;
+                }
+            return count;
+        }
+
+        // r120 C2h: count cyan-GREEN pixels (bright + cool + green-dominant) in
+        // the projection box, step 2 -- identity census for the decision
+        // cut-top band. Green identity (g-r) separates the band from the CEO
+        // white antenna pulse and the ambient blue-family tints.
+        static int GreenCensus(Texture2D tex, Camera cam, float wx, float wy, int radius)
+        {
+            float halfH = cam.orthographicSize;
+            float halfW = halfH * (1920f / 1080f);
+            int cx = (int)(((wx - cam.transform.position.x) / (2f * halfW) + 0.5f) * 1920f);
+            int cy = (int)(((wy - cam.transform.position.y) / (2f * halfH) + 0.5f) * 1080f);
+            int count = 0;
+            for (int y = cy - radius; y <= cy + radius; y += 2)
+                for (int x = cx - radius; x <= cx + radius; x += 2)
+                {
+                    if (x < 0 || x >= 1920 || y < 0 || y >= 1080) continue;
+                    Color c = tex.GetPixel(x, y);
+                    float bri = (c.r + c.g + c.b) / 3f;
+                    if (bri > 0.30f && (c.r - c.b) < -0.15f && (c.g - c.r) > 0.20f) count++;
                 }
             return count;
         }

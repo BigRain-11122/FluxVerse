@@ -7,12 +7,21 @@
 # belongs to the P-38(3) heat line). Sizes: quant 120x192 = 5x8u,
 # game 120x120 = 5x5u, annex 48x72 = 2x3u @PPU24. Deterministic double-run
 # SHA gate + pixel-class census. ASCII-only (PS5.1 GBK law).
+# r152 adds the 4th skin: facade-media 144x144 = 6x6u with the flow-magenta
+# accent (five-color law MEDIA city). Science-judgment amendment of the
+# r150 direct-use plan: tower-glass-37 (k37) measured 43.8% near-white
+# opaque pixels (9090/20736) and the r151 preview rack reads the glass
+# family as a noon-daytime brightness-order violation (sticker read) under
+# the dusk anchor - the three-axis verdict never covered the luminance
+# axis. r44 law FAIL->swap-piece, silent-keep banned: MEDIA falls back to
+# the proven dark-skin route; the k31-37 glass pool moves to the
+# dusk-remap candidate pool (see facades-manifest.json r152).
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $root = Join-Path $PSScriptRoot '..\..'
 $outDir = Join-Path $root 'City\Assets\ArtPacks\office-towers'
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-$report = Join-Path $root 'logs\devloop-r151-skinbake.txt'
+$report = Join-Path $root 'logs\devloop-r152-skinbake.txt'
 $rep = New-Object System.Collections.ArrayList
 
 # palette (documented constants; r151 preview FAIL->re-bake v2: anchor-family
@@ -28,6 +37,7 @@ $PLINTH = @{r=26;  g=26;  b=50}   # base band (darker = grounding read)
 $CROWN  = @{r=40;  g=40;  b=76}   # top cap
 $GOLD   = @{r=196; g=150; b=44}   # QUANT accent (muted five-color gold)
 $CYAN   = @{r=44;  g=168; b=192}  # GAME accent (muted five-color cyan)
+$MAGENTA= @{r=196; g=72;  b=152}  # MEDIA accent (muted five-color flow magenta, r152)
 
 function Class-At($x, $y, $w, $h, $plinthH) {
     # crown: rows 0-1 cap, row 2 accent line
@@ -95,14 +105,21 @@ function Bake-Skin($name, $w, $h, $plinthH, $accent) {
 $shaQ = Bake-Skin 'facade-quant' 120 192 8 $GOLD
 $shaG = Bake-Skin 'facade-game'  120 120 8 $CYAN
 $shaA = Bake-Skin 'facade-annex'  48  72 6 $CYAN
+$shaM = Bake-Skin 'facade-media'  144 144 8 $MAGENTA
 
-# double-run idempotency: re-bake all three, byte-identical required
+# double-run idempotency: re-bake all four, byte-identical required
 $shaQ2 = Bake-Skin 'facade-quant' 120 192 8 $GOLD
 $shaG2 = Bake-Skin 'facade-game'  120 120 8 $CYAN
 $shaA2 = Bake-Skin 'facade-annex'  48  72 6 $CYAN
-if ($shaQ -ne $shaQ2 -or $shaG -ne $shaG2 -or $shaA -ne $shaA2) { throw 'FATAL: bake not deterministic' }
-if (($shaQ -eq $shaG) -or ($shaQ -eq $shaA) -or ($shaG -eq $shaA)) { throw 'FATAL: skins must differ' }
+$shaM2 = Bake-Skin 'facade-media'  144 144 8 $MAGENTA
+if ($shaQ -ne $shaQ2 -or $shaG -ne $shaG2 -or $shaA -ne $shaA2 -or $shaM -ne $shaM2) { throw 'FATAL: bake not deterministic' }
+$all = @($shaQ, $shaG, $shaA, $shaM)
+for ($i = 0; $i -lt $all.Count; $i++) {
+    for ($j = $i + 1; $j -lt $all.Count; $j++) {
+        if ($all[$i] -eq $all[$j]) { throw 'FATAL: skins must differ' }
+    }
+}
 
-[void]$rep.Add('BAKE OK pieces=3 deterministic=PASS unlit_law=PASS opaque=PASS')
+[void]$rep.Add('BAKE OK pieces=4 deterministic=PASS unlit_law=PASS opaque=PASS')
 [IO.File]::WriteAllLines($report, $rep)
 $rep | ForEach-Object { Write-Output $_ }

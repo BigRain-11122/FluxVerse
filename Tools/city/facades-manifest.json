@@ -1,0 +1,66 @@
+{
+  "protocol": "fluxverse-facades/0.1",
+  "baked_round": 152,
+  "sources": [
+    "TECH.md sec9 r150 asset verdict + r151 bake handover + r152 science-judgment amendment",
+    "Tools/city/southbank-manifest.json (r103 one geometry source, rect-equality law)",
+    "cph4/research/R-20260924-hd-pixel-aesthetics.md (P-38 gap 2: hi-bit landmark facades)"
+  ],
+  "law": {
+    "family": "sprite facade overlay, tile-supplant OfficeRules family precedent (order 3, zero tilemap strokes; south tile layers 40/49/54 untouched)",
+    "persistence": "static built-city scenery persisted in scene like signs/offices (NeonSigns law); NOT CityAmbient runtime children (r146 red-chain-3 law)",
+    "rect_equality": "mount rect == southbank-manifest mass world rect, bitwise; zero migration by construction",
+    "natural_size": "scale 1, world size = px / ppu, zero resample (48px-tier divisor law r111/r151)",
+    "order_law": "facade 3 = building family tier (LabsRules.PodOrder) < rim 5 (RimLightRules.SortOrder) < signs 6 (NeonRules.Order) < street 7 (Resident/Robot/VehicleRules.Order) < tint 8 < band 9 < pulses 10 (CEO pulse always above)",
+    "tint_band": "all mounts inside city band y [-16, +15] (LabsRules.TintFloorY/TintCeilY; dusk tint applies uniformly, no sticker edge)",
+    "unlit_windows": "static zero lit windows (bake gate: avg brightness > 80 only on accent crown row); lit rate reserved to P-38(3) heat line",
+    "pivot": "sprite pivot center at rect center",
+    "order": 3,
+    "ppu": 24
+  },
+  "mounts": [
+    { "id": "FacadeQUANT", "asset": "Assets/ArtPacks/office-towers/facade-quant.png", "px": [120, 192], "accent": "gold",    "sha12": "17DD5EB3AF73", "rect": [-2.0, -16.0, 3.0, -8.0],    "source": "r151 bake (micro-window skin, muted five-color gold)" },
+    { "id": "FacadeGAME",  "asset": "Assets/ArtPacks/office-towers/facade-game.png",  "px": [120, 120], "accent": "cyan",    "sha12": "B5307D95A363", "rect": [-23.0, -16.0, -18.0, -11.0], "source": "r151 bake (muted five-color cyan)" },
+    { "id": "FacadeANNEX", "asset": "Assets/ArtPacks/office-towers/facade-annex.png", "px": [48, 72],   "accent": "cyan",    "sha12": "D22B8E620D43", "rect": [-26.0, -16.0, -24.0, -13.0], "source": "r151 bake (muted five-color cyan)" },
+    { "id": "FacadeMEDIA", "asset": "Assets/ArtPacks/office-towers/facade-media.png", "px": [144, 144], "accent": "magenta", "sha12": "A72D1CC7566D", "rect": [19.0, -14.0, 25.0, -8.0],   "source": "r152 bake (muted five-color flow magenta; science-judgment amendment of k37 direct-use, see verdict_change)" }
+  ],
+  "verdict_change": {
+    "topic": "MEDIA facade k37 direct-use (r150 verdict B candidate) withdrawn at r152",
+    "evidence": [
+      "disk census r152: tower-glass-37 opaque near-white pixels (min rgb channel >= 150) = 9090/20736 = 43.8% (k31 51.7%, k36 36.8%; art fully opaque)",
+      "r151 preview rack multimodal verdict (logs/devloop-r151-tower-preview.png): the glass family reads as a noon-daytime brightness-order violation under the dusk anchor - a giant face-light-source panel, sticker read; recommended fix = press glass to mid-low luminance + dusk hue + mullion grid",
+      "r150/r151 three-axis harmony gates (hue/density/texture) never covered the luminance axis - the violation lives exactly on the uncovered axis"
+    ],
+    "action": "r44 law FAIL->swap-piece, silent-keep banned: MEDIA falls back to the proven dark-skin route (facade-media 144x144, flow-magenta accent, five-color law)",
+    "remap_pool": "tower-glass-31..37 -> dusk-remap candidate pool (route: luminance press to mid-low + blue-purple mirror hue + mullion grid + at most a few lit windows; future line, not v0)"
+  },
+  "reserved_candidates": {
+    "dusk_remap_pool": ["tower-glass-31..37 (7 glass towers, see verdict_change.remap_pool)"],
+    "observation_pool": [
+      "tower-mid-39..42 (k39-42 three-bay mid buildings; preview rack read 'basically harmonious'; M3/M4 pool)",
+      "k41 = DUP_OF k39 (r151 pair-dup census, honest note)"
+    ],
+    "deferred": [
+      "brain-tower facade (r150-6: v2.0 canon just landed + CEO pin-formation review F-20260925-03 pending - zero churn this line)"
+    ],
+    "future": [
+      "window lights -> P-38(3) heat line (activity-driven lit rate, decor ban law)",
+      "PPU48 L1 tier shimmer risk (r150-5 density law: L0 PPU24 optimal, no double-tier in v0)"
+    ]
+  },
+  "census_evidence": {
+    "unlit_skins": "facade-quant/game/annex/media near-white (min-channel >= 150) opaque px = 0/0/0/0 (r152 disk census; bake gate avg>80 accent-only re-verified)",
+    "glass_pool": "tower-glass-37 = 9090/20736 near-white 43.8% (material glass, not lit windows - the time-of-day read is the violation)"
+  },
+  "coupled_updates_r153": [
+    "City/Assets/Scripts/FacadeRules.cs pure table (OfficeRules/LabsRules family, manifest mirror, single geometry source)",
+    "FacadeProof (OfficeProof-family): build/idempotent x2/persist/reload gates + live census mirrors",
+    "render diff census per mount (dusk delta, r148 rim law precedent) + 4 screenshots sec-3 rescan m1-r153-facades-{day,dusk,night,l1-south}",
+    "r44 in-city harmony verify (rack verdict already PASS r151 for skins; in-city composite verdict at r153 render)",
+    "NeonProof A2 unaffected (NeonRules.Buildings rects unchanged - signs stay legal above facades, order 6 > 3)",
+    "rim interplay preserved (rim order 5 renders above facade 3, r147 law)",
+    ".meta generated on first editor import (P-27-5 precedent; importer row office-towers->24 already live r151)",
+    "ARTPACKS-LEDGER office-towers consumption row update (r152)"
+  ],
+  "token_gate": "L1 deterministic math + GDI+ bake, zero generation touchpoints"
+}

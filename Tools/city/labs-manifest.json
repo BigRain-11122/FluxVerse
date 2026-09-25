@@ -1,0 +1,198 @@
+{
+  "protocol": "fluxverse-labs/0.1",
+  "baked_round": 141,
+  "sources": [
+    "TECH.md sec9 r139 row (window survey + 4-stage build order this manifest fulfills, stage 3 of 4) + r140 row (lab-glass 8-piece bake, PPU24 importer row, ARTPACKS-LEDGER self-bake section)",
+    "DESIGN.md sec16 v3.2 (CPH4 Labs physical embodiment: three facilities, honest-state law, superbody-blue, glass-pod + data-conduit visual order)",
+    "live C# tables post-r138: ResidentRules 32 seats / RobotRules 8 / VehicleRules 8 / NeonRules 21 signs + 8 buildings / OfficeRules 5 placements",
+    "Tools/city/eaveslots-manifest.json r123 (EAVE-N01/N01 slot geometry + the runner-up whose post-r132 death this round discovers)",
+    "Tools/city/terraces-manifest.json r137 (T1 rect joins the building set) + officeband-manifest r111 (N1-N4 rects + north cap law) + southbank-manifest r103 (masses)",
+    "CitySkeletonBuilder (ground bands rows 9..14 pavement / grass 5..6 / water -3..2; avenue vcols -18/-17/17/18 rows 3..14; north low-rise Block calls; props tiles)",
+    "cph4/research/R-20260924-m1-visual-fix.md sec2-1/2-2 (proportion + north low-rise laws)"
+  ],
+  "law": {
+    "district": "CPH4 Labs physical embodiment, north governance bank (DESIGN sec16.1). The tower-side semantics the r139 main window lost is carried by the data conduit: the pod feeds the tower = research conclusions flowing back to the governance layer (west-run visual story).",
+    "low_rise": "lab pod tops stay <= 12.0 (2-3u on base row 9): pods 12 < offices 13 < brain tower 19 - the block reads by its glass-glow, never by height (sec16.1 basis 3). The conduit band is structure-class above the rooflines (NeonAntenna r87 exempt precedent), capped under the tint band top 14 and clear of the far-shore strip (y 14.26..14.74).",
+    "zero_move": "v0.1 places 1 pod + the conduit with ZERO seat/robot/vehicle/sign/eave-slot moves (r111 law). Seat or fixture moves are a CEO-visible trade, never a silent default (r137 quota-ledger law) - the remedy candidates below are registered options, none exercised (and the ResN01 path is probe-proven DEAD: the seat is cage-locked).",
+    "sprite_family": "Labs* GOs at sorting order 3 (OfficeRules family idiom), LabsPipe* at order 6 (mounting/structure tier, signs 6 < street 7 < tint 8), pivot center, GO pos = world rect center, localScale 1 - NEVER painted into CityGAME/CityQUANT/CityMEDIA tilemaps (IdentityProof district derivation stays untouched).",
+    "glass_door_debt": "the glass-pod vocabulary carries no street door (r136 door-census family). Registered open debt like the v1 five-office door debt (terraces verdict) - CEO sees it at the pin-formation re-review.",
+    "honest_states": "statics only this round. The incubator pod sits dormant (low-glass sleep) until BigDomain Phase 1 lights real incubation tasks - no fake running animation (decoration ban). Birth wall / sandbox exhibits wire with the M2 state round; the statics never bake dead numbers (stale honesty law).",
+    "pipe_band": "elevated conduit band y 13.0..13.6667: west end flush at the brain-tower east face x=3.0 (B7 dock), east end flush at the pod east face x=23.0; the stub (pipe-v) mounts the pod roof (host-mount, sign-mounting precedent: sinks 0.3333 into the pod top) and ties the band down to the pod.",
+    "pipe_crossing": "the conduit crosses the east avenue road cells (cols 17/18) ONLY inside the elevated band y >= 13.0 (box-on-ledge row-8 props precedent for structure-on-road); buildings and stand cells still never touch road cells.",
+    "zone_disjointness": "conduit band y 13.0..13.6667 stays disjoint from the COMMIT cross-river data stream (river band Y -4.6..+4.6) and the TRANSFER trunk street band (y -7.5) - geometry domains never overlap (r114/territory law, asserted in the sandbox gate).",
+    "superbody_blue": "baked r140: CPH4 64,196,255 main anchor (brain-tower research color family), five-color law untouched.",
+    "t2_six_types": "schema/events-registry.json carries the six labs types this round in reserved state (first-register law, veto window to 2026-10-02, P-2026-09-24-39): LAB_INCUBATE_START/PASS/FAIL + RESIDENT_BIRTH + PROPOSAL_NEW/APPLIED - emitters land with the M2 wire round.",
+    "frame": "|x| <= 35.256 (L0 frame, seat/sign law family); tint band y -16..+14."
+  },
+  "placements": [
+    {
+      "id": "L1", "name": "LabPodTall01", "family": "pod",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pod-tall.png",
+      "asset_role": "incubator pod #1 (tall glass pod, dormant-honest face)",
+      "px": [48, 72], "ppu": 24,
+      "cells": [21, 22, 9, 11],
+      "world": [21.0, 9.0, 23.0, 12.0],
+      "slacks": { "res_n02_body_x": 0.333, "res_n02_nameplate_y": 0.0, "eave_body_x": 1.0, "eave_nameplate_x": 0.292, "b3_ne_x": 3.0, "vehicle_stopn_x": 4.188 },
+      "role": "the west front field of the NE low-rise (B3, BIGSTREAM plate), across the east avenue from the bus stop - the labs' first physical presence, zero-move"
+    },
+    {
+      "id": "P01", "name": "LabPipeH01", "family": "pipe",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pipe-h.png",
+      "px": [48, 16], "ppu": 24,
+      "world": [3.0, 13.0, 5.0, 13.6667],
+      "role": "conduit run segment 1/10 (tower dock end)"
+    },
+    {
+      "id": "P02", "name": "LabPipeH02", "family": "pipe",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pipe-h.png",
+      "px": [48, 16], "ppu": 24,
+      "world": [5.0, 13.0, 7.0, 13.6667],
+      "role": "conduit run segment 2/10"
+    },
+    {
+      "id": "P03", "name": "LabPipeH03", "family": "pipe",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pipe-h.png",
+      "px": [48, 16], "ppu": 24,
+      "world": [7.0, 13.0, 9.0, 13.6667],
+      "role": "conduit run segment 3/10 (above B2_NEMID roofline, 0.833 clear)"
+    },
+    {
+      "id": "P04", "name": "LabPipeH04", "family": "pipe",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pipe-h.png",
+      "px": [48, 16], "ppu": 24,
+      "world": [9.0, 13.0, 11.0, 13.6667],
+      "role": "conduit run segment 4/10"
+    },
+    {
+      "id": "P05", "name": "LabPipeH05", "family": "pipe",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pipe-h.png",
+      "px": [48, 16], "ppu": 24,
+      "world": [11.0, 13.0, 13.0, 13.6667],
+      "role": "conduit run segment 5/10 (above the VehicleBusN body top 10.583)"
+    },
+    {
+      "id": "P06", "name": "LabPipeH06", "family": "pipe",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pipe-h.png",
+      "px": [48, 16], "ppu": 24,
+      "world": [13.0, 13.0, 15.0, 13.6667],
+      "role": "conduit run segment 6/10"
+    },
+    {
+      "id": "P07", "name": "LabPipeH07", "family": "pipe",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pipe-h.png",
+      "px": [48, 16], "ppu": 24,
+      "world": [15.0, 13.0, 17.0, 13.6667],
+      "role": "conduit run segment 7/10 (west approach to the avenue)"
+    },
+    {
+      "id": "P08", "name": "LabPipeH08", "family": "pipe",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pipe-h.png",
+      "px": [48, 16], "ppu": 24,
+      "world": [17.0, 13.0, 19.0, 13.6667],
+      "role": "conduit run segment 8/10 (the avenue crossing, elevated-band law)"
+    },
+    {
+      "id": "P09", "name": "LabPipeH09", "family": "pipe",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pipe-h.png",
+      "px": [48, 16], "ppu": 24,
+      "world": [19.0, 13.0, 21.0, 13.6667],
+      "role": "conduit run segment 9/10 (clears ResN02 nameplate top by 0.167)"
+    },
+    {
+      "id": "P10", "name": "LabPipeH10", "family": "pipe",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pipe-h.png",
+      "px": [48, 16], "ppu": 24,
+      "world": [21.0, 13.0, 23.0, 13.6667],
+      "role": "conduit run segment 10/10 (over the pod roofline, east end flush at the pod east face)"
+    },
+    {
+      "id": "PV1", "name": "LabPipeV01", "family": "pipe_stub",
+      "asset": "Assets/ArtPacks/lab-glass/lab-pipe-v.png",
+      "px": [16, 48], "ppu": 24,
+      "world": [22.1667, 11.6667, 22.8333, 13.6667],
+      "mount": "host L1 (pod roof): sinks 0.3333 into the pod top y=12.0, rises to the band top, ties the conduit down to the incubator pod (sign-mounting precedent)",
+      "slacks": { "res_n02_nameplate_x": 0.792, "eave_nameplate_x": 0.458, "eave_body_x": 1.167 },
+      "role": "the pod-to-conduit leg - research conclusions leave the incubator and head for the tower"
+    }
+  ],
+  "census": {
+    "survey_window_main": "cells x16..24 rows 9..13 = world x16..25 y9..14 (r139 main window)",
+    "east_avenue": "vcols 17/18 = road cells world x17..19 for rows 3..14 - the survey window splits here; the west sliver x16..17 (1u) hosts only the bus-stop sign",
+    "five_live_objects": [
+      { "id": "VehicleBusN", "src": "VehicleRules[4]", "rect": [9.6042, 8.0, 14.3958, 10.5833], "note": "north-street bus, body top presses rows 9..10 across x9.6..14.4 - west of the window" },
+      { "id": "VehicleStopN", "src": "VehicleRules[7]", "rect": [16.1875, 9.0, 16.8125, 10.5417], "note": "bus-stop sign inside the west sliver" },
+      { "id": "ResN02", "src": "ResidentRules[25]", "body": [19.3333, 10.3333, 20.6667, 11.6667], "shadow": [19.3333, 10.1067, 20.6667, 10.44], "nameplate": [18.625, 12.0, 21.375, 12.8333], "note": "north walkway seat, stands 0.333 west of the pod - street life in front of the labs" },
+      { "id": "EAVE-N01", "src": "eaveslots-manifest r123", "body": [24.0, 10.3333, 25.3333, 11.6667], "shadow": [24.0, 10.1067, 25.3333, 10.44], "nameplate": [23.2917, 12.0, 26.0417, 12.8333], "note": "NORTH rain-shelter quota slot at the B3 west face - a landed P-75 facility, treated as pinned" },
+      { "id": "RobotPromE", "src": "RobotRules[7]", "rect": [14.0, 4.0, 15.0, 5.0], "note": "riverside promenade row 4 - outside the walkway band" }
+    ],
+    "props_in_window": "NONE: glow props sit on grass rows 5/-6, posts on rows 3/-4, boxes at (9,8)/( -12,8) and (14,-8)/(-10,-8) - all outside world y9..14",
+    "green_in_window": "NONE: grass rows 5..6 (and -6) only; the walkway band rows 9..14 is full pavement",
+    "ground_in_window": "pavement rows 9..14 across the full width; the only road cells are the avenue cols 17/18; water rows -3..2 far south",
+    "tile_buildings_in_window": "NONE: B2_NEMID ends at world x10, B3_NE starts at world x26; the window interior is open pavement",
+    "office_sprites_in_window": "NONE: N4 starts at world x29 (N1-N3 west of the tower)",
+    "neon_signs_in_window": "NONE mounted inside x16..25 y9..14 (NeonNEScroll/NeonBigstream mount on B3 at x>=26.797; NeonNMIds on B2 at x8)"
+  },
+  "verdict_windows": {
+    "east_main": {
+      "window": "world x19..25 y9..12 (the east block of the r139 survey window; pods cap at top 12.0 by the labs low-rise law)",
+      "verdict": "FRAGMENTED - max contiguous clean width 3.333u (x20.667..24.0): ResN02 body+shadow owns x19.333..20.667, EAVE-N01 body+shadow owns x24.0..25.333, both nameplates close the band at y12.0+; every 4u-wide piece (lab-birth 4x3, lab-sandbox 4x2, lab-pod-wide 4x2) fires; the clean zone hosts exactly one 2u-wide pod -> selected L1",
+      "res_n02_micro_moves": "the only harness-legal nearby cell is (21,11) - the y=10 family ((20,10)/(21,10)/(22,10)) dies to the sec.8 underfoot gate (underfoot = feet row - 1 = row 8 = north street road); (21,11) still leaves max clean width < 4u (its body 20.333..21.667 re-fragments the span) - micro-moves cannot open a 4u span",
+      "probes_pinned": [
+        "[19,9,23,12] fires seat:ResN02 body", "[21,9,25,12] fires eave:EAVE-N01 body", "[22,9,27,12] fires eave:EAVE-N01 body + bld:B3_NE",
+        "[16,9,20,12] fires road (avenue cols 17/18)", "[15,9,19,12] fires veh:VehicleStopN + road", "[10,9,14,12] fires veh:VehicleBusN",
+        "[19,9,25,12] fires seat:ResN02 + eave:EAVE-N01", "(20,10) stand cell fires underfoot road row 8 (sec.8 gate)"
+      ]
+    },
+    "west_backup": {
+      "window": "world x-6..-2 y9..12 (between B1 east face and the tower plinth west face - exactly 4u, the r139 backup window, concept-closest to 'tower-adjacent')",
+      "verdict": "BLOCKED - ResN01 (-3.5,11) body x-4.167..-2.833 + shadow sit inside the span (its nameplate floats at the top border y12.0+, x-4.875..-2.125) AND ResN01 is CAGE-LOCKED: the full out-move census over the north walkway finds NO legal destination outside the window - the y=10 family dies citywide to the sec.8 underfoot gate (underfoot = feet row - 1 = row 8 = north street road), and at y=11 the east approach dies to the halo/plate vise (ResN02 2.2-halo demands x >= 22.2, the EAVE-N01 nameplate tag-tag gate demands x <= 21.917 - empty band); the only legal cells are in-window (c in [-5.333,-3.375], y=11 - the B1 top border y12.0 never clips a y=11 nameplate, only the tower plinth bounds the cage east); a 4u facility is infeasible without an illegal seat",
+      "probes_pinned": [
+        "[-6,9,-2,12] fires seat:ResN01 body + shadow (nameplate = top-border y12.0, strict no-overlap)",
+        "(-5,11)/(-4.5,11)/(-4,11)/(-3.5,11) stand cells = legal but IN-WINDOW (ResN01 cage [-5.333,-3.375])",
+        "(-5.5,11) fires bld:B1 body (west cage wall)", "(-3.25,11) fires bld:B7 tower nameplate clip (east cage wall)",
+        "(22.5,10) fires underfoot road row 8 (sec.8 gate)", "(22.3,11) fires plate-plate eave:EAVE-N01 (dx 2.37 < 2.75)",
+        "(22.2,11) fires halo seat:ResN02 (dist 2.2 boundary) AND plate-plate eave", "(21.9,11) fires halo seat:ResN02 (dist 1.9 < 2.2)",
+        "(-19,11) fires bld:N1 (x-24..-18)", "(-15,11) fires bld:N2 (x-16..-10)", "(-12,11) fires bld:N2", "(-8,11) fires bld:B1 (x-9..-6)",
+        "(-17,11) fires road (avenue)", "(13,11) fires veh:VehicleBusN halo 2.16<2.8", "(14,11) fires veh:VehicleStopN halo 2.79<2.8",
+        "(16,11) fires veh:VehicleStopN halo 1.33<2.8", "(-25.5,11) fires the B0/N1 1u wedge", "(-10.5,11) fires the N2/B1 1u wedge"
+      ]
+    },
+    "east_wing": {
+      "window": "world x3..7 y9..12 (tower east flank)",
+      "verdict": "BANNED - the anchor honor seat ResT01 (C-00001, r73 law: the anchor outranks geometry, never moved) sits at (4.5,11) post-r132; r139 design-inversion verdict upheld"
+    },
+    "eave_ru_postmortem": {
+      "finding": "NEW DEBT DISCOVERY: the r123 runner-up EAVE-N01RU (B2 west face, window x6.25..6.333, y11) DIED to the r132 tower-v2 seat move - ResT01 stepped 3.5 -> 4.5, so the RU now sits 1.79u from the anchor (>= 2.2 required) and its nameplate sits 1.833u away in tag-tag terms (>= 2.75 required) - infeasible; EAVE-N01 has NO relocation destination (treated as pinned above); the eaveslots manifest runner_up note is stale post-r132 (dormant candidate, no live consumer - registered as an errata finding for the eaveslots line, not a repair)"
+    }
+  },
+  "quota_ledger": {
+    "pre_registered": "r139: three facilities as ONE contiguous block (incubator pods tall+mid+wide + birth station 4x3 + sandbox 4x2 = 5 pieces, ~38u2)",
+    "feasible_zero_move": 1,
+    "selected": 1,
+    "shortfall": 4,
+    "shortfall_pieces": ["lab-pod-mid 2x2", "lab-pod-wide 4x2", "lab-birth 4x3", "lab-sandbox 4x2"],
+    "root_cause": "the north walkway is SATURATED under the full gate family: the east avenue splits every wide window; the r104 seat ring + the r123 eave quota slot + street furniture (bus, stop sign) own the remaining stretches; no 4u-wide clean span exists anywhere (west span killed by the cage-locked ResN01 - no legal out-cell survives the underfoot/halo/plate gates; east span by the pinned EAVE-N01 + ResN02)",
+    "honest_note": "the labs open as a presence (pod + conduit), not the full block - the three-facility block is a CEO-visible trade, never a silent scope cut"
+  },
+  "remedy_candidates": {
+    "a_eave_relocation": "DEAD - no destination survives (RU postmortem above: every other face was probe-blocked in the r123 survey)",
+    "b_resn01_east_move": "DEAD - the (22.5,10) destination dies to the sec.8 underfoot gate (row 8 road), and the y=11 east approach dies to the halo/plate vise (ResN02 halo x>=22.2 vs EAVE plate tag-tag x<=21.917); ResN01 is cage-locked in-window - the west window can never open (probe-pinned)",
+    "c_eave_slot_retirement": {
+      "trade": "retire the EAVE-N01 rain-shelter quota slot (NORTH district -> 0 slots; the district falls to the honest home-position fallback in rain per the r123 law) - the slot has NO relocation home post-r132 (RU dead, all other faces probe-blocked), so retirement is the only single-fixture unlock",
+      "unlocks": "the east span x20.667..26 opens 5.333u wide - ONE of: (i) the incubator cluster grows to two pods (kept L1 [21,9,23,12] + lab-pod-mid [23,9,25,11], B3/NeonNEScroll/NeonBigstream all clear - the CEO-named glass-pod cluster 2/3 complete), or (ii) a single 4u facility instead of the pod (lab-birth [21,9,25,12] or lab-sandbox [21,10,25,12] - the span hosts one OR the other: 4+2 > 5.333)",
+      "costs": "one landed P-75 facility face is retired (rain-shelter coverage becomes MEDIA-only) - CEO-visible trade: labs vs rain shelter",
+      "ceo_pick": "cluster-growth vs 4u-facility vs keep-status-quo - CEO option (not this round)"
+    },
+    "d_mass_furniture_round": "v3 slice: additionally move VehicleStopN + re-quota ResN02 for a wider east span - multi-fixture move round, CEO-visible (r137 v1_door_debt pattern)",
+    "e_downsized_vocab": "S-library acquisition line: 2u-wide birth/sandbox vocabulary variants (art-style gate + U121 light tier) - the block re-plans around narrow pieces"
+  },
+  "coupled_updates_r142": [
+    "City/Assets/Scripts/LabsRules.cs: pure static table (12 placements: 1 pod + 10 pipe-h + 1 pipe-v stub; name/asset path/px/world rect/family/order) - OfficeRules idiom, zero person/city data (r10 stale-copy law)",
+    "City/Assets/Editor/LabsProof.cs: census mirror of this sandbox (proof-mirror law r103) - pod rect vs all live sources (8 buildings / 32 seats x body+shadow+nameplate / 8 robots x body+shadow / 8 vehicles / 21 signs / 5 offices / 1 terrace / 2 eave slots x body+shadow+nameplate / interiors / anchors), feet-cell pavement re-derivation from live tilemaps, low-rise top gate 12.0, conduit band gates (elevated crossing, tower dock border, zone disjointness vs COMMIT/TRANSFER), stub host-mount equality, chain connectivity (segment x-contiguity + stub span inside run span), importer PPU24 spot gate, idempotent swept rebuild + cross-session reload gate, .meta generation via first editor import (r140 note 3)",
+    "pipeline: LabsProof joins the r104-style pass list + four screenshots sec3 rescan (m1-r142-labs-*) + multimodal harmony check vs art-target-dusk (r44 law)",
+    "CameraProof L1-north baseline re-derivation: the conduit crosses the brain-area L1 view (r111 rederivations law; r138 |camX|<=30 street-cam law)",
+    "ARTPACKS-LEDGER lab-glass section: r142 consumption line (pod-tall 1, pipe-h 10, pipe-v 1)",
+    "real-machine scan+verify double green (tick 10min self-runs; editor round re-confirms)"
+  ],
+  "token_gate": "L1 deterministic math + on-disk checks, zero generation touchpoints"
+}

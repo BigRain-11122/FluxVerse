@@ -1,6 +1,11 @@
 // FluxVerse P-69 slice (r112): batch proof for the street office band v1
 // (office-ladder consumption, law = Tools/city/officeband-manifest.json r111
 // sandbox, 1072 assertions; provenance = TECH sec.9 P-69 r110/r111 rows).
+// r138 extension: the Ground terrace family (law = Tools/city/
+// terraces-manifest.json, the r137 939-assertion sandbox) - A2 table gates
+// (door law / north ban / 6u MEDIA tier hierarchy), census + eave-slot
+// protection, ground asset gate, build/persist + reload survival, render
+// gates + the L1 west street-front door view (m1-r138-terrace-* set).
 // Sentinel pattern (r35..r110 style):
 //   pass 1: logs/office.run         -> FluxVerse.OfficeProof.BatchRun   -> logs/office.done
 //   pass 2: logs/office-reload.run -> FluxVerse.OfficeProof.ReloadGate -> logs/office-reload.done
@@ -208,67 +213,60 @@ namespace FluxVerse
             Chk(Math.Abs(OfficeRules.X0(n4) - b3.x1) < 1e-5f,
                 "N4/Buildings[3] registered zero-gap touch must sit exactly at x=" + b3.x1);
 
-            // zero-encroachment census vs every live single source (r111 A3)
-            for (int i = 0; i < OfficeRules.Count; i++)
+            // ---- A2. ground terrace gates (r137 sandbox mirror, Tools/city/terraces-manifest.json) ----
+            Chk(OfficeRules.GroundCount >= 1, "ground terrace table empty (r138 law)");
+            for (int g = 0; g < OfficeRules.GroundCount; g++)
             {
-                float x0 = OfficeRules.X0(i), y0 = OfficeRules.Y0(i), x1 = OfficeRules.X1(i), y1 = OfficeRules.Y1(i);
-                string id = OfficeRules.Name(i);
-                for (int b = 0; b < 8; b++)
-                {
-                    NeonRules.Building bb = NeonRules.BuildingAt(b);
-                    Chk(!Overlap(x0, y0, x1, y1, bb.x0, bb.y0, bb.x1, bb.y1),
-                        "office " + id + " clips mounting building " + b);
-                }
-                for (int s = 0; s < ResidentRules.Count; s++)
-                {
-                    Vector2 c = ResidentRules.Pos(s);
-                    float half = ResidentRules.WorldW(s) / 2f;
-                    Chk(!Overlap(x0, y0, x1, y1, c.x - half, c.y - half, c.x + half, c.y + half),
-                        "office " + id + " clips resident " + ResidentRules.Name(s));
-                    Vector2 sc = ResidentRules.ShadowPos(s);
-                    float shw = ResidentRules.ShadowWorldW / 2f, shh = ResidentRules.ShadowWorldH / 2f;
-                    Chk(!Overlap(x0, y0, x1, y1, sc.x - shw, sc.y - shh, sc.x + shw, sc.y + shh),
-                        "office " + id + " clips resident shadow " + ResidentRules.Name(s));
-                    Chk(!Overlap(x0, y0, x1, y1, c.x - PlateHalfW, c.y + PlateOffsetY - PlateHalfH,
-                                 c.x + PlateHalfW, c.y + PlateOffsetY + PlateHalfH),
-                        "office " + id + " clips nameplate " + ResidentRules.Name(s));
-                }
-                for (int r = 0; r < RobotRules.Count; r++)
-                {
-                    Vector2 c = RobotRules.Pos(r);
-                    float half = RobotRules.WorldW(r) / 2f;
-                    Chk(!Overlap(x0, y0, x1, y1, c.x - half, c.y - half, c.x + half, c.y + half),
-                        "office " + id + " clips robot " + RobotRules.Name(r));
-                    Vector2 sc = RobotRules.ShadowPos(r);
-                    float shw = RobotRules.ShadowWorldW / 2f, shh = RobotRules.ShadowWorldH / 2f;
-                    Chk(!Overlap(x0, y0, x1, y1, sc.x - shw, sc.y - shh, sc.x + shw, sc.y + shh),
-                        "office " + id + " clips robot shadow " + RobotRules.Name(r));
-                }
-                for (int v = 0; v < VehicleRules.Count; v++)
-                {
-                    float vw = VehicleRules.WorldW(v) / 2f, vh = VehicleRules.WorldH(v);
-                    float vx = VehicleRules.Pos(v).x, gy = VehicleRules.FeetY(v);
-                    Chk(!Overlap(x0, y0, x1, y1, vx - vw, gy, vx + vw, gy + vh),
-                        "office " + id + " clips vehicle " + VehicleRules.Name(v));
-                }
-                for (int g = 0; g < NeonRules.Count; g++)
-                {
-                    Vector2 c = NeonRules.Pos(g);
-                    float gw = NeonRules.WorldW(g) / 2f, gh = NeonRules.WorldH(g) / 2f;
-                    Chk(!Overlap(x0, y0, x1, y1, c.x - gw, c.y - gh, c.x + gw, c.y + gh),
-                        "office " + id + " clips neon sign " + NeonRules.Name(g));
-                }
-                List<InteriorTarget> reg = InteriorRouter.DefaultRegistry();
-                for (int w = 0; w < reg.Count; w++)
-                {
-                    Rect rr = reg[w].bounds;
-                    Chk(!Overlap(x0, y0, x1, y1, rr.xMin, rr.yMin, rr.xMax, rr.yMax),
-                        "office " + id + " clips interior hit rect " + reg[w].zone);
-                }
-                for (int a = 0; a < AnchorCanon.Length; a++)
-                    Chk(!ContainsPoint(x0, y0, x1, y1, AnchorCanon[a].x, AnchorCanon[a].y),
-                        "office " + id + " swallows anchor " + a);
+                string gid = OfficeRules.GroundName(g);
+                Chk(gid != null && gid.StartsWith(OfficeRules.GroundPrefix), "bad terrace GO name: " + gid);
+                Chk(OfficeRules.GroundPath(g).StartsWith("Assets/ArtPacks/office-ladder/"),
+                    "terrace path outside the office-ladder pack: " + OfficeRules.GroundPath(g));
+                Chk(OfficeRules.GroundPxW(g) == 48 && OfficeRules.GroundPxH(g) == 144,
+                    "ground slab frame drift (pack layout changed): " + gid + " "
+                    + OfficeRules.GroundPxW(g) + "x" + OfficeRules.GroundPxH(g));
+                Chk(Math.Abs(OfficeRules.GroundWorldW(g) - OfficeRules.GroundPxW(g) / OfficeRules.PPU) < 1e-5f
+                    && Math.Abs(OfficeRules.GroundWorldH(g) - OfficeRules.GroundPxH(g) / OfficeRules.PPU) < 1e-5f,
+                    "world size != px/PPU24 at " + gid);
+                float gx0 = OfficeRules.GroundX0(g), gy0 = OfficeRules.GroundY0(g);
+                float gx1 = OfficeRules.GroundX1(g), gy1 = OfficeRules.GroundY1(g);
+                Chk(Math.Abs(gx0 - Mathf.Round(gx0)) < 1e-5f && Math.Abs(gy0 - Mathf.Round(gy0)) < 1e-5f
+                    && Math.Abs(gx1 - Mathf.Round(gx1)) < 1e-5f && Math.Abs(gy1 - Mathf.Round(gy1)) < 1e-5f,
+                    "non-integer cell boundary at " + gid);
+                // the Ground family is river-north BANNED (law.north_ban)
+                Chk(!OfficeRules.GroundIsNorth(g), "Ground module north of the river (6u breaches the 2-4u cap): " + gid);
+                Chk(Math.Abs(gy0 - OfficeRules.TintFloorY) < 1e-5f, "terrace must sit on the band floor -16: " + gid);
+                Chk(gy1 <= OfficeRules.SouthTopMax + 1e-5f, "terrace top edge breach (<= -8): " + gid);
+                // hierarchy: 6u = the MEDIA storefront tier; top -10 < MEDIA -8 < QUANT 128px < brain 160px
+                float gh = gy1 - gy0;
+                Chk(Math.Abs(gh - 6f) < 1e-5f, "terrace height must be the 6u storefront tier: " + gid);
+                Chk(gh < 8f, "terrace towers over QUANT 8u: " + gid);
+                Chk(gy1 < OfficeRules.SouthTopMax - 1e-5f,
+                    "terrace top must clear the canopy line strictly (hierarchy -10 < -8): " + gid);
+                // door law (r136 census): the Ground family door >= 1.5x the resident line
+                Chk(OfficeRules.DoorHeightPx / OfficeRules.PPU >= 1.5f * ResidentRules.WorldW(0) - 1e-5f,
+                    "terrace door below the 1.5x law: " + (OfficeRules.DoorHeightPx / OfficeRules.PPU).ToString("F2")
+                    + "u vs resident " + ResidentRules.WorldW(0).ToString("F2") + "u");
+                Chk(OfficeRules.GroundInFrame(g), "terrace escapes the static L0 frame: " + gid);
+                Chk(OfficeRules.GroundInTintBand(g), "terrace escapes the tint band: " + gid);
+                Chk(!Overlap(gx0, gy0, gx1, gy1, -18f, -50f, -16f, 50f), "vcol-west road encroached: " + gid);
+                Chk(!Overlap(gx0, gy0, gx1, gy1, 16f, -50f, 18f, 50f), "vcol-east road encroached: " + gid);
+                Chk(!Overlap(gx0, gy0, gx1, gy1, -50f, -3f, 50f, 3f), "river rows encroached: " + gid);
             }
+            // office <-> terrace mutual non-overlap
+            for (int i = 0; i < OfficeRules.Count; i++)
+                for (int g = 0; g < OfficeRules.GroundCount; g++)
+                    Chk(!Overlap(OfficeRules.X0(i), OfficeRules.Y0(i), OfficeRules.X1(i), OfficeRules.Y1(i),
+                                 OfficeRules.GroundX0(g), OfficeRules.GroundY0(g), OfficeRules.GroundX1(g), OfficeRules.GroundY1(g)),
+                        "terrace clips office: " + OfficeRules.Name(i) + "<->" + OfficeRules.GroundName(g));
+
+            // zero-encroachment census vs every live single source (r111 A3;
+            // r138: the terraces join the census and the 2 eave slots join the
+            // protected stand positions - manifest coupled_updates census)
+            for (int i = 0; i < OfficeRules.Count; i++)
+                CensusOne(OfficeRules.X0(i), OfficeRules.Y0(i), OfficeRules.X1(i), OfficeRules.Y1(i), OfficeRules.Name(i));
+            for (int g = 0; g < OfficeRules.GroundCount; g++)
+                CensusOne(OfficeRules.GroundX0(g), OfficeRules.GroundY0(g), OfficeRules.GroundX1(g), OfficeRules.GroundY1(g),
+                          OfficeRules.GroundName(g));
             // detector positive controls (the r111 rejected windows genuinely fire)
             int g07 = -1, bus = -1, kiosk = -1;
             for (int s = 0; s < ResidentRules.Count; s++) if (ResidentRules.Name(s) == "ResG07") g07 = s;
@@ -295,6 +293,7 @@ namespace FluxVerse
             // asset pins on disk
             Chk(File.Exists(Path.Combine(ProjectRoot, OfficeRules.SrcPath)), "source condo missing on disk");
             Chk(File.Exists(Path.Combine(ProjectRoot, OfficeRules.MirrorPath)), "mirror condo missing on disk");
+            Chk(File.Exists(Path.Combine(ProjectRoot, OfficeRules.GroundSrcPath)), "ground slab missing on disk");
 
             // ---- B. asset gate: importer laws on both files (idempotent) ----
             for (int f = 0; f < 2; f++)
@@ -328,6 +327,14 @@ namespace FluxVerse
             UnityEngine.Object.DestroyImmediate(srcTex);
             UnityEngine.Object.DestroyImmediate(mirTex);
 
+            // ground slab asset gate (r138): same importer law family, 48x144 pin
+            Sprite gsp = ForceSprite(OfficeRules.GroundSrcPath);
+            Chk(gsp != null, "ground slab sprite failed to load: " + OfficeRules.GroundSrcPath);
+            Chk(Math.Abs(gsp.rect.width - 48f) < 0.5f && Math.Abs(gsp.rect.height - 144f) < 0.5f,
+                "ground rect != 48x144: " + gsp.rect.width + "x" + gsp.rect.height);
+            Chk(Math.Abs(gsp.bounds.size.x - 2f) < 0.01f && Math.Abs(gsp.bounds.size.y - 6f) < 0.01f,
+                "ground natural bounds != 2x6u: " + gsp.bounds.size.x.ToString("F2") + "x" + gsp.bounds.size.y.ToString("F2"));
+
             // ---- C. CityScene wiring: live census -> sweep -> build -> idempotent -> save ----
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             Chk(scene.isLoaded, "CityScene failed to open");
@@ -347,6 +354,11 @@ namespace FluxVerse
                     Chk(!Overlap(OfficeRules.X0(i), OfficeRules.Y0(i), OfficeRules.X1(i), OfficeRules.Y1(i),
                                  cells[c].x, cells[c].y, cells[c].x + 1, cells[c].y + 1),
                         "office " + OfficeRules.Name(i) + " clips props cell (" + cells[c].x + "," + cells[c].y + ")");
+            for (int g = 0; g < OfficeRules.GroundCount; g++)
+                for (int c = 0; c < cells.Count; c++)
+                    Chk(!Overlap(OfficeRules.GroundX0(g), OfficeRules.GroundY0(g), OfficeRules.GroundX1(g), OfficeRules.GroundY1(g),
+                                 cells[c].x, cells[c].y, cells[c].x + 1, cells[c].y + 1),
+                        "terrace " + OfficeRules.GroundName(g) + " clips props cell (" + cells[c].x + "," + cells[c].y + ")");
             // live anchor GOs == canon (BrainTower anchor = the non-tilemap GO of the two)
             for (int a = 1; a <= 3; a++)
             {
@@ -391,6 +403,26 @@ namespace FluxVerse
                     && Math.Abs(go.transform.localScale.y - 1f) < 1e-5f,
                     "office scale != 1 (sprite-family law): " + OfficeRules.Name(i));
             }
+            // r138: terraces join the build (fresh LoadAssetAtPath, r10 law)
+            BuildTerraces();
+            BuildTerraces();   // idempotency: the second sweep+build must land on exactly GroundCount
+            Chk(CountTerraces() == OfficeRules.GroundCount,
+                "idempotent terrace rebuild count != table: " + CountTerraces());
+            for (int g = 0; g < OfficeRules.GroundCount; g++)
+            {
+                GameObject go = GameObject.Find(OfficeRules.GroundName(g));
+                Chk(go != null, "terrace GO missing pre-save: " + OfficeRules.GroundName(g));
+                SpriteRenderer sr = go.GetComponent<SpriteRenderer>();
+                Chk(sr != null && sr.sprite != null, "terrace sprite unresolved pre-save: " + OfficeRules.GroundName(g));
+                Chk(sr.sortingOrder == OfficeRules.Order, "terrace order lost: " + OfficeRules.GroundName(g));
+                Vector2 p = OfficeRules.GroundPos(g);
+                Chk(Math.Abs(go.transform.position.x - p.x) < 1e-4f
+                    && Math.Abs(go.transform.position.y - p.y) < 1e-4f,
+                    "terrace GO pos != rect center: " + OfficeRules.GroundName(g));
+                Chk(Math.Abs(go.transform.localScale.x - 1f) < 1e-5f
+                    && Math.Abs(go.transform.localScale.y - 1f) < 1e-5f,
+                    "terrace scale != 1 (sprite-family law): " + OfficeRules.GroundName(g));
+            }
             bool saved = EditorSceneManager.SaveScene(scene);
             Chk(saved, "scene save failed");
 
@@ -413,6 +445,24 @@ namespace FluxVerse
                 Chk(Math.Abs(sr.sprite.rect.width - 144f) < 0.5f
                     && Math.Abs(sr.sprite.rect.height - 96f) < 0.5f,
                     "persisted sprite rect drift: " + OfficeRules.Name(i));
+            }
+            // r138: terraces persisted on disk
+            Chk(CountTerraces() == OfficeRules.GroundCount,
+                "persisted terrace count != table: " + CountTerraces());
+            for (int g = 0; g < OfficeRules.GroundCount; g++)
+            {
+                GameObject go = GameObject.Find(OfficeRules.GroundName(g));
+                Chk(go != null, "terrace missing on disk: " + OfficeRules.GroundName(g));
+                SpriteRenderer sr = go != null ? go.GetComponent<SpriteRenderer>() : null;
+                Chk(sr != null && sr.sprite != null, "terrace sprite lost on disk: " + OfficeRules.GroundName(g));
+                Chk(sr.sortingOrder == OfficeRules.Order, "terrace order lost on disk: " + OfficeRules.GroundName(g));
+                Vector2 p = OfficeRules.GroundPos(g);
+                Chk(Math.Abs(go.transform.position.x - p.x) < 1e-4f
+                    && Math.Abs(go.transform.position.y - p.y) < 1e-4f,
+                    "terrace position lost on disk: " + OfficeRules.GroundName(g));
+                Chk(Math.Abs(sr.sprite.rect.width - 48f) < 0.5f
+                    && Math.Abs(sr.sprite.rect.height - 144f) < 0.5f,
+                    "persisted terrace sprite rect drift: " + OfficeRules.GroundName(g));
             }
             // neighbor regressions (our save must not drop earlier serialized wiring)
             int neonKept = 0, robotKept = 0, resKept = 0, tagKept = 0, vehKept = 0;
@@ -463,6 +513,12 @@ namespace FluxVerse
                 officeGos[i] = GameObject.Find(OfficeRules.Name(i));
                 Chk(officeGos[i] != null, "office GO missing for render gate: " + OfficeRules.Name(i));
             }
+            GameObject[] terraceGos = new GameObject[OfficeRules.GroundCount];
+            for (int g = 0; g < OfficeRules.GroundCount; g++)
+            {
+                terraceGos[g] = GameObject.Find(OfficeRules.GroundName(g));
+                Chk(terraceGos[g] != null, "terrace GO missing for render gate: " + OfficeRules.GroundName(g));
+            }
             float dayLum = 0f, duskLum = 0f, nightLum = 0f;
             float dayWarm = 0f, duskWarm = 0f;
             int dayTot = 0, duskTot = 0, nightTot = 0;
@@ -481,6 +537,16 @@ namespace FluxVerse
             }
             dayLum = dayTot > 0 ? dayLum / dayTot : 0f;
             dayWarm = dayTot > 0 ? dayWarm / dayTot : 0f;
+            // r138 terrace day pair (offices stay on in both frames - clean
+            // attribution); the m1-r138-terrace-day frame = the dayOn bytes
+            SetTerraces(terraceGos, false);
+            Texture2D terraceDayBase = Shot(cam, null);
+            SetTerraces(terraceGos, true);
+            int terraceDayN; float terraceDayLum, terraceDayWarm;
+            GroundWinDelta(dayOn, terraceDayBase, cam, 0, out terraceDayN, out terraceDayLum, out terraceDayWarm);
+            Chk(terraceDayN >= 150, "terrace invisible in the day L0 frame: " + terraceDayN + "px");
+            File.Copy(Path.Combine(RepoRoot, "docs", "design", "m1-r112-officeband-day.png"),
+                      Path.Combine(RepoRoot, "docs", "design", "m1-r138-terrace-day.png"), true);
             amb.ApplyAmbient(AmbientTier.Dusk);
             SetOffices(officeGos, false);
             Texture2D duskBase = Shot(cam, null);
@@ -495,6 +561,15 @@ namespace FluxVerse
             }
             duskLum = duskTot > 0 ? duskLum / duskTot : 0f;
             duskWarm = duskTot > 0 ? duskWarm / duskTot : 0f;
+            // r138 terrace dusk pair + the m1-r138-terrace-dusk frame
+            SetTerraces(terraceGos, false);
+            Texture2D terraceDuskBase = Shot(cam, null);
+            SetTerraces(terraceGos, true);
+            int terraceDuskN; float terraceDuskLum, terraceDuskWarm;
+            GroundWinDelta(duskOn, terraceDuskBase, cam, 0, out terraceDuskN, out terraceDuskLum, out terraceDuskWarm);
+            Chk(terraceDuskN >= 200, "terrace invisible at dusk: " + terraceDuskN + "px");
+            File.Copy(Path.Combine(RepoRoot, "docs", "design", "m1-r112-officeband-dusk.png"),
+                      Path.Combine(RepoRoot, "docs", "design", "m1-r138-terrace-dusk.png"), true);
             amb.ApplyAmbient(AmbientTier.Night);
             SetOffices(officeGos, false);
             Texture2D nightBase = Shot(cam, null);
@@ -508,6 +583,20 @@ namespace FluxVerse
                 if (n < nightMin) { nightMin = n; nightWorst = OfficeRules.Name(i); }
             }
             nightLum = nightTot > 0 ? nightLum / nightTot : 0f;
+            // r138 terrace night pair + the m1-r138-terrace-night frame + the
+            // r44 harmony/atmosphere laws for the storefront family
+            SetTerraces(terraceGos, false);
+            Texture2D terraceNightBase = Shot(cam, null);
+            SetTerraces(terraceGos, true);
+            int terraceNightN; float terraceNightLum, terraceNightWarm;
+            GroundWinDelta(nightOn, terraceNightBase, cam, 0, out terraceNightN, out terraceNightLum, out terraceNightWarm);
+            Chk(terraceNightN >= 50, "terrace invisible at night: " + terraceNightN + "px");
+            File.Copy(Path.Combine(RepoRoot, "docs", "design", "m1-r112-officeband-night.png"),
+                      Path.Combine(RepoRoot, "docs", "design", "m1-r138-terrace-night.png"), true);
+            Chk(terraceDuskWarm > terraceDayWarm + 0.02f, "terrace harmony law: dusk must warm the storefront (r-b "
+                + terraceDayWarm.ToString("F3") + " -> " + terraceDuskWarm.ToString("F3") + ")");
+            Chk(terraceNightLum < terraceDuskLum, "terrace night must sit under dusk (atmosphere law): "
+                + terraceNightLum.ToString("F3") + " vs " + terraceDuskLum.ToString("F3"));
             Chk(duskTot >= 2000, "dusk office delta too sparse: " + duskTot + "px");
             Chk(duskMin >= 400, "dusk invisible office " + duskWorst + ": " + duskMin + "px");
             Chk(nightTot >= 300, "night office delta too sparse: " + nightTot + "px");
@@ -553,6 +642,21 @@ namespace FluxVerse
             int n4n; float n4l, n4w;
             WinDelta(l1nOn, l1nBase, cam, n4, out n4n, out n4l, out n4w);
             Chk(n4n == 0, "N4 must sit outside the L1-north frame (east-outer): " + n4n + "px");
+            // r138: the terrace's own L1 south-bank street view - the
+            // street-front DOOR face read (the m1-r138-terrace set closes with
+            // this frame; door >= 1.5x law asserted in A2). Camera law: the L1
+            // street family rides |camX| <= 30 (the E1 precedent rides the
+            // tint's +46 edge exactly) - camX -34 would expose the untinted
+            // 4u sliver west of the AmbientTint's -46 west edge as a false
+            // "overlay band" in evidence frames (r138 first-shot census).
+            cam.transform.position = new Vector3(-30f, -7f, origPos.z);
+            SetTerraces(terraceGos, false);
+            Texture2D l1wBase = Shot(cam, null);
+            SetTerraces(terraceGos, true);
+            Texture2D l1wOn = Shot(cam, "m1-r138-terrace-l1-west.png");
+            int l1wN; float l1wL, l1wW;
+            GroundWinDelta(l1wOn, l1wBase, cam, 0, out l1wN, out l1wL, out l1wW);
+            Chk(l1wN >= 800, "terrace street front invisible in the L1 west view: " + l1wN + "px");
             // restore the camera (scene was saved in section C; no save after renders)
             cam.orthographicSize = origSize;
             cam.transform.position = origPos;
@@ -562,6 +666,10 @@ namespace FluxVerse
             UnityEngine.Object.DestroyImmediate(nightBase); UnityEngine.Object.DestroyImmediate(nightOn);
             UnityEngine.Object.DestroyImmediate(l1sBase); UnityEngine.Object.DestroyImmediate(l1sOn);
             UnityEngine.Object.DestroyImmediate(l1nBase); UnityEngine.Object.DestroyImmediate(l1nOn);
+            UnityEngine.Object.DestroyImmediate(terraceDayBase);
+            UnityEngine.Object.DestroyImmediate(terraceDuskBase);
+            UnityEngine.Object.DestroyImmediate(terraceNightBase);
+            UnityEngine.Object.DestroyImmediate(l1wBase); UnityEngine.Object.DestroyImmediate(l1wOn);
 
             return "asserts=" + asserts
                 + " table=" + OfficeRules.Count
@@ -574,7 +682,11 @@ namespace FluxVerse
                 + " night=" + nightLum.ToString("F3")
                 + " warm day=" + dayWarm.ToString("F3") + " dusk=" + duskWarm.ToString("F3")
                 + " l1south_e1=" + l1sN + ")"
-                + " shots=5";
+                + " terrace(day=" + terraceDayN + " dusk=" + terraceDuskN + " night=" + terraceNightN
+                + " l1west=" + l1wN + " warm day->dusk=" + terraceDayWarm.ToString("F3")
+                + "->" + terraceDuskWarm.ToString("F3") + " lum dusk=" + terraceDuskLum.ToString("F3")
+                + " night=" + terraceNightLum.ToString("F3") + ")"
+                + " shots=6+3copy";
         }
 
         static string ReloadProve()
@@ -594,9 +706,24 @@ namespace FluxVerse
                     && Math.Abs(go.transform.position.y - p.y) < 1e-4f,
                     "office position lost across restart: " + OfficeRules.Name(i));
             }
+            // r138: terraces survive the editor restart
+            Chk(CountTerraces() == OfficeRules.GroundCount,
+                "terrace count after editor restart != table: " + CountTerraces());
+            for (int tg = 0; tg < OfficeRules.GroundCount; tg++)
+            {
+                GameObject go = GameObject.Find(OfficeRules.GroundName(tg));
+                Chk(go != null, "terrace lost across sessions: " + OfficeRules.GroundName(tg));
+                SpriteRenderer sr = go != null ? go.GetComponent<SpriteRenderer>() : null;
+                Chk(sr != null && sr.sprite != null, "terrace sprite unresolved after restart: " + OfficeRules.GroundName(tg));
+                Chk(sr.sortingOrder == OfficeRules.Order, "terrace order lost after restart: " + OfficeRules.GroundName(tg));
+                Vector2 p = OfficeRules.GroundPos(tg);
+                Chk(Math.Abs(go.transform.position.x - p.x) < 1e-4f
+                    && Math.Abs(go.transform.position.y - p.y) < 1e-4f,
+                    "terrace position lost across restart: " + OfficeRules.GroundName(tg));
+            }
             int q = TileCount("CityQUANT"), g = TileCount("CityGAME"), m = TileCount("CityMEDIA");
             Chk(q == 40 && g == 49 && m == 54, "south city tile counts off canon after restart: " + q + "/" + g + "/" + m);
-            string[] spot = { OfficeRules.SrcPath, OfficeRules.MirrorPath };
+            string[] spot = { OfficeRules.SrcPath, OfficeRules.MirrorPath, OfficeRules.GroundSrcPath };
             foreach (string p in spot)
             {
                 TextureImporter imp = (TextureImporter)TextureImporter.GetAtPath(p);
@@ -620,6 +747,7 @@ namespace FluxVerse
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f, "L0 camera broken after restart");
             return "reload_gate=OK offices=" + CountOffices() + "/" + OfficeRules.Count
+                + " terraces=" + CountTerraces() + "/" + OfficeRules.GroundCount
                 + " persisted south_tiles=" + q + "/" + g + "/" + m
                 + " importers=sprite+point+ppu24+nemip neon=" + neonKept + "/" + NeonRules.Count
                 + " neighbors=6 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
@@ -651,6 +779,108 @@ namespace FluxVerse
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(OfficeRules.NamePrefix)) c++;
             return c;
+        }
+
+        // r138: sweep every root-level Terrace* GO, then build from the ground
+        // table (fresh LoadAssetAtPath at every use = r10 fake-null law)
+        static void BuildTerraces()
+        {
+            foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+                if (t.parent == null && t.name.StartsWith(OfficeRules.GroundPrefix))
+                    UnityEngine.Object.DestroyImmediate(t.gameObject);
+            for (int g = 0; g < OfficeRules.GroundCount; g++)
+            {
+                GameObject go = new GameObject(OfficeRules.GroundName(g));
+                Vector2 p = OfficeRules.GroundPos(g);
+                go.transform.position = new Vector3(p.x, p.y, 0f);
+                SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(OfficeRules.GroundPath(g));
+                if (sr.sprite == null)
+                    throw new InvalidOperationException("terrace sprite resolve failed: " + OfficeRules.GroundPath(g));
+                sr.sortingOrder = OfficeRules.Order;
+            }
+        }
+
+        static int CountTerraces()
+        {
+            int c = 0;
+            foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
+                if (sr.name.StartsWith(OfficeRules.GroundPrefix)) c++;
+            return c;
+        }
+
+        static void SetTerraces(GameObject[] gos, bool on)
+        {
+            foreach (GameObject go in gos) if (go != null) go.SetActive(on);
+        }
+
+        // one building rect vs every live single source (r111 A3 census law;
+        // r138: the 2 eave slots join the protected stand positions - the
+        // r137 manifest coupled_updates census)
+        static void CensusOne(float x0, float y0, float x1, float y1, string id)
+        {
+            for (int b = 0; b < 8; b++)
+            {
+                NeonRules.Building bb = NeonRules.BuildingAt(b);
+                Chk(!Overlap(x0, y0, x1, y1, bb.x0, bb.y0, bb.x1, bb.y1),
+                    "building " + id + " clips mounting building " + b);
+            }
+            for (int s = 0; s < ResidentRules.Count; s++)
+            {
+                Vector2 c = ResidentRules.Pos(s);
+                float half = ResidentRules.WorldW(s) / 2f;
+                Chk(!Overlap(x0, y0, x1, y1, c.x - half, c.y - half, c.x + half, c.y + half),
+                    "building " + id + " clips resident " + ResidentRules.Name(s));
+                Vector2 sc = ResidentRules.ShadowPos(s);
+                float shw = ResidentRules.ShadowWorldW / 2f, shh = ResidentRules.ShadowWorldH / 2f;
+                Chk(!Overlap(x0, y0, x1, y1, sc.x - shw, sc.y - shh, sc.x + shw, sc.y + shh),
+                    "building " + id + " clips resident shadow " + ResidentRules.Name(s));
+                Chk(!Overlap(x0, y0, x1, y1, c.x - PlateHalfW, c.y + PlateOffsetY - PlateHalfH,
+                             c.x + PlateHalfW, c.y + PlateOffsetY + PlateHalfH),
+                    "building " + id + " clips nameplate " + ResidentRules.Name(s));
+            }
+            for (int r = 0; r < RobotRules.Count; r++)
+            {
+                Vector2 c = RobotRules.Pos(r);
+                float half = RobotRules.WorldW(r) / 2f;
+                Chk(!Overlap(x0, y0, x1, y1, c.x - half, c.y - half, c.x + half, c.y + half),
+                    "building " + id + " clips robot " + RobotRules.Name(r));
+                Vector2 sc = RobotRules.ShadowPos(r);
+                float shw = RobotRules.ShadowWorldW / 2f, shh = RobotRules.ShadowWorldH / 2f;
+                Chk(!Overlap(x0, y0, x1, y1, sc.x - shw, sc.y - shh, sc.x + shw, sc.y + shh),
+                    "building " + id + " clips robot shadow " + RobotRules.Name(r));
+            }
+            for (int v = 0; v < VehicleRules.Count; v++)
+            {
+                float vw = VehicleRules.WorldW(v) / 2f, vh = VehicleRules.WorldH(v);
+                float vx = VehicleRules.Pos(v).x, gy = VehicleRules.FeetY(v);
+                Chk(!Overlap(x0, y0, x1, y1, vx - vw, gy, vx + vw, gy + vh),
+                    "building " + id + " clips vehicle " + VehicleRules.Name(v));
+            }
+            for (int g = 0; g < NeonRules.Count; g++)
+            {
+                Vector2 c = NeonRules.Pos(g);
+                float gw = NeonRules.WorldW(g) / 2f, gh = NeonRules.WorldH(g) / 2f;
+                Chk(!Overlap(x0, y0, x1, y1, c.x - gw, c.y - gh, c.x + gw, c.y + gh),
+                    "building " + id + " clips neon sign " + NeonRules.Name(g));
+            }
+            List<InteriorTarget> reg = InteriorRouter.DefaultRegistry();
+            for (int w = 0; w < reg.Count; w++)
+            {
+                Rect rr = reg[w].bounds;
+                Chk(!Overlap(x0, y0, x1, y1, rr.xMin, rr.yMin, rr.xMax, rr.yMax),
+                    "building " + id + " clips interior hit rect " + reg[w].zone);
+            }
+            for (int a = 0; a < AnchorCanon.Length; a++)
+                Chk(!ContainsPoint(x0, y0, x1, y1, AnchorCanon[a].x, AnchorCanon[a].y),
+                    "building " + id + " swallows anchor " + a);
+            for (int e = 0; e < StreetBehaviorRules.EaveCount; e++)
+            {
+                Vector2 ep = StreetBehaviorRules.EavePos(e);
+                float eh = ResidentRules.WorldW(0) / 2f;   // seat-class body 1.333u (r123 law)
+                Chk(!Overlap(x0, y0, x1, y1, ep.x - eh, ep.y - eh, ep.x + eh, ep.y + eh),
+                    "building " + id + " clips eave slot " + StreetBehaviorRules.Eave(e).id);
+            }
         }
 
         static int CountPrefix(string prefix)
@@ -739,6 +969,42 @@ namespace FluxVerse
             Vector2 c = OfficeRules.Pos(i);
             float hw = OfficeRules.WorldW(i) / 2f + 0.4f;
             float hh = OfficeRules.WorldH(i) / 2f + 0.4f;
+            float halfH = cam.orthographicSize;
+            float halfW = halfH * (1920f / 1080f);
+            float cx = cam.transform.position.x, cy = cam.transform.position.y;
+            int px0 = (int)(((c.x - hw - cx) / (2f * halfW) + 0.5f) * 1920f);
+            int px1 = (int)(((c.x + hw - cx) / (2f * halfW) + 0.5f) * 1920f);
+            int py0 = (int)(((c.y - hh - cy) / (2f * halfH) + 0.5f) * 1080f);
+            int py1 = (int)(((c.y + hh - cy) / (2f * halfH) + 0.5f) * 1080f);
+            px0 = Math.Max(0, px0); px1 = Math.Min(1919, px1);
+            py0 = Math.Max(0, py0); py1 = Math.Min(1079, py1);
+            double lum = 0, warm = 0; int n = 0;
+            for (int y = py0; y <= py1; y += 3)
+                for (int x = px0; x <= px1; x += 3)
+                {
+                    Color ca = on.GetPixel(x, y);
+                    Color cb = off.GetPixel(x, y);
+                    float d = Math.Abs(ca.r - cb.r) + Math.Abs(ca.g - cb.g) + Math.Abs(ca.b - cb.b);
+                    if (d > 0.06f)
+                    {
+                        n++;
+                        lum += (ca.r + ca.g + ca.b) / 3.0;
+                        warm += ca.r - ca.b;
+                    }
+                }
+            deltaCount = n;
+            avgLum = n > 0 ? (float)(lum / n) : 0f;
+            avgWarm = n > 0 ? (float)(warm / n) : 0f;
+        }
+
+        // r138: per-terrace window metric (GroundWinDelta = WinDelta's ground
+        // family mirror; same +0.4u margin, same 3px sampling, same laws)
+        static void GroundWinDelta(Texture2D on, Texture2D off, Camera cam, int g,
+            out int deltaCount, out float avgLum, out float avgWarm)
+        {
+            Vector2 c = OfficeRules.GroundPos(g);
+            float hw = OfficeRules.GroundWorldW(g) / 2f + 0.4f;
+            float hh = OfficeRules.GroundWorldH(g) / 2f + 0.4f;
             float halfH = cam.orthographicSize;
             float halfW = halfH * (1920f / 1080f);
             float cx = cam.transform.position.x, cy = cam.transform.position.y;

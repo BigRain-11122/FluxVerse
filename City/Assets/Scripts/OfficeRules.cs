@@ -107,5 +107,70 @@ namespace FluxVerse
         {
             return Table[i].y0 >= TintFloorY && Table[i].y1 <= TintCeilY;
         }
+
+        // ---- Ground terrace family (r138; law = Tools/city/terraces-manifest.json,
+        // the r137 939-assertion sandbox) ----
+        // Ground modules are 2x6u vertical storefront slabs (48x144px @PPU24) -
+        // the DOOR-LAW compliant street-front vocabulary. 6u = the MEDIA tier:
+        // QUANT 8u keeps the south command, brain 19 the city command. Ground is
+        // BANNED north of the river (6u breaches the 2-4u low-rise cap -
+        // law.north_ban). T1 closes the west frame edge, the mirror bookend of
+        // E1 (r111 east 29..35); zero-move law keeps ResG07 (0.833u clear) and
+        // the camper (2.542u clear) exactly where they stand.
+        // VARIANT SWAP (manifest asset_family authorization, extents pinned):
+        // Modular_1 is DOOR-LESS (r138 on-disk census: bottom = sign band +
+        // sealed base, zero door openings) - the r136 contact-sheet "one door
+        // per module" claim does not survive the per-variant scan. Modular_22
+        // carries the family's clearest legal entry: arch-top landing door at
+        // the left edge, dark-column census y63..143 = 81px = 3.375u >= 1.5x
+        // the 1.333u resident line (2.0u), threshold + transom included.
+        public const int GroundCount = 1;
+        public const string GroundPrefix = "Terrace";
+        public const string GroundSrcPath =
+            "Assets/ArtPacks/office-ladder/ME_Singles_Floor_Modular_Building_48x48_Ground_Floor_Condo_Modular_22.png";
+        public const float DoorHeightPx = 81f;   // r138 census: Modular_22 door dark extent y63..143
+
+        static readonly Bld[] GroundTable = new Bld[]
+        {
+            // T1: south west-outer street-front storefront - the r111 west
+            // window reopened at the 2u micro-slot [-35,-33] (r137 census)
+            new Bld { name = "Terrace01", path = GroundSrcPath, pxW = 48, pxH = 144,
+                      x0 = -35f, y0 = -16f, x1 = -33f, y1 = -10f, mirror = false, north = false },
+        };
+
+        public static Bld GroundAt(int g) { return GroundTable[g]; }
+        public static string GroundName(int g) { return GroundTable[g].name; }
+        public static string GroundPath(int g) { return GroundTable[g].path; }
+        public static int GroundPxW(int g) { return GroundTable[g].pxW; }
+        public static int GroundPxH(int g) { return GroundTable[g].pxH; }
+        public static float GroundX0(int g) { return GroundTable[g].x0; }
+        public static float GroundY0(int g) { return GroundTable[g].y0; }
+        public static float GroundX1(int g) { return GroundTable[g].x1; }
+        public static float GroundY1(int g) { return GroundTable[g].y1; }
+        public static float GroundWorldW(int g) { return GroundTable[g].x1 - GroundTable[g].x0; }
+        public static float GroundWorldH(int g) { return GroundTable[g].y1 - GroundTable[g].y0; }
+        public static bool GroundIsNorth(int g) { return GroundTable[g].north; }
+
+        // sprite pivot = center; GO pos = world rect center (family law)
+        public static Vector2 GroundPos(int g)
+        {
+            return new Vector2((GroundTable[g].x0 + GroundTable[g].x1) / 2f,
+                               (GroundTable[g].y0 + GroundTable[g].y1) / 2f);
+        }
+
+        public static Rect GroundWorldRect(int g)
+        {
+            return new Rect(GroundTable[g].x0, GroundTable[g].y0, GroundWorldW(g), GroundWorldH(g));
+        }
+
+        public static bool GroundInFrame(int g)
+        {
+            return Mathf.Abs(GroundTable[g].x0) <= FrameHalfX && Mathf.Abs(GroundTable[g].x1) <= FrameHalfX;
+        }
+
+        public static bool GroundInTintBand(int g)
+        {
+            return GroundTable[g].y0 >= TintFloorY && GroundTable[g].y1 <= TintCeilY;
+        }
     }
 }

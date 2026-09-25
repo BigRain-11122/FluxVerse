@@ -29,8 +29,8 @@
   "placements": [
     {
       "id": "T1", "name": "Terrace01",
-      "asset": "Assets/ArtPacks/office-ladder/ME_Singles_Floor_Modular_Building_48x48_Ground_Floor_Condo_Modular_1.png",
-      "asset_family": "Ground_Floor_Condo_Modular 1..24 (door-law compliant family; the editor-round visual pass may swap the variant within the family, extents pinned)",
+      "asset": "Assets/ArtPacks/office-ladder/ME_Singles_Floor_Modular_Building_48x48_Ground_Floor_Condo_Modular_22.png",
+      "asset_family": "Ground_Floor_Condo_Modular 1..24 (door-law compliant family; r138 variant swap EXERCISED per this authorization: Modular_1 census-verified DOOR-LESS (bottom = sign band + sealed base) -> Modular_22 pinned (arch-top landing door, dark-column census y63..143 = 81px = 3.375u >= 2.0u), extents pinned 48x144)",
       "px": [48, 144], "ppu": 24, "modules": 1,
       "cells": [-35, -34, -16, -11],
       "world": [-35.0, -16.0, -33.0, -10.0],

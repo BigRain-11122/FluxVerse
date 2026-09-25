@@ -578,6 +578,14 @@ namespace FluxVerse
             adapter.ReleaseMounts();
             Chk(adapter.transform.childCount == 0, "adapter still has children after ReleaseMounts");
             Chk(Census() == 0, "global WindowLight* census must be 0 before save");
+            // r162 (r146 save-purity law): the CITY AMBIENT family is runtime-only
+            // too and must never ride this save - this proof's tier renders
+            // created it, and the r162 pipeline order (neon BEFORE windowlight)
+            // left no healing save after us: the leaked family froze a night
+            // tint into the disk scene and broke the ambient D1 blend gate.
+            amb.ReleaseVisuals();
+            Chk(amb.transform.childCount == 0,
+                "CityAmbient children not released before the save: " + amb.transform.childCount);
             EditorSceneManager.MarkSceneDirty(scene);
             Chk(EditorSceneManager.SaveScene(scene), "SaveScene failed");
 

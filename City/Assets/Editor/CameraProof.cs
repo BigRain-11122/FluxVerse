@@ -12,7 +12,7 @@
 //  3) REAL RENDERS from CityScene: L0 panorama sky-strip gates (view 40u > band 31u ->
 //     sky always visible), mid-flight interpolation gate (size strictly between 20 and 9
 //     at t=0.6s - hard cuts impossible), L1 street gates at Zone_QUANT and BrainTower
-//     (sky-free frame = true zoom, QUANT gold face warmth, tower-face brightness), L0
+//     (sky-free frame = true zoom, QUANT gold identity census, tower-face brightness), L0
 //     return gate (size 20 + live drift + panorama sky restored).
 //  4) RELOAD GATE (sentinel logs/reload.run): a SECOND editor session re-opens the saved
 //     scene and asserts all three components RESOLVE (the gate r12/r13 never ran - that
@@ -316,9 +316,18 @@ namespace FluxVerse
             int s1bot = SkyRowsPx(l1Shot, cam, 13f, false);
             Chk(s1top <= 30, "L1 street view must fill the frame with city (top sky: " + s1top + ")");
             Chk(s1bot <= 30, "L1 street view must fill the frame with city (bottom sky: " + s1bot + ")");
-            float quantBri, quantWarm;
-            BoxMetrics(l1Shot, cam, 0f, -12.5f, out quantBri, out quantWarm);   // r104: face plane moved dy=-7
-            Chk(quantWarm > 0.10f, "QUANT gold face missing in street view: " + quantWarm.ToString("F3"));
+            // r162 re-anchor (r51 drift law): the r152 hi-bit facade supplanted
+            // the r104 tile gold face - the skin body reads navy at street zoom
+            // (measured warm -0.155; the retired gate wanted +0.10). The QUANT
+            // zone identity now rides the muted-gold ACCENT family per the
+            // r150/r151/r152 design chain (crown line + BIGMONEY sign + the
+            // P-38(3) night window lights). Gate re-derived as a warm-bright
+            // census over the tower rect: identity PRESENCE (floor 100; the
+            // completed r162 pass measured 413), never the retired face-body
+            // average.
+            int quantGold = CountWarmBright(l1Shot, cam, -2f, -16f, 3f, -8f);
+            Chk(quantGold >= 100, "QUANT gold identity missing in street view: "
+                + quantGold + " warm-bright samples (floor 100)");
             DestroyShot(midShot);
 
             // ---- C3. focus BrainTower: street view of the tower face ----
@@ -359,7 +368,7 @@ namespace FluxVerse
                 + " sky(l0=" + s0top + "/" + s0bot + ", quant=" + s1top + "/" + s1bot
                 + ", tower=" + s2top + "/" + s2bot + ", ret=" + s3top + "/" + s3bot + ")"
                 + " mid_size=" + midSize.ToString("F2")
-                + " faces(quant_warm=" + quantWarm.ToString("F2")
+                + " faces(quant_gold=" + quantGold
                 + ", tower_bri=" + towerBri.ToString("F2") + ")"
                 + " l0_return_pos=" + rig.PosNow.ToString("F2")
                 + " scene_saved=" + saved + " shots=5 reload_gate=pass2";
@@ -428,6 +437,32 @@ namespace FluxVerse
             int nn = System.Math.Max(1, n);
             brightness = (float)(sumBri / nn);
             warmth = (float)(sumWarm / nn);
+        }
+
+        // r162: warm-bright census over a world rect (identity-presence
+        // metric, 4px grid) - samples with (r-b > 0.15 AND avg > 0.30) read
+        // as the muted-gold family (crown accent + signs). y=0 is the image
+        // BOTTOM row (r13 law); the rect is clipped to the frame.
+        static int CountWarmBright(Texture2D tex, Camera cam, float wx0, float wy0, float wx1, float wy1)
+        {
+            float halfH = cam.orthographicSize;
+            float halfW = halfH * (1920f / 1080f);
+            int px0 = (int)(((wx0 - cam.transform.position.x) / (2f * halfW) + 0.5f) * 1920f);
+            int px1 = (int)(((wx1 - cam.transform.position.x) / (2f * halfW) + 0.5f) * 1920f);
+            int py0 = (int)(((wy0 - cam.transform.position.y) / (2f * halfH) + 0.5f) * 1080f);
+            int py1 = (int)(((wy1 - cam.transform.position.y) / (2f * halfH) + 0.5f) * 1080f);
+            px0 = Mathf.Max(0, px0); px1 = Mathf.Min(1919, px1);
+            py0 = Mathf.Max(0, py0); py1 = Mathf.Min(1079, py1);
+            int n = 0;
+            for (int y = py0; y <= py1; y += 4)
+                for (int x = px0; x <= px1; x += 4)
+                {
+                    Color c = tex.GetPixel(x, y);
+                    float warm = c.r - c.b;
+                    float bri = (c.r + c.g + c.b) / 3f;
+                    if (warm > 0.15f && bri > 0.30f) n++;
+                }
+            return n;
         }
     }
 }

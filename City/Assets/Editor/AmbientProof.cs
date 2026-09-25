@@ -132,6 +132,15 @@ namespace FluxVerse
                 ambGo = new GameObject("CityAmbient");
                 amb = ambGo.AddComponent<CityAmbient>();
             }
+            // r162 boot sweep (the r146 NeonProof-C heal pattern): the ambient
+            // family is runtime-only by the r13/r25 law - ANY CityAmbient child
+            // on disk is stale contamination. A saver that leaked the family
+            // froze a mid-render tint quad into the scene, and Find then reads
+            // the FROZEN twin instead of the live blend (the r162 D1 red). The
+            // sweep must run BEFORE the wiring save or the pollution rides it.
+            amb.ReleaseVisuals();
+            Chk(amb.transform.childCount == 0,
+                "stale ambient children must be swept at boot: " + amb.transform.childCount);
             bool saved = EditorSceneManager.SaveScene(scene);   // persist wiring only
             Chk(saved, "scene save failed");
             GameObject camGo = GameObject.Find("CityCamera");

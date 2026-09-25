@@ -7,7 +7,7 @@
 > 架构：感知器独立只读扫描（world-state.json + world-events.jsonl，只读不破跨仓写禁令）→ 引擎侧只读轮询渲染（每 ~10s）；零服务器零预算（MiniGame 红线）；协议草案 = `docs/design/fluxverse-protocol-draft.md`。
 > 治理：FluxGroup governance.md §2 登记簿；BRAND §8 locked；对集团层反馈 = 本仓根 HQ-FEEDBACK.md；门禁链同源（X026Gate / EncodingGate / NameCheck 随建随接）。
 > 调研面：`docs/research/`（R- 件·每件末尾结论应用表〔落点四选一·正典 cph4/research-protocol.md〕）——消费方 = DESIGN 设定 / TECH 基建 / TECH §九 任务板。
-> 技能面：`Tools/skills/`（P-2026-09-26-01 集团技能动员令·在册=fluxverse-city-sandbox 布设沙盒门族〔r170·安装副本 .codely-cli/skills/ gitignored〕；会话内置 codely-guide/skill-creator/tuanjie-cli 即用；过筛候选=bake-pipeline GDI+ 自焙管线〔待建〕——建队切片随 TECH §九 技能令行分轮领·登记行随建随接）。
+> 技能面：`Tools/skills/`（P-2026-09-26-01 集团技能动员令·在册=fluxverse-city-sandbox 布设沙盒门族〔r170〕+fluxverse-bake-pipeline GDI+ 自焙管线〔r171·安装副本 .codely-cli/skills/ gitignored·建队切片全闭〕；会话内置 codely-guide/skill-creator/tuanjie-cli 即用）。
 
 ## 状态（r54 勘正·工作项实况唯一权威 = `TECH.md` §九·此处只载门面事实）
 

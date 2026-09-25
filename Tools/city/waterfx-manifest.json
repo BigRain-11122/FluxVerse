@@ -1,0 +1,106 @@
+{
+  "protocol": "fluxverse-waterfx/0.1",
+  "baked_round": 154,
+  "sources": [
+    "cph4/research/R-20260925-water-daynight.md sec1 W1-W5 + sec3 verdicts (CEO order 09-25 ~18:00, fast-lane <= 24h, close 09-26 ~18:00)",
+    "TECH.md sec9 r153 verdict: W3 commit-stream = r116 CommitStream reuse (zero new build), W6 daynight dual-channel = r146 MoodVisualRules reuse; W1/W2/W3-foam/W4/W5 = true construction faces of this line",
+    "City/Assets/Editor/CitySkeletonBuilder.cs L225-229: water band live anchor (cells x -50..50, rows -3..2, static hash h=((x*31+y*17)&7) over 4 registered variants)",
+    "Tools/city/tower-v2-manifest.json: brain tower whole rect + lower 3u cells (single source for the north reflection span and tile vocabulary)",
+    "Tools/city/facades-manifest.json r152: three south city face mounts (reflection x-spans, rect equality)",
+    "City/Assets/Scripts/NeonSigns.cs Table: south sign x positions (shimmer anchors, dual-source cross-check)"
+  ],
+  "water_band": {
+    "cells": [-50, 50, -3, 2],
+    "world": [-50.0, -3.0, 51.0, 3.0],
+    "bank_north_row": 3,
+    "bank_south_row": -4,
+    "note": "painted cells x -50..50 -> world x -50..51; foam strips span x -50..50 (100u), the easternmost half-cell is uncovered (beyond L0 view halfwidth 35.6, invisible)"
+  },
+  "frame_cycle": {
+    "verdict": "tilemap SetTile frame cycling (NOT a water-band quad)",
+    "rationale": "reuses the in-project 8-frame vocabulary (Art/CleanCityv3/Tiles_Extract/water_wave_00..07.png, all 16px, only 4 registered as tiles today); zero new big textures; the tilemap keeps the dusk/night tint interplay untouched (a band quad would re-derive the tint + proof baseline family); census-count identity gate is provable",
+    "sequence": "frames 00..07 (engine round registers t_water_1/5/6/7 via 4 builder MK lines)",
+    "index_law": "at water tick t, cell (x,y) shows frame index ((x*31 + y*17 + t) mod 8); the existing spatial hash becomes the per-cell phase offset (31 mod 8 = 7 -> neighbors mostly anti-phase, staggered wavefront)",
+    "rate_fps": 2,
+    "rate_rain_fps": 4,
+    "census_identity": "water tile count constant (606) at every tick - SetTile swaps variants, never adds/removes cells",
+    "first_tick": "one full-band rewrite on first tick (static paint hash -> cycling law), census count unchanged",
+    "fallback": "4-frame degraded mode (mod 4 over registered t_water_0/2/3/4) stays legal if tile import hiccups"
+  },
+  "reflections": [
+    { "id": "ReflTower",  "asset": "Assets/ArtPacks/water-fx/refl-tower.png",          "px": [80, 48],  "ppu": 16, "rect": [-2.0, 0.0, 3.0, 3.0],     "bank": "north", "source": "tower-v2 lower 3u composed from REAL tiles (glass 189 plinth x2 rows + shaft row with glow props 132/133 overlay), pre-mirrored layout (plinth at bank edge), darkened 0.4" },
+    { "id": "ReflQuant",  "asset": "Assets/ArtPacks/water-fx/facades/refl-quant.png",  "px": [120, 72], "ppu": 24, "rect": [-2.0, -3.0, 3.0, 0.0],    "bank": "south", "source": "facade-quant top-72px crop, raw-ARGB vertical flip (r93 law), darkened 0.4; roof crown lands on the bank line" },
+    { "id": "ReflGame",   "asset": "Assets/ArtPacks/water-fx/facades/refl-game.png",   "px": [120, 72], "ppu": 24, "rect": [-23.0, -3.0, -18.0, 0.0],  "bank": "south", "source": "facade-game top-72px crop, v-flip, darkened 0.4" },
+    { "id": "ReflMedia",  "asset": "Assets/ArtPacks/water-fx/facades/refl-media.png",  "px": [144, 72], "ppu": 24, "rect": [19.0, -3.0, 25.0, 0.0],   "bank": "south", "source": "facade-media top-72px crop, v-flip, darkened 0.4" }
+  ],
+  "shimmer": [
+    { "id": "ShimGameW",  "asset": "Assets/ArtPacks/water-fx/shimmer-cyan.png",   "rect": [-23.25, -3.0, -21.75, -0.5], "sign": "NeonGameWest",  "sign_x": -22.5, "color": "cyan",    "family": "GAME" },
+    { "id": "ShimGameE",  "asset": "Assets/ArtPacks/water-fx/shimmer-cyan.png",   "rect": [-20.45, -3.0, -18.95, -0.5], "sign": "NeonGameWest2", "sign_x": -19.7, "color": "cyan",    "family": "GAME" },
+    { "id": "ShimQuantW", "asset": "Assets/ArtPacks/water-fx/shimmer-gold.png",   "rect": [-2.2, -3.0, -0.7, -0.5],     "sign": "NeonQuantL",    "sign_x": -1.45, "color": "gold",    "family": "QUANT" },
+    { "id": "ShimQuantE", "asset": "Assets/ArtPacks/water-fx/shimmer-gold.png",   "rect": [0.7, -3.0, 2.2, -0.5],       "sign": "NeonQuantR",    "sign_x": 1.45,  "color": "gold",    "family": "QUANT" },
+    { "id": "ShimMediaE", "asset": "Assets/ArtPacks/water-fx/shimmer-magenta.png", "rect": [19.45, -3.0, 20.95, -0.5],   "sign": "NeonMediaEast", "sign_x": 20.2,  "color": "magenta", "family": "MEDIA" },
+    { "id": "ShimMediaR", "asset": "Assets/ArtPacks/water-fx/shimmer-magenta.png", "rect": [21.65, -3.0, 23.15, -0.5],  "sign": "NeonMediaRoof", "sign_x": 22.4,  "color": "magenta", "family": "MEDIA" }
+  ],
+  "shimmer_law": {
+    "size": [24, 40],
+    "ppu": 16,
+    "world_size": [1.5, 2.5],
+    "mount_law": "outermost sign pair per city (overlap-free by construction: 1.5u wide mounts centered on sign x, neighbor signs > 1.5u apart at the outer pair)",
+    "omitted": "NeonBigmoney (x 0.5) / NeonBiggame (x -20.5) center plates - their glow is carried by the refl strip crown accent; a center mount would overlap both neighbors",
+    "colors": {
+      "gold": [250, 191, 51],
+      "cyan": [51, 235, 219],
+      "magenta": [242, 82, 168],
+      "law": "five-color law family tints = the CityQUANT/CityGAME/CityMEDIA tile-layer colors (functional color canon)"
+    }
+  },
+  "foam": [
+    { "id": "FoamN", "assets": ["foam-n-0.png", "foam-n-1.png", "foam-n-2.png", "foam-n-3.png"], "rect": [-50.0, 2.875, 50.0, 3.0],     "solid_row": "top",    "bank": "north" },
+    { "id": "FoamS", "assets": ["foam-s-0.png", "foam-s-1.png", "foam-s-2.png", "foam-s-3.png"], "rect": [-50.0, -3.0, 50.0, -2.875],   "solid_row": "bottom", "bank": "south" }
+  ],
+  "foam_law": {
+    "px": [1600, 2],
+    "ppu": 16,
+    "world_size": [100.0, 0.125],
+    "frames": 4,
+    "sync": "foam frame index = water tick mod 4 (W3: moves with the wave frames)",
+    "solid_row": "1px foam line at the bank interface (north strip: solid row on top = y3 bank line; south strip: solid row on bottom = y-3 bank line); sparse bubbles row = the W3 embankment gradient v0"
+  },
+  "render_laws": {
+    "order": 2,
+    "order_law": "above the Water tilemap (1), below street (7) / tint (8) / pulses (10) - reflections receive the dusk/night tint like all city furniture; Roads tilemap also sits at order 2 with zero spatial overlap (Office pod order-3 vs City tilemaps precedent)",
+    "sibling_order": "water < refl < shimmer < foam (later sibling = on top; foam line reads over the reflection edge, physically the foam band)",
+    "tier_alpha": { "day": 0.0, "dusk": 0.55, "night": 1.0, "scope": "refl + shimmer", "foam": 1.0 },
+    "wobble": {
+      "amp_art_px": 1,
+      "law": "x offset sequence per water tick [0, +1/16, -1/16, 0] world u (1 art px @ ppu16); rain doubles to 2 art px (W5: reflection disturbance intensifies)",
+      "scope": "refl + shimmer mounts; foam stays pinned to the bank (bank-attached)"
+    },
+    "rain_law": "W5: water frame rate 2 -> 4 fps (ripple density up), wobble 1 -> 2 px, foam cycles at the water rate; weather via CityAmbient existing weather_kind field (Open-Meteo live source, P-75 law), zero new probes",
+    "night_must_show": "spec W2 hard requirement: night tier alpha 1.0 for refl + shimmer (09-25 morning audit: no reflections at all - this line closes it)"
+  },
+  "overlap_law": {
+    "commit_stream": "COMMIT river lane Y -4.6..+4.6 (r116) passes over the static strips - transient light dots over a reflection = physical, no conflict; the r114 distinctness law binds COMMIT vs TRANSFER street band (y -7.5) only, and TRANSFER is disjoint from the water band",
+    "shimmer_over_refl": "intentional: shimmer mounts overlay the refl strips at sign x positions (structure + neon layers, sibling order law)"
+  },
+  "honest_notes": [
+    "facade-source reflections precede the facade mount (r153 4: facades engine round deferred behind this CEO order): until it lands, in-scene tile faces vs facade-skin reflections read apart for a few rounds - accepted transient inside the same 24h window, facades queued next",
+    "GAME_ANNEX reflection omitted v0 (sign table external, spec W2 scope = three cities)",
+    "tower band tile pick 132/133 alternating inside the glow family = editor-round tunable within family (tower-v2 vocabulary law)",
+    "W3 embankment gradient v0 = the foam sparse second row; a deeper dithered bank gradient = v1 candidate line",
+    "depth fade of reflections = engine-round tunable within reflection semantics (bake is pure crop+flip+darken per spec)"
+  ],
+  "family": {
+    "go_prefix": "WaterFx",
+    "adapter": "CityWaterFx.cs (r155): Update accumulator 0.5s, full-band SetTile sweep + mount alpha/wobble from tier; tier + weather handed by CityAmbient existing fields (zero new poll face)"
+  },
+  "coupled_updates_r155": [
+    "CitySkeletonBuilder: +4 MK lines (t_water_1/5/6/7 from Tiles_Extract/water_wave_01/05/06/07.png)",
+    "City/Assets/Scripts/WaterFxRules.cs pure table (OfficeRules family: manifest mirror, single geometry source)",
+    "CityWaterFx.cs adapter (cycling + tier alpha + wobble + rain law)",
+    "WaterFxProof: census identity 606 / mount census / tier alpha gates / wobble determinism / render diff census (night visible, day zero-leak) / reload gates",
+    "4 screenshots m1-r155-water-{day,night,l1-south,l1-north} + sec-3 rescan + multimodal (W1 waves >= 2 frames visible, W2 night reflections, W4 shimmer)",
+    "ARTPACKS-LEDGER water-fx row (done r154); real-machine scan+verify double-green"
+  ],
+  "token_gate": "L1 deterministic GDI+ bake + geometry math, zero generation touchpoints"
+}

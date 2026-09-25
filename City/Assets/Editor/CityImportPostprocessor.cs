@@ -34,6 +34,9 @@ public class CityImportPostprocessor : AssetPostprocessor
         if (path.StartsWith("Assets/ArtPacks/lab-glass/")) return 24;
         // r149 canopies (D-09 route B): 48px-tier awning crops @ 24 = street shading law (r37 divisor)
         if (path.StartsWith("Assets/ArtPacks/canopies/")) return 24;
+        // r154 water-fx facade-crop reflections (P-20260925-09 W2): 48px-tier facade crops @ 24;
+        // parent water-fx/ stays default 16 (tower/shimmer/foam tier)
+        if (path.StartsWith("Assets/ArtPacks/water-fx/facades/")) return 24;
         // r151 office towers (P-38(2) hi-bit facades): 48px-cell crops + facade skins @ 24 (r150 list)
         if (path.StartsWith("Assets/ArtPacks/office-towers/")) return 24;
         return 16;

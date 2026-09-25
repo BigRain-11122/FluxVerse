@@ -1,0 +1,149 @@
+{
+  "protocol": "fluxverse-eaveslots/0.1",
+  "baked_round": 123,
+  "sources": [
+    "TECH.md sec9 r122 row (engine consumption law + quota pre-registration)",
+    "docs/design/city-core-design.md sec8 grounding whitelist + sec9.1-3 rain shelter law",
+    "Tools/city/southbank-manifest.json r103 (mass rects single source)",
+    "Tools/city/officeband-manifest.json r111 (office rects single source)",
+    "live C# tables post-r113: ResidentRules 32 seats / RobotRules 8 / VehicleRules 8 / NeonRules 18 signs + 8 buildings / OfficeRules 5 placements"
+  ],
+  "law": {
+    "purpose": "P-75 slice B step 1 (r122 item 3): rain-shelter eave sub-slots. A sheltering resident (state=shelter, no umbrella quirk, deterministic h%10<3 bucket) relocates from the street home seat to the district eave slot; umbrella holders stay at the street home position (r122 law c); districts with no slot fall back to the home position (honest fallback, no fake shelter).",
+    "slot_class": "seat-class stand position: the full r99 seat-harness gate family applies (body 1.333x1.333 @PPU24, grounding shadow, b1 nameplate 66x20 at +1.4167, tag framing, bubble ceiling +15)",
+    "eave_adjacency": "at least one stand cell shares a full edge with the hosted building footprint; 14 building rects = NeonRules.Buildings (8) + GAME_ANNEX (southbank r103) + officeband E1/N1/N2/N3/N4 (r111)",
+    "hard_gates": [
+      "integer y",
+      "L0 static frame: |x|+0.6667 <= 35.256 and |y|+0.6667 <= 19.7",
+      "tint band: y-0.6667 >= -15.9 and y+0.6667 <= 14",
+      "underfoot row = floor(y-0.6667)-1 must be painted ground pavement (rows -16..-9 / -5 / -4 / 3 / 4 / 9..14), never grass/water/road",
+      "body cells clear of roads (rows -8/-7/7/8 full width; avenue cols -18/-17/17/18 for rows -16..-4 and 3..14), water rows -3..2, and all 14 building footprints",
+      "center distances: >= 2.2 to every seat, >= 2.0 to every robot, >= 2.8 to every vehicle center",
+      "body vs neon sign: NOT(|dx| < w/2+1.065 AND |dy| < h/2+1.065)",
+      "tag vs sign: NOT(|dx| < 1.375+w/2 AND |dy| < 0.4167+h/2)",
+      "tag vs robot: NOT(|dx| < 1.875 AND |dy| < 0.9167)",
+      "tag vs tag: NOT(|dx| < 2.75 AND |dy| < 0.8333)",
+      "tag framing: |x|+1.375 <= 35.256, tag y span inside tint band, bubble top y+3.4834 <= 15"
+    ],
+    "capacity": 1,
+    "assignment": "deterministic pick in StreetBehaviorRules (bucket members by roster slot order, first takes the district slot, overflow stays home)",
+    "fallback": "districts with no slot (QUANT / GAME) and visitors (OR/RV) shelter at the home position - honest fallback, umbrella semantics per r122 law c",
+    "quota_verdict": "r122 pre-registered first batch = 2 per city district + 1 north (7). Geometry-feasible candidates under the hard gates = 3 (MEDIA E1-north wide window, NORTH B3-west window, NORTH B2-west narrow window). Selected = 2 (quota), B2-west kept as runner-up. Root cause of the shortfall: the r104 seat re-anchor ringed the tower feet (Q02/Q03/Q04/Q06 / M01/M04/M05/M08 / T01-N01 flanks) and street furniture (kiosk, food+fruit carts, camper, bus) occupies the remaining eave-adjacent cells; the r99-family clearance gates are hard law (no silent weakening). Remedy candidates for fuller coverage (CEO option, NOT this round): (a) seat-move round freeing eave cells, (b) arcade/awning asset line (S-library acquisition)."
+  },
+  "slots": [
+    {
+      "id": "EAVE-M01", "district": "MEDIA", "capacity": 1,
+      "host": "E1_OFFICE", "host_rect": [29, -16, 35, -12], "host_source": "officeband-manifest r111 (placement E1)",
+      "face": "north", "x": 33.5, "y": -11,
+      "cols": [32, 34], "rows": [-12, -11], "underfoot_row": -13, "edge_cell": [32, -12],
+      "worst_slack": 0.107,
+      "note": "in front of the east-outer office; M07/M08 stand clear west; binding slack = grounding shadow vs E1 top edge 0.107"
+    },
+    {
+      "id": "EAVE-N01", "district": "NORTH", "capacity": 1,
+      "host": "B3_NE", "host_rect": [26, 9, 29, 12], "host_source": "NeonRules.Buildings[3]",
+      "face": "west", "x": 24.6667, "y": 11,
+      "cols": [24, 25], "rows": [10, 11], "underfoot_row": 9, "edge_cell": [25, 10],
+      "worst_slack": 0.146,
+      "note": "west of the NE low-rise; binding slack = tag vs NeonBigstream roof plate 0.146; beats the B2-west runner-up on max-min-slack (0.146 vs 0.0 wall-touch)"
+    }
+  ],
+  "runner_up": {
+    "id": "EAVE-N01RU", "district": "NORTH",
+    "host": "B2_NEMID", "host_rect": [7, 9, 10, 12], "host_source": "NeonRules.Buildings[2]",
+    "face": "west", "window_x": [6.25, 6.333], "y": 11, "worst_slack": 0.0,
+    "note": "feasible narrow window (tag-tag T01 0.083, body wall-touch 0.0); NOT selected - NORTH quota 1, max-min-slack pick favors B3-west; keep as overflow if the quota expands"
+  },
+  "quota_ledger": {
+    "pre_registered": "2 per city district + 1 north = 7 (r122 item 3)",
+    "feasible_candidates": 3,
+    "selected": 2,
+    "per_district": { "QUANT": 0, "GAME": 0, "MEDIA": 1, "NORTH": 1 },
+    "runner_up_count": 1
+  },
+  "survey": [
+    { "b": "B4_QUANT", "rect": [-2, -16, 3, -8], "faces": {
+      "west": "blocked: seat ring Q04/Q09/Q02 + RobotPlazaS; max-clearance probe (-2.6667,-14): PlazaS 1.014<2.0, Q04 2.167<2.2",
+      "east": "blocked: Q03 2.167 max-over-strip <2.2 + PlazaE 1.90<2.0 + kiosk sign envelope at rows -14/-15",
+      "north": "blocked: adjacent row -8 = south street road (residents sidewalk-bound)",
+      "south": "blocked: adjacent row -17 outside the ground band (underfoot gate)" } },
+    { "b": "GAME_MAIN", "rect": [-23, -16, -18, -11], "faces": {
+      "west": "blocked: 1u alley to GAME_ANNEX - a 1.333u body cannot wedge without building overlap",
+      "east": "blocked: adjacent cols -18/-17 = avenue road cells",
+      "north": "blocked: NeonBiggame roof plate spans the full face +1.065 envelope; max-clearance probe (-23.5,-10) dx 3.0<3.19",
+      "south": "blocked: adjacent row -17 outside the ground band" } },
+    { "b": "GAME_ANNEX", "rect": [-26, -16, -24, -13], "faces": {
+      "west": "blocked at both adjacent rows (y -14/-13): CartG 2.44/1.64 < 2.8 - the fruit cart parks inside the strip's vehicle halo",
+      "north": "blocked: CartG parked in front of the face - 0.146<2.8 at face center",
+      "east": "alley (shared with GAME_MAIN west)",
+      "south": "blocked: adjacent row -17 outside the ground band" } },
+    { "b": "B6_MEDIA", "rect": [19, -14, 25, -8], "faces": {
+      "west": "blocked: the adjacent col 18 = avenue road; any position clear of the road lands on building cells instead",
+      "east": "blocked: seat ring M01/M04/V05 - max 2.03<2.2 over the strip",
+      "north": "blocked: adjacent row -8 = south street road",
+      "south": "blocked: adjacent-row body row -14 = building row; y -15 fails the underfoot gate" } },
+    { "b": "E1_OFFICE", "rect": [29, -16, 35, -12], "faces": {
+      "west": "blocked: ResM03 stands in the adjacent strip - 1.05 max < 2.2 across the three adjacent rows (y -14..-12)",
+      "north": "FEASIBLE -> EAVE-M01 (window x 32.75..34.589; M07 tag-tag east bound, L0 frame west bound)",
+      "east": "blocked: |x|+0.667 = 36.33 > 35.256 L0 frame at every adjacent row",
+      "south": "blocked: adjacent row -17 outside the ground band" } },
+    { "b": "B0_NW", "rect": [-28, 9, -25, 12], "faces": {
+      "west": "blocked: N3|B0 1u wedge - body overlaps N3",
+      "east": "blocked: B0|N1 1u wedge - body overlaps N1",
+      "north": "blocked: bubble ceiling (y 12 -> 15.48 > 15) + NeonHotel envelope",
+      "south": "blocked: adjacent row 8 = north street road (residents sidewalk-bound)" } },
+    { "b": "B1_NWMID", "rect": [-9, 9, -6, 12], "faces": {
+      "west": "blocked: N2|B1 1u wedge (body overlaps N2) + NeonBiglife envelope 1.77<2.13",
+      "east": "blocked: ResN01 1.83<2.2 at forced y 11",
+      "north": "blocked: bubble ceiling + NeonBiglife envelope",
+      "south": "blocked: adjacent row 8 = north street road" } },
+    { "b": "B2_NEMID", "rect": [7, 9, 10, 12], "faces": {
+      "west": "FEASIBLE-NARROW -> runner-up (window x 6.25..6.333; tag-tag T01 0.083, wall-touch 0.0)",
+      "east": "blocked: VehicleBusN 2.17<2.8 at y 11",
+      "north": "blocked: bubble ceiling + NeonNMids envelope",
+      "south": "blocked: adjacent row 8 = north street road" } },
+    { "b": "B3_NE", "rect": [26, 9, 29, 12], "faces": {
+      "west": "FEASIBLE -> EAVE-N01 (window x 24.34..24.81; NeonBigstream tag east bound, N02 seat west bound)",
+      "east": "blocked: B3|N4 zero-gap at x 29 - body overlaps B3 or N4",
+      "north": "blocked: bubble ceiling + NeonNEScroll/Bigstream envelopes",
+      "south": "blocked: adjacent row 8 = north street road" } },
+    { "b": "B7_BRAIN", "rect": [-1, 9, 2, 15], "faces": {
+      "west": "blocked: ResN01 1.83<2.2 at the forced y 11 (bubble ceiling pins north slots to y 10/11)",
+      "east": "blocked: ResT01 anchor honor seat 0.83<2.2",
+      "north": "blocked: y 15 fails the tint band (15.67 > 14)",
+      "south": "blocked: adjacent row 8 = north street road" } },
+    { "b": "N1_OFFICE", "rect": [-24, 9, -18, 13], "faces": {
+      "west": "blocked: B0|N1 1u wedge - body overlaps B0",
+      "east": "blocked: adjacent cols -18/-17 = avenue road cells",
+      "north": "blocked: 4u offices occupy rows 9..12 - any adjacent-row body includes building row 12",
+      "south": "blocked: adjacent row 8 = north street road" } },
+    { "b": "N2_OFFICE", "rect": [-16, 9, -10, 13], "faces": {
+      "west": "blocked: adjacent cols -18/-17 = avenue road cells",
+      "east": "blocked: N2|B1 1u wedge - body overlaps B1",
+      "north": "blocked: building row 12 in every adjacent-row body",
+      "south": "blocked: adjacent row 8 = north street road" } },
+    { "b": "N3_OFFICE", "rect": [-35, 9, -29, 13], "faces": {
+      "west": "blocked: |x|+0.667 = 36.33 > 35.256 L0 frame",
+      "east": "blocked: N3|B0 1u wedge - body overlaps B0",
+      "north": "blocked: building row 12 in every adjacent-row body",
+      "south": "blocked: adjacent row 8 = north street road" } },
+    { "b": "N4_OFFICE", "rect": [29, 9, 35, 13], "faces": {
+      "west": "blocked: B3|N4 zero-gap at x 29 - body overlaps B3",
+      "east": "blocked: L0 frame",
+      "north": "blocked: building row 12 in every adjacent-row body",
+      "south": "blocked: adjacent row 8 = north street road" } }
+  ],
+  "rejected_windows": [
+    { "window": "QUANT tower east strip (col 3, rows -14..-9)", "blocker": "double lock: Q03/Q06 seat ring at 2.167 max + NeonKiosk +1.065 envelope over rows -14/-15; the r104 re-anchor seated Q03 at (4.5,-11) inside the strip's 2.2 halo", "note": "the central city has no legal eave cell left; honest fallback = home position" },
+    { "window": "GAME ANNEX west strip (col -27, adjacent rows y -14/-13)", "blocker": "CartG (-25.5,-11.85) parks inside the strip's vehicle halo at both adjacent rows - 2.44/1.64 < 2.8; positions north of the annex are not eave-adjacent (its wall ends at row -14)", "note": "zero-move law keeps the cart; the annex has only two adjacent rows and both die to the same vehicle" },
+    { "window": "B6 MEDIA south face (row -15 under the dual-sphere)", "blocker": "band geometry: the building fills rows -14..-9 of the pavement band, so the adjacent-row body always includes building row -14, and y -15 fails the underfoot gate (row -17)", "note": "south faces of full-band buildings are structurally eave-proof" },
+    { "window": "brain tower west/east faces (forced y 10/11)", "blocker": "the anchor honor seat T01 (3.5,11) and NS seat N01 (-3.5,11) pin both flanks inside 2.2 at the only bubble-legal rows", "note": "anchor seat law (r73) outranks slot geometry - do not move the anchor" }
+  ],
+  "coupled_updates_r124": [
+    "City/Assets/Scripts/StreetBehaviorRules.cs: pure table consuming this manifest as the single source (slots + runner-up + fallback law + h%10<3 bucket + capacity-1 deterministic pick)",
+    "City/Assets/Scripts/CityStreetBehavior.cs: adapter - 10s poll of state.street_behavior (CityAmbient same law, world read-only), per-seat SetActive(visible==1) full re-derive per tick (no incremental drift), shelter relocate/restore by state, batch TriggerDirect same-path proof (r115 precedent)",
+    "ResidentProof eave gates: slot census (2 slots present at manifest coords), relocate round-trip + restore home, no-slot-district fallback stays home, sec8 live-tilemap stand gate for both slots, shadow/plate follow the relocated body",
+    "four screenshots sec3 rescan + scan/verify dual green"
+  ],
+  "token_gate": "L1 deterministic math + on-disk checks, zero generation touchpoints"
+}

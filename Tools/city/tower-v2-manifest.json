@@ -1,0 +1,125 @@
+{
+  "protocol": "fluxverse-tower-v2/0.1",
+  "baked_round": 131,
+  "sources": [
+    "docs/design/tower-brain-design.md v2.0 (CEO-authored canon, r72, post-lates-wins over city-core flower form)",
+    "TECH.md sec9 r101 budget note + r103 handover: brain tower v2.0 wedge reshape = standalone slice, never claimed",
+    "TECH.md sec9 r116 P-41 slice1: AntennaPos single-source derivation, code comment pre-registers v2.0 re-anchor",
+    "cph4/research/R-20260924-m1-visual-fix.md sec2-2/sec3 (southbank heights are governed by this later CEO-fix spec)"
+  ],
+  "canon_conflicts": {
+    "issue": "tower-brain v2.0 sec1 says other landmarks <= 96px, but R-20260924-m1-visual-fix sec2-1 (later CEO order 09-24 ~20:45) sanctions QUANT twist tower 96-160px band; r104 built QUANT at 128px",
+    "resolution": "post-lates-wins: m1-visual-fix governs southbank heights, QUANT 128px stands; brain tower rises to 160px > 128px so v2.0 sec6 'city-unique commanding height' is restored - both canons satisfied",
+    "tallness_law": "brain 160px > QUANT 128px > MEDIA 96px; north flank low-rise 48px <= 53.3px (tower/3, v2.0 sec6 neighbor discipline); office band N1-N4 sprites 4u = 40% of tower height, non-adjacent, north low-rise read preserved (r105)"
+  },
+  "tiles_vocabulary": {
+    "shaft": "t_wall_glass (189 curtain-wall glazing, dark blue-black glass - v2.0 sec1 facade)",
+    "wedge_tip": "t_roof_a (pale panel blade tip)",
+    "band_props": "t_prop_a / t_prop_b (132/133 glow-props as horizontal data light bands, props layer order 4 renders above brain layer 3)",
+    "base_pipes": "t_prop_box (296 box-on-ledge as exposed cooling-pipe interface boxes on base shoulders)",
+    "law": "cell extents below are LAW; final tile pick inside a named family may be tuned by the editor round visual pass (swap within family only, extents and rows are not tunable)"
+  },
+  "geometry": {
+    "cell_px": 16,
+    "ppu": 16,
+    "whole": { "cells": [-2, 2, 9, 10], "world": [-2.0, 9.0, 3.0, 19.0], "px_h": 160 },
+    "base_data_plinth": {
+      "cells": [-2, 2, 9, 2],
+      "world": [-2.0, 9.0, 3.0, 11.0],
+      "tile": "t_wall_glass",
+      "role": "v2.0 sec1/sec5: data plinth, one ring wider than shaft, exposed pipes; plinth plaza pavement ring around it stays (data-grid floor tile = future S-library acquisition candidate, deferred)"
+    },
+    "shaft": {
+      "cells": [-1, 1, 11, 6],
+      "world": [-1.0, 11.0, 2.0, 17.0],
+      "tile": "t_wall_glass",
+      "role": "slender server-blade body, v2.0 zones bottom-up: data exchange 11-12, fleet compute racks 13-15, governance 16-17"
+    },
+    "wedge_shoulder": {
+      "cells": [-1, 1, 17, 1],
+      "world": [-1.0, 17.0, 2.0, 18.0],
+      "tile": "t_wall_glass",
+      "role": "v2.0 sec1 wedge-cut lower step (CPH4 Labs / decision chamber floor); DECISION flash re-anchors to this edge band"
+    },
+    "wedge_tip": {
+      "cells": [0, 0, 18, 1],
+      "world": [0.0, 18.0, 1.0, 19.0],
+      "tile": "t_roof_a",
+      "role": "blade tip of the wedge cut - sharp, not flower: two-step cut silhouette 3->1 cells"
+    },
+    "height_law": {
+      "top_world_y": 19.0,
+      "top_cell_row": 18,
+      "zenith_floor": 19.04,
+      "margin": 0.04,
+      "law": "top cell row <= 18 keeps tower top (19.0) below AmbientProof r51 zenith window floor (19.04) - pure-sky zone untouched; taller = fail-loud (r51 law bound to SkylineRules.FarContentTopY family)"
+    }
+  },
+  "data_bands": {
+    "layer": "Props (order 4, over brain layer 3)",
+    "full_rows": [
+      { "row": 11, "cells_x": [-1, 1], "role": "data-exchange band, densest (v2.0 sec2 lower floors)" },
+      { "row": 16, "cells_x": [-1, 1], "role": "governance band (evolution ledger / night round)" }
+    ],
+    "indicator_singles": [
+      { "cell": [-1, 13] }, { "cell": [1, 13] },
+      { "cell": [-1, 15] }, { "cell": [1, 15] }
+    ],
+    "role": "v2.0 sec1: one thin horizontal light line per functional floor; static v0 = fixed bands. Runtime window-light choreography (fleet task lights, NEW_RESIDENT plinth dot, NIGHT_ROUND bottom-up sweep, BACKTEST gold flow) = event-family performances, T2 window ends 2026-10-01, connect after - NOT part of this static slice",
+    "total_prop_cells": 10
+  },
+  "base_pipes": {
+    "layer": "Props",
+    "boxes": [ [-2, 11], [2, 11] ],
+    "role": "exposed cooling-pipe interface boxes sitting on plinth shoulders (v2.0 sec1 bottom)"
+  },
+  "antennas": {
+    "class": "scene-persistent sprites, NeonSigns antenna exempt family (r89 exempt-class precedent; reuse warped-city antenna sprite asset, proven importer path; fallback = procedural white strip r16 pattern)",
+    "go_family": "TowerAntennas (3 entries, exempt from neon sign ratio gates)",
+    "middle": { "x_center": 0.5, "y_base": 19.0, "w": 0.16, "h": 0.9, "rect": [0.42, 19.0, 0.58, 19.9], "role": "CEO throne pin - thickest, pure white always-on + breathing (v2.0 sec2 top)" },
+    "left": { "x_center": 0.15, "y_base": 19.0, "w": 0.07, "h": 0.55, "rect": [0.115, 19.0, 0.185, 19.55], "role": "fleet heartbeat pin" },
+    "right": { "x_center": 0.85, "y_base": 19.0, "w": 0.07, "h": 0.55, "rect": [0.815, 19.0, 0.885, 19.55], "role": "fleet heartbeat pin" },
+    "frame_law": "all needle tops <= 19.9 < L0 frame top 20.0 (margin 0.1) - no viewport clipping, deterministic renders",
+    "law": "all three needles inside wedge-tip x span [0,1]; middle strictly tallest and widest; middle never outshone (v2.0 sec6)"
+  },
+  "anchors": {
+    "brain_tower": { "from": [0.0, 11.0], "to": [0.5, 14.0], "law": "x = visual shaft center (world -1..2 -> 0.5), y = whole-tower mid (9..19 -> 14); single source, all anchor-derived effects move coherently" },
+    "antenna_pos": { "from_offset": [0.0, 4.3], "to_offset": [0.0, 5.45], "lands": [0.5, 19.45], "law": "inside middle needle rect (r116 code comment L184-189 pre-registers this re-anchor)" },
+    "decision_flash_zone": { "target": [0.5, 18.5], "law": "wedge edge band (anchor + [0, 4.5]); r120 tower-top flash re-anchors here - editor maps to actual implementation" },
+    "breathing_envelope": { "law": "P-12 r114 OS_TICK breath envelope re-derived from new tower world rect (-2,9)-(3,19)" }
+  },
+  "seat_moves": {
+    "ResT01": { "from_x": 3.5, "to_x": 4.5, "y": 11.0, "law": "C-00001 anchor honor seat stays tower-flank (r73 law, |x-0.5| = 4.0u); plinth widening (right edge 3.0) needs body clearance; new body rect 3.83..5.17 clear 0.83u - mirrors N01 left-side clearance" },
+    "ResN01": { "x": -3.5, "y": 11.0, "move": "none", "law": "body -4.17..-2.83 vs plinth left edge -2.0 = 0.83u clear, untouched" },
+    "feet_law": "floor(-3.5) = -4 / floor(4.5) = 4, feet row 11 = pavement whitelist, sec8 stands (r99 gate family)"
+  },
+  "collisions_checked": {
+    "vcol_roads": "x -18,-17,17,18 untouched (plinth x -2..3, far)",
+    "row_roads": "rows 7/8 untouched (plinth starts row 9)",
+    "props_box": "seats clear 0.83u from box cells (-2,11)/(2,11)",
+    "eave_n01": "EAVE-N01 (24.6667, 11) far, zero coupling",
+    "res_n02": "(20, 11) far, zero coupling",
+    "interior_windows": "QUANT/GAME hit-rects are southbank faces, zero coupling"
+  },
+  "tint_band_note": {
+    "law": "r51 tint band -16..+15 unchanged; tower rows 9-15 sit inside tint, rows 16-18 rise above it - by-design glow zone (v2.0 sec4 night: tower IS the city light center; dark glass carries the night read, no bright-pavement band issue like r22)",
+    "sky_budget": "L0 frame 40u, city band -16..19 = 35u, sky 5u split top 1u / bottom 4u - both halves present (r14 both-halves law re-derived by its own formula 40 - cityband; was 9u at 31u band, honest re-derivation not a lowered gate)"
+  },
+  "coupled_updates_editor_round": [
+    "CitySkeletonBuilder: Block(brain,-1,1,9,6,...) -> PaintTower(brain, props) per this manifest (single geometry writer law)",
+    "CitySkeletonBuilder: MakeAnchor('BrainTower', 0.5, 14)",
+    "EventRouter: AntennaPos offset 4.3 -> 5.45; breathing envelope re-derive; DECISION flash re-anchor to wedge zone",
+    "NeonSigns/Rules: +3 TowerAntennas entries (exempt class, warped-city antenna sprite reuse)",
+    "ResidentRules: ResT01 x 3.5 -> 4.5 (one line)",
+    "proofs re-baseline: EventRouterProof 11 performance frames re-shoot + anchor-derived gates; ResidentProof sec8 x32 + tag/shadow re-derive; TagProof re-anchor; CameraProof L0 sky-band re-derive (formula above) + L1-north baseline; NeonProof antenna-exempt census; IdentityProof zero-coupling expected (census by id) - run to prove",
+    "r119 evidence-frame law: all proof evidence frames re-shoot after tower change (r130 51-frame precedent)",
+    "four screenshots sec3 rescan m1-r132-tower-{day,night,l1-south,l1-north} + multimodal verify: wedge cut readable, three needles, data bands, widened plinth, NO flower/bud read (v2.0 sec6 discipline)",
+    "real-machine scan+verify double-green + AmbientProof fail-soft census re-run (r127/r130 pattern)"
+  ],
+  "deferred_faces": [
+    "river reflection (v2.0 sec4) = P-38-5 water reflection trio, stays open",
+    "plinth data-grid floor tiles (v2.0 sec5) = vocabulary gap, S-library acquisition candidate line",
+    "runtime window-light choreography = event-family performances after T2 window 2026-10-01"
+  ],
+  "token_gate": "L1 deterministic geometry + proven-vocabulary tiles, zero generation touchpoints"
+}

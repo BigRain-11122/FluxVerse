@@ -31,13 +31,18 @@
 #     market_open market_close ceo_order festival
 #
 # Outputs (deterministic, SHA256 recorded):
-#   City/Assets/Data/residents-barks.json         - 6 used axes x 12 contexts
+#   City/Assets/Data/residents-barks.json - 6 used axes x 12 contexts
 #     x up to 15 lines + the 31-seat narrative id->axis roster in street slot
 #     order (slot 26 anchor excluded; coupled to residents-street.json)
-#   City/Assets/Data/residents-barks-vectors.json - 310 precomputed law vectors
-#     (31 residents x 5 contexts x 2 dates) for the C# cross-implementation
-#     proof gate: ResidentBarks.Pick must return these strings byte-for-byte
-#   logs/r107-barks-bake.txt                      - bake report + SHA256
+#   logs/r107-barks-bake.txt             - bake report + SHA256
+#
+# r144 vectors retirement: the r41/r107 companion output
+# residents-barks-vectors.json (310 pre-baked law vectors) is RETIRED - the
+# r144 mood face carries live event density in the selection seed and cannot
+# be pre-baked. ResidentBarksProof now recomputes the law at proof time over
+# the FULL pool (31 ids x 12 contexts x 2 dates, runtime md5) and golden-pair
+# gates the mood mirror against python mood_director.py - the cross-
+# implementation discipline continues without the stale pre-bake.
 #
 # Gates (all fail-loud): pool parses; street roster holds 32 slots in order;
 # exactly ONE seat excluded and it carries layer=anchor; every kept seat has
@@ -54,7 +59,6 @@ $group  = Split-Path (Split-Path $repo -Parent) -Parent           # -> FluxGroup
 $pool   = Join-Path $group "life\BigLife\cognition\pools.json"
 $street = Join-Path $repo "City\Assets\Data\residents-street.json"
 $out    = Join-Path $repo "City\Assets\Data\residents-barks.json"
-$outVec = Join-Path $repo "City\Assets\Data\residents-barks-vectors.json"
 $report = Join-Path $repo "logs\r107-barks-bake.txt"
 
 if (-not (Test-Path -LiteralPath $pool))   { throw "pools.json not found: $pool" }
@@ -62,9 +66,6 @@ if (-not (Test-Path -LiteralPath $street)) { throw "street roster not found: $st
 
 # draw.py CONTEXTS canon order (engine contract - never reorder)
 $contexts = @('morning','dusk','night','weekend','rain','typhoon','heatwave','coldsnap','market_open','market_close','ceo_order','festival')
-# vector coverage: clock ctx (morning/night/weekend) + weather ctx (rain) + event ctx (ceo_order) x near/far dates
-$vecCtxs  = @('morning','night','rain','ceo_order','weekend')
-$vecDates = @('2026-09-24','2027-01-01')
 if ($contexts.Count -ne 12) { throw "context canon must hold 12" }
 
 function JsonEsc([string]$s) {
@@ -146,17 +147,6 @@ foreach ($ax in $usedAxes) {
 }
 if ($totalLines -lt 100) { throw "suspiciously small bake: $totalLines lines" }
 
-# ---- PS md5 pick law (draw.py byte-mirror) ----
-function Pick-Index([string]$key, [int]$len) {
-    $md5 = [System.Security.Cryptography.MD5]::Create()
-    try {
-        $h = $md5.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($key))
-    } finally { $md5.Dispose() }
-    $hex = -join ($h[0..3] | ForEach-Object { $_.ToString('x2') })
-    $v = [Convert]::ToUInt32($hex, 16)
-    return [int]($v % [uint32]$len)
-}
-
 # ---- deterministic JSON builders ----
 $rosterN = $roster.Count
 function Build-Pool() {
@@ -191,72 +181,25 @@ function Build-Pool() {
     return $sb.ToString()
 }
 
-function Build-Vectors() {
-    $sb = New-Object System.Text.StringBuilder
-    [void]$sb.Append("{`n`"vectors`": [`n")
-    $rows = New-Object 'System.Collections.Generic.List[string]'
-    for ($i = 0; $i -lt $rosterN; $i++) {
-        $r = $roster[$i]
-        foreach ($ctx in $vecCtxs) {
-            $bucket = $bucketOf[($r.axis + [char]31 + $ctx)]
-            foreach ($date in $vecDates) {
-                $key = $r.id + '|' + $date + '|' + $ctx
-                $idx = Pick-Index $key $bucket.Count
-                $line = $bucket[$idx]
-                [void]$rows.Add('{"id":"' + $r.id + '","date":"' + $date + '","ctx":"' + $ctx + '","line":"' + (JsonEsc $line) + '"}')
-            }
-        }
-    }
-    for ($k = 0; $k -lt $rows.Count; $k++) {
-        [void]$sb.Append($rows[$k])
-        if ($k -lt $rows.Count - 1) { [void]$sb.Append(',') }
-        [void]$sb.Append("`n")
-    }
-    [void]$sb.Append("]`n}`n")
-    return $sb.ToString()
-}
-
 $poolJson1 = Build-Pool
 $poolJson2 = Build-Pool
 if ($poolJson1 -ne $poolJson2) { throw "pool bake is not deterministic - two builds differ" }
-$vecJson1 = Build-Vectors
-$vecJson2 = Build-Vectors
-if ($vecJson1 -ne $vecJson2) { throw "vector bake is not deterministic - two builds differ" }
 
-# ---- round-trip parse + vector-vs-pool consistency ----
+# ---- round-trip parse ----
 $rt = $poolJson1 | ConvertFrom-Json
 if (@($rt.axes).Count -ne $usedAxes.Count) { throw "round-trip axis count drift" }
 if (@($rt.residents).Count -ne $rosterN) { throw "round-trip roster count drift" }
-$rtv = $vecJson1 | ConvertFrom-Json
-$vecRows = @($rtv.vectors)
-if ($vecRows.Count -ne ($rosterN * $vecCtxs.Count * $vecDates.Count)) { throw "vector count must be $($rosterN * $vecCtxs.Count * $vecDates.Count), got $($vecRows.Count)" }
-$vecSeen = @{}
-foreach ($v in $vecRows) {
-    $k = $v.id + '|' + $v.date + '|' + $v.ctx
-    if ($vecSeen.ContainsKey($k)) { throw "duplicate vector key: $k" }
-    $vecSeen[$k] = $true
-    $r = $roster | Where-Object { $_.id -eq $v.id } | Select-Object -First 1
-    $bucket = $bucketOf[($r.axis + [char]31 + $v.ctx)]
-    if (-not ($bucket -contains $v.line)) { throw "vector line not in its bucket: $k" }
-    $idx = Pick-Index ($v.id + '|' + $v.date + '|' + $v.ctx) $bucket.Count
-    if ($bucket[$idx] -cne $v.line) { throw "vector law replay drift: $k" }
-}
 
 # ---- write + report ----
-[System.IO.File]::WriteAllText($out,    $poolJson1, (New-Object System.Text.UTF8Encoding $false))
-[System.IO.File]::WriteAllText($outVec, $vecJson1, (New-Object System.Text.UTF8Encoding $false))
-$shaP = (Get-FileHash -LiteralPath $out    -Algorithm SHA256).Hash
-$shaV = (Get-FileHash -LiteralPath $outVec -Algorithm SHA256).Hash
+[System.IO.File]::WriteAllText($out, $poolJson1, (New-Object System.Text.UTF8Encoding $false))
+$shaP = (Get-FileHash -LiteralPath $out -Algorithm SHA256).Hash
 
 $rl = New-Object 'System.Collections.Generic.List[string]'
-$rl.Add("axes=$($usedAxes.Count) contexts=12 lines_total=$totalLines vectors=$($vecRows.Count) roster=$rosterN")
+$rl.Add("axes=$($usedAxes.Count) contexts=12 lines_total=$totalLines roster=$rosterN")
 $rl.Add("pool_sha256=$shaP")
-$rl.Add("vectors_sha256=$shaV")
 foreach ($ax in $usedAxes) { $rl.Add("axis=" + $ax) }
 [System.IO.File]::WriteAllLines($report, $rl, (New-Object System.Text.UTF8Encoding $false))
 
-Write-Output ("BAKE OK axes=" + $usedAxes.Count + " lines=" + $totalLines + " vectors=" + $vecRows.Count + " roster=" + $rosterN)
+Write-Output ("BAKE OK axes=" + $usedAxes.Count + " lines=" + $totalLines + " roster=" + $rosterN)
 Write-Output ("pool_sha256=" + $shaP)
-Write-Output ("vectors_sha256=" + $shaV)
 Write-Output ("out=" + $out)
-Write-Output ("outVec=" + $outVec)

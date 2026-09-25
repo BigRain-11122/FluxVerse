@@ -19,23 +19,29 @@
 //    the residents-street.json NARRATIVE subset - slot/id/axis equality per
 //    street slot, layer==narrative on every barking seat, exactly ONE anchor
 //    seat in the street file and it never carries a bark.
-//  D vectors gate (dual implementation - the strongest gate): 310 baked law
-//    vectors (31 residents x 5 contexts x 2 dates; PS md5 law over the real
-//    pool; live-verified == python draw.py 12/12 on 2026-09-24) must be
-//    reproduced byte-for-byte by the C# Pick; every vector line must live
-//    inside its own C# bucket.
+//  D runtime law gate (r144: the 310-vector pre-bake is RETIRED - the mood
+//    dimension carries live event density and cannot be pre-baked): the pick
+//    law is recomputed HERE over the FULL pool - every roster id x 12 canon
+//    contexts x 2 dates, in-proof formula independent of PickFrom.
 //  E law gates: pick determinism; unknown id/ctx -> honest null; draw.py
 //    fallback-axis law (in-memory file); <24-char runtime guard (in-memory);
 //    corrupt-file degrade -> null.
 //  F context derivation gates (fact gate): events priority chain > weather >
-//    clock; every clock tier; weekend overlay only on the clock tier.
+//    clock; every clock tier; weekend overlay only on the clock tier; the
+//    fact-gate source mirror (event/weather/clock, r144 out-src overload).
+//  M mood mirror gates (r144, python mood_director.py = the law source):
+//    calendar parse/rejection laws; 13 golden derive-state cases (python
+//    injected, all five states + 05:00/05:01 boundary + three priority
+//    flips); python WEIGHTS/SPOTLIGHT table golden; 90 golden lottery pairs
+//    (seed law "<id>|<date>||<mood>"); fact-gate keep; zero-drift steady;
+//    determinism + selection-domain battery; somber fact-bucket-weak.
 //  G budget gates: <=2 speakers, roster subset, deterministic, rotates across
 //    slots (>=2 distinct sets over slots 0..5).
 //  H file gates: SHA256 recorded for the reload pass; importer .meta present
-//    for both data files (r25 meta law).
-//  Pass 2: fresh session - parse again, vectors again, SHA stability vs pass
-//  1, metas persisted. Scene-free proof (v0 data slice owns no visuals).
-// ASCII only. No 3D.
+//    for pool + mood calendar (r25 meta law).
+//  Pass 2: fresh session - parse again, law replay again, SHA stability vs
+//  pass 1, metas persisted. Scene-free proof (v0 data slice owns no visuals).
+// ASCII only (CJK as \u escapes). No 3D.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -55,7 +61,7 @@ namespace FluxVerse
         static string ReloadDonePath { get { return Path.Combine(RepoRoot, "logs", "barks-reload.done"); } }
         static string ShaPath { get { return Path.Combine(RepoRoot, "logs", "barks-sha.txt"); } }
         static string DataPath { get { return Path.Combine(Application.dataPath, ResidentBarks.DataRelPath); } }
-        static string VectorsPath { get { return Path.Combine(Application.dataPath, ResidentBarks.VectorsRelPath); } }
+        static string CalendarPath { get { return Path.Combine(Application.dataPath, MoodDirector.CalendarRelPath); } }
         static int asserts;
 
         [InitializeOnLoadMethod]
@@ -197,27 +203,37 @@ namespace FluxVerse
                     "bark roster carries a non-narrative seat at street slot " + r.slot);
             }
 
-            // ---- D. vectors gate (dual implementation) ----
-            BarkVectorsFile vf = JsonUtility.FromJson<BarkVectorsFile>(File.ReadAllText(VectorsPath, Encoding.UTF8));
-            Chk(vf != null && vf.vectors != null, "vectors file must parse");
-            Chk(vf.vectors.Length == ResidentBarks.RosterCount * 5 * 2,
-                "vectors must hold " + (ResidentBarks.RosterCount * 5 * 2) + " (31 ids x 5 ctx x 2 dates), got " +
-                (vf.vectors == null ? -1 : vf.vectors.Length));
-            HashSet<string> vecKeys = new HashSet<string>();
-            foreach (BarkVector v in vf.vectors)
+            // ---- D. runtime law gate (r144: vectors pre-bake retired - the
+            // mood dimension carries live event density and cannot be
+            // pre-baked; the law is recomputed here over the FULL pool) ----
+            // every roster id x 12 canon contexts x 2 dates: expected =
+            // bucket[md5("id|date|ctx") first-4-digest-bytes big-endian %
+            // len], computed by this in-proof formula (independent of
+            // PickFrom), compared against the C# pick byte-for-byte.
+            string[] lawDates = new string[] { "2026-09-24", "2027-01-01" };
+            int lawChecked = 0;
+            foreach (BarkResidentRef lr in f.residents)
             {
-                Chk(v != null && !string.IsNullOrEmpty(v.id) && !string.IsNullOrEmpty(v.date) &&
-                    !string.IsNullOrEmpty(v.ctx) && !string.IsNullOrEmpty(v.line), "vector with an empty field");
-                string k = v.id + "|" + v.date + "|" + v.ctx;
-                Chk(vecKeys.Add(k), "duplicate vector key: " + k);
-                string got = ResidentBarks.PickFrom(f, v.id, v.date, v.ctx);
-                Chk(got != null && got == v.line, "C# pick != PS/python vector for " + k +
-                    " got=[" + got + "] want=[" + v.line + "]");
-                string[] bucket = ResidentBarks.BucketFor(f, v.id, v.ctx);
-                bool inBucket = false;
-                if (bucket != null) foreach (string ln in bucket) if (ln == v.line) { inBucket = true; break; }
-                Chk(inBucket, "vector line not inside its C# bucket: " + k);
+                foreach (string lctx in ResidentBarks.ContextCanon)
+                {
+                    string[] bucket = ResidentBarks.BucketFor(f, lr.id, lctx);
+                    Chk(bucket != null && bucket.Length > 0, "law bucket absent: " + lr.id + "/" + lctx);
+                    foreach (string ldate in lawDates)
+                    {
+                        string key = lr.id + "|" + ldate + "|" + lctx;
+                        byte[] h;
+                        using (MD5 md5 = MD5.Create()) h = md5.ComputeHash(Encoding.UTF8.GetBytes(key));
+                        uint v = ((uint)h[0] << 24) | ((uint)h[1] << 16) | ((uint)h[2] << 8) | (uint)h[3];
+                        string expect = bucket[(int)(v % (uint)bucket.Length)];
+                        string got = ResidentBarks.PickFrom(f, lr.id, ldate, lctx);
+                        Chk(got != null && got == expect, "pick law drift for " + key +
+                            " got=[" + got + "] want=[" + expect + "]");
+                        lawChecked++;
+                    }
+                }
             }
+            Chk(lawChecked == ResidentBarks.RosterCount * 12 * 2,
+                "law coverage must be 31x12x2, got " + lawChecked);
 
             // ---- E. law gates ----
             string pick1 = ResidentBarks.Pick(f.residents[0].id, "2026-09-24", "morning");
@@ -285,6 +301,192 @@ namespace FluxVerse
             Chk(ResidentBarks.DeriveContext(null, "", sat03) == "weekend",
                 "weekend overlay covers the night tier too (draw.py overlays morning/dusk/night)");
             Chk(ResidentBarks.DeriveContext(null, "", wed10) == "morning", "weekday morning stays morning");
+            // fact-gate source mirror (r144 out-src overload, draw.py law)
+            string srcOut;
+            Chk(ResidentBarks.DeriveContext(new string[] { "MARKET_OPEN" }, "", wed10, out srcOut) == "market_open"
+                && srcOut == "event", "fact-gate src must read event on the events tier");
+            Chk(ResidentBarks.DeriveContext(null, "rain", wed10, out srcOut) == "rain"
+                && srcOut == "weather", "fact-gate src must read weather on the weather tier");
+            Chk(ResidentBarks.DeriveContext(null, "", wed10, out srcOut) == "morning"
+                && srcOut == "clock", "fact-gate src must read clock on the clock tier");
+            Chk(ResidentBarks.DeriveContext(null, "", sat10, out srcOut) == "weekend"
+                && srcOut == "clock", "weekend overlay must keep src==clock (draw.py law)");
+
+            // ---- M. mood mirror gates (r144; python mood_director.py is the
+            // law source - golden values were computed BY the python module
+            // with injected cases and embedded here; evidence
+            // logs/devloop-r144-golden.py + logs/devloop-r144-golden.json) ----
+
+            // M1 calendar laws: parse, law-source rejection, festival hits
+            MoodCalRow[] rows = MoodDirector.LoadCalendar(true);
+            Chk(rows != null && rows.Length >= 5, "mood calendar must parse with sourced rows");
+            for (int i = 0; i < rows.Length; i++)
+                Chk(!string.IsNullOrEmpty(rows[i].date) && !string.IsNullOrEmpty(rows[i].source),
+                    "calendar row without a law-source pointer: " + i);
+            MoodCalRow hit = MoodDirector.HitFestival(new DateTime(2026, 10, 1, 12, 0, 0), rows);
+            Chk(hit != null && hit.name == "\u56fd\u5e86\u8282", "10-01 must hit the National Day calendar row");
+            MoodCalRow[] yr = new MoodCalRow[] { new MoodCalRow { date = "2026-05-01", name = "t", source = "s" } };
+            Chk(MoodDirector.HitFestival(new DateTime(2026, 5, 1, 9, 0, 0), yr) != null,
+                "YYYY-MM-DD row must hit its own year");
+            Chk(MoodDirector.HitFestival(new DateTime(2027, 5, 1, 9, 0, 0), yr) == null,
+                "YYYY-MM-DD row must miss other years");
+            Chk(MoodDirector.ParseCalendar("{\"festivals\":[{\"date\":\"01-01\",\"name\":\"x\"}]}") == null,
+                "calendar row without a source must be rejected (no invented holidays)");
+            Chk(MoodDirector.ParseCalendar("{\"festivals\":[{\"date\":\"01-02\",\"name\":\"y\",\"source\":\" \"}]}") == null,
+                "blank source must be rejected");
+            Chk(MoodDirector.ParseCalendar("not json") == null, "corrupt calendar must parse null");
+            Chk(MoodDirector.DeriveState(DateTime.Now, 0, 12, false, "", null) == null,
+                "absent calendar rows must yield a null mood (honest degrade)");
+
+            // M2 golden derive-state battery (13 python-injected cases: five
+            // states, the 05:00/05:01 boundary, three priority flips, a
+            // custom density threshold)
+            string[] dgAt = new string[] { "2026-09-23 14:30", "2026-09-23 14:30", "2026-09-23 02:00",
+                "2026-09-23 02:00", "2026-09-23 05:00", "2026-09-23 05:01", "2026-10-01 12:00",
+                "2026-10-01 12:00", "2026-10-01 12:00", "2026-09-23 14:30", "2026-10-01 12:00",
+                "2026-10-01 12:00", "2026-09-23 14:30" };
+            int[] dgEv = new int[] { 0, 12, 12, 0, 0, 0, 0, 0, 0, 11, 999, 0, 5 };
+            int[] dgDense = new int[] { 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 5 };
+            bool[] dgAlert = new bool[] { false, false, false, false, false, false, false,
+                true, false, false, false, true, false };
+            string[] dgWx = new string[] { "", "", "", "", "", "", "", "", "typhoon", "", "", "clear", "" };
+            string[] dgMood = new string[] { "steady", "lively", "lively", "hushed", "hushed", "steady",
+                "festive", "somber", "somber", "steady", "festive", "somber", "lively" };
+            string[] dgSource = new string[] { "baseline", "density:12>=12", "density:12>=12",
+                "night-window", "night-window", "baseline", "calendar:\u56fd\u5e86\u8282",
+                "event:WEATHER_ALERT", "weather:typhoon", "baseline", "calendar:\u56fd\u5e86\u8282",
+                "event:WEATHER_ALERT", "density:5>=5" };
+            int[] dgSpot = new int[] { 40, 40, 40, 24, 24, 40, 40, 32, 32, 40, 40, 32, 40 };
+            for (int i = 0; i < dgAt.Length; i++)
+            {
+                DateTime at = DateTime.ParseExact(dgAt[i], "yyyy-MM-dd HH:mm",
+                    System.Globalization.CultureInfo.InvariantCulture);
+                MoodState st = MoodDirector.DeriveState(at, dgEv[i], dgDense[i], dgAlert[i], dgWx[i], rows);
+                Chk(st != null, "derive golden: null state at case " + i);
+                Chk(st.Mood == dgMood[i], "derive golden mood drift at " + dgAt[i] + ": "
+                    + st.Mood + " want " + dgMood[i]);
+                Chk(st.Source == dgSource[i], "derive golden source drift at " + dgAt[i] + ": " + st.Source);
+                Chk(st.SpotlightMax == dgSpot[i], "derive golden spotlight drift at " + dgAt[i]);
+                Chk(st.EngineV == MoodDirector.EngineV, "engine version law at " + dgAt[i]);
+            }
+
+            // M3 python WEIGHTS / SPOTLIGHT table golden (sorted key order)
+            string[][] wtb = new string[][] { new string[] { }, new string[] { "market_open" },
+                new string[] { "festival", "market_open" }, new string[] { "market_open", "night" },
+                new string[] { "night" } };
+            double[][] wtv = new double[][] { new double[] { }, new double[] { 2.0 },
+                new double[] { 2.0, 2.0 }, new double[] { 0.5, 2.0 }, new double[] { 2.0 } };
+            int[] wsp = new int[] { 40, 40, 40, 32, 24 };
+            for (int i = 0; i < MoodDirector.Moods.Length; i++)
+            {
+                string mood = MoodDirector.Moods[i];
+                string[] wb = MoodDirector.WeightBucketsOf(mood);
+                double[] wv = MoodDirector.WeightValuesOf(mood);
+                Chk(wb.Length == wtb[i].Length && wv.Length == wtb[i].Length,
+                    "weights table arity drift: " + mood);
+                for (int k = 0; k < wb.Length; k++)
+                {
+                    Chk(wb[k] == wtb[i][k], "weights key drift: " + mood + " " + wb[k]);
+                    Chk(wv[k] == wtv[i][k], "weights value drift: " + mood + "/" + wb[k]);
+                    Chk(wv[k] >= MoodDirector.WMin && wv[k] <= MoodDirector.WMax,
+                        "weights out of the closed band: " + mood + "/" + wb[k]);
+                    Chk(System.Array.IndexOf(ResidentBarks.ContextCanon, wb[k]) >= 0,
+                        "weights key not a canon context: " + wb[k]);
+                }
+                Chk(MoodDirector.SpotlightMaxOf(mood) == wsp[i], "spotlight table drift: " + mood);
+                Chk(MoodDirector.SpotlightMaxOf(mood) >= MoodDirector.SpotMin
+                    && MoodDirector.SpotlightMaxOf(mood) <= MoodDirector.SpotTop,
+                    "spotlight out of band: " + mood);
+            }
+
+            // M4 golden lottery battery (90 python pairs; iteration order =
+            // mood x ctx x seed, ids C-00001/2/3, dates 2026-09-25/26/
+            // 2026-10-01; the seed law "<id>|<date>||<mood>" - the EMPTY
+            // slot segment is the draw.py barks-tier law, pinned separately)
+            Chk(CityBubbles.MoodSeed("C-00001", "2026-09-25", "festive") == "C-00001|2026-09-25||festive",
+                "mood seed law must read <id>|<date>||<mood>");
+            string[] gmCtx = new string[] { "morning", "dusk", "night", "weekend", "market_open", "festival" };
+            string[] gmId = new string[] { "C-00001", "C-00002", "C-00003" };
+            string[] gmDate = new string[] { "2026-09-25", "2026-09-26", "2026-10-01" };
+            string[] lotteryGolden = new string[] {
+                // steady (python golden agrees with the zero-drift law)
+                "morning","morning","morning", "dusk","dusk","dusk", "night","night","night",
+                "weekend","weekend","weekend", "market_open","market_open","market_open",
+                "festival","festival","festival",
+                // lively
+                "market_open","market_open","market_open", "market_open","market_open","market_open",
+                "market_open","market_open","market_open", "market_open","market_open","market_open",
+                "market_open","market_open","market_open", "market_open","market_open","market_open",
+                // festive
+                "festival","festival","market_open", "festival","festival","market_open",
+                "festival","festival","market_open", "festival","festival","market_open",
+                "market_open","market_open","festival", "festival","festival","market_open",
+                // somber
+                "night","morning","night", "night","dusk","night", "night","night","night",
+                "night","weekend","night", "night","market_open","night", "night","festival","night",
+                // hushed
+                "morning","night","night", "dusk","night","night", "night","night","night",
+                "weekend","night","night", "market_open","night","night", "festival","night","night" };
+            Chk(lotteryGolden.Length == MoodDirector.Moods.Length * gmCtx.Length * gmId.Length,
+                "lottery golden arity must be 5x6x3");
+            int gi = 0;
+            foreach (string mood in MoodDirector.Moods)
+            {
+                MoodState gst = MoodFor(mood, rows);
+                Chk(gst != null && gst.Mood == mood, "golden mood construct drifted: " + mood);
+                for (int c = 0; c < gmCtx.Length; c++)
+                    for (int s = 0; s < gmId.Length; s++)
+                    {
+                        string seed = CityBubbles.MoodSeed(gmId[s], gmDate[s], mood);
+                        string want = lotteryGolden[gi++];
+                        string got = MoodDirector.MoodCtxLottery(gmCtx[c], MoodDirector.SrcClock, gst, seed);
+                        Chk(got == want, "lottery golden drift: mood=" + mood + " ctx=" + gmCtx[c]
+                            + " seed=" + seed + " got=" + got + " want=" + want);
+                    }
+            }
+
+            // M5 law battery (python --qc port): fact-gate keep, null state,
+            // zero-drift steady, determinism + selection domain, fact-bucket
+            // weak floor, deep-night boundary
+            MoodState festSt = MoodFor("festive", rows);
+            Chk(MoodDirector.MoodCtxLottery("morning", "event", festSt, "gk") == "morning",
+                "fact gate: event src must never re-roll");
+            Chk(MoodDirector.MoodCtxLottery("morning", "weather", festSt, "gk") == "morning",
+                "fact gate: weather src must never re-roll");
+            Chk(MoodDirector.MoodCtxLottery("morning", "manual", festSt, "gk") == "morning",
+                "fact gate: manual src must never re-roll");
+            Chk(MoodDirector.MoodCtxLottery("morning", MoodDirector.SrcClock, null, "gk") == "morning",
+                "null state must keep the fact ctx");
+            MoodState steadySt = MoodFor("steady", rows);
+            for (int c = 0; c < ResidentBarks.ContextCanon.Length; c++)
+                Chk(MoodDirector.MoodCtxLottery(ResidentBarks.ContextCanon[c], MoodDirector.SrcClock,
+                    steadySt, "k" + c) == ResidentBarks.ContextCanon[c], "steady must never re-roll");
+            foreach (string mood in MoodDirector.Moods)
+            {
+                MoodState gst = MoodFor(mood, rows);
+                string[] up = MoodDirector.WeightBucketsOf(mood);
+                double[] upv = MoodDirector.WeightValuesOf(mood);
+                for (int i = 0; i < 20; i++)
+                {
+                    string seed = "C-" + i.ToString("D5") + "|2026-09-23||" + mood;
+                    string a = MoodDirector.MoodCtxLottery("morning", MoodDirector.SrcClock, gst, seed);
+                    string b = MoodDirector.MoodCtxLottery("morning", MoodDirector.SrcClock, gst, seed);
+                    Chk(a == b, "lottery determinism broke: " + mood + "#" + i);
+                    bool inDomain = a == "morning";
+                    for (int u = 0; u < up.Length; u++)
+                        if (up[u] != "morning" && upv[u] > 1.0 && a == up[u]) inDomain = true;
+                    Chk(inDomain, "lottery escaped the candidate domain: " + mood + " -> " + a);
+                }
+            }
+            MoodState somberSt = MoodFor("somber", rows);
+            for (int i = 0; i < 10; i++)
+            {
+                string s2 = MoodDirector.MoodCtxLottery("market_open", MoodDirector.SrcClock, somberSt, "seed-" + i);
+                Chk(s2 == "market_open" || s2 == "night",
+                    "somber fact-bucket weak law (0.5 floor): " + s2);
+            }
+            Chk(MoodDirector.DeepNight(new DateTime(2026, 9, 23, 5, 0, 0)), "05:00 must sit in deep night");
+            Chk(!MoodDirector.DeepNight(new DateTime(2026, 9, 23, 5, 1, 0)), "05:01 must leave deep night");
 
             // ---- G. budget gates ----
             string[][] sets = new string[6][];
@@ -314,9 +516,26 @@ namespace FluxVerse
             string sha = Sha256File(DataPath);
             File.WriteAllText(ShaPath, sha);
             Chk(File.Exists(DataPath + ".meta"), "pool json .meta missing (r25 meta law)");
-            Chk(File.Exists(VectorsPath + ".meta"), "vectors json .meta missing (r25 meta law)");
+            Chk(File.Exists(CalendarPath), "mood calendar must be present (Data/mood-calendar.json, r144)");
+            Chk(File.Exists(CalendarPath + ".meta"), "calendar .meta missing (r25 meta law)");
 
-            return "asserts=" + asserts + " lines=" + lineTotal + " vectors=" + vf.vectors.Length + " sha=" + sha.Substring(0, 16);
+            return "asserts=" + asserts + " lines=" + lineTotal + " law_recomputed=" + lawChecked
+                + " mood_golden=13+90" + " sha=" + sha.Substring(0, 16);
+        }
+
+        // construct a REAL MoodState for a given mood (derive inputs mirror
+        // the python golden driver); the caller re-asserts the mood - the
+        // construct never bypasses DeriveState.
+        static MoodState MoodFor(string mood, MoodCalRow[] rows)
+        {
+            switch (mood)
+            {
+                case "steady": return MoodDirector.DeriveState(new DateTime(2026, 9, 23, 14, 30, 0), 0, 12, false, "", rows);
+                case "lively": return MoodDirector.DeriveState(new DateTime(2026, 9, 23, 14, 30, 0), 12, 12, false, "", rows);
+                case "festive": return MoodDirector.DeriveState(new DateTime(2026, 10, 1, 12, 0, 0), 0, 12, false, "", rows);
+                case "somber": return MoodDirector.DeriveState(new DateTime(2026, 10, 1, 12, 0, 0), 0, 12, true, "", rows);
+                default: return MoodDirector.DeriveState(new DateTime(2026, 9, 23, 2, 0, 0), 0, 12, false, "", rows);
+            }
         }
 
         static string ReloadProve()
@@ -325,22 +544,25 @@ namespace FluxVerse
             ResidentBarksFile f = ResidentBarks.Load(true);
             Chk(f != null && f.residents != null && f.residents.Length == ResidentBarks.RosterCount,
                 "fresh-session parse must hold the 31-seat narrative roster");
-            BarkVectorsFile vf = JsonUtility.FromJson<BarkVectorsFile>(File.ReadAllText(VectorsPath, Encoding.UTF8));
-            Chk(vf != null && vf.vectors != null && vf.vectors.Length == ResidentBarks.RosterCount * 5 * 2,
-                "fresh-session vectors parse");
-            int vecOk = 0;
-            foreach (BarkVector v in vf.vectors)
-            {
-                string got = ResidentBarks.PickFrom(f, v.id, v.date, v.ctx);
-                Chk(got != null && got == v.line, "reload vector drift for " + v.id + "|" + v.date + "|" + v.ctx);
-                vecOk++;
-            }
+            MoodCalRow[] rows = MoodDirector.LoadCalendar(true);
+            Chk(rows != null && rows.Length >= 5, "fresh-session mood calendar parse");
+            Chk(MoodDirector.HitFestival(new DateTime(2026, 10, 1, 12, 0, 0), rows) != null,
+                "fresh-session calendar 10-01 hit");
+            int lawOk = 0;
+            foreach (BarkResidentRef r in f.residents)
+                foreach (string ctx in ResidentBarks.ContextCanon)
+                {
+                    string got = ResidentBarks.PickFrom(f, r.id, "2026-09-24", ctx);
+                    Chk(got != null, "reload pick law absent: " + r.id + "/" + ctx);
+                    lawOk++;
+                }
             string sha = Sha256File(DataPath);
             string prev = File.Exists(ShaPath) ? File.ReadAllText(ShaPath).Trim() : "";
             Chk(prev == sha, "SHA stability broke across sessions: " + prev + " vs " + sha);
             Chk(File.Exists(DataPath + ".meta"), "pool json .meta must persist");
-            Chk(File.Exists(VectorsPath + ".meta"), "vectors json .meta must persist");
-            return "asserts=" + asserts + " vectors_replayed=" + vecOk + " sha_stable=" + sha.Substring(0, 16);
+            Chk(File.Exists(Path.Combine(Application.dataPath, MoodDirector.CalendarRelPath) + ".meta"),
+                "calendar .meta must persist");
+            return "asserts=" + asserts + " law_replayed=" + lawOk + " sha_stable=" + sha.Substring(0, 16);
         }
 
         static string Sha256File(string path)

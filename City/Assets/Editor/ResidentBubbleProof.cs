@@ -34,6 +34,10 @@
 //    release-clean returns to baseline, screenshots saved for the multimodal
 //    face; final disk reopen still has zero BarkBubble*.
 //  G degrade gates: fake dir / bogus key / unknown ctx -> honest silence.
+//  H mood-face gates (r144): mood mount through the adapter - festive
+//    injected state, per-speaker weighted lottery pick reproduced from the
+//    law (seed = id|date||mood), domain stays {fact, festival, market_open},
+//    <=2 rationing; null mood = the pre-mood fact-ctx law.
 // Fail-loud: any broken assumption throws into the .done report. ASCII. No 3D.
 using System;
 using System.Collections.Generic;
@@ -447,6 +451,47 @@ namespace FluxVerse
                 Chk(silent.BubbleCount == 0, "unknown ctx must mount nothing (honest silence)");
             }
             finally { UnityEngine.Object.DestroyImmediate(tmp); }
+
+            // ---- H. mood-face gates (r144 adapter wiring: per-speaker
+            // weighted lottery + seed law + honest absence) ----
+            GameObject moodGo = new GameObject("BubbleMoodProbe");
+            try
+            {
+                CityBubbles mb = moodGo.AddComponent<CityBubbles>();
+                MoodCalRow[] rows = MoodDirector.LoadCalendar(true);
+                Chk(rows != null, "mood calendar must parse for the mood-face gate");
+                MoodState festive = MoodDirector.DeriveState(
+                    new DateTime(2026, 10, 1, 12, 0, 0), 0, 12, false, "clear", rows);
+                Chk(festive != null && festive.Mood == "festive", "injected festive state for the mood gate");
+                mb.Refresh("2026-10-01", "morning", 0, festive);
+                Chk(mb.BubbleCount >= 1, "mood mount must mount at least one speaker");
+                Chk(mb.BubbleCount <= ResidentBarks.MaxBubblesPerScreen,
+                    "mood mount must respect the <=2 rationing law");
+                for (int i = 0; i < mb.BubbleCount; i++)
+                {
+                    string id = mb.MountedId(i);
+                    Chk(id != null, "mood mount must expose its speaker id");
+                    string wantCtx = MoodDirector.MoodCtxLottery("morning", MoodDirector.SrcClock, festive,
+                        CityBubbles.MoodSeed(id, "2026-10-01", "festive"));
+                    Chk(wantCtx == "morning" || wantCtx == "festival" || wantCtx == "market_open",
+                        "festive lottery escaped its candidate domain: " + wantCtx);
+                    string wantLine = ResidentBarks.PickFrom(f, id, "2026-10-01", wantCtx);
+                    Chk(wantLine != null && wantLine == mb.MountedLine(i),
+                        "mood mount line != per-speaker lottery pick at " + i + " (useCtx=" + wantCtx + ")");
+                }
+                // null mood = the pre-mood law: the fact-gate ctx stands
+                mb.Release();
+                mb.Refresh("2026-10-01", "morning", 0, null);
+                Chk(mb.BubbleCount >= 1, "null-mood mount must still mount the fact ctx");
+                for (int i = 0; i < mb.BubbleCount; i++)
+                {
+                    string id = mb.MountedId(i);
+                    string wantLine = ResidentBarks.PickFrom(f, id, "2026-10-01", "morning");
+                    Chk(wantLine != null && wantLine == mb.MountedLine(i),
+                        "null-mood mount must use the fact ctx at " + i);
+                }
+            }
+            finally { UnityEngine.Object.DestroyImmediate(moodGo); }
 
             // ---- sha record for the reload gate ----
             string maniSha = Sha256File(ManifestPath());

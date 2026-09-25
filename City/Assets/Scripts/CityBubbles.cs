@@ -1,12 +1,16 @@
-// FluxVerse P-23(2) r42: CityBubbles - thin MonoBehaviour adapter of the street
-// bubble layer. SEPARATE FILE LAW (r14): the component class must live in
-// <ClassName>.cs or the saved scene reference dies across editor sessions.
-// The pure faces stay split: ResidentBarks (r41 data core: pool/pick/fact gate/
-// budget) + ResidentBubbleRules (r42 mounting law). This adapter only WIRES:
-// poll world/world-state.json + world/world-events.jsonl READ-ONLY every ~10s
+// FluxVerse P-23(2) r42 / r144: CityBubbles - thin MonoBehaviour adapter of
+// the street bubble layer. SEPARATE FILE LAW (r14): the component class must
+// live in <ClassName>.cs or the saved scene reference dies across editor
+// sessions. The pure faces stay split: ResidentBarks (r41 data core:
+// pool/pick/fact gate/budget) + ResidentBubbleRules (r42 mounting law) +
+// MoodDirector (r144 mood mirror). This adapter only WIRES: poll
+// world/world-state.json + world/world-events.jsonl READ-ONLY every ~10s
 // (perceptor owns all writes), derive the context through the draw.py fact
-// gate (events tail > weather > clock), budget the speakers (<=2 on screen),
-// then mount their bubbles above the nameplates.
+// gate (events tail > weather > clock), then on the CLOCK tier apply the
+// city mood director (mood = f(date, time, 24h event density); each
+// budgeted speaker rolls its own use-ctx through the weighted lottery,
+// draw.py L301-303 law - fact-gate contexts never move), budget the
+// speakers (<=2 on screen), then mount their bubbles above the nameplates.
 //
 // RUNTIME-ONLY LAW (r13/r25): every bubble GO and every loaded texture is a
 // runtime child of this component - NEVER saved into the scene. The proof
@@ -38,15 +42,17 @@ namespace FluxVerse
         public const float PollIntervalSec = 10f;
         const int TailEvents = 15;   // draw.py law: the fact gate reads the last 15 stream lines
         static readonly Regex TypeRx = new Regex("\"type\":\"([A-Z_]+)\"");
+        static readonly Regex TsRx = new Regex("\"ts_utc\":\"([^\"]+)\"");
 
         [Serializable] class StateFile { public Reality reality; }
         [Serializable] class Reality { public string beijing_hhmm, weather_kind; }
 
         readonly List<GameObject> mounted = new List<GameObject>();
+        readonly List<string> mountedIds = new List<string>();
         readonly List<string> mountedLines = new List<string>();
         readonly List<Rect> mountedRects = new List<Rect>();
         readonly Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();
-        string lastDate, lastCtx;
+        string lastDate, lastCtx, lastMood;
         int lastSlot = -1;
         float pollTimer = 999f;      // poll on first Update
 
@@ -59,8 +65,9 @@ namespace FluxVerse
             if (pollTimer >= PollIntervalSec) { pollTimer = 0f; PollFromWorld(); }
         }
 
-        // reality link: world-state (Beijing clock + weather) + events tail ->
-        // draw.py fact gate -> ctx; 45-minute slot from the same clock.
+        // reality link: world-state (Beijing clock + weather) + events stream ->
+        // draw.py fact gate -> ctx (+ src); on the clock tier the mood director
+        // (24h density + alert + calendar) may re-roll each speaker's bucket.
         public void PollFromWorld()
         {
             try
@@ -73,27 +80,52 @@ namespace FluxVerse
                 if (string.IsNullOrEmpty(hhmm)) return;
                 int h, m;
                 if (!ParseHhmm(hhmm, out h, out m)) return;
-                string[] types = RecentEventTypes(Path.Combine(repo, "world", "world-events.jsonl"));
+                string[] types; int density; bool alert;
+                ReadStream(Path.Combine(repo, "world", "world-events.jsonl"), out types, out density, out alert);
                 DateTime bj = DateTime.Now.Date + new TimeSpan(h, m, 0);
-                string ctx = ResidentBarks.DeriveContext(types, sf.reality.weather_kind, bj);
-                Refresh(DateTime.Now.ToString("yyyy-MM-dd"), ctx, (h * 60 + m) / 45);
+                string src;
+                string ctx = ResidentBarks.DeriveContext(types, sf.reality.weather_kind, bj, out src);
+                MoodState mood = null;
+                if (src == MoodDirector.SrcClock)
+                    mood = MoodDirector.DeriveState(bj, density, MoodDirector.DenseDefault, alert,
+                        sf.reality.weather_kind, MoodDirector.LoadCalendar());
+                Refresh(DateTime.Now.ToString("yyyy-MM-dd"), ctx, (h * 60 + m) / 45, mood);
             }
             catch (Exception) { /* keep current bubbles: probe contract silent degrade */ }
         }
 
-        // rebuild when the (date, ctx, slot) triple moves; mounts the budgeted
-        // speakers in rank order under the strict-overlap drop policy.
-        public void Refresh(string date, string ctx, int slot)
+        // draw.py barks-tier mood seed law (L301-303 with slot=None):
+        // "<id>|<date>||<mood>" - the empty slot segment is the barks tier,
+        // NOT a bug; the proof pins the exact string against python goldens.
+        public static string MoodSeed(string id, string date, string mood)
         {
-            if (date == lastDate && ctx == lastCtx && slot == lastSlot) return;
+            return id + "|" + date + "||" + mood;
+        }
+
+        // rebuild when the (date, ctx, slot, mood) quad moves; mounts the
+        // budgeted speakers in rank order under the strict-overlap drop
+        // policy. mood == null = the pre-mood law (fact-gate ctx stands).
+        public void Refresh(string date, string ctx, int slot) { Refresh(date, ctx, slot, null); }
+
+        // mood-aware mount (r144): mood != null implies the caller's fact
+        // gate decided src == "clock" (adapter law) - each speaker rolls its
+        // own use-ctx through the weighted lottery before picking its line.
+        public void Refresh(string date, string ctx, int slot, MoodState mood)
+        {
+            string moodName = mood != null ? mood.Mood : null;
+            if (date == lastDate && ctx == lastCtx && slot == lastSlot && moodName == lastMood) return;
             ClearMounted();
-            lastDate = date; lastCtx = ctx; lastSlot = slot;
+            lastDate = date; lastCtx = ctx; lastSlot = slot; lastMood = moodName;
             ResidentBarksFile f = ResidentBarks.Load();
             if (f == null) return;   // barks absent this build: silent (proof fails loud)
             string[] ids = ResidentBarks.BudgetedSpeakersFrom(f, date, ctx, slot);
             for (int k = 0; k < ids.Length; k++)
             {
-                string line = ResidentBarks.PickFrom(f, ids[k], date, ctx);
+                string useCtx = ctx;
+                if (mood != null)
+                    useCtx = MoodDirector.MoodCtxLottery(ctx, MoodDirector.SrcClock, mood,
+                        MoodSeed(ids[k], date, mood.Mood));
+                string line = ResidentBarks.PickFrom(f, ids[k], date, useCtx);
                 if (string.IsNullOrEmpty(line)) continue;
                 int idx = RosterIndex(f, ids[k]);
                 if (idx < 0) continue;
@@ -114,11 +146,12 @@ namespace FluxVerse
                 SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
                 sr.sprite = sp;
                 sr.sortingOrder = ResidentBubbleRules.Order;
-                mounted.Add(go); mountedLines.Add(line); mountedRects.Add(r);
+                mounted.Add(go); mountedIds.Add(ids[k]); mountedLines.Add(line); mountedRects.Add(r);
             }
         }
 
         public string MountedLine(int k) { return k >= 0 && k < mountedLines.Count ? mountedLines[k] : null; }
+        public string MountedId(int k) { return k >= 0 && k < mountedIds.Count ? mountedIds[k] : null; }
         public Rect MountedRect(int k) { return k >= 0 && k < mountedRects.Count ? mountedRects[k] : new Rect(); }
 
         // destroy mounted GOs + every cached texture (r23 owned-lifetime law:
@@ -128,13 +161,13 @@ namespace FluxVerse
             ClearMounted();
             foreach (Sprite s in spriteCache.Values) if (s != null) Kill(s.texture);
             spriteCache.Clear();
-            lastDate = null; lastCtx = null; lastSlot = -1;
+            lastDate = null; lastCtx = null; lastSlot = -1; lastMood = null;
         }
 
         void ClearMounted()
         {
             for (int i = 0; i < mounted.Count; i++) if (mounted[i] != null) Kill(mounted[i]);
-            mounted.Clear(); mountedLines.Clear(); mountedRects.Clear();
+            mounted.Clear(); mountedIds.Clear(); mountedLines.Clear(); mountedRects.Clear();
         }
 
         Sprite SpriteFor(string line)
@@ -182,23 +215,51 @@ namespace FluxVerse
             return -1;
         }
 
-        // last TailEvents stream lines -> their event types (draw.py derive input)
-        static string[] RecentEventTypes(string streamPath)
+        // single backward pass over the active event stream (the perceptor
+        // owns writes; the stream rotates daily - scan v0.4, so the active
+        // file IS the 24h window's live face): tail-15 event types for the
+        // fact gate + the 24h density count + the WEATHER_ALERT hit for the
+        // mood mirror (mood_director.py read_world law: ts-unparseable lines
+        // never count - data absent cannot be verified, no guessing).
+        static void ReadStream(string streamPath, out string[] types, out int density, out bool alert)
         {
-            if (!File.Exists(streamPath)) return null;
+            types = null; density = 0; alert = false;
+            if (!File.Exists(streamPath)) return;
             string[] lines;
             try { lines = File.ReadAllLines(streamPath); }
-            catch (Exception) { return null; }
-            List<string> types = new List<string>();
+            catch (Exception) { return; }
+            List<string> t = new List<string>();
             int taken = 0;
-            for (int i = lines.Length - 1; i >= 0 && taken < TailEvents; i--)
+            DateTime cut = DateTime.UtcNow.AddHours(-24.0);
+            for (int i = lines.Length - 1; i >= 0; i--)
             {
-                if (string.IsNullOrEmpty(lines[i])) continue;
-                taken++;
-                Match mt = TypeRx.Match(lines[i]);
-                if (mt.Success) types.Add(mt.Groups[1].Value);
+                string ln = lines[i];
+                if (string.IsNullOrEmpty(ln)) continue;
+                if (TsInWindow(ln, cut))
+                {
+                    density++;
+                    if (!alert && TypeRx.Match(ln).Groups[1].Value == "WEATHER_ALERT") alert = true;
+                }
+                if (taken < TailEvents)
+                {
+                    taken++;
+                    Match mt = TypeRx.Match(ln);
+                    if (mt.Success) t.Add(mt.Groups[1].Value);
+                }
             }
-            return types.Count > 0 ? types.ToArray() : null;
+            types = t.Count > 0 ? t.ToArray() : null;
+        }
+
+        static bool TsInWindow(string line, DateTime cut)
+        {
+            Match m = TsRx.Match(line);
+            if (!m.Success) return false;
+            DateTime t;
+            if (!DateTime.TryParseExact(m.Groups[1].Value, "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal, out t))
+                return false;
+            return t >= cut;
         }
 
         static bool ParseHhmm(string hhmm, out int h, out int m)

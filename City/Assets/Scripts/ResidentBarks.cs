@@ -8,13 +8,12 @@
 // fail-loud gates) writes Assets/Data/residents-barks.json (6 used axes x 12
 // contexts x up to 15 lines per the BigLife layer-2 contract v1.8 + the
 // 31-seat NARRATIVE id->axis roster in street slot order - the single anchor
-// seat, layer=anchor, is honestly excluded and never barks, r106/r107 law)
-// and Assets/Data/residents-barks-vectors.json (310 precomputed law vectors:
-// 31 residents x 5 contexts x 2 dates). The proof demands byte agreement on
-// all vectors -> the PS bake and this C# core are separate implementations of
-// the SAME law; agreement proves the law, not just the artifact (r39 dual-impl
-// pattern). Verified live 2026-09-24: python draw.py output == PS vectors
-// 12/12 for (all residents, morning, today) - the python law is the source.
+// seat, layer=anchor, is honestly excluded and never barks, r106/r107 law).
+// The r41/r107 pre-baked law-vectors file is RETIRED (r144): the mood face
+// carries live event density and cannot be pre-baked - the law is now
+// recomputed at proof time over the FULL pool (runtime md5, 31x12x2) and
+// the mood mirror is golden-pair gated against python mood_director.py
+// (ResidentBarksProof D/M sections, r41 dual-impl pattern continues).
 //
 // Law (byte-mirrors BigLife Tools/draw.py):
 //   - bucket routing: resident axis -> axes[<axis>][ctx]; empty bucket falls
@@ -75,28 +74,12 @@ namespace FluxVerse
         public BarkResidentRef[] residents;
     }
 
-    [Serializable]
-    public class BarkVector
-    {
-        public string id;
-        public string date;
-        public string ctx;
-        public string line;
-    }
-
-    [Serializable]
-    public class BarkVectorsFile
-    {
-        public BarkVector[] vectors;
-    }
-
     // pure static core: pool parse + selection law + context derivation +
     // attention budget. No MonoBehaviour (v0 slice wires nothing into the
     // scene; SEPARATE FILE LAW n/a).
     public static class ResidentBarks
     {
         public const string DataRelPath = "Data/residents-barks.json";
-        public const string VectorsRelPath = "Data/residents-barks-vectors.json";
         public const int MaxLineChars = 24;                       // <24-char engine law (cognition README acceptance 2)
         public const int MaxBubblesPerScreen = 2;                 // attention rationing (P-23 spec)
         public const int RosterCount = 31;                        // street NARRATIVE seats (r107): the 32-seat roster
@@ -213,6 +196,16 @@ namespace FluxVerse
         // weather_kind; localNow = the city's real local time (Beijing).
         public static string DeriveContext(string[] recentEventTypes, string weatherKind, DateTime localNow)
         {
+            string src;
+            return DeriveContext(recentEventTypes, weatherKind, localNow, out src);
+        }
+
+        // fact-gate source mirror (r144, draw.py returns (ctx, src)): src =
+        // "event" / "weather" / "clock". The weekend overlay keeps
+        // src=="clock" (python law) - the mood lottery may therefore re-roll
+        // a weekend ctx too (draw.py L301 gate is src, not ctx).
+        public static string DeriveContext(string[] recentEventTypes, string weatherKind, DateTime localNow, out string src)
+        {
             // events (fixed priority chain, draw.py if/elif order)
             if (recentEventTypes != null)
             {
@@ -225,21 +218,22 @@ namespace FluxVerse
                     else if (t == "MARKET_CLOSE") mc = true;
                     else if (t == "WEATHER_ALERT") wa = true;
                 }
-                if (ceo) return "ceo_order";
-                if (mo) return "market_open";
-                if (mc) return "market_close";
-                if (wa) return "typhoon";
+                if (ceo) { src = "event"; return "ceo_order"; }
+                if (mo) { src = "event"; return "market_open"; }
+                if (mc) { src = "event"; return "market_close"; }
+                if (wa) { src = "event"; return "typhoon"; }
             }
             // weather
             if (!string.IsNullOrEmpty(weatherKind))
             {
                 string k = weatherKind;
-                if (k == "rain" || k == "storm" || k == "drizzle" || k == "shower") return "rain";
-                if (k == "snow" || k == "sleet") return "coldsnap";
-                if (k == "typhoon" || k == "gale" || k == "wind") return "typhoon";
+                if (k == "rain" || k == "storm" || k == "drizzle" || k == "shower") { src = "weather"; return "rain"; }
+                if (k == "snow" || k == "sleet") { src = "weather"; return "coldsnap"; }
+                if (k == "typhoon" || k == "gale" || k == "wind") { src = "weather"; return "typhoon"; }
             }
             // clock (weekend overlay only on this tier - reaching here means
             // neither events nor weather decided, mirroring draw.py src=="clock")
+            src = "clock";
             int hour = localNow.Hour;
             string ctx;
             if (hour >= 5 && hour < 11) ctx = "morning";
@@ -248,7 +242,7 @@ namespace FluxVerse
             else ctx = (hour < 15) ? "morning" : "dusk";
             int pyWeekday = ((int)localNow.DayOfWeek + 6) % 7;   // python weekday: Mon=0..Sun=6
             if (pyWeekday >= 5 && (ctx == "morning" || ctx == "dusk" || ctx == "night"))
-                return "weekend";
+                return "weekend";                                  // src stays "clock" (draw.py law)
             return ctx;
         }
 

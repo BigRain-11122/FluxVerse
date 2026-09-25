@@ -32,9 +32,19 @@
 //    residents-hidden baseline (robots visible in both = clean attribution),
 //    dusk visibility for every seat, night presence under the tint, night
 //    luminance < dusk. Plus the r99 record set: L0 day + night, L1 south +
-//    north (R-20260924-m1-visual-fix sec.3 four-shot family).
+//    north (R-20260924-m1-visual-fix sec.3 four-shot family) - carried LIVE
+//    since r124: the record set renders the current street_behavior face.
+//  F street-behavior consumption (P-75 slice B, r124 work order): eave table
+//    mirror census vs Tools/city/eaveslots-manifest.json (r123 geometry
+//    source), sec.8 live-tilemap stand gate at both eave positions, eave
+//    clearance re-derivation (seat 2.2 / robot 2.0 / neon envelopes / L0
+//    frame / tint band / bubble ceiling), synthetic rain relocation
+//    round-trip (capacity pick + overflow / umbrella / no-slot / visitor /
+//    bucket-miss all home, body+shadow+plate trio travels together),
+//    anchor-follows-data, grandfather restore, live-file smoke.
 //  E pass 2: everything survives an editor restart (parents + children +
-//    shadows persisted, importer laws, exactly 32, zero duplicates).
+//    shadows + nameplates + the behavior adapter persisted, importer laws,
+//    exactly 32, zero duplicates).
 // Fail-loud: any broken assumption throws into the .done report. ASCII only. No 3D.
 using System;
 using System.Collections.Generic;
@@ -330,6 +340,7 @@ namespace FluxVerse
             }
             // per-seat wiring gates (children + tints + z stack against the roster)
             WiringGates(roster, cells);
+            EnsureStreetBehaviorAdapter();   // r124: persisted adapter GO (idempotent)
             bool saved = EditorSceneManager.SaveScene(scene);
             Chk(saved, "scene save failed");
 
@@ -337,6 +348,17 @@ namespace FluxVerse
             Chk(CountParents() == ResidentRules.Count, "persisted parent count != 32: " + CountParents());
             Chk(CountShadows() == ResidentRules.Count, "persisted shadow count != 32: " + CountShadows());
             WiringGates(roster, cells);   // everything survives the disk round-trip
+            // r124: the behavior adapter resolves across the save (r14 component law)
+            GameObject behGo = GameObject.Find(CityStreetBehavior.GoName);
+            Chk(behGo != null, "CityStreetBehavior GO lost after save");
+            CityStreetBehavior beh = behGo != null
+                ? behGo.GetComponent<CityStreetBehavior>() : null;
+            Chk(beh != null, "CityStreetBehavior component unresolved after save");
+            int tagsKept = 0;
+            foreach (Transform tg in UnityEngine.Object.FindObjectsOfType<Transform>())
+                if (tg.parent == null && tg.name.StartsWith(ResidentTagRules.NamePrefix)) tagsKept++;
+            Chk(tagsKept == ResidentTagRules.Count,
+                "nameplates lost after our save: " + tagsKept);
             // neighbor regressions (our save must not drop earlier serialized wiring)
             int robotsKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
@@ -410,7 +432,21 @@ namespace FluxVerse
             Chk(nightLum < duskLum, "night residents must sit under dusk (atmosphere law): "
                 + nightLum.ToString("F3") + " vs " + duskLum.ToString("F3"));
 
-            // ---- D2. r104 record set (R- sec.3 four-shot family): L0 night + day, L1 south + north
+            // ---- D2. r104 record set (R- sec.3 four-shot family): L0 night + day,
+            // L1 south + north. r124 (r122 item 4): the rescan carries the LIVE
+            // street_behavior face - the night window's visible seats are the
+            // provable face. Restored to grandfather right after: in-session
+            // state only, the scene on disk never learns runtime moves.
+            StreetBehaviorSnapshot live = StreetBehaviorRules.LoadStateFile();
+            int liveVisible = -1; string liveCtx = "absent";
+            beh.ApplyState(live);
+            if (live != null && live.seats != null)
+            {
+                liveCtx = live.ctx;
+                liveVisible = 0;
+                foreach (StreetBehaviorSeat row in live.seats)
+                    if (row != null && row.visible == 1) liveVisible++;
+            }
             Shot(cam, "m1-r104-south-night.png");
             amb.ApplyAmbient(AmbientTier.Day);
             Shot(cam, "m1-r104-south-day.png");
@@ -423,6 +459,210 @@ namespace FluxVerse
             Shot(cam, "m1-r104-south-l1-north.png");
             cam.orthographicSize = camSizeSaved;
             cam.transform.position = camPosSaved;
+            beh.ApplyState(null);   // grandfather restore - record set done
+
+            // ---- F. street-behavior consumption gates (P-75 slice B, r124) ----
+            int fEaveReloc = 0; string fMediaPick = "-", fNorthPick = "-";
+            {
+                // seat trio references - resolved while every seat is active
+                // (GameObject.Find skips inactive objects, r34 law)
+                GameObject[] shads = new GameObject[ResidentRules.Count];
+                GameObject[] plats = new GameObject[ResidentRules.Count];
+                for (int i = 0; i < ResidentRules.Count; i++)
+                {
+                    shads[i] = GameObject.Find(ResidentRules.ShadowName(i));
+                    plats[i] = GameObject.Find(ResidentTagRules.Name(i));
+                    Chk(shads[i] != null, "shadow missing for the F gates: " + ResidentRules.ShadowName(i));
+                    Chk(plats[i] != null, "plate missing for the F gates: " + ResidentTagRules.Name(i));
+                }
+
+                // F0 manifest mirror census: the C# eave table must mirror
+                // Tools/city/eaveslots-manifest.json bit for bit (r123 source)
+                EaveManifestFile mf = JsonUtility.FromJson<EaveManifestFile>(
+                    File.ReadAllText(Path.Combine(RepoRoot, "Tools", "city", "eaveslots-manifest.json")));
+                Chk(mf != null && mf.slots != null
+                    && mf.slots.Length == StreetBehaviorRules.EaveCount,
+                    "eaveslots manifest unreadable / slot count != table");
+                for (int e = 0; e < StreetBehaviorRules.EaveCount; e++)
+                {
+                    StreetBehaviorRules.EaveSlot es = StreetBehaviorRules.Eave(e);
+                    Chk(mf.slots[e].id == es.id, "eave id drift at " + e + ": " + mf.slots[e].id);
+                    Chk(mf.slots[e].district == es.district, "eave district drift at " + e);
+                    Chk(mf.slots[e].capacity == es.capacity, "eave capacity drift at " + e);
+                    Chk(Math.Abs(mf.slots[e].x - es.x) < 1e-4f && Math.Abs(mf.slots[e].y - es.y) < 1e-4f,
+                        "eave position drift vs manifest at " + es.id);
+                    Chk(StreetBehaviorRules.EaveIndexForZone(es.district) == e,
+                        "zone routing must map " + es.district + " to eave " + e);
+                }
+                Chk(StreetBehaviorRules.EaveIndexForZone("QUANT") == -1
+                    && StreetBehaviorRules.EaveIndexForZone("GAME") == -1
+                    && StreetBehaviorRules.EaveIndexForZone("TOWER") == -1
+                    && StreetBehaviorRules.EaveIndexForZone("VISITOR") == -1,
+                    "no-slot zones must route home (honest fallback law)");
+
+                // F1 sec.8 stand gate at both eave positions - the identical law
+                // the 32 home seats walk, re-derived from the LIVE tilemaps
+                Tilemap groundF = TilemapLayer("Ground");
+                Tilemap roadsF = TilemapLayer("Roads");
+                Tilemap waterF = TilemapLayer("Water");
+                Tilemap gGameF = TilemapLayer("CityGAME");
+                Tilemap gQuantF = TilemapLayer("CityQUANT");
+                Tilemap gMediaF = TilemapLayer("CityMEDIA");
+                Tilemap brainF = TilemapLayer("BrainTower");
+                Chk(groundF != null && roadsF != null && waterF != null && gGameF != null
+                    && gQuantF != null && gMediaF != null && brainF != null,
+                    "eave stand-gate tilemaps missing");
+                for (int e = 0; e < StreetBehaviorRules.EaveCount; e++)
+                    StandGateAt(StreetBehaviorRules.EavePos(e),
+                        StreetBehaviorRules.Eave(e).id,
+                        groundF, roadsF, waterF, gGameF, gQuantF, gMediaF, brainF);
+
+                // F2 clearance re-derivation at both eave positions (r99 family)
+                for (int e = 0; e < StreetBehaviorRules.EaveCount; e++)
+                {
+                    Vector2 ep = StreetBehaviorRules.EavePos(e);
+                    string eid = StreetBehaviorRules.Eave(e).id;
+                    Chk(Mathf.Abs(ep.x) + ResidentRules.HalfSide <= RigMath.L0Size * RigMath.Aspect - 0.3f
+                        && Mathf.Abs(ep.y) + ResidentRules.HalfSide <= RigMath.L0Size - 0.3f,
+                        "eave escapes the L0 frame: " + eid);
+                    Chk(ep.y - ResidentRules.HalfSide >= -16f + 0.1f
+                        && ep.y + ResidentRules.HalfSide <= 14f,
+                        "eave escapes the tint band: " + eid);
+                    Chk(ep.y + ResidentTagRules.OffsetY + ResidentTagRules.WorldH / 2f
+                        + ResidentBubbleRules.GapFromTag + ResidentBubbleRules.WorldH / 2f <= 15f,
+                        "eave bubble stack breaks the +15 ceiling: " + eid);
+                    for (int i = 0; i < ResidentRules.Count; i++)
+                        Chk(Vector2.Distance(ep, ResidentRules.Pos(i)) >= 2.2f,
+                            "eave " + eid + " crowds seat " + ResidentRules.Name(i));
+                    for (int b = 0; b < RobotRules.Count; b++)
+                        Chk(Vector2.Distance(ep, RobotRules.Pos(b)) >= 2.0f,
+                            "eave " + eid + " crowds robot " + RobotRules.Name(b));
+                    for (int s = 0; s < NeonRules.Count; s++)
+                    {
+                        float hw = NeonRules.WorldW(s) / 2f + ResidentRules.HalfSide + 0.4f;
+                        float hh = NeonRules.WorldH(s) / 2f + ResidentRules.HalfSide + 0.4f;
+                        float dx = Mathf.Abs(ep.x - NeonRules.Pos(s).x);
+                        float dy = Mathf.Abs(ep.y - NeonRules.Pos(s).y);
+                        Chk(!(dx < hw && dy < hh),
+                            "eave " + eid + " clips mounted sign " + NeonRules.Name(s));
+                    }
+                }
+
+                // F3 synthetic rain: every shelter-law branch in one apply. The
+                // bucket members resolve from the ROSTER ids (no hardcoded ids).
+                List<int> mediaBucket = new List<int>();
+                List<int> northBucket = new List<int>();
+                for (int i = 0; i < ResidentRules.Count; i++)
+                {
+                    if (!StreetBehaviorRules.BucketHit(roster[i].id)) continue;
+                    string z = ResidentRules.ZoneOf(i);
+                    if (z == "MEDIA") mediaBucket.Add(i);
+                    else if (z == "NORTH") northBucket.Add(i);
+                }
+                Chk(mediaBucket.Count >= 2,
+                    "MEDIA bucket must hold >= 2 members for the capacity gate: " + mediaBucket.Count);
+                Chk(northBucket.Count >= 1,
+                    "NORTH bucket must hold >= 1 member: " + northBucket.Count);
+                int mediaPick = mediaBucket[0], northPick = northBucket[0];
+                fMediaPick = ResidentRules.Name(mediaPick);
+                fNorthPick = ResidentRules.Name(northPick);
+                fEaveReloc = 2;
+
+                Dictionary<int, string> umbrellaQ = new Dictionary<int, string>();
+                umbrellaQ[0] = StreetBehaviorRules.UmbrellaQuirk;   // ResQ01 street-with-umbrella
+                HashSet<int> hidden = new HashSet<int>();
+                hidden.Add(ResidentIdentity.AnchorSlot);            // anchor follows data
+                hidden.Add(3);                                       // generic hidden seat
+                beh.ApplyState(BuildSynthetic(roster, StreetBehaviorRules.ShelterState, umbrellaQ, hidden));
+
+                // relocated trio: body + shadow + plate travel together
+                Vector2 eM = StreetBehaviorRules.EavePos(0);
+                Vector2 eN = StreetBehaviorRules.EavePos(1);
+                Chk(AtPlan(folk[mediaPick].transform, eM),
+                    "MEDIA pick must sit at EAVE-M01: " + fMediaPick);
+                Chk(AtPlan(folk[northPick].transform, eN),
+                    "NORTH pick must sit at EAVE-N01: " + fNorthPick);
+                Chk(shads[mediaPick].activeSelf
+                    && AtPlan(shads[mediaPick].transform,
+                        new Vector2(eM.x, eM.y - ResidentRules.HalfSide - ResidentRules.ShadowDropY)),
+                    "MEDIA pick shadow must follow to the eave");
+                Chk(shads[northPick].activeSelf
+                    && AtPlan(shads[northPick].transform,
+                        new Vector2(eN.x, eN.y - ResidentRules.HalfSide - ResidentRules.ShadowDropY)),
+                    "NORTH pick shadow must follow to the eave");
+                Chk(plats[mediaPick].activeSelf
+                    && AtPlan(plats[mediaPick].transform, new Vector2(eM.x, eM.y + ResidentTagRules.OffsetY)),
+                    "MEDIA pick plate must follow to the eave");
+                Chk(plats[northPick].activeSelf
+                    && AtPlan(plats[northPick].transform, new Vector2(eN.x, eN.y + ResidentTagRules.OffsetY)),
+                    "NORTH pick plate must follow to the eave");
+                // capacity-1: overflow members stay home
+                foreach (int s in mediaBucket)
+                    if (s != mediaPick)
+                        Chk(AtPlan(folk[s].transform, ResidentRules.Pos(s)),
+                            "overflow member must stay home: " + ResidentRules.Name(s));
+                // umbrella / no-slot / visitor / bucket-miss / every other seat:
+                // visible + home (honest fallback); hidden seats hide the trio
+                for (int i = 0; i < ResidentRules.Count; i++)
+                {
+                    if (i == mediaPick || i == northPick) continue;
+                    if (hidden.Contains(i))
+                    {
+                        Chk(!folk[i].activeSelf,
+                            "hidden seat must follow the data face: " + ResidentRules.Name(i));
+                        Chk(!shads[i].activeSelf && !plats[i].activeSelf,
+                            "hidden trio law (shadow+plate) at " + ResidentRules.Name(i));
+                        continue;
+                    }
+                    Chk(folk[i].activeSelf,
+                        "fallback seat must stay visible: " + ResidentRules.Name(i));
+                    Chk(AtPlan(folk[i].transform, ResidentRules.Pos(i)),
+                        "fallback law broken (must be home): " + ResidentRules.Name(i));
+                }
+
+                // F4 restore round-trip: plain work state, then grandfather
+                beh.ApplyState(BuildSynthetic(roster, "work", null, null));
+                for (int i = 0; i < ResidentRules.Count; i++)
+                {
+                    Chk(folk[i].activeSelf, "work-state restore visibility at " + ResidentRules.Name(i));
+                    Chk(AtPlan(folk[i].transform, ResidentRules.Pos(i)),
+                        "work-state restore home at " + ResidentRules.Name(i));
+                }
+                beh.ApplyState(null);
+                for (int i = 0; i < ResidentRules.Count; i++)
+                {
+                    Chk(folk[i].activeSelf, "grandfather visibility at " + ResidentRules.Name(i));
+                    Chk(AtPlan(folk[i].transform, ResidentRules.Pos(i)),
+                        "grandfather home at " + ResidentRules.Name(i));
+                    Chk(shads[i].activeSelf && AtPlan(shads[i].transform, ResidentRules.ShadowPos(i)),
+                        "grandfather shadow at " + ResidentRules.Name(i));
+                    Chk(plats[i].activeSelf && AtPlan(plats[i].transform, ResidentTagRules.Pos(i)),
+                        "grandfather plate at " + ResidentRules.Name(i));
+                }
+
+                // F5 live-file smoke: the real state file drives the same invariant
+                // (active-seat count == grandfather-inclusive visible rows)
+                if (live != null && live.seats != null)
+                {
+                    beh.ApplyState(live);
+                    bool[] covered = new bool[ResidentRules.Count];
+                    int expect = 0;
+                    foreach (StreetBehaviorSeat row in live.seats)
+                    {
+                        if (row == null || row.slot < 0 || row.slot >= ResidentRules.Count) continue;
+                        if (row.go != ResidentRules.Name(row.slot)) continue;
+                        covered[row.slot] = true;
+                        if (row.visible == 1) expect++;
+                    }
+                    for (int i = 0; i < ResidentRules.Count; i++)
+                        if (!covered[i]) expect++;
+                    int act = 0;
+                    for (int i = 0; i < ResidentRules.Count; i++)
+                        if (folk[i].activeSelf) act++;
+                    Chk(act == expect, "live face active count != visible rows: " + act + " vs " + expect);
+                    beh.ApplyState(null);
+                }
+            }
 
             UnityEngine.Object.DestroyImmediate(duskBase); UnityEngine.Object.DestroyImmediate(duskOn);
             UnityEngine.Object.DestroyImmediate(nightBase); UnityEngine.Object.DestroyImmediate(nightOn);
@@ -430,11 +670,15 @@ namespace FluxVerse
             return "asserts=" + asserts
                 + " table=32 zones=Q" + q + "/G" + g + "/M" + m + "/N" + n + "/T" + t + "/V" + v
                 + " roster=32coupled sprites=" + sprites + " plates=" + plates.Count + "/32"
-                + " scene(saved=" + saved + ",32+32shadow persisted,stand_gate=sec8_underfoot_pavement+body_clear,"
+                + " scene(saved=" + saved + ",32+32shadow+tags" + tagsKept + "+adapter persisted,"
+                + "stand_gate=sec8_underfoot_pavement+body_clear,"
                 + "robots8_kept,neon" + NeonRules.Count + "_kept,neighbors_ok)"
                 + " render(dusk_px=" + duskTot + " worst=" + duskWorst + ":" + duskMin
                 + " night_px=" + nightTot + " worst=" + nightWorst + ":" + nightMin
                 + " lum dusk=" + duskLum.ToString("F3") + " night=" + nightLum.ToString("F3") + ")"
+                + " streetbeh(manifest_mirror=2,sec8_eave=2/2,relocate=" + fMediaPick
+                + "+EAVE-M01/" + fNorthPick + "+EAVE-N01,relocated=" + fEaveReloc
+                + ",live_face=" + liveVisible + " ctx=" + liveCtx + ")"
                 + " shots=6";
         }
 
@@ -478,10 +722,19 @@ namespace FluxVerse
             Chk(UnityEngine.Object.FindObjectsOfType<CityInterior>().Length >= 1, "CityInterior unresolved after restart");
             Chk(UnityEngine.Object.FindObjectsOfType<CityCameraRig>().Length >= 1, "CityCameraRig unresolved after restart");
             Chk(UnityEngine.Object.FindObjectsOfType<CityAmbientAudio>().Length >= 1, "CityAmbientAudio unresolved after restart");
+            GameObject behGoR = GameObject.Find(CityStreetBehavior.GoName);
+            Chk(behGoR != null && behGoR.GetComponent<CityStreetBehavior>() != null,
+                "CityStreetBehavior lost across restart");
+            int tagsKeptR = 0;
+            foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+                if (t.parent == null && t.name.StartsWith(ResidentTagRules.NamePrefix)) tagsKeptR++;
+            Chk(tagsKeptR == ResidentTagRules.Count,
+                "nameplates lost across restart: " + tagsKeptR);
             GameObject camGo = GameObject.Find("CityCamera");
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f, "L0 camera broken after restart");
-            return "reload_gate=OK residents=32/32 persisted shadows=32/32 children_resolved robots=8/8 neon="
+            return "reload_gate=OK residents=32/32 persisted shadows=32/32 tags=" + tagsKeptR
+                + "/32 adapter=resolved children_resolved robots=8/8 neon="
                 + NeonRules.Count + "/" + NeonRules.Count
                 + " importers=atlas_multiple9+point+ppu24+nemip"
                 + " skyline=2/2 neighbors=4 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
@@ -648,6 +901,96 @@ namespace FluxVerse
         {
             foreach (GameObject go in folk) go.SetActive(on);
         }
+
+        // ---- r124 helpers (P-75 slice B) ----
+
+        // idempotent scene wiring of the behavior adapter: a legit persisted root
+        // GO with zero serialized fields (CityAmbient precedent, r14 component law)
+        static void EnsureStreetBehaviorAdapter()
+        {
+            GameObject go = GameObject.Find(CityStreetBehavior.GoName);
+            if (go == null)
+            {
+                go = new GameObject(CityStreetBehavior.GoName);
+                go.AddComponent<CityStreetBehavior>();
+            }
+            if (go.GetComponent<CityStreetBehavior>() == null)
+                throw new InvalidOperationException("adapter component must resolve pre-save");
+        }
+
+        // transform sits at the plan position within 1e-4
+        static bool AtPlan(Transform t, Vector2 p)
+        {
+            return t != null && Mathf.Abs(t.position.x - p.x) < 1e-4f
+                && Mathf.Abs(t.position.y - p.y) < 1e-4f;
+        }
+
+        // sec.8 stand gate parameterized for the eave slot positions - the 32-seat
+        // loop above walks the identical law at the home coordinates
+        static void StandGateAt(Vector2 pos, string who, Tilemap ground, Tilemap roads,
+            Tilemap water, Tilemap gGame, Tilemap gQuant, Tilemap gMedia, Tilemap brain)
+        {
+            int rowLo = Mathf.FloorToInt(pos.y - ResidentRules.HalfSide);
+            int rowHi = Mathf.CeilToInt(pos.y + ResidentRules.HalfSide) - 1;
+            int colLo = Mathf.FloorToInt(pos.x - ResidentRules.HalfSide);
+            int colHi = Mathf.CeilToInt(pos.x + ResidentRules.HalfSide) - 1;
+            for (int col = colLo; col <= colHi; col++)
+            {
+                Vector3Int uc = new Vector3Int(col, rowLo - 1, 0);
+                TileBase ut = ground.GetTile(uc);
+                Chk(ut != null, who + " underfoot cell off the pavement at " + uc);
+                Chk(roads.GetTile(uc) == null, who + " underfoot on a road cell at " + uc);
+                string utName = ut != null ? ut.name : "";
+                Chk(utName != "t_grass_a" && utName != "t_grass_b",
+                    who + " stands on the greenbelt at " + uc);
+                for (int row = rowLo; row <= rowHi; row++)
+                {
+                    Vector3Int bc = new Vector3Int(col, row, 0);
+                    Chk(roads.GetTile(bc) == null, who + " body over a road lane at " + bc);
+                    Chk(water.GetTile(bc) == null, who + " body over water at " + bc);
+                    Chk(gGame.GetTile(bc) == null && gQuant.GetTile(bc) == null
+                        && gMedia.GetTile(bc) == null && brain.GetTile(bc) == null,
+                        who + " body over a building tile at " + bc);
+                }
+            }
+        }
+
+        // synthetic snapshot builder: every seat covered (defaultState), optional
+        // per-slot quirk overrides + hidden set - the probe's state face verbatim
+        static StreetBehaviorSnapshot BuildSynthetic(ResidentIdentityEntry[] roster,
+            string defaultState, Dictionary<int, string> quirks, HashSet<int> hidden)
+        {
+            StreetBehaviorSnapshot s = new StreetBehaviorSnapshot();
+            s.ctx = "synthetic";
+            s.generated_utc = "";
+            s.total = ResidentRules.Count;
+            s.nodata = 0;
+            s.seats = new StreetBehaviorSeat[ResidentRules.Count];
+            int vis = 0;
+            for (int i = 0; i < ResidentRules.Count; i++)
+            {
+                StreetBehaviorSeat r = new StreetBehaviorSeat();
+                r.slot = i;
+                r.go = ResidentRules.Name(i);
+                r.id = roster[i].id;
+                r.state = defaultState;
+                r.quirk = quirks != null && quirks.ContainsKey(i) ? quirks[i] : "";
+                r.visible = hidden != null && hidden.Contains(i) ? 0 : 1;
+                r.recovering = 0;
+                s.seats[i] = r;
+                if (r.visible == 1) vis++;
+            }
+            s.visible = vis;
+            return s;
+        }
+
+        // r123 manifest mirror (minimal - the census needs the slot fields only)
+        [Serializable] class EaveManifestSlot
+        {
+            public string id; public string district; public int capacity;
+            public float x; public float y;
+        }
+        [Serializable] class EaveManifestFile { public EaveManifestSlot[] slots; }
 
         static Tilemap TilemapLayer(string layerName)
         {

@@ -79,9 +79,28 @@ public static class CitySkeletonBuilder
         MK("t_prop_post", "Tiles/GuttyKreum_CleanCity_136.png");
         MK("t_prop_box", "Tiles/GuttyKreum_CleanCity_296.png");
         MK("t_water_0", "Tiles_Extract/water_wave_00.png");
+        // r155 (P-20260925-09 W1): the full 8-frame cycle vocabulary - the
+        // cycling law ((x*31+y*17+t) mod 8) needs all eight; the static paint
+        // below keeps the legacy 4-variant hash as the boot state.
+        MK("t_water_1", "Tiles_Extract/water_wave_01.png");
         MK("t_water_2", "Tiles_Extract/water_wave_02.png");
         MK("t_water_3", "Tiles_Extract/water_wave_03.png");
         MK("t_water_4", "Tiles_Extract/water_wave_04.png");
+        MK("t_water_5", "Tiles_Extract/water_wave_05.png");
+        MK("t_water_6", "Tiles_Extract/water_wave_06.png");
+        MK("t_water_7", "Tiles_Extract/water_wave_07.png");
+        AssetDatabase.SaveAssets();
+    }
+
+    // r155: create-if-missing the four cycle tiles WITHOUT a full build -
+    // WaterFxProof calls this so the adapter's serialized frameTiles[8] can
+    // be wired (MK is idempotent create-if-missing, r10 vocabulary law).
+    public static void EnsureWaterCycleTiles()
+    {
+        MK("t_water_1", "Tiles_Extract/water_wave_01.png");
+        MK("t_water_5", "Tiles_Extract/water_wave_05.png");
+        MK("t_water_6", "Tiles_Extract/water_wave_06.png");
+        MK("t_water_7", "Tiles_Extract/water_wave_07.png");
         AssetDatabase.SaveAssets();
     }
 

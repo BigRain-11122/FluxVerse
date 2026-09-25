@@ -240,6 +240,13 @@ if ($stateParts.ContainsKey('gametasks_items')) {
   }
 }
 
+# r121: street resident behavior face (probe street_behavior, P-75 M2 data leg)
+# - additive section; ctx/generated_utc forwarded for snapshot-freshness honesty
+$streetBeh = @{}
+foreach ($sk in @('ctx','generated_utc','total','visible','nodata','seats')) {
+  if ($stateParts.ContainsKey('streetbeh_' + $sk)) { $streetBeh[$sk] = $stateParts['streetbeh_' + $sk] }
+}
+
 # resident minds (probe residents.ps1): latest AI line per resident -> state.residents
 $residents = @{}
 if ($stateParts.ContainsKey('residents')) { $residents = $stateParts.residents }
@@ -287,6 +294,10 @@ $state = [ordered]@{
 # r65: fleet inbox ingest face - additive section; absent entirely while no repo
 # carries an inbox/ dir (zero consumer impact when the feature is idle)
 if ($inboxSec.Count -gt 0) { $state['inbox'] = $inboxSec }
+
+# r121: street resident behavior face - additive section; absent entirely while
+# the BigLife behavior export is missing (zero consumer impact when idle)
+if ($streetBeh.Count -gt 0) { $state['street_behavior'] = $streetBeh }
 
 # ---------- write outputs (state -> .new, verify promotes on PASS) ----------
 [System.IO.File]::WriteAllText($newFile, ($state | ConvertTo-Json -Depth 6), $utf8)

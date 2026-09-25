@@ -243,6 +243,97 @@ namespace FluxVerse
             int alertN = CountBright(alertShot, 100, 300, 1820, 800, 0.30f);
             Chk(alertN - nightBase > 80, "storm rain enhancement not visible: d=" + (alertN - nightBase));
 
+            // ---- E. r156 D1: tier-flip palette blend (the hard-cut "feel" defect) ----
+            // Pure-core golden gates (headless), then the adapter on the live scene:
+            // mid-blend values must be exact palette lerps, the rendered zenith must
+            // sit strictly BETWEEN the settled anchors, and the settle must swap back
+            // to the cached tier sprite (content-identical by construction = no pop).
+            Chk(AmbientBlend.BlendSeconds >= 2f && AmbientBlend.BlendSeconds <= 4f,
+                "blend duration must sit in the 2-4s spec band (r153 D1)");
+            Chk(Mathf.Abs(RigMath.EaseInOut(0.5f) - 0.5f) < 1e-4f,
+                "r14 easing midpoint must be exactly 0.5 (zero-end-velocity smoothstep)");
+            AmbientPalette d1NightP = AmbientWheel.PaletteFor(AmbientTier.Night);
+            AmbientPalette d1DuskP = AmbientWheel.PaletteFor(AmbientTier.Dusk);
+            AmbientBlend d1Core = new AmbientBlend();
+            d1Core.Begin(d1DuskP, d1NightP, AmbientBlend.BlendSeconds);
+            AmbientPalette d1Mid = d1Core.Advance(AmbientBlend.BlendSeconds * 0.5f);
+            Chk(d1Core.Active, "half-way pump must leave the core blend active");
+            Chk(ColorNear(d1Mid.tint, Color.Lerp(d1DuskP.tint, d1NightP.tint, 0.5f), 1e-3f), "core mid tint must be the palette lerp");
+            Chk(Mathf.Abs(d1Mid.tintAlpha - (d1DuskP.tintAlpha + d1NightP.tintAlpha) * 0.5f) < 1e-3f, "core mid tintAlpha must be the lerp midpoint");
+            Chk(ColorNear(d1Mid.skyTop, Color.Lerp(d1DuskP.skyTop, d1NightP.skyTop, 0.5f), 1e-3f), "core mid skyTop must be the palette lerp");
+            Chk(ColorNear(d1Mid.skyBottom, Color.Lerp(d1DuskP.skyBottom, d1NightP.skyBottom, 0.5f), 1e-3f), "core mid skyBottom must be the palette lerp");
+            Chk(ColorNear(d1Mid.camBg, Color.Lerp(d1DuskP.camBg, d1NightP.camBg, 0.5f), 1e-3f), "core mid camBg must be the palette lerp");
+            // monotonic law: dusk -> night DARKENS the zenith, strictly, until the snap
+            d1Core.Begin(d1DuskP, d1NightP, AmbientBlend.BlendSeconds);
+            float d1Prev = (d1DuskP.skyTop.r + d1DuskP.skyTop.g + d1DuskP.skyTop.b) / 3f;
+            bool d1Mono = true;
+            for (int i = 0; i < 10; i++)
+            {
+                AmbientPalette sp = d1Core.Advance(0.25f);
+                float bri = (sp.skyTop.r + sp.skyTop.g + sp.skyTop.b) / 3f;
+                if (bri > d1Prev + 1e-5f) d1Mono = false;
+                d1Prev = bri;
+            }
+            Chk(d1Mono, "blend samples must be monotonically darkening dusk->night");
+            Chk(!d1Core.Active, "10 x 0.25s pumps must complete the 2.5s blend");
+            Chk(ColorNear(d1Core.Advance(0f).skyTop, d1NightP.skyTop, 1e-5f), "completed blend must snap to the target palette");
+
+            // adapter gates on the live scene
+            amb.ApplyWeather("clear", 5f, 3);
+            for (int i = 0; i < 10; i++) amb.StepWeather(0.5f);   // decay the alert band
+            Chk(amb.BandAlpha < 0.01f, "alert band must decay before the D1 gates");
+            amb.ApplyAmbient(AmbientTier.Night);
+            amb.StepWeather(0.1f);
+            Texture2D d1NightAnchor = ShotMem(cam);
+            float d1NightZen, d1W1; RegionAvg(d1NightAnchor, 0, 1054, 1920, 1079, out d1NightZen, out d1W1);
+            amb.ApplyAmbient(AmbientTier.Dusk);
+            amb.StepWeather(0.1f);
+            Texture2D d1DuskAnchor = ShotMem(cam);
+            float d1DuskZen, d1W2; RegionAvg(d1DuskAnchor, 0, 1054, 1920, 1079, out d1DuskZen, out d1W2);
+            Chk(d1DuskZen > d1NightZen + 0.10f,
+                "D1 anchors must be far apart for the between-ness gate: d=" + (d1DuskZen - d1NightZen).ToString("F3"));
+            SpriteRenderer d1Tint = GameObject.Find("AmbientTint").GetComponent<SpriteRenderer>();
+            amb.TransitionAmbient(AmbientTier.Night);
+            Chk(amb.BlendActive, "dusk->night flip must start an eased blend");
+            amb.StepAmbient(AmbientBlend.BlendSeconds * 0.5f);
+            Chk(amb.BlendActive, "half-way StepAmbient pump must keep the blend active");
+            Color d1ExpTint = Color.Lerp(d1DuskP.tint, d1NightP.tint, 0.5f);
+            float d1ExpA = (d1DuskP.tintAlpha + d1NightP.tintAlpha) * 0.5f;
+            Chk(ColorNear(d1Tint.color, new Color(d1ExpTint.r, d1ExpTint.g, d1ExpTint.b, d1ExpA), 2e-3f),
+                "mid-blend tint quad must be the palette lerp: " + d1Tint.color.ToString("F3"));
+            Chk(ColorNear(cam.backgroundColor, Color.Lerp(d1DuskP.camBg, d1NightP.camBg, 0.5f), 2e-3f),
+                "mid-blend camBg must be the palette lerp");
+            Texture2D d1MidShot = Shot(cam, "m1-r156-d1-transition.png");   // evidence: the cross-fade frame
+            float d1MidZen, d1W3; RegionAvg(d1MidShot, 0, 1054, 1920, 1079, out d1MidZen, out d1W3);
+            float d1Span = d1DuskZen - d1NightZen;
+            Chk(d1MidZen > d1NightZen + 0.25f * d1Span && d1MidZen < d1DuskZen - 0.25f * d1Span,
+                "mid-blend zenith must sit strictly between the anchors: n=" + d1NightZen.ToString("F3")
+                + " m=" + d1MidZen.ToString("F3") + " d=" + d1DuskZen.ToString("F3"));
+            int d1Guard = 0;
+            while (amb.BlendActive && d1Guard++ < 20) amb.StepAmbient(1f);
+            Chk(!amb.BlendActive, "blend must settle inside the guard pumps");
+            Chk(amb.CurrentSkySprite == CityAmbient.CachedSkyFor(AmbientTier.Night),
+                "settle must swap back to the cached tier sprite (content-identical, zero pop)");
+            Chk(ColorNear(d1Tint.color, new Color(d1NightP.tint.r, d1NightP.tint.g, d1NightP.tint.b, d1NightP.tintAlpha), 1e-4f),
+                "settled blend state must equal the instant-apply state (parity law)");
+            // re-flip mid-flight: the new blend must start from the CURRENT mid palette
+            amb.TransitionAmbient(AmbientTier.Dusk);
+            Chk(amb.BlendActive, "night->dusk must start a blend");
+            amb.StepAmbient(0.6f);
+            amb.TransitionAmbient(AmbientTier.Night);
+            Chk(amb.BlendActive, "mid-blend re-flip must restart from the current palette");
+            d1Guard = 0;
+            while (amb.BlendActive && d1Guard++ < 20) amb.StepAmbient(1f);
+            Chk(ColorNear(d1Tint.color, new Color(d1NightP.tint.r, d1NightP.tint.g, d1NightP.tint.b, d1NightP.tintAlpha), 1e-4f),
+                "re-flipped blend must settle at the night palette");
+            amb.TransitionAmbient(AmbientTier.Night);   // settled at night: near-equal path
+            Chk(!amb.BlendActive, "same-tier transition must be a no-op settle");
+            amb.ApplyAmbient(AmbientTier.Dusk);          // instant primitive must stay instant
+            Chk(!amb.BlendActive, "ApplyAmbient must never start a blend");
+            Chk(ColorNear(d1Tint.color, new Color(d1DuskP.tint.r, d1DuskP.tint.g, d1DuskP.tint.b, d1DuskP.tintAlpha), 1e-4f),
+                "ApplyAmbient must apply the target palette immediately");
+            amb.ApplyAmbient(AmbientTier.Night);        // canonical close: settled night
+
             // cleanup in-memory evidence textures
             UnityEngine.Object.DestroyImmediate(dawnShot);
             UnityEngine.Object.DestroyImmediate(dayShot);
@@ -251,6 +342,9 @@ namespace FluxVerse
             UnityEngine.Object.DestroyImmediate(rainShot);
             UnityEngine.Object.DestroyImmediate(snowShot);
             UnityEngine.Object.DestroyImmediate(alertShot);
+            UnityEngine.Object.DestroyImmediate(d1NightAnchor);
+            UnityEngine.Object.DestroyImmediate(d1DuskAnchor);
+            UnityEngine.Object.DestroyImmediate(d1MidShot);
 
             return "asserts=" + asserts
                 + " tiers(dawn_bot_warm=" + dawnBotWarm.ToString("F2")
@@ -262,10 +356,21 @@ namespace FluxVerse
                 + ", snow+" + (snowN - nightBase) + ", alert_rain+" + (alertN - nightBase)
                 + ", band_alpha=" + amb.BandAlpha.ToString("F3")
                 + ", band_warm_d=" + (alertWarm - baseWarm).ToString("F3") + ")"
-                + " scene_saved=" + saved + " shots=7";
+                + " d1(blend_s=" + AmbientBlend.BlendSeconds.ToString("F1")
+                + ", zen_n=" + d1NightZen.ToString("F3") + ", zen_m=" + d1MidZen.ToString("F3")
+                + ", zen_d=" + d1DuskZen.ToString("F3") + ", settle=cache-swap)"
+                + " scene_saved=" + saved + " shots=8";
         }
 
         static Texture2D Shot(Camera cam, string name)
+        {
+            Texture2D tex = ShotMem(cam);
+            File.WriteAllBytes(Path.Combine(RepoRoot, "docs", "design", name), tex.EncodeToPNG());
+            return tex;
+        }
+
+        // r156 D1: render WITHOUT writing a file (in-memory anchors for the between-ness gate)
+        static Texture2D ShotMem(Camera cam)
         {
             RenderTexture rt = new RenderTexture(1920, 1080, 24, RenderTextureFormat.ARGB32);
             cam.targetTexture = rt;
@@ -278,8 +383,14 @@ namespace FluxVerse
             RenderTexture.active = null;
             rt.Release();
             UnityEngine.Object.DestroyImmediate(rt);
-            File.WriteAllBytes(Path.Combine(RepoRoot, "docs", "design", name), tex.EncodeToPNG());
             return tex;
+        }
+
+        // r156 D1: per-channel tolerance compare (blend golden values)
+        static bool ColorNear(Color a, Color b, float e)
+        {
+            return Mathf.Abs(a.r - b.r) <= e && Mathf.Abs(a.g - b.g) <= e
+                && Mathf.Abs(a.b - b.b) <= e && Mathf.Abs(a.a - b.a) <= e;
         }
 
         // average brightness + warmth (r-b) over a screen rectangle (stride-sampled)

@@ -18,6 +18,14 @@
 // children in EnsureVisuals, tier-gated in ApplyAmbient (alpha = falloff
 // strength at dusk, hard zero otherwise), released with everything else in
 // ReleaseVisuals (r146 owned-lifetime law).
+// r156 (P-20260925-09 D1): tier flips now EASE. The play path is TransitionAmbient -
+// the five-value palette family (skyTop/skyBottom/tint rgb/tintAlpha/camBg) blends over
+// AmbientBlend.BlendSeconds with the r14 zero-end-velocity easing, so the four-tier
+// wheel cross-fades instead of hard-cutting (the "feel" defect, r153). ApplyAmbient
+// stays the INSTANT settle primitive (boot build + all proof call sites) - the two
+// entries converge on identical visuals at settle, which AmbientProof asserts as the
+// parity/no-pop gate. Play pumps the blend from Update -> StepAmbient; proofs pump
+// the SAME Advance core directly (CameraRig law).
 // Polls world/world-state.json READ-ONLY every ~10s (perceptor owns all writes).
 // Pure 2D: sky/tint/band = SpriteRenderer quads; rain/snow = recycled sprite field.
 using System;
@@ -54,6 +62,10 @@ namespace FluxVerse
         WeatherMode mode = WeatherMode.None;
         bool alert;
         string curMood;               // r146: applied mood name (null = neutral / not yet polled)
+        AmbientBlend blend = new AmbientBlend();                                   // r156 D1
+        AmbientPalette curPal = AmbientWheel.PaletteFor(AmbientTier.Night);        // r156: effective palette
+        static Texture2D _blendTex;   // r156: runtime sky gradient during a blend
+        static Sprite _blendSky;      // r156: its sprite (same 8x64 construction as SkySprite)
 
         // r146: independent stream read (CityBubbles same-path law - identical
         // regexes, single backward pass, ts-unparseable lines never count)
@@ -66,6 +78,11 @@ namespace FluxVerse
         public float BandAlpha { get { return bandAlpha; } }
         public float WindMs { get; private set; }   // r31: read-only for the ambient bed adapter
         public string CurrentMood { get { return curMood; } }   // r146 proof tap
+        public bool BlendActive { get { return blend.Active; } }               // r156 D1 proof tap
+        public Sprite CurrentSkySprite { get { return sky != null ? sky.sprite : null; } }   // r156 proof tap
+
+        // r156 proof tap: the cached per-tier gradient sprite (settle/no-pop parity gate)
+        public static Sprite CachedSkyFor(AmbientTier t) { return SkySprite(t); }
 
         void Awake() { EnsureVisuals(); }
 
@@ -73,6 +90,7 @@ namespace FluxVerse
         {
             pollTimer += Time.deltaTime;
             if (pollTimer >= PollIntervalSec) { pollTimer = 0f; Poll(); }
+            StepAmbient(Time.deltaTime);   // r156 D1: play pumps the palette blend
             StepWeather(Time.deltaTime);
             SyncSkyline();
         }
@@ -88,7 +106,7 @@ namespace FluxVerse
                 int h = ParseHour(r.beijing_hhmm);
                 AmbientTier t = h >= 0 ? AmbientWheel.TierForHour(h)
                                        : AmbientWheel.TierFromName(r.city_day_phase);
-                ApplyAmbient(t);
+                TransitionAmbient(t);   // r156 D1: play path eases the tier flip
                 ApplyWeather(r.weather_kind, ParseFloat(r.weather_wind_ms), (int)ParseFloat(r.weather_code));
                 ApplyMoodVisual(DeriveMoodFromWorld());   // r146: same poll, mood-visual face
             }
@@ -252,24 +270,77 @@ namespace FluxVerse
             float v; return float.TryParse(s, out v) ? v : 0f;
         }
 
+        // r156 D1: INSTANT settle primitive - boot build, proofs (53 call sites), and the
+        // tier-gated families. The play path is TransitionAmbient (eased tier flips).
         public void ApplyAmbient(AmbientTier t)
         {
             if (sky == null) EnsureVisuals();
             tier = t;
-            AmbientPalette p = AmbientWheel.PaletteFor(t);
+            ApplyInstantFamilies(t);
+            SettleAt(t);
+        }
+
+        // r156 D1: PLAY-path tier entry - ease the five-value palette family over
+        // BlendSeconds instead of the hard cut. Skyline fog + rims stay instant per
+        // their own family laws (r34 fog gates / r148 manifest tier_gate).
+        public void TransitionAmbient(AmbientTier t)
+        {
+            if (sky == null) EnsureVisuals();
+            tier = t;
+            AmbientPalette target = AmbientWheel.PaletteFor(t);
+            ApplyInstantFamilies(t);
+            if (PaletteNear(curPal, target)) { SettleAt(t); return; }   // same tier = no-op settle
+            blend.Begin(curPal, target, AmbientBlend.BlendSeconds);
+            sky.sprite = BlendSky();   // runtime gradient takes over until settle
+        }
+
+        void SettleAt(AmbientTier t)
+        {
+            blend.End();
+            curPal = AmbientWheel.PaletteFor(t);
             sky.sprite = SkySprite(t);
+            ApplyPalette(curPal);
+        }
+
+        // five-value family application (the interpolated face)
+        void ApplyPalette(AmbientPalette p)
+        {
+            curPal = p;
             tint.color = new Color(p.tint.r, p.tint.g, p.tint.b, p.tintAlpha);
-            if (skylineFarR != null) skylineFarR.color = SkylineRules.FogFar(t);
-            if (skylineNearR != null) skylineNearR.color = SkylineRules.FogNear(t);
             Camera cam = Cam();
             if (cam != null) cam.backgroundColor = p.camBg;
-            // r148 (P-38(1)): tier-gate the roofline rims - alpha = falloff
-            // strength at dusk, hard zero on every other tier (manifest
-            // tier_gate; instant switch = this family's tint law). The
-            // per-art-row dither alphas live in the texture; this alpha
-            // carries the strength. Honey orange = AMBIENT channel: the
-            // dusk tint quad (order 8) rides over the rims exactly as it
-            // does over the signs (unified light script, r147 manifest).
+            if (blend.Active && _blendTex != null)
+            {
+                // repaint the runtime sky gradient - the SAME 8x64 construction as
+                // SkySprite, so the settle swap back to the cached sprite is
+                // content-identical (zero pop by construction)
+                const int W = 8, H = 64;
+                for (int y = 0; y < H; y++)
+                {
+                    Color c = Color.Lerp(p.skyBottom, p.skyTop, y / (float)(H - 1));   // y=0 bottom row
+                    for (int x = 0; x < W; x++) _blendTex.SetPixel(x, y, c);
+                }
+                _blendTex.Apply();
+            }
+        }
+
+        // r156 D1: advance the palette blend. Play pumps this from Update; proofs pump
+        // the same core directly - one Advance law for both (CameraRig pattern).
+        public void StepAmbient(float dt)
+        {
+            if (!blend.Active) return;
+            ApplyPalette(blend.Advance(dt));
+            if (!blend.Active) sky.sprite = SkySprite(tier);   // settle: back to the cached tier sprite
+        }
+
+        // tier-gated families that stay INSTANT on every flip (their own family laws:
+        // r34 fog gates; r148 rim manifest tier_gate - per-art-row dither alphas live
+        // in the texture, this alpha carries the strength, honey orange = ambient
+        // channel riding the dusk tint exactly like the signs)
+        void ApplyInstantFamilies(AmbientTier t)
+        {
+            if (skylineFarR != null) skylineFarR.color = SkylineRules.FogFar(t);
+            if (skylineNearR != null) skylineNearR.color = SkylineRules.FogNear(t);
             if (rims != null)
             {
                 for (int i = 0; i < rims.Length; i++)
@@ -278,6 +349,28 @@ namespace FluxVerse
                     rims[i].color = new Color(c.r, c.g, c.b, RimLightRules.AlphaFor(i, t));
                 }
             }
+        }
+
+        static bool PaletteNear(AmbientPalette a, AmbientPalette b)
+        {
+            const float e = 0.0005f;
+            return Mathf.Abs(a.skyTop.r - b.skyTop.r) < e && Mathf.Abs(a.skyTop.g - b.skyTop.g) < e && Mathf.Abs(a.skyTop.b - b.skyTop.b) < e
+                && Mathf.Abs(a.skyBottom.r - b.skyBottom.r) < e && Mathf.Abs(a.skyBottom.g - b.skyBottom.g) < e && Mathf.Abs(a.skyBottom.b - b.skyBottom.b) < e
+                && Mathf.Abs(a.tint.r - b.tint.r) < e && Mathf.Abs(a.tint.g - b.tint.g) < e && Mathf.Abs(a.tint.b - b.tint.b) < e
+                && Mathf.Abs(a.tintAlpha - b.tintAlpha) < e
+                && Mathf.Abs(a.camBg.r - b.camBg.r) < e && Mathf.Abs(a.camBg.g - b.camBg.g) < e && Mathf.Abs(a.camBg.b - b.camBg.b) < e;
+        }
+
+        // r156 D1: the blend-window sky gradient scaffold (identical geometry to the
+        // cached tier sprites: 8x64 @ PPU16 -> the quad scale never changes on swap)
+        static Sprite BlendSky()
+        {
+            if (_blendSky != null) return _blendSky;
+            _blendTex = new Texture2D(8, 64, TextureFormat.RGBA32, false);
+            _blendTex.wrapMode = TextureWrapMode.Clamp;
+            _blendTex.filterMode = FilterMode.Bilinear;
+            _blendSky = Sprite.Create(_blendTex, new Rect(0, 0, 8, 64), new Vector2(0.5f, 0.5f), 16f);
+            return _blendSky;
         }
 
         // P-28 (r34): silhouettes track 0.9 x camera (subtle parallax). Y stays glued

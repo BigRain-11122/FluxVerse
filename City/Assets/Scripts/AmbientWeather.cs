@@ -82,6 +82,51 @@ namespace FluxVerse
         }
     }
 
+    // r156 (P-20260925-09 D1): tier-flip palette blend core. The wheel's hard cut was the
+    // "feel" defect (r153 finding: ApplyAmbient -> PaletteFor = instant switch, zero lerp).
+    // The PLAY path (CityAmbient.TransitionAmbient) eases the five-value family
+    // (skyTop / skyBottom / tint rgb / tintAlpha / camBg) over BlendSeconds with the r14
+    // zero-end-velocity smoothstep; ApplyAmbient stays the instant settle primitive (boot
+    // build + the 53 proof call sites + tier-gated families). One Advance core serves
+    // play (Update) and proof (StepAmbient pumps) - the CameraRig law.
+    public class AmbientBlend
+    {
+        public const float BlendSeconds = 2.5f;   // spec band 2-4s (r153 D1)
+
+        AmbientPalette from, to;
+        float elapsed, seconds = BlendSeconds;
+
+        public bool Active { get; private set; }
+
+        public void Begin(AmbientPalette f, AmbientPalette t, float dur)
+        {
+            from = f; to = t; elapsed = 0f;
+            seconds = Mathf.Max(0.0001f, dur);
+            Active = true;
+        }
+
+        public void End() { Active = false; }
+
+        // one step; returns the blended palette, snapping to the target at completion
+        public AmbientPalette Advance(float dt)
+        {
+            if (!Active) return to;
+            elapsed += dt;
+            float k = Mathf.Clamp01(elapsed / seconds);
+            if (k >= 1f) { Active = false; return to; }
+            float s = RigMath.EaseInOut(k);   // r14 easing: zero velocity at both ends
+            AmbientPalette p = new AmbientPalette();
+            p.skyTop = Color.Lerp(from.skyTop, to.skyTop, s);
+            p.skyBottom = Color.Lerp(from.skyBottom, to.skyBottom, s);
+            p.tint = Color.Lerp(from.tint, to.tint, s);
+            p.tintAlpha = Mathf.Lerp(from.tintAlpha, to.tintAlpha, s);
+            p.camBg = Color.Lerp(from.camBg, to.camBg, s);
+            return p;
+        }
+
+        public float Progress01 { get { return Mathf.Clamp01(elapsed / seconds); } }
+    }
+
     // pure logic: probe weather values -> FX mode + alert flag (headless-testable)
     public static class WeatherRules
     {

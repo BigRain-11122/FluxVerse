@@ -17,7 +17,10 @@ using UnityEngine;
 
 public class CityImportPostprocessor : AssetPostprocessor
 {
-    const string MARK = "fvimport:v1";
+    // v2 (r126, P-37 2b-A): marks imports whose stock values were re-verified
+    // under the compression-effective regime (default-platform TC=0). v1 stamps
+    // predating it stay valid "already configured" marks (non-empty userData).
+    const string MARK = "fvimport:v2";
 
     // PPU tiers (world-law constant: residents 48px/24ppu = 2u per r37; default 16)
     public static int PpuFor(string path)

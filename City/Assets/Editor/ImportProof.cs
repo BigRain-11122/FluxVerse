@@ -113,7 +113,7 @@ namespace FluxVerse
                 throw new InvalidOperationException("A3: residents Idle baseline expected PPU100 (as-audited default)");
             if (before[2].IndexOf("textureCompression: 1") < 0)
                 throw new InvalidOperationException("A3: CleanCity baseline expected compression 1 (A2 as-audited)");
-            if (before[3].IndexOf("loadType: 2") < 0 || before[3].IndexOf("userData: fvimport:v1") < 0)
+            if (before[3].IndexOf("loadType: 2") < 0 || before[3].IndexOf("userData: fvimport:") < 0)
                 throw new InvalidOperationException("A3: music baseline expected Streaming+stamp (r81 audio stock cured state; pre-r81 as-audited loadType 0 fixed by AudioStockProof)");
 
             // ---- A1 fresh stones (truly fresh import = DeleteAsset purge + restore) ----
@@ -129,7 +129,7 @@ namespace FluxVerse
                 // (e.g. from a previous green run) is asserted in place - no purge,
                 // no GUID churn. Only an uncorrected stone goes through the purge.
                 var ti0 = AssetImporter.GetAtPath(p) as TextureImporter;
-                bool already = ti0 != null && ti0.userData == "fvimport:v1"
+                bool already = ti0 != null && !string.IsNullOrEmpty(ti0.userData) && ti0.userData.StartsWith("fvimport:")
                     && ti0.filterMode == FilterMode.Point
                     && ti0.spritePixelsPerUnit == 16
                     && ti0.textureCompression == TextureImporterCompression.Uncompressed;
@@ -158,12 +158,12 @@ namespace FluxVerse
                 if (ti.npotScale != TextureImporterNPOTScale.None) throw new InvalidOperationException("A1: npot " + p);
                 if (!ti.alphaIsTransparency) throw new InvalidOperationException("A1: alpha " + p);
                 if (ti.spritePixelsPerUnit != 16) throw new InvalidOperationException("A1: ppu " + p);
-                if (ti.userData != "fvimport:v1") throw new InvalidOperationException("A1: mark " + p);
+                if (!ti.userData.StartsWith("fvimport:")) throw new InvalidOperationException("A1: mark " + p);
                 string mt = MetaText(p);
                 if (mt.IndexOf("filterMode: 0") < 0) throw new InvalidOperationException("A1: meta filterMode " + p);
                 if (mt.IndexOf("textureCompression: 0") < 0) throw new InvalidOperationException("A1: meta compression " + p);
                 if (mt.IndexOf("spritePixelsToUnits: 16") < 0) throw new InvalidOperationException("A1: meta ppu " + p);
-                if (mt.IndexOf("userData: fvimport:v1") < 0) throw new InvalidOperationException("A1: meta mark " + p);
+                if (mt.IndexOf("userData: fvimport:") < 0) throw new InvalidOperationException("A1: meta mark " + p);
                 a1 += 13;
             }
 
@@ -178,7 +178,7 @@ namespace FluxVerse
             if (s.loadType != AudioClipLoadType.Streaming) throw new InvalidOperationException("A2: loadType not Streaming");
             if (s.preloadAudioData) throw new InvalidOperationException("A2: preload should be off for music");
             if (!ai.loadInBackground) throw new InvalidOperationException("A2: loadInBackground should be on");
-            if (ai.userData != "fvimport:v1") throw new InvalidOperationException("A2: mark missing");
+            if (string.IsNullOrEmpty(ai.userData) || !ai.userData.StartsWith("fvimport:")) throw new InvalidOperationException("A2: mark missing");
             string amt = MetaText(dst);
             if (amt.IndexOf("loadType: 2") < 0) throw new InvalidOperationException("A2: meta loadType");
             if (amt.IndexOf("preloadAudioData: 0") < 0) throw new InvalidOperationException("A2: meta preload");
@@ -196,7 +196,7 @@ namespace FluxVerse
             AssetDatabase.ImportAsset(scope, ImportAssetOptions.ForceSynchronousImport);
             var si = AssetImporter.GetAtPath(scope) as TextureImporter;
             if (si == null) throw new InvalidOperationException("A4: scope stone importer null");
-            if (si.userData == "fvimport:v1") throw new InvalidOperationException("A4: pipeline must not stamp non-art assets");
+            if (!string.IsNullOrEmpty(si.userData) && si.userData.StartsWith("fvimport:")) throw new InvalidOperationException("A4: pipeline must not stamp non-art assets");
             if (si.filterMode == FilterMode.Point) throw new InvalidOperationException("A4: pipeline must not touch non-art assets");
             a4 = 2;
             if (!AssetDatabase.DeleteAsset(scope)) throw new InvalidOperationException("A4: cleanup failed");
@@ -214,9 +214,9 @@ namespace FluxVerse
                 seen++;
                 if (string.IsNullOrEmpty(ti.userData))
                 {
-                    ti.userData = "fvimport:v1";
+                    ti.userData = "fvimport:v2";
                     ti.SaveAndReimport();
-                    if (((TextureImporter)AssetImporter.GetAtPath(ap)).userData != "fvimport:v1")
+                    if (((TextureImporter)AssetImporter.GetAtPath(ap)).userData != "fvimport:v2")
                         throw new InvalidOperationException("A5b: stamp did not persist " + ap);
                     a5++;
                 }
@@ -243,7 +243,7 @@ namespace FluxVerse
                 {
                     if (StripUserDataLine(before[i]) != StripUserDataLine(after))
                         throw new InvalidOperationException("A3: stock stamp changed more than userData: " + keep[i]);
-                    if (after.IndexOf("userData: fvimport:v1") < 0)
+                    if (after.IndexOf("userData: fvimport:") < 0)
                         throw new InvalidOperationException("A3: expected stamp on " + keep[i]);
                 }
                 else

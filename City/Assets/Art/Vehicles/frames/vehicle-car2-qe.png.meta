@@ -51,7 +51,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 24
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -200,6 +200,6 @@ TextureImporter:
   pSDRemoveMatte: 0
   doOverrideTextureManagerOperations: 0
   platformOperationGroupSettings: 
-  userData: fvimport:v1
+  userData: fvimport:v2
   assetBundleName: 
   assetBundleVariant: 

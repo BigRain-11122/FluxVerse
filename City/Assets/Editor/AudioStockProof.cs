@@ -91,14 +91,16 @@ namespace FluxVerse
                 if (!s.preloadAudioData) throw new InvalidOperationException("S2 sfx preload off " + p);
                 if (ai.loadInBackground) throw new InvalidOperationException("S2 sfx bg on " + p);
             }
-            if (ai.userData != MARK)
+            // r126: version-tolerant - the pipeline stamps fvimport:v2 since 2b-A;
+            // the audio VALUES are the law, the stamp prefix is the provenance.
+            if (string.IsNullOrEmpty(ai.userData) || !ai.userData.StartsWith("fvimport:"))
                 throw new InvalidOperationException("S2 mark " + p + " ud='" + ai.userData + "'");
         }
 
         static void AssertMeta(string p)
         {
             string mt = MetaText(p);
-            if (mt.IndexOf("userData: fvimport:v1") < 0)
+            if (mt.IndexOf("userData: fvimport:") < 0)
                 throw new InvalidOperationException("S2 meta mark " + p);
             if (IsMusic(p))
             {

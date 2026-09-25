@@ -1,6 +1,6 @@
 // FluxVerse P-15 r12 (split r14; gate widened r30; five city-core faces r115
-// P-12 slice 4; canon faces r116 P-41 slice 1): event router pure logic core
-// — poll/cursor/parse/route.
+// P-12 slice 4; canon faces r116 P-41 slice 1; task faces r117 P-41 slice 2):
+// event router pure logic core — poll/cursor/parse/route.
 // CEO_ORDER -> WHITE ANTENNA pulse (r116 canon map: middle-antenna white light
 // pulse; five-color law CEO=pure white, replacing the r12 gold that belonged
 // to the funds family) + five city-core faces (OS round breath, city
@@ -96,10 +96,13 @@ namespace FluxVerse
         // research batch first). COMMIT stays OUT of this list: it is audio-mapped
         // (Laser_00, r30) and reached the gate through the map long before its r116
         // canon visual face (river stream); the reload gate keeps asserting every
-        // VisualTypes member stays audio-silent.
+        // VisualTypes member stays audio-silent. r117 (P-41 slice 2): TASK_DONE
+        // joins the list (windows-down face, no audio row). TASK_CLAIM stays OUT
+        // with COMMIT: audio-mapped (Robot_Activated_00, r30) it reached the gate
+        // through the map long ago; its r117 windows face rides the same dispatch.
         public static readonly string[] VisualTypes =
         {
-            "OS_TICK_START", "OS_TICK_DONE", "GATE_PASS", "GATE_BLOCK", "TRANSFER"
+            "OS_TICK_START", "OS_TICK_DONE", "GATE_PASS", "GATE_BLOCK", "TRANSFER", "TASK_DONE"
         };
 
         static readonly string[] gateTokens = BuildGateTokens();
@@ -225,6 +228,12 @@ namespace FluxVerse
                 case "COMMIT":                      // r116 P-41 slice 1: canon river stream
                     fx.Add(new CommitStream(ev.zone));
                     break;
+                case "TASK_CLAIM":                 // r117 P-41 slice 2: zone building windows up + robot out
+                    fx.Add(new TaskClaimFace(ev.zone));
+                    break;
+                case "TASK_DONE":                  // r117: robot home + windows down + one pulse
+                    fx.Add(new TaskDoneFace(ev.zone));
+                    break;
             }
             if (EventSink != null) EventSink(ev);   // P-27 r25: same event, second presenter (audio)
         }
@@ -233,6 +242,12 @@ namespace FluxVerse
         public void TriggerDirect(string type)
         {
             Dispatch(new FluxEvent { type = type, zone = "test" });
+        }
+
+        // r117: zone-aware proof hook (the task faces are zone-driven)
+        public void TriggerDirect(string type, string zone)
+        {
+            Dispatch(new FluxEvent { type = type, zone = zone });
         }
 
         long CountLines()
@@ -667,6 +682,258 @@ namespace FluxVerse
                 any = true;
             }
             return any;
+        }
+    }
+
+    // r117 (P-41 slice 2): TASK_CLAIM / TASK_DONE canon faces (CEO canon map:
+    // claim = "the zone's own building lights up + a robot walks out"; done =
+    // "robot goes home + windows go dark + one light pulse"). Fleet tasks all
+    // carry zone "quant" today (fleet_tasks probe domain), so the live face
+    // rides the QUANT twist tower; gaming/media map to their own towers for
+    // future task sources. Geometry derives from the r103 southbank-manifest
+    // footprints (single geometry source; the proof re-reads the manifest and
+    // asserts containment). Window dots carry the zone light-family color
+    // (five-color law: QUANT gold / GAME cyan / MEDIA magenta); the robot is a
+    // bright data-cyan lamp dot (street-robot head-lamp semantics, v0 -- a
+    // physical walking sprite is M2 polish).
+    public static class TaskLights
+    {
+        // world rects [x0,y0,x1,y1] = southbank-manifest.json masses (r103)
+        public static readonly float[] QuantRect = { -2f, -16f, 3f, -8f };
+        public static readonly float[] GameRect = { -23f, -16f, -18f, -11f };
+        public static readonly float[] MediaRect = { 19f, -14f, 25f, -8f };
+
+        public static float[] RectFor(string zone)
+        {
+            if (zone == "gaming") return GameRect;
+            if (zone == "media") return MediaRect;
+            return QuantRect;   // quant + governance/unknown: fleet home city (probe zone law)
+        }
+
+        public static Color WindowColor(string zone)
+        {
+            if (zone == "gaming") return new Color(0.30f, 0.95f, 1f);   // GAME cyan
+            if (zone == "media") return new Color(1f, 0.30f, 0.70f);    // MEDIA magenta
+            return new Color(1f, 0.80f, 0.30f);                          // QUANT gold
+        }
+
+        public static void GridFor(float[] rect, out int cols, out int rows)
+        {
+            cols = Mathf.Max(3, Mathf.RoundToInt((rect[2] - rect[0]) / 1.3f));
+            rows = Mathf.Max(2, Mathf.RoundToInt((rect[3] - rect[1]) / 1.8f));
+        }
+
+        static Sprite square;
+
+        // r117 red-chain 1: the first pass used soft radial glow dots -- on the
+        // gold QUANT tower the multimodal judge read the face as uniform tower
+        // tone (r115 breath v1/v2 same family). Pixel windows are CRISP solid
+        // blocks: 16x16 solid core + 1px rim, native 0.5u at 32ppu (scale 1).
+        // A hard edge survives any static frame (visibility law, r110).
+        internal static Sprite WindowSprite()
+        {
+            if (square != null) return square;
+            const int S = 16;
+            Texture2D tex = new Texture2D(S, S, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Point;   // pixel law: crisp edges, no soft blend
+            for (int y = 0; y < S; y++)
+                for (int x = 0; x < S; x++)
+                {
+                    bool rim = x == 0 || y == 0 || x == S - 1 || y == S - 1;
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, rim ? 0.35f : 1f));
+                }
+            tex.Apply();
+            square = Sprite.Create(tex, new Rect(0, 0, S, S), new Vector2(0.5f, 0.5f), 32f);
+            return square;
+        }
+    }
+
+    // TASK_CLAIM: the zone building's windows light up in a staggered ramp and
+    // a robot lamp dot walks out the front door onto the avenue (canon
+    // "windows up / robot out"). Envelope: per-window ramp 0.6s / hold to 2.4s
+    // / fade to 3.0s, stagger 0.05s; robot walk 1.2s then fades.
+    public class TaskClaimFace : TransientFx
+    {
+        const float StaggerStep = 0.05f;
+        const float RampSec = 0.6f;
+        const float HoldSec = 2.4f;
+        const float FadeSec = 3.0f;
+        const float RobotDelay = 0.10f;
+        const float RobotMoveSec = 1.2f;
+        const float RobotIngress = 2.6f;   // door -> avenue walk distance
+
+        class Window { public SpriteRenderer sr; public float delay; }
+        readonly Window[] windows;
+        readonly GameObject parent;
+        readonly GameObject robotGo;
+        readonly SpriteRenderer robotSr;
+        readonly Color winColor;
+        readonly Color robotColor = new Color(0.52f, 0.98f, 1f);   // data-cyan lamp (dot family)
+        readonly float doorX, frontY;
+        readonly float life;
+        float t;
+
+        public TaskClaimFace(string zone)
+        {
+            float[] rect = TaskLights.RectFor(zone);
+            winColor = TaskLights.WindowColor(zone);
+            doorX = (rect[0] + rect[2]) * 0.5f;
+            frontY = rect[3];
+            parent = new GameObject("TaskClaim");
+            int cols, rows; TaskLights.GridFor(rect, out cols, out rows);
+            float ux0 = rect[0] + 0.55f, uy0 = rect[1] + 0.55f;
+            float uw = (rect[2] - rect[0]) - 1.1f, uh = (rect[3] - rect[1]) - 1.1f;
+            windows = new Window[cols * rows];
+            for (int j = 0; j < rows; j++)
+                for (int i = 0; i < cols; i++)
+                {
+                    GameObject go = new GameObject("TaskWindow");
+                    go.transform.parent = parent.transform;
+                    go.transform.position = new Vector3(
+                        ux0 + (i + 0.5f) * uw / cols, uy0 + (j + 0.5f) * uh / rows, 0f);
+                    SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+                    sr.sprite = TaskLights.WindowSprite();
+                    sr.sortingOrder = 9;   // above the ambient tint (8), neon-face level
+                    sr.color = new Color(winColor.r, winColor.g, winColor.b, 0f);
+                    go.transform.localScale = new Vector3(1f, 1f, 1f);   // crisp 0.5u pixel window
+                    windows[j * cols + i] = new Window { sr = sr, delay = (j * cols + i) * StaggerStep };
+                }
+            robotGo = new GameObject("TaskRobot");
+            robotGo.transform.parent = parent.transform;
+            robotGo.transform.position = new Vector3(doorX, frontY - 0.5f, 0f);
+            robotSr = robotGo.AddComponent<SpriteRenderer>();
+            robotSr.sprite = TaskLights.WindowSprite();
+            robotSr.sortingOrder = 11;
+            robotSr.color = new Color(robotColor.r, robotColor.g, robotColor.b, 0f);
+            robotGo.transform.localScale = new Vector3(1.33f, 1.33f, 1f);   // ~0.67u = street-robot size (P-17)
+            life = windows[windows.Length - 1].delay + FadeSec + 0.2f;
+        }
+
+        public override bool Advance(float dt)
+        {
+            t += dt;
+            for (int i = 0; i < windows.Length; i++)
+            {
+                float local = t - windows[i].delay;
+                float a;
+                if (local <= 0f) a = 0f;
+                else if (local < RampSec) a = Mathf.SmoothStep(0f, 1f, local / RampSec);
+                else if (local < HoldSec) a = 1f;
+                else if (local < FadeSec) a = 1f - (local - HoldSec) / (FadeSec - HoldSec);
+                else a = 0f;
+                windows[i].sr.color = new Color(winColor.r, winColor.g, winColor.b, 0.85f * a);
+            }
+            float rLocal = t - RobotDelay;
+            float rA = 0f;
+            if (rLocal > 0f)
+            {
+                float k = Mathf.Clamp01(rLocal / RobotMoveSec);
+                robotGo.transform.position = new Vector3(doorX,
+                    Mathf.Lerp(frontY - 0.5f, frontY + RobotIngress, k), 0f);
+                rA = Mathf.Min(1f, rLocal / 0.15f);
+                if (rLocal > RobotMoveSec) rA = Mathf.Max(0f, 1f - (rLocal - RobotMoveSec) / 0.5f);
+            }
+            robotSr.color = new Color(robotColor.r, robotColor.g, robotColor.b, 0.95f * rA);
+            if (t >= life) { KillGo(parent); return false; }
+            return true;
+        }
+    }
+
+    // TASK_DONE: the reverse face -- the windows still lit from the work
+    // session hold half a beat, then dim out in a staggered sweep (canon
+    // "windows go dark"), the robot lamp dot walks home through the front
+    // door, and one light pulse fires on the building (canon "light pulse").
+    public class TaskDoneFace : TransientFx
+    {
+        const float WinStartAlpha = 0.85f;
+        const float HoldSec = 0.5f;      // all windows stay lit this long first
+        const float OffStep = 0.05f;
+        const float OffFade = 0.4f;
+        const float RobotDelay = 0.05f;
+        const float RobotMoveSec = 1.2f;
+        const float RobotIngress = 2.6f;
+        const float PulseLife = 1.5f;
+        const float Life = 2.6f;
+
+        class Window { public SpriteRenderer sr; public float delay; }
+        readonly Window[] windows;
+        readonly GameObject parent;
+        readonly GameObject robotGo;
+        readonly SpriteRenderer robotSr;
+        readonly GameObject pulseGo;
+        readonly SpriteRenderer pulseSr;
+        readonly Color winColor;
+        readonly Color robotColor = new Color(0.52f, 0.98f, 1f);
+        readonly float doorX, frontY, pulseY;
+        float t;
+
+        public TaskDoneFace(string zone)
+        {
+            float[] rect = TaskLights.RectFor(zone);
+            winColor = TaskLights.WindowColor(zone);
+            doorX = (rect[0] + rect[2]) * 0.5f;
+            frontY = rect[3];
+            pulseY = (rect[1] + rect[3]) * 0.5f;
+            parent = new GameObject("TaskDone");
+            int cols, rows; TaskLights.GridFor(rect, out cols, out rows);
+            float ux0 = rect[0] + 0.55f, uy0 = rect[1] + 0.55f;
+            float uw = (rect[2] - rect[0]) - 1.1f, uh = (rect[3] - rect[1]) - 1.1f;
+            windows = new Window[cols * rows];
+            for (int j = 0; j < rows; j++)
+                for (int i = 0; i < cols; i++)
+                {
+                    GameObject go = new GameObject("TaskWindow");
+                    go.transform.parent = parent.transform;
+                    go.transform.position = new Vector3(
+                        ux0 + (i + 0.5f) * uw / cols, uy0 + (j + 0.5f) * uh / rows, 0f);
+                    SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+                    sr.sprite = TaskLights.WindowSprite();
+                    sr.sortingOrder = 9;
+                    sr.color = new Color(winColor.r, winColor.g, winColor.b, WinStartAlpha);
+                    go.transform.localScale = new Vector3(1f, 1f, 1f);
+                    windows[j * cols + i] = new Window { sr = sr, delay = HoldSec + (j * cols + i) * OffStep };
+                }
+            robotGo = new GameObject("TaskRobot");
+            robotGo.transform.parent = parent.transform;
+            robotGo.transform.position = new Vector3(doorX, frontY + RobotIngress, 0f);
+            robotSr = robotGo.AddComponent<SpriteRenderer>();
+            robotSr.sprite = TaskLights.WindowSprite();
+            robotSr.sortingOrder = 11;
+            robotSr.color = new Color(robotColor.r, robotColor.g, robotColor.b, 0.95f);
+            robotGo.transform.localScale = new Vector3(1.33f, 1.33f, 1f);
+            pulseGo = new GameObject("TaskPulse");
+            pulseGo.transform.parent = parent.transform;
+            pulseGo.transform.position = new Vector3(doorX, pulseY, 0f);
+            pulseSr = pulseGo.AddComponent<SpriteRenderer>();
+            pulseSr.sprite = GlowPulse.SharedGlow();
+            pulseSr.sortingOrder = 10;
+            pulseSr.color = new Color(winColor.r, winColor.g, winColor.b, 0f);
+            pulseGo.transform.localScale = new Vector3(0.75f, 0.75f, 1f);   // ~1.5u pulse
+        }
+
+        public override bool Advance(float dt)
+        {
+            t += dt;
+            for (int i = 0; i < windows.Length; i++)
+            {
+                float local = t - windows[i].delay;
+                float a = local <= 0f ? 1f : Mathf.Max(0f, 1f - local / OffFade);
+                windows[i].sr.color = new Color(winColor.r, winColor.g, winColor.b, WinStartAlpha * a);
+            }
+            float rLocal = t - RobotDelay;
+            if (rLocal > 0f)
+            {
+                float k = Mathf.Clamp01(rLocal / RobotMoveSec);
+                robotGo.transform.position = new Vector3(doorX,
+                    Mathf.Lerp(frontY + RobotIngress, frontY - 0.5f, k), 0f);
+                float rA = Mathf.Min(1f, rLocal / 0.15f);
+                if (rLocal > RobotMoveSec) rA = Mathf.Max(0f, 1f - (rLocal - RobotMoveSec) / 0.35f);
+                robotSr.color = new Color(robotColor.r, robotColor.g, robotColor.b, 0.95f * rA);
+            }
+            float pA = t >= PulseLife ? 0f : Mathf.Sin(t / PulseLife * Mathf.PI);
+            pulseSr.color = new Color(winColor.r, winColor.g, winColor.b, 0.75f * pA);
+            if (t >= Life) { KillGo(parent); return false; }
+            return true;
         }
     }
 

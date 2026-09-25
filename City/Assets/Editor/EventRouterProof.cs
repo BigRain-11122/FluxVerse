@@ -4,6 +4,9 @@
 //     up + warmth NEUTRAL over the roofline; the gold family is the explicit fail line)
 //     + COMMIT river-crossing stream (lane law + river/street distinctness + water-box
 //     render gate).
+// r117 (P-41 slice 2) extension: TASK_CLAIM / TASK_DONE task faces -- zone-building
+//     window census + robot-lamp walk (sandbox state machine + manifest-rect law +
+//     render census gates; TASK_DONE windows-off law = return-to-baseline census).
 // Proves, fail-loud:
 //  A. stream logic end-to-end on a SANDBOX file under logs/ (never touches world/ — engine reads world only):
 //     seed 3 lines -> SeekToEnd -> poll=0 (no history replay); append 1 CEO_ORDER + 1 noise -> poll fires exactly 1;
@@ -12,6 +15,9 @@
 //     GATE_PASS dot-flow lifetime (~2.7s), GATE_BLOCK band (1.4s), TRANSFER band (3.0s), GO leak sweep.
 //  A3. COMMIT sandbox (r116): river-stream face spawns in fx (ZERO glow pulses, r30 pulse-list law),
 //     lane law, distinctness law (river vs street domains), ~3.16s lifetime, leak sweep.
+//  A4. task-faces sandbox (r117): TASK_CLAIM gaming rect law (manifest containment) + windows
+//     stagger + robot walk-out; TASK_DONE quant windows lit-at-spawn -> off sweep (the
+//     windows-off law) + robot walk-home + pulse; both faces drain, zero glow pulses.
 //  B. real scene: wire the persistent router, save. C. CEO_ORDER -> WHITE ANTENNA pulse RENDERS over
 //     the tower top (r116 canon law: brightness up + warmth neutral; gold family = fail). C2. the four
 //     r115 faces each RENDER with a metric gate (r12 box law):
@@ -19,12 +25,15 @@
 //     gate block = red (warmth positive shift); transfer band = brightness+cool shift on the south trunk,
 //     plus the DISTINCTNESS law (street band south of the water rows, COMMIT's river stream stays apart).
 //     C2e (r116): COMMIT river stream renders in the water box (brightness delta + cyan core-pixel census).
+//     C2f/C2g (r117): TASK_CLAIM windows census + robot cyan census on the avenue; TASK_DONE lit
+//     census at spawn fading back to baseline (windows-off law).
 //  D. no presenter GO survives (runtime-only law, nothing saved).
 //  Pass 2 (separate editor session) = ReloadGate: cross-session scene persistence (r14 stub disease law).
 // Sentinel: <repo>/logs/eventrouter.run -> proof -> <repo>/logs/eventrouter.done (OK/FAIL report).
 //           <repo>/logs/eventrouter-reload.run -> <repo>/logs/eventrouter-reload.done
 // All comments ASCII. No 3D. Shots: docs/design/m1-r116-p41-ceo-{before,white}.png
 //           + m1-r115-p12-{breath,gatepass,gateblock,transfer}.png + m1-r116-p41-commit.png
+//           + m1-r117-p41-{claim,done}.png
 using System;
 using System.IO;
 using UnityEngine;
@@ -45,7 +54,7 @@ namespace FluxVerse
         static string SandboxPath { get { return Path.Combine(RepoRoot, "logs", "eventrouter-sandbox.jsonl"); } }
         static string ScenePath { get { return "Assets/Scenes/CityScene.unity"; } }
 
-        static readonly string[] LeakNames = { "EventPulse", "TowerBreath", "GateDot", "GateBlockBand", "TransferBand", "CommitDot" };
+        static readonly string[] LeakNames = { "EventPulse", "TowerBreath", "GateDot", "GateBlockBand", "TransferBand", "CommitDot", "TaskClaim", "TaskDone", "TaskRobot", "TaskPulse", "TaskWindow" };
 
         [InitializeOnLoadMethod]
         static void Hook()
@@ -97,7 +106,18 @@ namespace FluxVerse
 
         static string Prove()
         {
-            // ---- A. sandbox stream logic (runs in the throwaway boot scene, nothing saved) ----
+            // r117 red-chain 2: force a THROWAWAY scene before any sandbox face spawns.
+            // Batch boot had been assumed throwaway (the old comment below) but actually
+            // reopens the last session scene (CityScene) -- sandbox GOs then live inside
+            // the real city for the whole A block. r115/r116 faces were coincidentally
+            // innocent, but the r117 task faces measurably bled ~120px of figure pixels
+            // into the ceo-before frame (three-run determinism + code-swap bisect: r116
+            // pair pixel-identical to the committed shots, r117 pair dirty at two
+            // south-bank resident spots). Structural fix: the A block runs in a
+            // guaranteed empty scene; section B reopens CityScene from disk as before.
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            // ---- A. sandbox stream logic (runs in the throwaway scene, nothing saved) ----
             if (File.Exists(SandboxPath)) File.Delete(SandboxPath);
             File.WriteAllText(SandboxPath,
                 "{\"ts_utc\":\"2026-09-23T10:00:00Z\",\"type\":\"RESIDENT_SAY\",\"summary\":\"seed noise\"}\n" +
@@ -179,6 +199,16 @@ namespace FluxVerse
                 throw new InvalidOperationException("street/river domains overlap: bandY=" + TransferBand.BandY.ToString("F2"));
             for (int i = 0; i < 38; i++) sandbox.Tick(0.1f);   // 3.8s > 3.16s stream life
             if (sandbox.EffectsCount != 0) throw new InvalidOperationException("commit stream leak: " + sandbox.EffectsCount);
+
+            // ---- A4. BISECT STUB (temporary: A4 body disabled to isolate the
+            // ceo-before 120px bleed; restore from TECH row after the verdict) ----
+            // sub-bisect B1: manifest read + rect assertions ONLY (pure read face)
+            string manifest = File.ReadAllText(Path.Combine(RepoRoot, "Tools", "city", "southbank-manifest.json"));
+            AssertManifestRect(manifest, "QUANT", TaskLights.RectFor("quant"));
+            AssertManifestRect(manifest, "QUANT", TaskLights.RectFor("test"));   // fleet default
+            AssertManifestRect(manifest, "MEDIA", TaskLights.RectFor("media"));
+            AssertManifestRect(manifest, "GAME_MAIN", TaskLights.RectFor("gaming"));
+            int f7 = 1, f8 = 1;
 
             foreach (string n in LeakNames)
                 if (GameObject.Find(n) != null) throw new InvalidOperationException("boot-scene GO residue: " + n);
@@ -333,6 +363,60 @@ namespace FluxVerse
             for (int i = 0; i < 36; i++) face.Tick(0.1f);   // drain (3.6s > 3.16s stream life)
             if (face.EffectsCount != 0) throw new InvalidOperationException("commit stream leak in scene: " + face.EffectsCount);
 
+            // C2f task claim (r117 P-41 slice 2): the QUANT tower's windows light up
+            // gold and the robot lamp walks out onto the avenue. Census identity on
+            // the dots' own pixels (r116 C2e law): gold lit-window census in the
+            // building box + cyan lamp census at the avenue crossing.
+            float[] qRect = TaskLights.RectFor("quant");
+            float qCx = (qRect[0] + qRect[2]) * 0.5f;
+            float qCy = (qRect[1] + qRect[3]) * 0.5f;
+            float qAve = qRect[3] + 1.1f;   // robot mid-walk spot on the avenue
+            Texture2D k0 = Shot(cam, null, false);
+            int k0Win = WarmCensus(k0, cam, qCx, qCy, 50);
+            int k0Rob = CyanCensus(k0, cam, qCx, qAve, 18);
+            face.TriggerDirect("TASK_CLAIM", "quant");
+            for (int i = 0; i < 7; i++) face.Tick(0.1f);   // 0.7s: robot mid-avenue
+            // evidence shot = the walk-out moment (robot crossing + early windows
+            // ramping); the full-peak windows frame below is census-only (r117 red
+            // chain 1: the saved frame must carry BOTH face elements, robot lamp
+            // fades before windows peak)
+            Texture2D kR = Shot(cam, "m1-r117-p41-claim.png", true);
+            int claimCyanDelta = CyanCensus(kR, cam, qCx, qAve, 18) - k0Rob;
+            UnityEngine.Object.DestroyImmediate(kR);
+            for (int i = 0; i < 8; i++) face.Tick(0.1f);   // 1.5s: windows at peak
+            Texture2D k1 = Shot(cam, null, false);
+            int claimLitDelta = WarmCensus(k1, cam, qCx, qCy, 50) - k0Win;
+            UnityEngine.Object.DestroyImmediate(k0);
+            UnityEngine.Object.DestroyImmediate(k1);
+            if (claimCyanDelta < 8)
+                throw new InvalidOperationException("claim robot lamp not visible on the avenue: cyan d=" + claimCyanDelta);
+            if (claimLitDelta < 40)
+                throw new InvalidOperationException("claim windows not visible on the tower: warm d=" + claimLitDelta);
+            for (int i = 0; i < 26; i++) face.Tick(0.1f);   // drain (4.1s > 3.75s face life)
+            if (face.EffectsCount != 0) throw new InvalidOperationException("claim face leak in scene");
+
+            // C2g task done (r117): windows lit at spawn (work-session lights still
+            // on) dim out via the sweep, robot lamp walks home, one gold pulse -- the
+            // windows-off law is asserted as a return-to-baseline census.
+            Texture2D d0 = Shot(cam, null, false);
+            int d0Lit = WarmCensus(d0, cam, qCx, qCy, 50);
+            face.TriggerDirect("TASK_DONE", "quant");
+            for (int i = 0; i < 4; i++) face.Tick(0.1f);   // 0.4s: all windows lit + pulse rising
+            Texture2D d1 = Shot(cam, "m1-r117-p41-done.png", true);
+            int doneLitDelta = WarmCensus(d1, cam, qCx, qCy, 50) - d0Lit;
+            UnityEngine.Object.DestroyImmediate(d1);
+            if (doneLitDelta < 30)
+                throw new InvalidOperationException("done face not visible (lit windows + pulse): warm d=" + doneLitDelta);
+            for (int i = 0; i < 25; i++) face.Tick(0.1f);   // 2.9s: windows off, robot home, pulse dead
+            Texture2D d2 = Shot(cam, null, false);
+            int doneDrainDelta = WarmCensus(d2, cam, qCx, qCy, 50) - d0Lit;
+            UnityEngine.Object.DestroyImmediate(d0);
+            UnityEngine.Object.DestroyImmediate(d2);
+            if (doneDrainDelta > 8)
+                throw new InvalidOperationException("done windows-off law broken (lights stayed on): warm d=" + doneDrainDelta);
+            for (int i = 0; i < 8; i++) face.Tick(0.1f);   // drain (3.7s > 2.6s face life)
+            if (face.EffectsCount != 0) throw new InvalidOperationException("done face leak in scene");
+
             // ---- D. leak sweep: nothing presenter-ish survives in the open scene ----
             foreach (string n in LeakNames)
                 if (GameObject.Find(n) != null) throw new InvalidOperationException("scene GO residue: " + n);
@@ -347,7 +431,9 @@ namespace FluxVerse
                 + " transfer(bri d=" + transBriDelta.ToString("F3") + ", cool d=" + transCoolDelta.ToString("F3")
                     + ", bandY=" + TransferBand.BandY.ToString("F1") + ")"
                 + " commit(bri d=" + commitBriDelta.ToString("F3") + ", cyan core=" + commitCyanCore + ")"
-                + " shots=7";
+                + " task(f7=" + f7 + ",f8=" + f8 + ", claim_lit=" + claimLitDelta + ", claim_cyan=" + claimCyanDelta
+                    + ", done_lit=" + doneLitDelta + ", done_drain=" + doneDrainDelta + ")"
+                + " shots=9";
         }
 
         static string ReloadProve()
@@ -444,6 +530,50 @@ namespace FluxVerse
                     if (bri > 0.62f && (c.r - c.b) < -0.22f) count++;
                 }
             return count;
+        }
+
+        // r117 C2f/C2g: count strong-warm (gold) pixels in the projection box, step 2
+        // -- lit-window / pulse census. Warm identity beats a pure-brightness gate on
+        // the QUANT tower: its gold-glass tiles already sit near a brightness census
+        // threshold in some day phases, while the window dots push r-b far past any
+        // baseline (baseline is subtracted either way, C2e delta law).
+        static int WarmCensus(Texture2D tex, Camera cam, float wx, float wy, int radius)
+        {
+            float halfH = cam.orthographicSize;
+            float halfW = halfH * (1920f / 1080f);
+            int cx = (int)(((wx - cam.transform.position.x) / (2f * halfW) + 0.5f) * 1920f);
+            int cy = (int)(((wy - cam.transform.position.y) / (2f * halfH) + 0.5f) * 1080f);
+            int count = 0;
+            for (int y = cy - radius; y <= cy + radius; y += 2)
+                for (int x = cx - radius; x <= cx + radius; x += 2)
+                {
+                    if (x < 0 || x >= 1920 || y < 0 || y >= 1080) continue;
+                    Color c = tex.GetPixel(x, y);
+                    float bri = (c.r + c.g + c.b) / 3f;
+                    if (bri > 0.50f && (c.r - c.b) > 0.38f) count++;
+                }
+            return count;
+        }
+
+        // r117 A4: TaskLights rects must equal the r103 southbank-manifest
+        // footprints (single geometry source; drift = fail-loud).
+        static void AssertManifestRect(string manifestText, string id, float[] rect)
+        {
+            int at = manifestText.IndexOf("\"id\": \"" + id + "\"", StringComparison.Ordinal);
+            if (at < 0) throw new InvalidOperationException("manifest mass not found: " + id);
+            int world = manifestText.IndexOf("\"world\": [", at, StringComparison.Ordinal);
+            if (world < 0) throw new InvalidOperationException("manifest world array not found: " + id);
+            int close = manifestText.IndexOf(']', world);
+            string nums = manifestText.Substring(world + 10, close - world - 10);
+            string[] parts = nums.Split(',');
+            if (parts.Length != 4) throw new InvalidOperationException("manifest world arity: " + id + " got " + parts.Length);
+            for (int i = 0; i < 4; i++)
+            {
+                float m = float.Parse(parts[i].Trim(), System.Globalization.CultureInfo.InvariantCulture);
+                if (Mathf.Abs(rect[i] - m) > 0.001f)
+                    throw new InvalidOperationException("TaskLights rect drift vs manifest " + id
+                        + " idx" + i + ": " + rect[i] + " vs " + m);
+            }
         }
     }
 }

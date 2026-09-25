@@ -9,11 +9,12 @@
 //    A2 fake-player capture with per-row volumes,
 //    A3 dual-presentation chain on a sandbox stream (history law now covers a mapped
 //       non-CEO type), A3b mixed-type poll: COMMIT/MARKET_OPEN/RESIDENT_SAY fire the
-//       sink but spawn ZERO pulses (visual law: only CEO_ORDER has a mapped visual),
+//       sink but spawn ZERO glow pulses (r30 pulse-list law holds: the r116 COMMIT
+//       canon visual face lives in the fx list, asserted in EventRouterProof),
 //    A4 null-sink regression (r12 pulse-only baselines stay intact when unwired),
 //    A5 all 7 real clip assets load (CEO keeps synth spec 2.2s; others >0),
 //    A6 real adapter wiring in edit mode: ResolveClip all 7, TriggerDirect(COMMIT)
-//       = sink-only (no pulse), TriggerDirect(CEO_ORDER) = pulse+play, play-mode-only
+//       = audio fires, ZERO glow pulses (fx face asserted elsewhere), TriggerDirect(CEO_ORDER) = pulse+play, play-mode-only
 //       mixer law (no CityAudio GO), pulse drain, zero residue.
 //    A7 ambient bed pure core (r31): volume canon 0.35/0.5, BGM x4 tier map, weather
 //       matrix (rain/storm/snow-silence/wind threshold) + all 8 bed clips load,

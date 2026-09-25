@@ -1,6 +1,9 @@
 // FluxVerse P-15 r12 (split r14; gate widened r30; five city-core faces r115
-// P-12 slice 4): event router pure logic core — poll/cursor/parse/route.
-// CEO_ORDER -> gold glow pulse + five city-core faces (OS round breath, city
+// P-12 slice 4; canon faces r116 P-41 slice 1): event router pure logic core
+// — poll/cursor/parse/route.
+// CEO_ORDER -> WHITE ANTENNA pulse (r116 canon map: middle-antenna white light
+// pulse; five-color law CEO=pure white, replacing the r12 gold that belonged
+// to the funds family) + five city-core faces (OS round breath, city
 // verify gate, fleet transport band), headless-testable. The MonoBehaviour adapter
 // CityEventRouter now lives in CityEventRouter.cs (SEPARATE FILE LAW, r14: a component
 // class must match its .cs file name or the saved scene reference dies across editor
@@ -90,7 +93,10 @@ namespace FluxVerse
         // r115 (P-12 slice 4): the five stream-live city-core types join the gate too --
         // they carry engine faces but NO audio rows (r30 three-intersection law: R- 1.1
         // has no clip rows for these types, so they stay silent; sound needs a new
-        // research batch first).
+        // research batch first). COMMIT stays OUT of this list: it is audio-mapped
+        // (Laser_00, r30) and reached the gate through the map long before its r116
+        // canon visual face (river stream); the reload gate keeps asserting every
+        // VisualTypes member stays audio-silent.
         public static readonly string[] VisualTypes =
         {
             "OS_TICK_START", "OS_TICK_DONE", "GATE_PASS", "GATE_BLOCK", "TRANSFER"
@@ -167,16 +173,38 @@ namespace FluxVerse
             return AnchorPos() + new Vector3(0f, -3f, 0f);
         }
 
+        // r116 P-41 slice 1: brain-tower middle-antenna spot (canon map "middle
+        // antenna white light pulse"). v0: the tower has no physical antennas yet
+        // (tower-brain v2.0 rebuild is a separate slice), so the pulse floats just
+        // above the roofline -- tower tiles rows 9..14, anchor (0,11) -> roof y=15.
+        // Single geometry source for the proof (derive-don't-copy, r99 law); the
+        // v2.0 rebuild re-anchors here to its physical middle antenna.
+        public static Vector3 AntennaPos(Vector3 anchorPos)
+        {
+            return anchorPos + new Vector3(0f, 4.3f, 0f);
+        }
+
+        Vector3 AntennaPos()
+        {
+            Vector3 a = AnchorPos();
+            return AntennaPos(a);
+        }
+
         void Dispatch(FluxEvent ev)
         {
             // r115 P-12(4): five city-core types now carry mapped faces (DESIGN 7
             // rows: OS round breath / gate release+intercept / transport band).
-            // Every other row still has no visual (M2 work, un-anchored pulses
+            // r116 P-41 slice 1: COMMIT gains its canon face (river-crossing data
+            // stream) -- first audio-mapped type to also carry a visual. Every
+            // other row still has no visual (M2 work, un-anchored pulses
             // forbidden: every animation anchors a real mapped behavior).
             switch (ev.type)
             {
                 case "CEO_ORDER":
-                    pulses.Add(new GlowPulse(AnchorPos(), new Color(1f, 0.85f, 0.45f)));   // CEO gold
+                    // r116 P-41 slice 1: canon face = middle-antenna WHITE pulse
+                    // (five-color law: CEO pure white; the r12 gold belonged to
+                    // the funds family and misassigned the CEO color slot).
+                    pulses.Add(new GlowPulse(AntennaPos(), new Color(1f, 1f, 1f)));
                     break;
                 case "OS_TICK_START":               // one breath per OS round, long envelope
                     if (breath == null) breath = new BreathGlow(AnchorPos());
@@ -193,6 +221,9 @@ namespace FluxVerse
                     break;
                 case "TRANSFER":                    // street light band, distinctness law below
                     fx.Add(new TransferBand());
+                    break;
+                case "COMMIT":                      // r116 P-41 slice 1: canon river stream
+                    fx.Add(new CommitStream(ev.zone));
                     break;
             }
             if (EventSink != null) EventSink(ev);   // P-27 r25: same event, second presenter (audio)
@@ -562,6 +593,80 @@ namespace FluxVerse
             go.transform.position = new Vector3(Mathf.Lerp(X0, X1, k), BandY, 0f);
             if (t >= Life) { KillGo(go); return false; }
             return true;
+        }
+    }
+
+    // COMMIT (r116 P-41 slice 1): data-messenger stream crossing the river,
+    // south bank -> north bank (CEO canon map: "south->north data light stream
+    // across the river"; DESIGN 7: a commit is a data messenger running to the
+    // brain ring). Cyan messenger dots climb the water lane toward the tower.
+    // Full-span bright chain: 14 dots at 0.69u spacing bridge the whole 9.2u
+    // crossing -- the 7-dot first pass read as a partial comet hovering over
+    // the north bank in a static frame (r116 red chain: multimodal judged it
+    // "not bank-to-bank"); mid-flight the light now spans bank to bank. Core
+    // runs a brighter cyan to survive the day-phase worst case (water
+    // luminance ~0.49). Lane follows the event's zone down the three nerve
+    // trunk arteries (gaming -> GAME lane, media -> MEDIA lane, rest ->
+    // central tower axis). DISTINCTNESS LAW (r114/r115): this face owns the
+    // RIVER domain, the TransferBand owns the street rows -- the two vertical
+    // spans never overlap (EventRouterProof asserts it).
+    public class CommitStream : TransientFx
+    {
+        public const float Y0 = -4.6f;   // south bank launch line (above street rows)
+        public const float Y1 = 4.6f;    // north bank arrival (brain-ring side)
+        const int DotCount = 14;         // full-span chain: 13x0.12s spacing ~= 9.0u of light
+        const float DelayStep = 0.12f;
+        const float DotLife = 1.6f;
+
+        class Dot { public GameObject go; public SpriteRenderer sr; public float delay; }
+
+        readonly Dot[] dots = new Dot[DotCount];
+        readonly float laneX;
+        readonly Color color = new Color(0.52f, 0.98f, 1f);   // bright data cyan (five-color law, day-water contrast)
+        float t;
+
+        public CommitStream(string zone)
+        {
+            laneX = LaneX(zone);
+            for (int i = 0; i < DotCount; i++)
+            {
+                GameObject go = new GameObject("CommitDot");
+                go.transform.position = new Vector3(laneX, Y0, 0f);
+                SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = GlowPulse.SharedGlow();
+                sr.sortingOrder = 11;
+                sr.color = new Color(color.r, color.g, color.b, 0f);
+                go.transform.localScale = new Vector3(0.55f, 0.55f, 1f);   // ~1.1u messenger dot
+                dots[i] = new Dot { go = go, sr = sr, delay = i * DelayStep };
+            }
+        }
+
+        // nerve trunk lane per zone: three arteries radiate from the tower
+        // (DESIGN 3); quant/governance/unknown ride the central tower axis.
+        public static float LaneX(string zone)
+        {
+            if (zone == "gaming") return -21f;
+            if (zone == "media") return 21f;
+            return 0f;
+        }
+
+        public override bool Advance(float dt)
+        {
+            t += dt;
+            bool any = false;
+            for (int i = 0; i < dots.Length; i++)
+            {
+                Dot d = dots[i];
+                if (d.go == null) continue;
+                float local = t - d.delay;
+                if (local < 0f) { any = true; continue; }
+                if (local >= DotLife) { KillGo(d.go); d.go = null; continue; }
+                float k = local / DotLife;
+                d.sr.color = new Color(color.r, color.g, color.b, 0.9f * Mathf.Sin(k * Mathf.PI));
+                d.go.transform.position = new Vector3(laneX, Mathf.Lerp(Y0, Y1, k), 0f);
+                any = true;
+            }
+            return any;
         }
     }
 

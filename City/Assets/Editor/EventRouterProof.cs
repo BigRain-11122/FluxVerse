@@ -1,21 +1,30 @@
 // FluxVerse P-15 r12: batch proof harness for the event router (sentinel pattern, r11 builder style).
 // r115 (P-12 slice 4) extension: proves the five city-core engine faces.
+// r116 (P-41 slice 1) extension: canon faces -- CEO_ORDER WHITE ANTENNA pulse (brightness
+//     up + warmth NEUTRAL over the roofline; the gold family is the explicit fail line)
+//     + COMMIT river-crossing stream (lane law + river/street distinctness + water-box
+//     render gate).
 // Proves, fail-loud:
 //  A. stream logic end-to-end on a SANDBOX file under logs/ (never touches world/ — engine reads world only):
 //     seed 3 lines -> SeekToEnd -> poll=0 (no history replay); append 1 CEO_ORDER + 1 noise -> poll fires exactly 1;
 //     4s simulated time drains every pulse (edit mode -> DestroyImmediate, no leaks).
 //  A2. five-type sandbox (r115): OS_TICK_START/DONE breath state machine (ramp-in 2s / ramp-out dead),
 //     GATE_PASS dot-flow lifetime (~2.7s), GATE_BLOCK band (1.4s), TRANSFER band (3.0s), GO leak sweep.
-//  B. real scene: wire the persistent router, save. C. CEO_ORDER -> BrainTower gold pulse RENDERS (r12
-//     regression, warmth law). C2. the four new faces each RENDER with a metric gate (r12 box law):
+//  A3. COMMIT sandbox (r116): river-stream face spawns in fx (ZERO glow pulses, r30 pulse-list law),
+//     lane law, distinctness law (river vs street domains), ~3.16s lifetime, leak sweep.
+//  B. real scene: wire the persistent router, save. C. CEO_ORDER -> WHITE ANTENNA pulse RENDERS over
+//     the tower top (r116 canon law: brightness up + warmth neutral; gold family = fail). C2. the four
+//     r115 faces each RENDER with a metric gate (r12 box law):
 //     breath = blue (warmth NEGATIVE shift) over the tower; gate flow = brightness up at the tower foot;
 //     gate block = red (warmth positive shift); transfer band = brightness+cool shift on the south trunk,
 //     plus the DISTINCTNESS law (street band south of the water rows, COMMIT's river stream stays apart).
+//     C2e (r116): COMMIT river stream renders in the water box (brightness delta + cyan core-pixel census).
 //  D. no presenter GO survives (runtime-only law, nothing saved).
 //  Pass 2 (separate editor session) = ReloadGate: cross-session scene persistence (r14 stub disease law).
 // Sentinel: <repo>/logs/eventrouter.run -> proof -> <repo>/logs/eventrouter.done (OK/FAIL report).
 //           <repo>/logs/eventrouter-reload.run -> <repo>/logs/eventrouter-reload.done
-// All comments ASCII. No 3D. Shots: docs/design/m1-r12-pulse-*.png + m1-r115-p12-{breath,gatepass,gateblock,transfer}.png
+// All comments ASCII. No 3D. Shots: docs/design/m1-r116-p41-ceo-{before,white}.png
+//           + m1-r115-p12-{breath,gatepass,gateblock,transfer}.png + m1-r116-p41-commit.png
 using System;
 using System.IO;
 using UnityEngine;
@@ -36,7 +45,7 @@ namespace FluxVerse
         static string SandboxPath { get { return Path.Combine(RepoRoot, "logs", "eventrouter-sandbox.jsonl"); } }
         static string ScenePath { get { return "Assets/Scenes/CityScene.unity"; } }
 
-        static readonly string[] LeakNames = { "EventPulse", "TowerBreath", "GateDot", "GateBlockBand", "TransferBand" };
+        static readonly string[] LeakNames = { "EventPulse", "TowerBreath", "GateDot", "GateBlockBand", "TransferBand", "CommitDot" };
 
         [InitializeOnLoadMethod]
         static void Hook()
@@ -147,6 +156,30 @@ namespace FluxVerse
             if (f5 != 1) throw new InvalidOperationException("DONE poll fired=" + f5 + " (expected 1)");
             for (int i = 0; i < 16; i++) sandbox.Tick(0.1f);   // 1.6s ramp-out
             if (sandbox.BreathAlive) throw new InvalidOperationException("breath survived OS_TICK_DONE");
+
+            // ---- A3. COMMIT canon face sandbox (r116 P-41 slice 1) ----
+            File.AppendAllText(SandboxPath,
+                "{\"ts_utc\":\"2026-09-23T10:13:00Z\",\"type\":\"COMMIT\",\"zone\":\"gaming\",\"summary\":\"commit in game city\"}\n" +
+                "{\"ts_utc\":\"2026-09-23T10:14:00Z\",\"type\":\"FX_TICK\",\"summary\":\"noise\"}\n");
+            int f6 = sandbox.PollOnce();
+            if (f6 != 1) throw new InvalidOperationException("COMMIT poll fired=" + f6 + " (expected 1)");
+            if (sandbox.PulseCount != 0)
+                throw new InvalidOperationException("COMMIT must not spawn a glow pulse (pulse-list law, r30)");
+            if (sandbox.EffectsCount != 1)
+                throw new InvalidOperationException("COMMIT face count=" + sandbox.EffectsCount + " (expected 1)");
+            if (CommitStream.LaneX("gaming") != -21f || CommitStream.LaneX("media") != 21f
+                || CommitStream.LaneX("quant") != 0f || CommitStream.LaneX("governance") != 0f)
+                throw new InvalidOperationException("commit lane law broken (three nerve trunk arteries)");
+            // distinctness law (r114): the river domain and the street band never overlap
+            if (CommitStream.Y0 <= -6.5f)
+                throw new InvalidOperationException("commit stream dips into the street band domain: Y0=" + CommitStream.Y0.ToString("F2"));
+            if (CommitStream.Y1 < 3.5f)
+                throw new InvalidOperationException("commit stream must clear the water band: Y1=" + CommitStream.Y1.ToString("F2"));
+            if (TransferBand.BandY >= CommitStream.Y0)
+                throw new InvalidOperationException("street/river domains overlap: bandY=" + TransferBand.BandY.ToString("F2"));
+            for (int i = 0; i < 38; i++) sandbox.Tick(0.1f);   // 3.8s > 3.16s stream life
+            if (sandbox.EffectsCount != 0) throw new InvalidOperationException("commit stream leak: " + sandbox.EffectsCount);
+
             foreach (string n in LeakNames)
                 if (GameObject.Find(n) != null) throw new InvalidOperationException("boot-scene GO residue: " + n);
 
@@ -168,25 +201,28 @@ namespace FluxVerse
             Camera cam = camGo.GetComponent<Camera>();
             if (cam == null) throw new InvalidOperationException("CityCamera has no Camera component");
 
-            // ---- C. CEO_ORDER event-driven animation rendered: before vs pulse-peak (r12 regression) ----
-            // metric: WARMTH (avg r-b). The brain tower glass is already near-white (luminance ~0.75),
-            // and CEO gold has near-equal luminance (0.767) -> brightness delta is ~0 by design.
-            // The robust signal of a gold pulse over white glass is the warm hue shift (gold r-b = 0.55).
-            Texture2D before = Shot(cam, "m1-r12-pulse-before.png", true);
+            // ---- C. CEO_ORDER canon face rendered (r116 P-41 slice 1): before vs pulse-peak ----
+            // metric: BRIGHTNESS over the roofline + NEUTRAL warmth. The canon face is a
+            // WHITE pulse on the middle antenna (five-color law: CEO pure white); the r12
+            // gold face (warm shift +0.199) is the explicit fail family -- a warm reading
+            // above 0.06 means the gold regression came back or the color slot broke.
+            Vector3 antenna = FluxEventRouter.AntennaPos(anchor.transform.position);
+            Texture2D before = Shot(cam, "m1-r116-p41-ceo-before.png", true);
             float beforeBri, beforeWarm;
-            BoxMetrics(before, cam, 0f, 11.5f, out beforeBri, out beforeWarm, 40);
+            BoxMetrics(before, cam, antenna.x, antenna.y, out beforeBri, out beforeWarm, 40);
             router.Core.TriggerDirect("CEO_ORDER");   // dispatch as if a live CEO_ORDER just arrived
             router.Core.Tick(0.24f);                  // advance to alpha peak (peak-at 0.25s)
-            Texture2D peak = Shot(cam, "m1-r12-pulse-peak.png", true);
+            Texture2D peak = Shot(cam, "m1-r116-p41-ceo-white.png", true);
             float peakBri, peakWarm;
-            BoxMetrics(peak, cam, 0f, 11.5f, out peakBri, out peakWarm, 40);
+            BoxMetrics(peak, cam, antenna.x, antenna.y, out peakBri, out peakWarm, 40);
             float alpha = router.Core.LastPulseAlpha;
             UnityEngine.Object.DestroyImmediate(before);
             UnityEngine.Object.DestroyImmediate(peak);
             float warmDelta = peakWarm - beforeWarm;
             float briDelta = peakBri - beforeBri;
             if (alpha < 0.9f) throw new InvalidOperationException("pulse alpha peak too low: " + alpha.ToString("F3"));
-            if (warmDelta < 0.05f) throw new InvalidOperationException("pulse not visible over brain tower (warmth): delta=" + warmDelta.ToString("F3"));
+            if (briDelta < 0.25f) throw new InvalidOperationException("white pulse not visible over the roofline: bri delta=" + briDelta.ToString("F3"));
+            if (peakWarm > 0.06f) throw new InvalidOperationException("CEO pulse not white (gold family?): warm=" + peakWarm.ToString("F3") + " delta=" + warmDelta.ToString("F3"));
             for (int i = 0; i < 30; i++) router.Core.Tick(0.1f);   // drain CEO pulse (2.4s life) before C2 baselines
 
             // ---- C2. four new faces rendered with metric gates (r115 P-12 slice 4) ----
@@ -272,20 +308,46 @@ namespace FluxVerse
             for (int i = 0; i < 20; i++) face.Tick(0.1f);   // drain (3.5s > 3.0s life)
             if (face.EffectsCount != 0) throw new InvalidOperationException("transfer band leak in scene");
 
+            // C2e commit stream (r116): the dense dot chain crosses the river at
+            // the central lane. Visibility = brightness delta over the water box;
+            // CYAN identity = core-pixel census -- the warmth delta over the
+            // already-blue day water is structurally weak (water r-b ~ -0.35 vs
+            // cyan -0.48, measured 0.007), so identity is asserted on the dots'
+            // own rendered pixels, not the shift.
+            Texture2D c0 = Shot(cam, null, false);
+            float c0Bri, c0Warm; BoxMetrics(c0, cam, 0f, 0.5f, out c0Bri, out c0Warm, 40);
+            int c0Cyan = CyanCensus(c0, cam, 0f, 0.5f, 40);
+            face.TriggerDirect("COMMIT");   // zone "test" -> central lane x=0
+            for (int i = 0; i < 15; i++) face.Tick(0.1f);   // 1.5s: mid-flight, 5 dots in the water box
+            Texture2D c1 = Shot(cam, "m1-r116-p41-commit.png", true);
+            float c1Bri, c1Warm; BoxMetrics(c1, cam, 0f, 0.5f, out c1Bri, out c1Warm, 40);
+            int c1Cyan = CyanCensus(c1, cam, 0f, 0.5f, 40);
+            float commitBriDelta = c1Bri - c0Bri;
+            int commitCyanCore = c1Cyan - c0Cyan;
+            if (commitBriDelta < 0.02f)
+                throw new InvalidOperationException("commit stream not visible over the water: delta=" + commitBriDelta.ToString("F3"));
+            if (commitCyanCore < 60)
+                throw new InvalidOperationException("commit stream not cyan: core pixels=" + commitCyanCore + " (need 60+)");
+            UnityEngine.Object.DestroyImmediate(c0);
+            UnityEngine.Object.DestroyImmediate(c1);
+            for (int i = 0; i < 36; i++) face.Tick(0.1f);   // drain (3.6s > 3.16s stream life)
+            if (face.EffectsCount != 0) throw new InvalidOperationException("commit stream leak in scene: " + face.EffectsCount);
+
             // ---- D. leak sweep: nothing presenter-ish survives in the open scene ----
             foreach (string n in LeakNames)
                 if (GameObject.Find(n) != null) throw new InvalidOperationException("scene GO residue: " + n);
             if (File.Exists(SandboxPath)) File.Delete(SandboxPath);   // clean sandbox evidence file
-            return "sandbox(f0=" + f0 + ",f1=" + f1 + ",f2=" + f2 + ",f3=" + f3 + ",f4=" + f4 + ",f5=" + f5 + ",leaks=0)"
+            return "sandbox(f0=" + f0 + ",f1=" + f1 + ",f2=" + f2 + ",f3=" + f3 + ",f4=" + f4 + ",f5=" + f5 + ",f6=" + f6 + ",leaks=0)"
                 + " router_saved=" + routerSaved
                 + " anchor=(" + anchorPos.x.ToString("F1") + "," + anchorPos.y.ToString("F1") + ")"
-                + " ceo(alpha " + alpha.ToString("F2") + ", warm d=" + warmDelta.ToString("F3") + ", bri d=" + briDelta.ToString("F3") + ")"
+                + " ceo(alpha " + alpha.ToString("F2") + ", warm=" + peakWarm.ToString("F3") + " (white law <=0.06), bri d=" + briDelta.ToString("F3") + ")"
                 + " breath(warm d=" + breathWarmDelta.ToString("F3") + ")"
                 + " gatepass(bri d=" + gateBriDelta.ToString("F3") + ")"
                 + " gateblock(warm d=" + blockWarmDelta.ToString("F3") + ")"
                 + " transfer(bri d=" + transBriDelta.ToString("F3") + ", cool d=" + transCoolDelta.ToString("F3")
                     + ", bandY=" + TransferBand.BandY.ToString("F1") + ")"
-                + " shots=6";
+                + " commit(bri d=" + commitBriDelta.ToString("F3") + ", cyan core=" + commitCyanCore + ")"
+                + " shots=7";
         }
 
         static string ReloadProve()
@@ -361,6 +423,27 @@ namespace FluxVerse
             int nn = System.Math.Max(1, n);
             brightness = (float)(sumBri / nn);
             warmth = (float)(sumWarm / nn);
+        }
+
+        // r116 C2e: count cyan-core pixels (bright + strongly cool) in the same
+        // projection box, step 2 -- identity census for the commit dots. Texture
+        // space note: ReadPixels rows run bottom-up (r13 law), same as BoxMetrics.
+        static int CyanCensus(Texture2D tex, Camera cam, float wx, float wy, int radius)
+        {
+            float halfH = cam.orthographicSize;
+            float halfW = halfH * (1920f / 1080f);
+            int cx = (int)(((wx - cam.transform.position.x) / (2f * halfW) + 0.5f) * 1920f);
+            int cy = (int)(((wy - cam.transform.position.y) / (2f * halfH) + 0.5f) * 1080f);
+            int count = 0;
+            for (int y = cy - radius; y <= cy + radius; y += 2)
+                for (int x = cx - radius; x <= cx + radius; x += 2)
+                {
+                    if (x < 0 || x >= 1920 || y < 0 || y >= 1080) continue;
+                    Color c = tex.GetPixel(x, y);
+                    float bri = (c.r + c.g + c.b) / 3f;
+                    if (bri > 0.62f && (c.r - c.b) < -0.22f) count++;
+                }
+            return count;
         }
     }
 }

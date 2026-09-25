@@ -1,0 +1,101 @@
+{
+  "protocol": "fluxverse-terraces/0.1",
+  "baked_round": 137,
+  "sources": [
+    "TECH.md sec9 r136 row (terrace assembly law + door census evidence + the r137 work order this manifest fulfills)",
+    "Tools/city/officeband-manifest.json r111 (band/frame/vcol/sprite-family laws + the 3 rejected windows re-opened here)",
+    "Tools/city/southbank-manifest.json r103 (south band law, mass rects, legal top edge -8)",
+    "Tools/city/eaveslots-manifest.json r123 (gate-family precedent + the 2 eave slots as protected stand positions)",
+    "live C# tables post-r132: ResidentRules 32 seats (ResT01 x=4.5) / RobotRules 8 / VehicleRules 8 / NeonRules 21 signs + 8 buildings (brain tower v2.0 rect) / OfficeRules 5",
+    "logs/devloop-r136-plateband-scan.json (63-slab survey: Ground 48x144 vertical storefront slabs, 3 opaque bands, zero separator rows)",
+    "docs/design/city-core-design.md sec5 (P-17 office 4-6 tile) + sec8 (stand whitelist)",
+    "cph4/research/R-20260924-m1-visual-fix.md sec2-1/sec2-2 (proportion + north 2-4u low-rise laws)"
+  ],
+  "law": {
+    "assembly": "Ground modules are 2x6u vertical storefront slabs (48x144px @PPU24; one legal door per module, ~50px = 2.08u >= 1.5x the 1.333u resident line - r136 door census). Ground x N side-joined = 2N x 6u building (r136 terrace law). 6u = the MEDIA tier (r136 sanction); QUANT 8u stays the south commanding height; brain tower 160px stays the city commanding height.",
+    "base_row": "rear-anchored y0=-16 on the band south edge (QUANT / GAME_MAIN / E1 precedent): top edge -10 keeps front plaza rows -10/-9 stand-legal so street life reads in front of the storefront doors (sec8 whitelist + city-core sec5 street-front law). Census proves the window feasible at y0=-16/-15/-14; the pick is y0=-16 by this law.",
+    "north_ban": "Ground modules are BANNED north of the river: 6u breaches the north 2-4u low-rise cap (north top edge must stay <= 13; city-core sec2 + R- sec2-2). North office-band v2 faces wait for a <= 4u slab vocabulary (Middle front-2-cell trim = r136 watch-pool entry), never for a silent cap breach.",
+    "south_band": "rows -16..-9 (r103 band law); building world top edge <= -8 (zero road press, zero river soak); footprint cells must be pavement (never road/water/grass).",
+    "vcol_roads_protected": [-18, -17, 17, 18],
+    "river_rows_protected": [-3, 2],
+    "view_frame": "rect fully inside |x| <= 35.256 (halfW 35.556 - 0.3, seat/robot/sign law family).",
+    "tint_band": "y0 >= -16, y1 <= 15 (r51).",
+    "zero_move": "v2 places terraces with ZERO seat/robot/vehicle/sign/eave-slot moves: every window derives from the post-r132 live tables (r111 zero-move precedent). The r104 move_census pattern stays a v3 candidate (registered below) - displacing residents for storefronts is a CEO-visible trade, never a silent default.",
+    "sprite_family": "Terrace* GOs at sorting order 3 (OfficeRules family), pivot center, GO pos = world rect center, localScale 1 - NEVER painted into CityGAME/CityQUANT/CityMEDIA tilemaps (r103-4 condo law: IdentityProof district derivation and every sec8 feet cell stay untouched; south tile layer totals 40/49/54 unchanged).",
+    "seat_family": "the full r99 seat-harness gate family re-runs for every existing seat and both eave slots with the terrace rect added to the building set - zero violations tolerated (a placement may not break any stand position's gates).",
+    "door_law": "new street-front buildings must carry a legal door face (>= 1.5x resident height); the Ground family is the compliant vocabulary. The v1 five Condo_4_24 buildings stay door-less (open debt - verdict_windows.v1_door_debt).",
+    "hierarchy": "terrace top -10 < MEDIA -8 < QUANT -8 (128px) < brain 19.0 (160px); zero landmark competition."
+  },
+  "placements": [
+    {
+      "id": "T1", "name": "Terrace01",
+      "asset": "Assets/ArtPacks/office-ladder/ME_Singles_Floor_Modular_Building_48x48_Ground_Floor_Condo_Modular_1.png",
+      "asset_family": "Ground_Floor_Condo_Modular 1..24 (door-law compliant family; the editor-round visual pass may swap the variant within the family, extents pinned)",
+      "px": [48, 144], "ppu": 24, "modules": 1,
+      "cells": [-35, -34, -16, -11],
+      "world": [-35.0, -16.0, -33.0, -10.0],
+      "mirror": false, "bank": "south",
+      "frame_slack": 0.256,
+      "entity_slack": 0.833,
+      "role": "west-outer street-front storefront closing the west frame edge - the mirror bookend of E1 (east 29..35, r111); the V04/G07 quarter stays untouched (camper -30.458..-26.542 clear 2.542u, ResG07 -32.167..-30.833 clear 0.833u)"
+    }
+  ],
+  "census": {
+    "slot_model": "one 2u module footprint [x0, x0+2] x [y0, y0+6]; x0 integer -36..34 (frame bracket included), y0 in -16/-15/-14 (all base rows whose top edge stays <= -8)",
+    "slots_total": 213,
+    "feasible": ["-35:-16", "-35:-15", "-35:-14"],
+    "selected": "-35:-16",
+    "blocked_groups": [
+      { "group": "west-outer x -34..-27", "blockers": "ResG07 body (-32.167..-30.833) kills -34..-31; VehicleCamperW (-30.458..-26.542) kills -30..-27; GAME_ANNEX kills -27..-25" },
+      { "group": "GAME_MAIN + vcol x -24..-17", "blockers": "GAME_MAIN footprint -23..-18; avenue cols -18/-17 road cells" },
+      { "group": "central-west living stretch x -16..-3", "blockers": "seat/robot scatter: G03/G04/G05/G02/Q08/Q01/Q09/Q04 + RobotPlazaW/RobotPlazaS - all 13 slots die to a named stander" },
+      { "group": "QUANT + kiosk x -3..4", "blockers": "QUANT footprint; NeonKiosk envelope 3.544..4.856" },
+      { "group": "plaza heart x 5..16", "blockers": "Q03/RobotPlazaE/VehicleCartQ/Q07/M05/M02/M06 chain - gaps between standers are 0.58..1.17u, never 2u" },
+      { "group": "vcol + MEDIA x 17..24", "blockers": "avenue cols 17/18 road cells; MEDIA footprint 19..25" },
+      { "group": "MEDIA east flank x 25..28", "blockers": "M01/M04/M03 seat ring (25.333..28.667)" },
+      { "group": "E1 + east frame x 28..34", "blockers": "E1 footprint 29..35; x0=34 frame breach" }
+    ]
+  },
+  "verdict_windows": {
+    "reopened_r111": [
+      { "window": "south west-outer (r111 rejected: ResG07)", "verdict": "PARTIAL UNBLOCK - the 2u micro-window [-35,-33] opens (G07 + camper leave exactly one legal slot); -34..-27 stay blocked", "note": "this round's placement T1" },
+      { "window": "south central plaza heart (r111 rejected: kiosk + seat scatter)", "verdict": "STILL BLOCKED at 2u granularity - Q03/PlazaE/CartQ/Q07/M05/M02/M06 leave no 2u gap; the plaza heart IS the residents' living room (r111 note upheld)" },
+      { "window": "north east-central (r111 rejected: bus + ResN02)", "verdict": "BANNED - Ground 6u breaches the north 2-4u low-rise cap (law.north_ban); the old blockers are moot" }
+    ],
+    "e1_flanks": [
+      { "window": "E1 west flank x 27..29", "verdict": "BLOCKED - ResM04 (27,-11) + ResM03 (28,-13) stand in the flank; zero-move keeps them" },
+      { "window": "E1 east flank x 35..37", "verdict": "BLOCKED - frame breach (|x1|=37 > 35.256)" }
+    ],
+    "v1_door_debt": {
+      "issue": "the five v1 Condo_4_24 offices (E1 + N1-N4, r113) carry no legal door (r136 door census: central bay solid brick + sign band; display windows are glass, not doors)",
+      "annex_verdict": "NEGATIVE - an E1 side-annex Ground module needs the west flank [27,29] and dies to the ResM04/ResM03 ring (probe-proven); east flank frame-locked",
+      "swap_verdict": "NEGATIVE - swapping E1 to a 3-module 6x6u terrace grows the footprint rows -16..-11 and kills ResM07 (30,-11) AND the EAVE-M01 rain-shelter slot (33.5,-11) (probe-proven)",
+      "verdict": "debt stays OPEN; remedies = (a) v3 seat-move round (r104 move_census harness precedent, registered candidate), (b) S-library >= 2u door-tile acquisition line (r136 registered), (c) accept the v1 five as built - CEO sees this at the pin-formation re-review (F-20260925-03 agenda)"
+    },
+    "rejected_probes_pinned": [
+      "[-34,-16] fires seat:ResG07", "[-30,-16] fires veh:VehicleCamperW", "[-27,-16] fires bld:GAME_ANNEX",
+      "[-19,-16] fires road (vcol)", "[-16,-16] fires seat:ResG03", "[-11,-16] fires seat:ResQ08",
+      "[-9,-16] fires seat:ResQ01", "[-6,-16] fires robot:RobotPlazaW", "[-5,-16] fires seat:ResQ09",
+      "[-4,-16] fires seat:ResQ04 + robot:RobotPlazaS", "[3,-16] fires sign:NeonKiosk", "[4,-16] fires seat:ResQ03",
+      "[7,-16] fires veh:VehicleCartQ", "[9,-16] fires seat:ResQ07", "[12,-16] fires seat:ResM05",
+      "[15,-16] fires seat:ResM02", "[16,-16] fires road (vcol)", "[27,-16] fires seat:ResM04",
+      "[34,-16] fires frame", "[-36,-16] fires frame", "[-35,-13] fires band-top (road row -8)",
+      "[10,-4] fires water (river rows)", "north probe (7,9)-(9,15) fires north-cap",
+      "annex probe [27,29]x[-16,-10] fires seat:ResM04", "swap probe [29,35]x[-16,-10] fires seat:ResM07 + eave:EAVE-M01"
+    ]
+  },
+  "quota_ledger": {
+    "feasible": 3,
+    "selected": 1,
+    "base_row_law": "y0=-16 rear anchor (law.base_row)",
+    "root_cause": "the south band is SATURATED under zero-move: seat rings + street furniture occupy every remaining stretch; this census is the protection of the residents' living street, not a shortfall - more storefronts cost seat moves (v3 candidate, CEO-visible trade)"
+  },
+  "coupled_updates_r138": [
+    "City/Assets/Scripts/OfficeRules.cs: Ground table extension (Terrace* family entry, 1 row: name/asset path/px/world rect/mirror=false/order 3) - OfficeRules stays the sprite-family single source; south tilemap untouched (sprite-family law)",
+    "City/Assets/Editor/OfficeProof.cs: census extension - terrace count gate 1, zero-encroachment re-census (buildings 14 + terrace, seats 32 x body+shadow, robots 8, vehicles 8, signs 21, anchors 4, props 42, interior 2, eave slots 2), frame/tint/band/vcol/river gates, mirror-asset + importer PPU24 spot gates, render-gate baseline re-derivation (r51 drift law), hierarchy gate (top -10)",
+    "pipeline: OfficeProof joins the r104-style pass list + four screenshots sec3 rescan (m1-r138-terrace-* set) + door L1 face read (street-front door visible in L1-south) + multimodal harmony check vs art-target-dusk (r44 vehicle law)",
+    "ARTPACKS-LEDGER office-ladder section: r138 consumption line (Ground module 1, 1 placement)",
+    "real-machine scan+verify double green (tick 10min self-runs; editor round re-confirms)"
+  ],
+  "token_gate": "L1 deterministic math + on-disk checks, zero generation touchpoints"
+}

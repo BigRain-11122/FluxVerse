@@ -176,20 +176,26 @@ namespace FluxVerse
         // r115 P-12(4): the city's own verify gate anchors at the brain-tower foot
         // (governance face, registry zone hint on the GATE_PASS row) -- NOT the
         // BigMoney quant gatechain (that emitter stays reserved to its own owner).
+        // r132 tower-v2 re-anchor: anchor moved to (0.5,14); offset -6 keeps the
+        // gate line at absolute (0.5,8) = the north trunk road at the tower's
+        // street foot -- the r115 visual baseline. The old -3 offset would have
+        // landed the dots at (0.5,11) ON the widened data plinth face (tiles are
+        // opaque; the gate semantics is a STREET gate, not a wall decal).
         Vector3 GatePos()
         {
-            return AnchorPos() + new Vector3(0f, -3f, 0f);
+            return AnchorPos() + new Vector3(0f, -6f, 0f);
         }
 
         // r116 P-41 slice 1: brain-tower middle-antenna spot (canon map "middle
-        // antenna white light pulse"). v0: the tower has no physical antennas yet
-        // (tower-brain v2.0 rebuild is a separate slice), so the pulse floats just
-        // above the roofline -- tower tiles rows 9..14, anchor (0,11) -> roof y=15.
-        // Single geometry source for the proof (derive-don't-copy, r99 law); the
-        // v2.0 rebuild re-anchors here to its physical middle antenna.
+        // antenna white light pulse"). r132 tower-v2 re-anchor (manifest anchors
+        // law): anchor moved to (0.5,14) = whole-tower mid of the new 10u rect
+        // (-2,9)-(3,19); offset 5.45 lands the pulse at (0.5,19.45) INSIDE the
+        // middle needle rect [0.42,19.0,0.58,19.9] (v2.0 physical antennas now
+        // exist -- the r116 float-above-roofline placeholder era is closed).
+        // Single geometry source for the proof (derive-don't-copy, r99 law).
         public static Vector3 AntennaPos(Vector3 anchorPos)
         {
-            return anchorPos + new Vector3(0f, 4.3f, 0f);
+            return anchorPos + new Vector3(0f, 5.45f, 0f);
         }
 
         Vector3 AntennaPos()
@@ -206,13 +212,13 @@ namespace FluxVerse
         public static readonly Color DecisionOverruleColor = new Color(1f, 0.55f, 0.20f);
 
         // r120 P-41 slice 3: DECISION_MADE flashes the tower's cut-top face --
-        // the top tile row just under the roofline (canon "tower cut-top
-        // cyan-green flash"; builder Block(brain,-1,1,9,6): top row y 14..15).
-        // v0 rides the current tower's top row; the tower-brain v2.0 wedge
-        // rebuild re-anchors here to its physical cut face.
+        // the wedge shoulder edge band under the blade tip (canon "tower cut-top
+        // cyan-green flash"). r132 tower-v2 re-anchor (manifest decision_flash_zone):
+        // offset 4.5 from anchor (0.5,14) lands at (0.5,18.5) = the wedge edge
+        // band rows 17..18 (3->1 cell two-step cut, v2.0 sec1 wedge silhouette).
         public static Vector3 DecisionTopPos(Vector3 anchorPos)
         {
-            return anchorPos + new Vector3(0f, 3.45f, 0f);
+            return anchorPos + new Vector3(0f, 4.5f, 0f);
         }
 
         Vector3 DecisionTopPos()
@@ -443,7 +449,12 @@ namespace FluxVerse
             // tucked inside the white glass and v2 disc at 3.6 tinted the tower but the
             // rim still read as tower self-glow (multimodal); a RING arc beyond the
             // silhouette is visible in any static frame (visibility law, r110).
-            go.transform.localScale = new Vector3(3.6f, 3.6f, 1f);   // ~7.2u, ring at ~2.2u
+            // r132 tower-v2 re-derivation (manifest breathing_envelope law): the new
+            // tower rect is (-2,9)-(3,19) -- 5u wide plinth, 10u tall. Ring peak
+            // radius = 0.62 x scale; scale 4.4 -> radius 2.73u > plinth half-width
+            // 2.5u, so the arc clears the WIDEST band and stays visible past the
+            // silhouette on both flanks (the 3.6 scale cleared only the old 3u shaft).
+            go.transform.localScale = new Vector3(4.4f, 4.4f, 1f);   // ~8.8u, ring at ~2.73u
         }
 
         public void RampIn() { target = 1f; }

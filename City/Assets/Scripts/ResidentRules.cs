@@ -159,7 +159,9 @@ namespace FluxVerse
             new Person { name = "ResN01", x = -3.5f,  y = 11.0f },
             new Person { name = "ResN02", x = 20.0f,  y = 11.0f },
             // TOWER 1 (anchor honor seat flanking the brain tower, C-00001)
-            new Person { name = "ResT01", x = 3.5f,   y = 11.0f },
+            // r132 tower-v2: plinth widened to world x 3.0; seat steps east,
+            // body clear 0.83u mirrors N01 (manifest seat_moves law)
+            new Person { name = "ResT01", x = 4.5f,   y = 11.0f },
             // VISITOR 5 (cross-city visitors on the south street sidewalk)
             new Person { name = "ResV01", x = -10.5f, y = -9.0f },
             new Person { name = "ResV02", x = 9.5f,   y = -9.0f },

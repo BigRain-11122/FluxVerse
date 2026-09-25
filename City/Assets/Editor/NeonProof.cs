@@ -4,7 +4,7 @@
 //   pass 1: logs/neon.run        -> FluxVerse.NeonProof.BatchRun   -> logs/neon.done
 //   pass 2: logs/neon-reload.run -> FluxVerse.NeonProof.ReloadGate -> logs/neon-reload.done
 // Sections:
-//  A pure-core gates (NeonRules, headless): 18-entry manifest (12 pack props + 6
+//  A pure-core gates (NeonRules, headless): 21-entry manifest (12 pack props + 6 plates + 3 needles, r132
 //    company plates), paths under the pack, native px sizes, every sign fully inside
 //    the L0 view AND the tint band, pairwise min spacing, order 6 sits between
 //    Props 4 and tint 8.
@@ -16,7 +16,7 @@
 //  B asset gate: the 17 consumed sprites forced to Sprite + Single + Point +
 //    manifest PPU tier (16/32/48) + no mips (r34 importer-default-PPU100 law,
 //    idempotent); rect == table px exactly.
-//  C CityScene wiring: stale Neon* sweep -> 18 sign GOs from the table (fresh
+//  C CityScene wiring: stale Neon* sweep -> 21 sign GOs from the table (fresh
 //    LoadAssetAtPath per r10 law) -> idempotent second sweep+build -> save -> disk
 //    round-trip; r34/r31/r36/r37 neighbor regressions (skyline sprites, bed clip,
 //    interior, rig, L0 camera, non-empty tilemaps, robots 8, residents 12,
@@ -30,7 +30,7 @@
 //    lit tip pixels fold into the plate's delta count; every gate here is a MINIMUM,
 //    so the inflation is safe, per-plate purity is waived for those rows only.
 //  E pass 2: everything survives an editor restart (SEPARATE FILE LAW spirit:
-//    persisted scene objects + importer settings + exactly 18, zero duplicates).
+//    persisted scene objects + importer settings + exactly 21, zero duplicates).
 // Fail-loud: any broken assumption throws into the .done report. ASCII only. No 3D.
 using System;
 using System.IO;
@@ -104,21 +104,53 @@ namespace FluxVerse
         static string Prove()
         {
             // ---- A. pure-core gates on the manifest ----
-            Chk(NeonRules.Count == 18, "manifest must hold 18 signs (12 pack + 6 plates)");
+            Chk(NeonRules.Count == 21, "manifest must hold 21 signs (12 pack + 6 plates + 3 tower needles)");
             Chk(NeonRules.Order == 6, "mounting layer order must be 6 (Props 4 < signs < tint 8)");
             Chk(NeonRules.Order > 4 && NeonRules.Order < 8, "order 6 not between Props 4 and tint 8");
             for (int i = 0; i < NeonRules.Count; i++)
             {
                 NeonRules.Sign s = NeonRules.At(i);
                 Chk(s.name != null && s.name.StartsWith(NeonRules.NamePrefix), "bad GO name at " + i);
-                Chk(s.path.StartsWith("Assets/ArtPacks/warped-city/ENVIRONMENT/props/"),
-                    "sign path outside the pack: " + s.path);
+                Chk(s.path.StartsWith("Assets/ArtPacks/warped-city/ENVIRONMENT/props/")
+                    || s.path.StartsWith("Assets/ArtPacks/tower-antennas/"),
+                    "sign path outside the packs: " + s.path);
                 Chk(s.pxW > 0 && s.pxH > 0, "native px missing at " + i);
                 Chk(Math.Abs(NeonRules.WorldW(i) - s.pxW / s.ppu) < 1e-5f, "world width math off at " + i);
+                // r132 tower-v2: exempt class = tower STRUCTURE (antenna family),
+                // not shop signage - the InView/InTintBand framing laws are sign
+                // laws; needles live in the by-design glow zone above the tint
+                // band (manifest tint_band_note) and get their own gates below.
+                if (s.mount == NeonRules.MountExempt) continue;
                 Chk(NeonRules.InView(i, RigMath.L0Size * RigMath.Aspect, RigMath.L0Size),
                     "sign not fully inside the L0 view: " + s.name);
                 Chk(NeonRules.InTintBand(i), "sign escapes the tint band (r22 edge-band kin): " + s.name);
             }
+            // ---- A1b. r132 tower-needle family gates (tower-v2-manifest
+            //      antennas law): all three needles inside the wedge-tip x span
+            //      [0,1]; tops <= 19.9 (frame margin law, L0 frame top 20);
+            //      middle strictly tallest AND widest; trio rects disjoint. ----
+            int needleN = 0; float nH = 0f, nW = 0f;
+            NeonRules.Sign mid = NeonRules.At(0), lft = NeonRules.At(0), rgt = NeonRules.At(0);
+            for (int i = 0; i < NeonRules.Count; i++)
+            {
+                NeonRules.Sign s = NeonRules.At(i);
+                if (!s.name.StartsWith("NeonTowerAnt")) continue;
+                needleN++;
+                if (s.name == "NeonTowerAntM") mid = s;
+                if (s.name == "NeonTowerAntL") lft = s;
+                if (s.name == "NeonTowerAntR") rgt = s;
+                float x0 = s.x - NeonRules.WorldW(i) / 2f, x1 = s.x + NeonRules.WorldW(i) / 2f;
+                float top = s.y + NeonRules.WorldH(i) / 2f;
+                Chk(x0 >= 0f && x1 <= 1f, "needle outside the wedge-tip x span: " + s.name);
+                Chk(top <= 19.9f, "needle top escapes the frame margin law: " + s.name);
+            }
+            Chk(needleN == 3, "tower needle census != 3: " + needleN);
+            nH = mid.pxH / mid.ppu; nW = mid.pxW / mid.ppu;
+            Chk(nH > lft.pxH / lft.ppu && nH > rgt.pxH / rgt.ppu,
+                "middle needle must be strictly tallest (v2.0 sec6)");
+            Chk(nW > lft.pxW / lft.ppu && nW > rgt.pxW / rgt.ppu,
+                "middle needle must be strictly widest (v2.0 sec6)");
+            Chk(Math.Abs(mid.x + lft.x + rgt.x - 1.5f) < 1e-4f, "needle trio not symmetric about x 0.5");
             // ---- A2. P-69 slice-1 proportion law (r89): mounted signs must respect
             //      their buildings - a facade sign sits inside the face at <= half
             //      its height, a roof plate sinks into the roofline and rises at
@@ -162,6 +194,11 @@ namespace FluxVerse
             for (int i = 0; i < NeonRules.Count; i++)
                 for (int j = i + 1; j < NeonRules.Count; j++)
                 {
+                    // r132: the needle trio is one structural family 0.35u apart
+                    // by design (manifest) - the 2u shop-sign spacing law reads
+                    // crowding between unrelated signs, not within one crown
+                    if (NeonRules.At(i).name.StartsWith("NeonTowerAnt")
+                        && NeonRules.At(j).name.StartsWith("NeonTowerAnt")) continue;
                     float d = Vector2.Distance(NeonRules.Pos(i), NeonRules.Pos(j));
                     if (d < minDist) minDist = d;
                 }
@@ -189,19 +226,19 @@ namespace FluxVerse
                     && Math.Abs(sp.bounds.size.y - NeonRules.WorldH(i)) < 0.01f,
                     "natural bounds != px/ppu (importer tier disease) at " + NeonRules.Name(i));
             }
-            Chk(unique == 17, "expected 17 unique consumed sprites, got " + unique);
+            Chk(unique == 19, "expected 19 unique consumed sprites (17 pack/plate + 2 needle files), got " + unique);
 
             // ---- C. CityScene wiring: sweep -> build -> idempotent rebuild -> save ----
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             Chk(scene.isLoaded, "CityScene failed to open");
             BuildSigns();
-            BuildSigns();   // idempotency: the second sweep+build must land on exactly 18
-            Chk(CountSigns() == 18, "idempotent rebuild count != 18: " + CountSigns());
+            BuildSigns();   // idempotency: the second sweep+build must land on exactly 21
+            Chk(CountSigns() == 21, "idempotent rebuild count != 21: " + CountSigns());
             bool saved = EditorSceneManager.SaveScene(scene);
             Chk(saved, "scene save failed");
 
             Scene reopened = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-            Chk(CountSigns() == 18, "persisted sign count != 18: " + CountSigns());
+            Chk(CountSigns() == 21, "persisted sign count != 21: " + CountSigns());
             for (int i = 0; i < NeonRules.Count; i++)
             {
                 GameObject go = GameObject.Find(NeonRules.Name(i));
@@ -251,7 +288,7 @@ namespace FluxVerse
             amb.EnsureVisuals();
             amb.ApplyAmbient(AmbientTier.Dusk);
             SpriteRenderer[] signs = CollectSignRenderers();
-            Chk(signs.Length == 18, "renderer collection != 18");
+            Chk(signs.Length == 21, "renderer collection != 21");
             SetSigns(signs, false);
             Texture2D duskBase = Shot(cam, null);
             SetSigns(signs, true);
@@ -300,9 +337,9 @@ namespace FluxVerse
             UnityEngine.Object.DestroyImmediate(nightBase); UnityEngine.Object.DestroyImmediate(nightOn);
 
             return "asserts=" + asserts
-                + " table=18 unique_sprites=" + unique
+                + " table=21 unique_sprites=" + unique
                 + " p69_prop=" + propGated + "/16"
-                + " scene(saved=" + saved + ",18 persisted,robots8+residents12_kept,neighbors_ok)"
+                + " scene(saved=" + saved + ",21 persisted,robots8+residents12_kept,neighbors_ok)"
                 + " render(dusk_px=" + duskTot + " worst=" + duskWorst + ":" + duskMin
                 + " night_px=" + nightTot + " worst=" + nightWorst + ":" + nightMin
                 + " lum dusk=" + duskLum.ToString("F3") + " night=" + nightLum.ToString("F3") + ")"
@@ -313,7 +350,7 @@ namespace FluxVerse
         {
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             if (!scene.isLoaded) throw new InvalidOperationException("CityScene failed to load");
-            Chk(CountSigns() == 18, "sign count after editor restart != 18: " + CountSigns());
+            Chk(CountSigns() == 21, "sign count after editor restart != 21: " + CountSigns());
             for (int i = 0; i < NeonRules.Count; i++)
             {
                 GameObject go = GameObject.Find(NeonRules.Name(i));
@@ -356,13 +393,13 @@ namespace FluxVerse
                     && t.name.Length == 6) residentsKept++;
             Chk(robotsKept == RobotRules.Count, "robots lost across restart: " + robotsKept);
             Chk(residentsKept == ResidentRules.Count, "residents lost across restart: " + residentsKept);
-            return "reload_gate=OK signs=18/18 persisted importers=sprite+point+ppu_manifest+nemip"
+            return "reload_gate=OK signs=21/21 persisted importers=sprite+point+ppu_manifest+nemip"
                 + " skyline=2/2 robots=" + robotsKept + "/" + RobotRules.Count
                 + " residents=" + residentsKept + "/" + ResidentRules.Count
                 + " neighbors=3 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
         }
 
-        // sweep every root-level Neon* GO, then build the 18 from the manifest
+        // sweep every root-level Neon* GO, then build the 21 from the manifest
         // (fresh LoadAssetAtPath at every use = r10 fake-null law)
         static void BuildSigns()
         {

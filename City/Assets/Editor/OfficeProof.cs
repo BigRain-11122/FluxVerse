@@ -335,7 +335,10 @@ namespace FluxVerse
             List<Vector3Int> cells = new List<Vector3Int>();
             foreach (Vector3Int p in props.cellBounds.allPositionsWithin)
                 if (props.GetTile(p) != null) { propCells++; cells.Add(p); }
-            Chk(propCells == 32, "props cell census != r111 canon 32: " + propCells);
+            // r132 tower-v2: +12 data-band/pipe cells on the Props layer (6 band
+            // cells rows 11/16 + 4 indicator singles + 2 plinth pipe boxes,
+            // tower-v2-manifest data_bands law) -> r111 canon 32 + 12 = 44
+            Chk(propCells == 44, "props cell census != 44 (r111 canon 32 + tower-v2 12): " + propCells);
             for (int i = 0; i < OfficeRules.Count; i++)
                 for (int c = 0; c < cells.Count; c++)
                     Chk(!Overlap(OfficeRules.X0(i), OfficeRules.Y0(i), OfficeRules.X1(i), OfficeRules.Y1(i),

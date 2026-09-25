@@ -260,8 +260,9 @@ public static class CitySkeletonBuilder
         if (gN == 0 || wN == 0 || rN == 0)
             throw new System.InvalidOperationException("EMPTY PAINT LAYER " + counts);
 
-        // brain tower (north bank center, glass walls 189 + pale panel roof, pure white tint)
-        Block(brain, -1, 1, 9, 6, "t_wall_glass", "t_wall_glass", "t_roof_a");
+        // brain tower (r132 tower-v2: wedge-cut cyber data hub, 160px city-unique
+        // commanding height; geometry source = Tools/city/tower-v2-manifest.json)
+        PaintTower(brain, props);
         // north low-rise
         Block(cityGame, -28, -26, 9, 3, "t_wall_gray_a", "t_wall_gray_b", "t_roof_b");
         Block(cityGame, -9, -7, 9, 3, "t_wall_gray_c", "t_wall_gray_a", "t_roof_b");
@@ -287,7 +288,7 @@ public static class CitySkeletonBuilder
         foreach (int x in new int[] { -10, 14 }) props.SetTile(new Vector3Int(x, -8, 0), RT("t_prop_box"));
 
         // event-routing anchors (future P-15 r11+; r104 southbank-manifest anchors)
-        MakeAnchor("BrainTower", 0f, 11f);
+        MakeAnchor("BrainTower", 0.5f, 14f);   // r132 tower-v2: shaft center x, whole-tower mid y
         MakeAnchor("Zone_GAME", -20.5f, -11f);
         MakeAnchor("Zone_QUANT", 0.5f, -12f);
         MakeAnchor("Zone_MEDIA", 22f, -11f);
@@ -443,5 +444,120 @@ public static class CitySkeletonBuilder
         bool saved = EditorSceneManager.SaveScene(scene);
         if (!saved) throw new System.InvalidOperationException("scene save failed");
         return "cleared=" + cleared + " south q=" + q + "/g=" + g + "/m=" + m + " saved=" + saved;
+    }
+
+    // ---- r132 tower-v2 (P-69 slice-2 tail; geometry source =
+    // Tools/city/tower-v2-manifest.json, the r131 sandbox verdict) ----
+    // CEO-authored canon tower-brain-design.md v2.0: hard-core cyber data hub,
+    // NOT a flower bud. 10 tile rows = 160px city-unique commanding height
+    // (> QUANT 128, post-lates-wins canon ruling): data plinth one ring wider
+    // than the shaft with exposed pipe boxes, slender glass shaft, two-step
+    // wedge cut 3->1 ending in a pale blade tip, thin horizontal data light
+    // bands on the Props layer (static v0 - runtime window-light choreography
+    // waits out the T2 window per the manifest deferred-faces law).
+    static void PaintTower(Tilemap brain, Tilemap props)
+    {
+        // idempotent: clear any previous tower paint first (the brain layer
+        // holds nothing but the tower); safe on a fresh NewScene layer too
+        foreach (Vector3Int p in brain.cellBounds.allPositionsWithin)
+            if (brain.GetTile(p) != null) brain.SetTile(p, null);
+        Block(brain, -2, 2, 9, 2, "t_wall_glass", "t_wall_glass", "t_wall_glass");   // data plinth rows 9..10 (one ring wider)
+        Block(brain, -1, 1, 11, 6, "t_wall_glass", "t_wall_glass", "t_wall_glass"); // server-blade shaft rows 11..16
+        Block(brain, -1, 1, 17, 1, "t_wall_glass", "t_wall_glass", "t_wall_glass"); // wedge shoulder row 17 (cut step 1)
+        Block(brain, 0, 0, 18, 1, "t_roof_a", "t_roof_a", "t_roof_a");             // blade tip row 18 (cut step 2, sharp not flower)
+        // data bands on Props (order 4 renders above brain layer 3): full rows
+        // 11 + 16 (data-exchange / governance), indicator singles rows 13/15 at
+        // the shaft flanks, cooling-pipe boxes on the plinth shoulders
+        for (int x = -1; x <= 1; x++)
+        {
+            props.SetTile(new Vector3Int(x, 11, 0), RT(((x & 1) == 0) ? "t_prop_b" : "t_prop_a"));
+            props.SetTile(new Vector3Int(x, 16, 0), RT(((x & 1) == 0) ? "t_prop_a" : "t_prop_b"));
+        }
+        props.SetTile(new Vector3Int(-1, 13, 0), RT("t_prop_a"));
+        props.SetTile(new Vector3Int(1, 13, 0), RT("t_prop_b"));
+        props.SetTile(new Vector3Int(-1, 15, 0), RT("t_prop_b"));
+        props.SetTile(new Vector3Int(1, 15, 0), RT("t_prop_a"));
+        props.SetTile(new Vector3Int(-2, 11, 0), RT("t_prop_box"));
+        props.SetTile(new Vector3Int(2, 11, 0), RT("t_prop_box"));
+    }
+
+    static string TowerPath { get { return Path.Combine(RepoRoot, "logs", "tower.run"); } }
+    static string TowerDonePath { get { return Path.Combine(RepoRoot, "logs", "tower.done"); } }
+
+    // batchmode entry: Tuanjie.exe -batchmode -quit -projectPath <City> -executeMethod CitySkeletonBuilder.BatchTower
+    public static void BatchTower()
+    {
+        if (!File.Exists(TowerPath))
+        {
+            File.WriteAllText(TowerDonePath, "SKIP no sentinel ts=" + System.DateTime.UtcNow.ToString("o"));
+            return;
+        }
+        try
+        {
+            string report = TowerInPlace();
+            File.WriteAllText(TowerDonePath, "OK " + report + " ts=" + System.DateTime.UtcNow.ToString("o"));
+        }
+        catch (System.Exception e)
+        {
+            File.WriteAllText(TowerDonePath, "FAIL " + e.GetType().Name + ": " + e.Message + " | " + e.StackTrace + " ts=" + System.DateTime.UtcNow.ToString("o"));
+        }
+        finally
+        {
+            if (File.Exists(TowerPath)) File.Delete(TowerPath);
+        }
+    }
+
+    // in-place repaint of the SAVED scene (BatchSouth pattern): keeps every
+    // serialized neighbor - residents/signs/robots/vehicles/rig/interior
+    // wiring - intact; single geometry writer law.
+    static string TowerInPlace()
+    {
+        Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+        if (!scene.isLoaded) throw new System.InvalidOperationException("CityScene failed to open");
+        Tilemap brain = TilemapByNameStrict("BrainTower");
+        Tilemap props = TilemapByNameStrict("Props");
+        int beforeBrain = CountTiles(brain);
+        if (beforeBrain != 18 && beforeBrain != 32)
+            throw new System.InvalidOperationException("unexpected pre-paint brain census: " + beforeBrain
+                + " (old v1 tower = 18, repainted v2 = 32)");
+        PaintTower(brain, props);
+        // fail-loud: manifest law - plinth 10 + shaft 18 + shoulder 3 + tip 1 = 32;
+        // tower prop cells = 6 band + 4 indicator + 2 pipes = 12 (all inside x -2..2, rows 11..16)
+        int b = CountTiles(brain);
+        if (b != 32)
+            throw new System.InvalidOperationException("TOWER COUNT DRIFT b=" + b + " (expected 32)");
+        int towerProps = 0;
+        for (int y = 11; y <= 16; y++)
+            for (int x = -2; x <= 2; x++)
+                if (props.GetTile(new Vector3Int(x, y, 0)) != null) towerProps++;
+        if (towerProps != 12)
+            throw new System.InvalidOperationException("TOWER PROP DRIFT p=" + towerProps + " (expected 12)");
+        // anchor re-anchor (r87 same-name trap law: the BrainTower ANCHOR is a bare
+        // root GO, the same-named tilemap is a CityGrid child - root scan only)
+        GameObject anchorGO = RootGO("BrainTower");
+        if (anchorGO == null) MakeAnchor("BrainTower", 0.5f, 14f);
+        else anchorGO.transform.position = new Vector3(0.5f, 14f, 0f);
+        bool saved = EditorSceneManager.SaveScene(scene);
+        if (!saved) throw new System.InvalidOperationException("scene save failed");
+        return "brain " + beforeBrain + "->" + b + " tower_props=12 anchor=(0.5,14) saved=" + saved;
+    }
+
+    // r87 same-name law: "BrainTower" names BOTH a root anchor GO and a CityGrid
+    // child tilemap GO; GameObject.Find can hand back either. The tilemap lookup
+    // discriminates by COMPONENT (anchors carry no Tilemap), the anchor lookup
+    // by HIERARCHY (anchors are root GOs, the tilemap is parented under CityGrid).
+    static Tilemap TilemapByNameStrict(string name)
+    {
+        Tilemap[] maps = Object.FindObjectsOfType<Tilemap>();
+        foreach (Tilemap tm in maps)
+            if (tm != null && tm.name == name) return tm;
+        throw new System.InvalidOperationException("tilemap missing: " + name);
+    }
+
+    static GameObject RootGO(string name)
+    {
+        foreach (Transform t in Object.FindObjectsOfType<Transform>())
+            if (t.parent == null && t.name == name) return t.gameObject;
+        return null;
     }
 }

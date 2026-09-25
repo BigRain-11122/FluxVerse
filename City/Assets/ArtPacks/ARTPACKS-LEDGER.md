@@ -103,3 +103,9 @@ AA-016.02 车辆 / AA-034 光效粒子 193 PNG / FT-011 缝合像素（霓虹中
 - 风格闸（r101 ⑦ 随行）：AA-016 日间平涂系入城走 r44 车辆同律——环境 tint 乘性重映射（r13 四档色轮罩城带）+五色律光色归位（QUANT 金/GAME 青/MEDIA 品红）引擎施工轮随证；48px@PPU24=2u/层（P-17 办公楼 4-6 tile=2-3 层判据）。
 - 消费实况（r102 预置）：**引擎布设待 r103 编辑器施工轮**（r101 预算表：南岸分区重排+扭塔制高+双球滨水前排+方塔群后列成阵=③清单三档体复用成阵+楼层板组装补办公层）；.meta 随首个编辑器轮导入生成（P-27⑤ 先例·CityImportPostprocessor PPU 表已增 office-ladder→24 行）。
 - 消费实况（r112 引擎落地）：**街面办公带 v1 五楼入城**——`OfficeRules.cs` 纯表 5 布设（E1 南岸东外 [29,-16,35,-12]＋北岸 N3/N1/N2/N4 走道排 y[9,13]·全 Condo_4_24 三档体 6×4u@PPU24·零迁移零普查违例=r111 officeband-manifest 逐位）+镜像变体 1 资产 2 消费（N2/N4=`ME_..._Condo_4_24_mirror.png`·`Tools/city/bake-office-mirror.ps1` 自焙=raw ARGB 列翻转零重采样〔r93 律〕·sha12=270B561E1BC1·双跑确定性）；精灵族 Office* GO order 3·零 tilemap 笔触（城层计数 40/49/54 前后不变证）；风格闸随证=暖移（day .128→dusk .263）+夜暗（.364<.531）双绿（r44 律·黄昏 tint=α0.22 暖金叠加非乘暗）；包 74→75 件；楼层板族 63 件仍待 v2 阶梯装配切片。
+
+## tower-antennas（r132 脑塔 v2.0 三针天线）——集团自产件
+
+- 内容：**脑塔 v2.0 楔尖三天线针**（tower-v2-manifest antennas law——中间=CEO 面壁者位最粗最高·纯白常亮；两侧=机队心跳针）——mid 4×14px（0.25×0.875u@16ppu）+side 2×9px（0.125×0.5625u）两件
+- 来源：**本仓自焙**（`Tools/city/bake-tower-antennas.ps1` GDI+ 程序化白针·零外采零第三方许可义务·确定性双跑 SHA256 稳：mid 9A15DBE98370/side CFF920F5A169）
+- 消费实况（r132 引擎落地）：`NeonSigns.cs` 表 21 行（NeonTowerAntM/L/R·MountExempt 豁免族=r87 天线先例——招牌框架律不适用，NeonProof 针族门〔楔尖 x 域 [0,1]·中间严格最高最宽·顶 ≤19.9 帧边距律〕执法）

@@ -40,7 +40,7 @@ namespace FluxVerse
     {
         public const int Order = 6;            // mounting layer: Props 4 < signs 6 < tint 8
         public const float PPU = 16f;           // default world law (r13); per-sign ppu tier overrides
-        public const int Count = 18;
+        public const int Count = 21;   // r132: +3 tower-v2 antenna needles (exempt family)
         public const string NamePrefix = "Neon";
 
         // P-69 slice 1 mount types: facade sign sits inside the building face at
@@ -73,7 +73,7 @@ namespace FluxVerse
             new Building { x0 = -2f,  y0 = -16f, x1 = 3f,   y1 = -8f },   // 4 QUANT tower (8u, r104 southbank)
             new Building { x0 = -23f, y0 = -16f, x1 = -18f, y1 = -11f },  // 5 GAME_MAIN (5u, r104 southbank)
             new Building { x0 = 19f,  y0 = -14f, x1 = 25f,  y1 = -8f },   // 6 MEDIA east (6u, r104 southbank)
-            new Building { x0 = -1f,  y0 = 9f,   x1 = 2f,   y1 = 15f },  // 7 brain tower (6u)
+            new Building { x0 = -2f,  y0 = 9f,   x1 = 3f,   y1 = 19f },  // 7 brain tower v2.0 (10u plinth-to-tip, r132)
         };
         public static Building BuildingAt(int i) { return Buildings[i]; }
 
@@ -141,6 +141,18 @@ namespace FluxVerse
             new Sign { name = "NeonBigstream", path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-bigstream.png", pxW = 84, pxH = 28, x = 27.5f,   y = 12.3125f, ppu = 32f, mount = MountRoof, b = 3 },
             // 17. north-west-mid low-rise rooftop: BIGLIFE residents company (warm amber, ambient)
             new Sign { name = "NeonBiglife",   path = "Assets/ArtPacks/warped-city/ENVIRONMENT/props/company-plates/plate-biglife.png",   pxW = 68, pxH = 28, x = -7.9f,   y = 12.3125f, ppu = 32f, mount = MountRoof, b = 1 },
+            // 18/19/20. r132 tower-v2 antenna needles (tower-v2-manifest antennas
+            // law; v2.0 canon three-needle crown): middle = CEO throne pin, strictly
+            // tallest and widest, pure white always-on; flanks = fleet heartbeat
+            // pins. Self-baked pixel needles (Tools/city/bake-tower-antennas.ps1,
+            // zero external art) at the default 16ppu tier -> mid 4x14px = 0.25x0.875u,
+            // side 2x9px = 0.125x0.5625u. Exempt class = tower structure, not a shop
+            // sign (r87 antenna precedent): the sign framing/spacing laws do not
+            // apply, NeonProof carries its own needle-family gates (tip x-span
+            // [0,1], middle dominance, tops <= 19.9 frame margin).
+            new Sign { name = "NeonTowerAntM", path = "Assets/ArtPacks/tower-antennas/tower-antenna-mid.png",  pxW = 4, pxH = 14, x = 0.5f,  y = 19.44f,  ppu = 16f, mount = MountExempt, b = -1 },
+            new Sign { name = "NeonTowerAntL", path = "Assets/ArtPacks/tower-antennas/tower-antenna-side.png", pxW = 2, pxH = 9,  x = 0.15f, y = 19.275f, ppu = 16f, mount = MountExempt, b = -1 },
+            new Sign { name = "NeonTowerAntR", path = "Assets/ArtPacks/tower-antennas/tower-antenna-side.png", pxW = 2, pxH = 9,  x = 0.85f, y = 19.275f, ppu = 16f, mount = MountExempt, b = -1 },
         };
     }
 }

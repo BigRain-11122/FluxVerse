@@ -266,7 +266,10 @@ namespace FluxVerse
             });
             face.SeekToEnd();
             Vector3 anchorPos = anchor.transform.position;
-            Vector3 gatePos = new Vector3(anchorPos.x, anchorPos.y - 3f, 0f);
+            // r132 tower-v2: gate line = anchor + (0,-6) = (0.5,8) north trunk road
+            // at the tower street foot (router GatePos law; the -3 era landed on
+            // the widened data plinth face - see EventRouter.GatePos comment)
+            Vector3 gatePos = new Vector3(anchorPos.x, anchorPos.y - 6f, 0f);
 
             // C2a breath: Lucy-blue halo rises over the brain tower (warmth shifts NEGATIVE)
             Texture2D b0 = Shot(cam, null, false);

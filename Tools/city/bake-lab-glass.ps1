@@ -9,6 +9,12 @@
 #   lab-pipe-h     48x16 = 2x0.67u data pipe segment, horizontal
 #   lab-pipe-v     16x48 = 0.67x2u data pipe segment, vertical
 #   lab-pipe-node  16x16           pipe junction box
+# r168 2u-wide variants (D-20260926-02 remedy candidate 3, P-39 segment 1;
+# east window net width 3.33u rejects all 4u pieces - r141 quota gap):
+#   lab-birth-2u   48x72 = 2x3u    compact birth station: glass chamber left
+#                                  + 10-slot card wall (3 lit) right
+#   lab-sandbox-2u 48x48 = 2x2u    compact sandbox table: 4-block mini city
+#                                  + antenna + hologram band
 # Visual law (DESIGN 16.3 + r139): silicon-ultimate blue (CPH4 64,196,255
 # core spectrum), glass morph = translucent gradient + glow rim + outer
 # halo + highlight streak + dark cool plinth; clean-lab cold light only
@@ -177,6 +183,31 @@ function Build-Birth($bmp) {
     Draw-Plinth $bmp 4 64 91 71
 }
 
+function Build-Birth2U($bmp) {
+    # compact 2u birth station (r168): chamber left, card wall right
+    Draw-GlassPod $bmp 5 8 29 59 3
+    # right card wall (birth wall, compact 2x5 slots, 3 lit)
+    Fill-Rect $bmp 33 14 44 59 255 42 54 70
+    for ($x = 33; $x -le 44; $x++) {
+        Set-Px $bmp $x 14 255 90 110 130
+        Set-Px $bmp $x 59 255 30 40 54
+    }
+    for ($c = 0; $c -lt 2; $c++) {
+        for ($rw = 0; $rw -lt 5; $rw++) {
+            $sx = 34 + $c * 6
+            $sy = 18 + $rw * 8
+            Fill-Rect $bmp $sx $sy ($sx + 4) ($sy + 3) 200 30 42 58
+            $litup = (($c -eq 0 -and $rw -eq 0) -or ($c -eq 1 -and $rw -eq 2) -or ($c -eq 0 -and $rw -eq 3))
+            if ($litup) {
+                Fill-Rect $bmp ($sx + 1) ($sy + 1) ($sx + 3) ($sy + 2) 235 200 240 255
+            } else {
+                for ($x = $sx; $x -le ($sx + 4); $x++) { Set-Px $bmp $x ($sy + 1) 140 90 110 130 }
+            }
+        }
+    }
+    Draw-Plinth $bmp 4 60 43 71
+}
+
 function Build-Sandbox($bmp) {
     # hologram glow band above the mini city (projection light)
     for ($y = 8; $y -le 16; $y++) {
@@ -204,6 +235,35 @@ function Build-Sandbox($bmp) {
     }
     Fill-Rect $bmp 12 44 17 47 255 40 52 66
     Fill-Rect $bmp 78 44 83 47 255 40 52 66
+}
+
+function Build-Sandbox2U($bmp) {
+    # compact 2u sandbox table (r168): hologram band + 4-block mini city
+    for ($y = 6; $y -le 13; $y++) {
+        $a = [int](25 + 50 * ($y - 6) / 7)
+        for ($x = 8; $x -le 39; $x++) { Set-Px $bmp $x $y $a 100 210 255 }
+    }
+    # mini city (flat stride-4 list: x0,y0,x1,y1), bottoms sit on tabletop
+    $bld = @(10, 18, 16, 29, 19, 15, 25, 29, 28, 19, 35, 29, 36, 22, 41, 29)
+    for ($i = 0; $i -lt $bld.Count; $i += 4) {
+        $bx0 = $bld[$i]; $by0 = $bld[$i + 1]; $bx1 = $bld[$i + 2]; $by1 = $bld[$i + 3]
+        Fill-Rect $bmp $bx0 $by0 $bx1 $by1 255 38 52 70
+        for ($x = $bx0; $x -le $bx1; $x++) { Set-Px $bmp $x $by0 255 70 95 120 }
+        for ($xx = ($bx0 + 2); $xx -le ($bx1 - 1); $xx += 3) {
+            for ($yy = ($by0 + 2); $yy -le ($by1 - 1); $yy += 4) { Set-Px $bmp $xx $yy 220 140 220 255 }
+        }
+    }
+    # antenna on the tallest mini tower
+    Set-Px $bmp 22 8 255 255 255 255
+    Set-Px $bmp 22 9 255 255 255 255
+    # tabletop slab + legs
+    Fill-Rect $bmp 6 30 41 37 255 52 66 84
+    for ($x = 6; $x -le 41; $x++) {
+        Set-Px $bmp $x 30 255 96 116 140
+        Set-Px $bmp $x 37 255 30 40 54
+    }
+    Fill-Rect $bmp 10 38 15 43 255 40 52 66
+    Fill-Rect $bmp 32 38 37 43 255 40 52 66
 }
 
 function Build-PipeH($bmp) {
@@ -257,6 +317,8 @@ function Build-One($name, $w, $h) {
         'lab-pod-wide.png'    { Build-PodWide $bmp }
         'lab-birth.png'       { Build-Birth $bmp }
         'lab-sandbox.png'     { Build-Sandbox $bmp }
+        'lab-birth-2u.png'    { Build-Birth2U $bmp }
+        'lab-sandbox-2u.png'  { Build-Sandbox2U $bmp }
         'lab-pipe-h.png'      { Build-PipeH $bmp }
         'lab-pipe-v.png'      { Build-PipeV $bmp }
         'lab-pipe-node.png'   { Build-PipeNode $bmp }
@@ -268,11 +330,12 @@ function Build-One($name, $w, $h) {
 $litMin = @{
     'lab-pod-tall.png' = 200; 'lab-pod-mid.png' = 150; 'lab-pod-wide.png' = 300;
     'lab-birth.png' = 350; 'lab-sandbox.png' = 25; 'lab-pipe-h.png' = 30;
-    'lab-pipe-v.png' = 30; 'lab-pipe-node.png' = 12
+    'lab-pipe-v.png' = 30; 'lab-pipe-node.png' = 12;
+    'lab-birth-2u.png' = 250; 'lab-sandbox-2u.png' = 12
 }
 $glassMin = @{
     'lab-pod-tall.png' = 400; 'lab-pod-mid.png' = 250;
-    'lab-pod-wide.png' = 400; 'lab-birth.png' = 400
+    'lab-pod-wide.png' = 400; 'lab-birth.png' = 400; 'lab-birth-2u.png' = 500
 }
 
 function Test-Sprite($bmp, $name) {
@@ -305,7 +368,9 @@ $specs = @(
     'lab-sandbox.png', 96, 48,
     'lab-pipe-h.png', 48, 16,
     'lab-pipe-v.png', 16, 48,
-    'lab-pipe-node.png', 16, 16
+    'lab-pipe-node.png', 16, 16,
+    'lab-birth-2u.png', 48, 72,
+    'lab-sandbox-2u.png', 48, 48
 )
 
 Write-Output 'pass 1: bake + gates'
@@ -342,7 +407,7 @@ for ($i = 0; $i -lt $vals.Count; $i++) {
     }
 }
 
-$sum = 'BAKE OK 8 sprites'
+$sum = 'BAKE OK ' + ($specs.Count / 3) + ' sprites'
 for ($i = 0; $i -lt $specs.Count; $i += 3) {
     $name = [string]$specs[$i]
     $sum = $sum + ' ' + $name + '=' + $hashes[$name].Substring(0, 12)

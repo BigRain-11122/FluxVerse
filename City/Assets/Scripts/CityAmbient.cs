@@ -13,6 +13,11 @@
 // neon signs (grayscale runtime tint, exempt structure family untouched)
 // and the router breath peak (BreathPeakScale). RestoreMoodNeutral() is the
 // r124 runtime law face: neutral white + scale 1.0 before any scene save.
+// r148 (P-38(1)): dusk roofline rim bands ride the same runtime-only lifecycle -
+// 11 top-edge strips (RimLightRules mirror of the r147 manifest) built as
+// children in EnsureVisuals, tier-gated in ApplyAmbient (alpha = falloff
+// strength at dusk, hard zero otherwise), released with everything else in
+// ReleaseVisuals (r146 owned-lifetime law).
 // Polls world/world-state.json READ-ONLY every ~10s (perceptor owns all writes).
 // Pure 2D: sky/tint/band = SpriteRenderer quads; rain/snow = recycled sprite field.
 using System;
@@ -42,6 +47,7 @@ namespace FluxVerse
         SpriteRenderer sky, tint, band;
         SpriteRenderer skylineFarR, skylineNearR;
         SpriteRenderer[] drops;
+        SpriteRenderer[] rims;        // r148: 11 dusk roofline rim bands (runtime-only)
         float pollTimer = 999f;      // poll on first Update
         float bandPhase, bandAlpha;
         AmbientTier tier = AmbientTier.Night;
@@ -178,6 +184,7 @@ namespace FluxVerse
             sky = null; tint = null; band = null;
             skylineFarR = null; skylineNearR = null;
             drops = null;
+            rims = null;               // r148: rim bands die with the family
             field = null;
         }
 
@@ -256,6 +263,21 @@ namespace FluxVerse
             if (skylineNearR != null) skylineNearR.color = SkylineRules.FogNear(t);
             Camera cam = Cam();
             if (cam != null) cam.backgroundColor = p.camBg;
+            // r148 (P-38(1)): tier-gate the roofline rims - alpha = falloff
+            // strength at dusk, hard zero on every other tier (manifest
+            // tier_gate; instant switch = this family's tint law). The
+            // per-art-row dither alphas live in the texture; this alpha
+            // carries the strength. Honey orange = AMBIENT channel: the
+            // dusk tint quad (order 8) rides over the rims exactly as it
+            // does over the signs (unified light script, r147 manifest).
+            if (rims != null)
+            {
+                for (int i = 0; i < rims.Length; i++)
+                {
+                    Color c = RimLightRules.BaseColorFor(i);
+                    rims[i].color = new Color(c.r, c.g, c.b, RimLightRules.AlphaFor(i, t));
+                }
+            }
         }
 
         // P-28 (r34): silhouettes track 0.9 x camera (subtle parallax). Y stays glued
@@ -349,8 +371,41 @@ namespace FluxVerse
                 go.SetActive(false);
             }
             field = new WeatherField(RainDrops, 20260923);
+            // r148 (P-38(1)): 11 dusk roofline rim bands - procedural per-segment
+            // texture (artW x 2 art px white, hard top row + 1-step dither decay,
+            // pixel-art law), natural-size build at PPU16 (scale 1, the 1/16u art
+            // grid maps 1:1 - zero resampling). Order 5 = free slot above the
+            // tilemaps, below signs/tint/band/pulses (CEO pulse stays above, law).
+            rims = new SpriteRenderer[RimLightRules.SegmentCount];
+            for (int i = 0; i < rims.Length; i++) rims[i] = MakeRimBand(i);
             ApplyAmbient(tier);
             SyncDrops();
+        }
+
+        // r148: one roofline rim band - a runtime-only child of CityAmbient
+        SpriteRenderer MakeRimBand(int i)
+        {
+            int w = RimLightRules.ArtPxWidth(i);
+            Texture2D tex = new Texture2D(w, RimLightRules.DitherRows, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Point;
+            for (int y = 0; y < RimLightRules.DitherRows; y++)
+            {
+                // texture y=0 is the BOTTOM row; rowFromTop 0 = hard top row
+                float a = RimLightRules.DitherRowAlpha(RimLightRules.DitherRows - 1 - y);
+                for (int x = 0; x < w; x++) tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+            }
+            tex.Apply();
+            Sprite s = Sprite.Create(tex, new Rect(0, 0, w, RimLightRules.DitherRows),
+                new Vector2(0.5f, 0.5f), 16f);
+            GameObject go = new GameObject("RimBand" + i);
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = s;
+            sr.sortingOrder = RimLightRules.SortOrder;
+            go.transform.position = new Vector3(
+                (RimLightRules.X0(i) + RimLightRules.X1(i)) * 0.5f,
+                (RimLightRules.Y0(i) + RimLightRules.Y1(i)) * 0.5f, 0f);
+            go.transform.SetParent(transform, false);
+            return sr;
         }
 
         void SyncDrops()

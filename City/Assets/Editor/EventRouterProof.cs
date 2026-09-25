@@ -352,8 +352,16 @@ namespace FluxVerse
             float t1Bri, t1Warm; BoxMetrics(t1, cam, 0f, TransferBand.BandY, out t1Bri, out t1Warm, 30);
             float transBriDelta = t1Bri - t0Bri;
             float transCoolDelta = t0Warm - t1Warm;
-            if (transBriDelta < 0.04f)
-                throw new InvalidOperationException("transfer band not visible: delta=" + transBriDelta.ToString("F3"));
+            // r146 red-chain 2: the r115 box-average brightness gate drifted marginal
+            // with the city's growth (0.039 vs the 0.04 face on the first
+            // EventRouterProof re-run since r134 - the r51 dormant-proof law; two
+            // build rounds landed in between). Re-derivation per the r134 GateDotCensus
+            // precedent: identity = the band's OWN cyan pixels (brightened vs the
+            // baseline AND strong-cool in the band frame) - a background-independent
+            // census, STRONGER than the diluted box average it replaces.
+            int transferCyan = BandDiffCensus(t0, t1, cam, 0f, TransferBand.BandY, 30);
+            if (transferCyan < 40)
+                throw new InvalidOperationException("transfer band not visible by cyan diff-census: " + transferCyan + "px (bri d=" + transBriDelta.ToString("F3") + ")");
             if (transCoolDelta < 0.02f)
                 throw new InvalidOperationException("transfer band not cyan: cool delta=" + transCoolDelta.ToString("F3"));
             UnityEngine.Object.DestroyImmediate(t0);
@@ -634,6 +642,61 @@ namespace FluxVerse
             if (sandbox.EffectsCount != 0) throw new InvalidOperationException("overrule pulse leak: " + sandbox.EffectsCount);
             if (GameObject.Find("DecisionPulse") != null) throw new InvalidOperationException("overrule pulse GO survived its life");
 
+            // ---- A6. breath-peak parameterization sandbox (r146 P-71(3) slice B) ----
+            // mood-visual channel 2: PeakAlpha const -> Peak field, the router owns a
+            // band-clamped scale (MoodVisualRules [0.70, 1.15]); the CEO-precedence
+            // law holds at every setting (0.8 x 1.15 = 0.92 strictly under the
+            // GlowPulse MaxAlpha 0.95) and the live re-hang applies mid-breath.
+            if (Mathf.Abs(sandbox.BreathPeakScale - 1f) > 1e-5f)
+                throw new InvalidOperationException("A6: breath scale default != 1.0 (steady baseline law)");
+            sandbox.TriggerDirect("OS_TICK_START");
+            if (!sandbox.BreathAlive) throw new InvalidOperationException("A6: START did not spawn the breath");
+            if (Mathf.Abs(sandbox.CurrentBreathPeak - 0.8f) > 1e-5f)
+                throw new InvalidOperationException("A6: default peak != 0.8 baseline: " + sandbox.CurrentBreathPeak.ToString("F3"));
+            for (int i = 0; i < 25; i++) sandbox.Tick(0.1f);   // 2.5s: hold phase
+            GameObject breathGo = GameObject.Find("TowerBreath");
+            if (breathGo == null) throw new InvalidOperationException("A6: TowerBreath missing");
+            SpriteRenderer breathSr = breathGo.GetComponent<SpriteRenderer>();
+            if (breathSr.color.a > sandbox.CurrentBreathPeak + 1e-4f)
+                throw new InvalidOperationException("A6: rendered breath alpha exceeds its peak: "
+                    + breathSr.color.a.ToString("F3") + " > " + sandbox.CurrentBreathPeak.ToString("F3"));
+            // festive top band: 0.8 x 1.15 = 0.92 < 0.95 (CEO precedence)
+            sandbox.BreathPeakScale = 1.15f;
+            if (Mathf.Abs(sandbox.CurrentBreathPeak - 0.92f) > 1e-4f)
+                throw new InvalidOperationException("A6: festive peak != 0.92: " + sandbox.CurrentBreathPeak.ToString("F3"));
+            if (!(sandbox.CurrentBreathPeak < MoodVisualRules.PulseCeiling))
+                throw new InvalidOperationException("A6: CEO precedence broken (peak >= 0.95)");
+            if (breathSr.color.a > sandbox.CurrentBreathPeak + 1e-4f)
+                throw new InvalidOperationException("A6: live re-hang did not apply the new peak");
+            // hushed floor: 0.8 x 0.70 = 0.56
+            sandbox.BreathPeakScale = 0.70f;
+            if (Mathf.Abs(sandbox.CurrentBreathPeak - 0.56f) > 1e-4f)
+                throw new InvalidOperationException("A6: hushed peak != 0.56: " + sandbox.CurrentBreathPeak.ToString("F3"));
+            // out-of-band setters clamp into the manifest band
+            sandbox.BreathPeakScale = 5f;
+            if (Mathf.Abs(sandbox.CurrentBreathPeak - 0.92f) > 1e-4f)
+                throw new InvalidOperationException("A6: over-band setter did not clamp to 0.92");
+            sandbox.BreathPeakScale = 0.1f;
+            if (Mathf.Abs(sandbox.CurrentBreathPeak - 0.56f) > 1e-4f)
+                throw new InvalidOperationException("A6: under-band setter did not clamp to 0.56");
+            // the CEO pulse at its own peak outranks the max ambient breath
+            sandbox.BreathPeakScale = 1.15f;
+            sandbox.TriggerDirect("CEO_ORDER");
+            sandbox.Tick(0.24f);   // pulse peak-at 0.25s
+            GameObject pulseGo = GameObject.Find("EventPulse");
+            if (pulseGo == null) throw new InvalidOperationException("A6: CEO pulse missing");
+            SpriteRenderer pulseSr = pulseGo.GetComponent<SpriteRenderer>();
+            float ceoPeakA = pulseSr.color.a;
+            if (ceoPeakA <= sandbox.CurrentBreathPeak)
+                throw new InvalidOperationException("A6: CEO pulse must outrank the breath peak: "
+                    + ceoPeakA.ToString("F3") + " vs " + sandbox.CurrentBreathPeak.ToString("F3"));
+            for (int i = 0; i < 42; i++) sandbox.Tick(0.1f);   // 4.2s: pulse drained
+            if (sandbox.PulseCount != 0) throw new InvalidOperationException("A6: pulse leak: " + sandbox.PulseCount);
+            sandbox.TriggerDirect("OS_TICK_DONE");
+            for (int i = 0; i < 16; i++) sandbox.Tick(0.1f);   // ramp-out
+            if (sandbox.BreathAlive) throw new InvalidOperationException("A6: breath survived DONE");
+            if (GameObject.Find("TowerBreath") != null) throw new InvalidOperationException("A6: breath GO survived its life");
+
             foreach (string n in LeakNames)
                 if (GameObject.Find(n) != null) throw new InvalidOperationException("boot-scene GO residue: " + n);
             if (File.Exists(SandboxPath)) File.Delete(SandboxPath);   // clean sandbox evidence file
@@ -644,12 +707,14 @@ namespace FluxVerse
                 + " breath(warm d=" + breathWarmDelta.ToString("F3") + ")"
                 + " gatepass(px=" + gateDots + ", c=(" + gateCentroid.x.ToString("F2") + "," + gateCentroid.y.ToString("F2") + "), d=" + gateBriDelta.ToString("F3") + ")"
                 + " gateblock(warm d=" + blockWarmDelta.ToString("F3") + ")"
-                + " transfer(bri d=" + transBriDelta.ToString("F3") + ", cool d=" + transCoolDelta.ToString("F3")
+                + " transfer(bri d=" + transBriDelta.ToString("F3") + ", cyan_census=" + transferCyan
+                    + ", cool d=" + transCoolDelta.ToString("F3")
                     + ", bandY=" + TransferBand.BandY.ToString("F1") + ")"
                 + " commit(bri d=" + commitBriDelta.ToString("F3") + ", cyan core=" + commitCyanCore + ")"
                 + " task(f7=" + f7 + ",f8=" + f8 + ", claim_lit=" + claimLitDelta + ", claim_cyan=" + claimCyanDelta
                     + ", done_lit=" + doneLitDelta + ", done_drain=" + doneDrainDelta + ")"
                 + " decision(f9=" + f9 + ",f10=" + f10 + ", made_green=" + madeGreenDelta + ", overrule_warm=" + overWarmDelta + ")"
+                + " moodpeak(fest=0.92,hush=0.56,clamp_ok, ceo_pulse_a=" + ceoPeakA.ToString("F2") + " > breath)"
                 + " shots=11";
         }
 
@@ -672,6 +737,18 @@ namespace FluxVerse
             foreach (string n in LeakNames)
                 if (GameObject.Find(n) != null) throw new InvalidOperationException("reload: runtime GO persisted into scene: " + n);
 
+            // r146: mood-visual runtime law across restarts - every neon sign color
+            // stayed neutral white on disk (the runtime mood tint never persisted)
+            int moodWhite = 0;
+            for (int i = 0; i < NeonRules.Count; i++)
+            {
+                GameObject go = GameObject.Find(NeonRules.Name(i));
+                SpriteRenderer sr = go != null ? go.GetComponent<SpriteRenderer>() : null;
+                if (sr != null && sr.color == Color.white) moodWhite++;
+            }
+            if (moodWhite != NeonRules.Count)
+                throw new InvalidOperationException("reload: neon colors not neutral white: " + moodWhite + "/" + NeonRules.Count);
+
             // cold render smoke: the saved city renders non-black from a cold start
             Texture2D shot = Shot(cam, null, false);
             float bri, warm; BoxMetrics(shot, cam, 0f, 0f, out bri, out warm, 200);
@@ -684,7 +761,8 @@ namespace FluxVerse
                     throw new InvalidOperationException("reload: visual type " + t + " must stay audio-silent (r30 law)");
             return "reload_ok router=resolved anchor=(" + anchor.transform.position.x.ToString("F1")
                 + "," + anchor.transform.position.y.ToString("F1") + ") cam_size=" + cam.orthographicSize.ToString("F1")
-                + " cold_bri=" + bri.ToString("F3") + " visual_types=" + FluxEventRouter.VisualTypes.Length;
+                + " cold_bri=" + bri.ToString("F3") + " visual_types=" + FluxEventRouter.VisualTypes.Length
+                + " mood_white=" + moodWhite + "/21";
         }
 
         static Texture2D Shot(Camera cam, string name, bool save)
@@ -745,6 +823,31 @@ namespace FluxVerse
                     Color c = tex.GetPixel(x, y);
                     float bri = (c.r + c.g + c.b) / 3f;
                     if (bri > 0.62f && (c.r - c.b) < -0.22f) count++;
+                }
+            return count;
+        }
+
+        // r146 C2d: transfer-band identity census (r134 GateDotCensus precedent):
+        // pixels that BRIGHTENED vs the baseline frame AND are strong-cool in the
+        // band frame = the band's own cyan presence, independent of the background
+        // brightness that diluted the r115 box-average gate to 0.039 (first re-run
+        // after two build rounds - the r51 dormant-proof drift law).
+        static int BandDiffCensus(Texture2D before, Texture2D after, Camera cam,
+            float wx, float wy, int radius)
+        {
+            float halfH = cam.orthographicSize;
+            float halfW = halfH * (1920f / 1080f);
+            int cx = (int)(((wx - cam.transform.position.x) / (2f * halfW) + 0.5f) * 1920f);
+            int cy = (int)(((wy - cam.transform.position.y) / (2f * halfH) + 0.5f) * 1080f);
+            int count = 0;
+            for (int y = cy - radius; y <= cy + radius; y += 2)
+                for (int x = cx - radius; x <= cx + radius; x += 2)
+                {
+                    if (x < 0 || x >= 1920 || y < 0 || y >= 1080) continue;
+                    Color ca = after.GetPixel(x, y);
+                    Color cb = before.GetPixel(x, y);
+                    float d = (ca.r + ca.g + ca.b) / 3f - (cb.r + cb.g + cb.b) / 3f;
+                    if (d > 0.04f && (ca.r - ca.b) < -0.22f) count++;
                 }
             return count;
         }

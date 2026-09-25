@@ -1,20 +1,23 @@
 {
-  "protocol": "fluxverse-moodvisual/0.1",
-  "baked_round": 145,
+  "protocol": "fluxverse-moodvisual/0.2",
+  "baked_round": 146,
   "sources": [
     "TECH.md sec9 r143 item 5 (mood->visual mapping candidates, slice B pre-registration) + r144 row (MoodDirector.cs mirror landed, slice A closed)",
+    "TECH.md sec9 r145 row (v0.1 sandbox, 71 assertions) - superseded engine-side by the r146 physics probe (see law.render_physics_law); history preserved append-only",
     "DESIGN.md sec.7 no-decoration law: every visual maps to real data - mood is 100% data-derived (event density / law-source festivals / deep-night window / weather alert)",
     "DESIGN.md sec.9 five-color law: functional colors fixed, pink/purple ambient-only, brightness modulation is structurally hue-free",
     "BigLife cognition/MOOD-DIRECTOR.md v1.0 (mood contract, T-20260924-16c; python Tools/mood_director.py = the LAW SOURCE)",
     "City/Assets/Scripts/MoodDirector.cs (r144 engine mirror: five-state closed set, DenseDefault=12, priority somber > festive > lively > hushed > steady)",
-    "City/Assets/Scripts/NeonRules.cs (21 persistent scene signs, MountExempt=3 tower-antenna needles)",
-    "City/Assets/Scripts/EventRouter.cs (BreathGlow per-OS-round ring, PeakAlpha=0.8; GlowPulse CEO pulse MaxAlpha=0.95)"
+    "City/Assets/Scripts/NeonRules.cs / NeonSigns.cs (21 persistent scene signs, MountExempt structure family = 4)",
+    "City/Assets/Scripts/EventRouter.cs (BreathGlow per-OS-round ring, base peak 0.8; GlowPulse CEO pulse MaxAlpha=0.95)",
+    "r146 engine-round physics probe (NeonProof D2 first-run red, logs/r146-pipeline-progress.txt): x2.0 grayscale tint moved 0 pixels while litMid=17970 sub-saturated sampled pixels stood in the modulated windows (night repeat: 0 moved, litMid=18436) - the input-clamp law evidence"
   ],
   "law": {
-    "purpose": "P-71(3) slice B step 1 (r143 item 5, sandbox-first r103/r111/r123/r137/r141 pattern): the director state (engine-mirrored r144) drives a CLOSED-BAND multiplicative modulation of exactly two existing visual channels. This manifest = the single parameter source for the r146 engine round; assertion gate logs/devloop-r145-moodvisual-test.ps1. Zero editor budget this round.",
+    "purpose": "P-71(3) slice B step 1 (r143 item 5, sandbox-first r103/r111/r123/r137/r141 pattern): the director state (engine-mirrored r144) drives a CLOSED-BAND multiplicative modulation of exactly two existing visual channels. This manifest = the single parameter source for the r146 engine round; assertion gate logs/devloop-r146-moodvisual-test.ps1 (v0.2 re-derivation of the r145 gate).",
     "no_decoration_law": "mood is 100% real-data derived (events 24h >= DenseDefault 12 / law-source festivals with legal pointers / deep-night window / WEATHER_ALERT + somber weather kinds) - the modulation inherits that traceability; zero invented states, zero timed decorative loops (DESIGN sec.7).",
     "five_color_law": "every modulation value is a single grayscale scalar (equal-RGB brightness multiplier) - structurally hue-free. Functional light colors, ambient palettes, tint quads and every proof-baseline hue are untouched.",
     "zero_drift_law": "steady AND somber rows are exactly 1.0 on every channel (the baseline never drifts; somber's visual IS the existing r13 ALERT red band + rain/snow field - linkage without new construction, r143 law).",
+    "render_physics_law": "r146 engine evidence: SpriteRenderer.color RGB above 1.0 clamps at the render-path INPUT in this LDR / Built-in sprite pipeline - a x2.0 grayscale tint moved 0 window pixels while 17970 sub-saturated (0.05..0.87 luminance) sampled pixels stood in the modulated windows (night-tier repeat: 0 moved, 18436 stood). A multiplicative tint can therefore ONLY dim; the neon channel's renderable domain is [0.85, 1.0]. The v0.1 up-band rows (lively 1.10 / festive 1.15) are FALSIFIED and re-derived to 1.0 - physically inert values never stay on the table. Dimming is proven live: hushed 0.85 moved 150+ px with a negative signed mean. Up-mood energy (lively/festive) rides the breath channel (real alpha 0.8 -> 0.92); NeonProof D2 enforces the clamp law - pixel motion under any >1 tint means the render path changed and the table must be re-derived, never a faked brightening.",
     "ceo_pulse_precedence": "effective breath peak = PeakAlpha(0.8) x breath_peak_scale must stay strictly below the CEO pulse MaxAlpha(0.95): max scale 1.15 -> 0.92 < 0.95. The CEO light is never outranked by ambient choreography.",
     "exempt_family_law": "the MountExempt structure family (4 signs: NeonTowerAntM/L/R r132 crown needles - CEO throne pin always-on + fleet pins - plus NeonAntenna, the QUANT rooftop lattice antenna, r87 exempt precedent) is tower/antenna structure, NOT street mood scenery: excluded from neon modulation. Modulated set = 21 - 4 = 17 signs.",
     "degrade_law": "mood absent (calendar null / world-state absent / events stream unreadable / unknown mood string) => steady row (x1.0 everywhere, grandfather face, honest silence - MoodDirector null law r144).",
@@ -22,8 +25,8 @@
   },
   "channels": {
     "neon_intensity": {
-      "carrier": "NeonRules table sprites (persistent scene objects) - runtime sr.color grayscale multiplier, white = neutral",
-      "band": [0.85, 1.15],
+      "carrier": "NeonRules table sprites (persistent scene objects) - runtime sr.color grayscale multiplier, white = neutral; renderable domain is dim-only [0.85, 1.0] (render_physics_law)",
+      "band": [0.85, 1.0],
       "modulated_count": 17,
       "exempt_count": 4,
       "exempt_family": "MountExempt structure family: NeonTowerAntM/L/R (r132 crown needles) + NeonAntenna (QUANT rooftop lattice, r87 exempt precedent)"
@@ -37,13 +40,14 @@
   },
   "moods": {
     "steady":  { "neon_intensity": 1.0,  "breath_peak_scale": 1.0,  "source": "baseline - zero overlay" },
-    "lively":  { "neon_intensity": 1.1,  "breath_peak_scale": 1.15, "source": "density: events 24h >= DenseDefault 12" },
-    "festive": { "neon_intensity": 1.15, "breath_peak_scale": 1.1,  "source": "calendar: law-source festival (10-01 National Day = first natural acceptance window)" },
+    "lively":  { "neon_intensity": 1.0,  "breath_peak_scale": 1.15, "source": "density: events 24h >= DenseDefault 12 - up-energy rides the breath ring (neon row 1.0 per render_physics_law; the v0.1 1.10 up-band was falsified engine-side)" },
+    "festive": { "neon_intensity": 1.0,  "breath_peak_scale": 1.1,  "source": "calendar: law-source festival (10-01 National Day = first natural acceptance window) - up-energy rides the breath ring (neon row 1.0 per render_physics_law; the v0.1 1.15 up-band was falsified engine-side)" },
     "somber":  { "neon_intensity": 1.0,  "breath_peak_scale": 1.0,  "source": "alert/weather: the r13 red band + rain/snow field IS the visual - no new overlay" },
     "hushed":  { "neon_intensity": 0.85, "breath_peak_scale": 0.7,  "source": "night-window: deep night 00:00-05:00 (05:00 included)" }
   },
   "reserved_candidates": {
     "window_light_density": "no persistent window-light carrier exists today (TASK_CLAIM/DONE faces are transient seconds-life; tile windows are baked static) - the hushed window-dim folds into P-38(3) heat-driven window line when that carrier is built",
+    "neon_up_band_additive": "a TRUE neon brightening carrier for the up-moods (lively/festive): an additive per-sign glow overlay, runtime-only family like the breath ring (v1 candidate, own slice) - v0 rides the breath channel because a multiplicative tint can only dim (render_physics_law)",
     "festive_ambient_warm": "a warm ambient accent would touch AmbientTint and the AmbientProof/CameraProof baselines - needs its own slice with re-derived gates, NOT v0",
     "aa034_fireworks": "festival fireworks unlock stays a separate CEO decision (hard-block line: no real event source; law-source festivals now exist in the calendar but the asset line is not this slice's call)"
   }

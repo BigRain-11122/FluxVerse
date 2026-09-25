@@ -4,10 +4,20 @@
 // class-name stubs for mismatched names which do not re-resolve; GetComponent returned
 // null on reload and r13's fallback silently stacked 5 ghost CityAmbient objects).
 // Logic cores (AmbientWheel / WeatherRules / WeatherField) stay in AmbientWeather.cs.
+// r146 (P-71(3) slice B): the mood-visual face rides this same poll - the
+// city mood director (MoodDirector.cs, r144 mirror of BigLife
+// mood_director.py) derives the five-state mood from the SAME world inputs
+// CityBubbles reads (beijing clock + weather_kind + 24h event density +
+// WEATHER_ALERT - an INDEPENDENT same-path read, zero coupling), then
+// MoodVisualRules maps it onto two closed-band channels: the 17 modulated
+// neon signs (grayscale runtime tint, exempt structure family untouched)
+// and the router breath peak (BreathPeakScale). RestoreMoodNeutral() is the
+// r124 runtime law face: neutral white + scale 1.0 before any scene save.
 // Polls world/world-state.json READ-ONLY every ~10s (perceptor owns all writes).
 // Pure 2D: sky/tint/band = SpriteRenderer quads; rain/snow = recycled sprite field.
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace FluxVerse
@@ -37,12 +47,19 @@ namespace FluxVerse
         AmbientTier tier = AmbientTier.Night;
         WeatherMode mode = WeatherMode.None;
         bool alert;
+        string curMood;               // r146: applied mood name (null = neutral / not yet polled)
+
+        // r146: independent stream read (CityBubbles same-path law - identical
+        // regexes, single backward pass, ts-unparseable lines never count)
+        static readonly Regex MoodTypeRx = new Regex("\"type\":\"([A-Z_]+)\"");
+        static readonly Regex MoodTsRx = new Regex("\"ts_utc\":\"([^\"]+)\"");
 
         public AmbientTier CurrentTier { get { return tier; } }
         public WeatherMode CurrentMode { get { return mode; } }
         public bool AlertOn { get { return alert; } }
         public float BandAlpha { get { return bandAlpha; } }
         public float WindMs { get; private set; }   // r31: read-only for the ambient bed adapter
+        public string CurrentMood { get { return curMood; } }   // r146 proof tap
 
         void Awake() { EnsureVisuals(); }
 
@@ -67,8 +84,145 @@ namespace FluxVerse
                                        : AmbientWheel.TierFromName(r.city_day_phase);
                 ApplyAmbient(t);
                 ApplyWeather(r.weather_kind, ParseFloat(r.weather_wind_ms), (int)ParseFloat(r.weather_code));
+                ApplyMoodVisual(DeriveMoodFromWorld());   // r146: same poll, mood-visual face
             }
             catch (Exception) { /* keep current visuals: probe contract silent degrade */ }
+        }
+
+        // r146 (P-71(3) slice B): derive the city mood from the world inputs -
+        // the same files CityBubbles reads, read INDEPENDENTLY (zero coupling,
+        // deterministic same-input-same-output). Null = mood absent (calendar
+        // null / file trouble) = the steady row downstream (degrade law).
+        public string DeriveMoodFromWorld()
+        {
+            try
+            {
+                StateFile sf = JsonUtility.FromJson<StateFile>(File.ReadAllText(StatePath()));
+                if (sf == null || sf.reality == null) return null;
+                string hhmm = sf.reality.beijing_hhmm;
+                int h, m;
+                if (string.IsNullOrEmpty(hhmm) || !ParseHourMin(hhmm, out h, out m)) return null;
+                string repo = Path.GetDirectoryName(Path.GetDirectoryName(Application.dataPath));
+                int density; bool alertHit;
+                ReadStreamFacts(Path.Combine(repo, "world", "world-events.jsonl"), out density, out alertHit);
+                DateTime bj = DateTime.Now.Date + new TimeSpan(h, m, 0);
+                MoodState st = MoodDirector.DeriveState(bj, density, MoodDirector.DenseDefault,
+                    alertHit, sf.reality.weather_kind, MoodDirector.LoadCalendar());
+                return st != null ? st.Mood : null;
+            }
+            catch (Exception) { return null; }
+        }
+
+        // r146: apply the mood row to both channels (the proof calls this
+        // directly with a pinned mood; the live poll feeds DeriveMoodFromWorld).
+        // Neon channel = the 17 modulated table signs (fresh Find per apply =
+        // flip-safe against any rebuild; exempt structure family never touched);
+        // breath channel = the persistent CityEventRouter's core scale. Missing
+        // GOs degrade silently here - the PROOF fails loud instead.
+        public void ApplyMoodVisual(string moodName)
+        {
+            float neon = MoodVisualRules.NeonScaleFor(moodName);
+            float breath = MoodVisualRules.BreathScaleFor(moodName);
+            curMood = moodName;
+            Color moodTint = MoodVisualRules.NeonTint(neon);
+            for (int i = 0; i < NeonRules.Count; i++)
+            {
+                if (MoodVisualRules.IsExemptSign(i)) continue;
+                GameObject go = GameObject.Find(NeonRules.Name(i));
+                if (go == null) continue;
+                SpriteRenderer sr = go.GetComponent<SpriteRenderer>();
+                if (sr == null) continue;
+                sr.color = moodTint;
+            }
+            CityEventRouter cer = FindEventRouter();
+            if (cer != null) cer.Core.BreathPeakScale = breath;
+        }
+
+        // r124 runtime law: restore neutral white signs + baseline breath scale
+        // before any scene save - the saved scene never learns runtime mood.
+        public void RestoreMoodNeutral()
+        {
+            for (int i = 0; i < NeonRules.Count; i++)
+            {
+                if (MoodVisualRules.IsExemptSign(i)) continue;
+                GameObject go = GameObject.Find(NeonRules.Name(i));
+                if (go == null) continue;
+                SpriteRenderer sr = go.GetComponent<SpriteRenderer>();
+                if (sr != null) sr.color = Color.white;
+            }
+            CityEventRouter cer = FindEventRouter();
+            if (cer != null) cer.Core.BreathPeakScale = 1f;
+            curMood = null;
+        }
+
+        static CityEventRouter FindEventRouter()
+        {
+            GameObject go = GameObject.Find("CityEventRouter");
+            return go != null ? go.GetComponent<CityEventRouter>() : null;
+        }
+
+        // r146 (r23 owned-lifetime law face): destroy every runtime visual child.
+        // All ambient visuals (sky/skyline/tint/band/drops) are runtime-only
+        // children by the r13/r25 law - nothing is ever serialized - so ANY child
+        // on disk is stale contamination (the r146 red-chain: a restore-save once
+        // persisted EnsureVisuals children into CityScene). Proofs call this
+        // before any scene save; EnsureVisuals() rebuilds everything after it.
+        public void ReleaseVisuals()
+        {
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform c = transform.GetChild(i);
+                if (Application.isPlaying) Destroy(c.gameObject);
+                else DestroyImmediate(c.gameObject);
+            }
+            sky = null; tint = null; band = null;
+            skylineFarR = null; skylineNearR = null;
+            drops = null;
+            field = null;
+        }
+
+        // r146: 24h event density + WEATHER_ALERT hit from the live stream
+        // (CityBubbles.ReadStream mirror - backward pass, rotation-safe, the
+        // perceptor owns writes). Mood_director.py read_world law: a line with
+        // an unparseable ts never counts - data absent cannot be verified.
+        static void ReadStreamFacts(string streamPath, out int density, out bool alertHit)
+        {
+            density = 0; alertHit = false;
+            if (!File.Exists(streamPath)) return;
+            string[] lines;
+            try { lines = File.ReadAllLines(streamPath); }
+            catch (Exception) { return; }
+            DateTime cut = DateTime.UtcNow.AddHours(-24.0);
+            for (int i = lines.Length - 1; i >= 0; i--)
+            {
+                string ln = lines[i];
+                if (string.IsNullOrEmpty(ln)) continue;
+                if (TsInWindow(ln, cut))
+                {
+                    density++;
+                    if (!alertHit && MoodTypeRx.Match(ln).Groups[1].Value == "WEATHER_ALERT") alertHit = true;
+                }
+            }
+        }
+
+        static bool TsInWindow(string line, DateTime cut)
+        {
+            Match m = MoodTsRx.Match(line);
+            if (!m.Success) return false;
+            DateTime t;
+            if (!DateTime.TryParseExact(m.Groups[1].Value, "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal, out t))
+                return false;
+            return t >= cut;
+        }
+
+        static bool ParseHourMin(string hhmm, out int h, out int m)
+        {
+            h = 0; m = 0;
+            int sep = hhmm.IndexOf(':');
+            if (sep <= 0) return false;
+            return int.TryParse(hhmm.Substring(0, sep), out h) && int.TryParse(hhmm.Substring(sep + 1), out m);
         }
 
         static string StatePath()

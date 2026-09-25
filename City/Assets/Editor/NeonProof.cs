@@ -29,6 +29,13 @@
 //    neighbor sign's overhang TIP (west2 / OPEN / scroll / QUANT flank tops) - those
 //    lit tip pixels fold into the plate's delta count; every gate here is a MINIMUM,
 //    so the inflation is safe, per-plate purity is waived for those rows only.
+//  A3 + D2 (r146 P-71(3) slice B): mood-visual layer gates. A3 = the MoodVisualRules
+//    pure core byte-mirrors Tools/city/mood-visual-manifest.json (five rows, two
+//    channel bands, 17+4 sign census, CEO-precedence ceiling). D2 = the scene face:
+//    hushed dims / festive brightens the 17 modulated signs (grayscale tint law),
+//    the 4 exempt structure signs stay white, the router carries the breath scale,
+//    RestoreMoodNeutral gives back white BEFORE any save (r124 runtime law) and a
+//    reopen proves nothing ever persisted. Record shots m1-r146-mood-*.png.
 //  E pass 2: everything survives an editor restart (SEPARATE FILE LAW spirit:
 //    persisted scene objects + importer settings + exactly 21, zero duplicates).
 // Fail-loud: any broken assumption throws into the .done report. ASCII only. No 3D.
@@ -204,6 +211,55 @@ namespace FluxVerse
                 }
             Chk(minDist >= 2.0f, "two signs nearer than 2u: " + minDist.ToString("F3"));
 
+            // ---- A3. r146 mood-visual mirror gates (P-71(3) slice B): the
+            //      MoodVisualRules pure core must mirror the r145 manifest
+            //      (Tools/city/mood-visual-manifest.json = the single parameter
+            //      source; the r145 sandbox already gated the file itself). ----
+            Chk(MoodVisualRules.Protocol == "fluxverse-moodvisual/0.2", "mood-visual protocol drifted");
+            Chk(MoodVisualRules.BakedRound == 146, "mood-visual manifest origin round drifted");
+            string mvJson = File.ReadAllText(Path.Combine(RepoRoot, "Tools", "city", "mood-visual-manifest.json"));
+            MvManifest mv = JsonUtility.FromJson<MvManifest>(mvJson);
+            Chk(mv != null && mv.moods != null && mv.channels != null, "mood-visual manifest unparseable");
+            Chk(mv.protocol == MoodVisualRules.Protocol, "manifest protocol != mirror");
+            Chk(mv.baked_round == MoodVisualRules.BakedRound, "manifest baked_round != mirror");
+            MvChannel neonCh = mv.channels.neon_intensity;
+            MvChannel breathCh = mv.channels.breath_peak_scale;
+            Chk(neonCh != null && neonCh.band != null && neonCh.band.Length == 2
+                && Mathf.Abs(neonCh.band[0] - MoodVisualRules.NeonMin) < 1e-4f
+                && Mathf.Abs(neonCh.band[1] - MoodVisualRules.NeonMax) < 1e-4f, "neon band != mirror");
+            Chk(neonCh.modulated_count == MoodVisualRules.ModulatedCount, "modulated_count != mirror");
+            Chk(neonCh.exempt_count == MoodVisualRules.ExemptCount, "exempt_count != mirror");
+            Chk(breathCh != null && breathCh.band != null && breathCh.band.Length == 2
+                && Mathf.Abs(breathCh.band[0] - MoodVisualRules.BreathMin) < 1e-4f
+                && Mathf.Abs(breathCh.band[1] - MoodVisualRules.BreathMax) < 1e-4f, "breath band != mirror");
+            Chk(Mathf.Abs(breathCh.base_peak_alpha - MoodVisualRules.BreathBasePeak) < 1e-4f, "breath base != mirror");
+            Chk(Mathf.Abs(breathCh.absolute_ceiling - MoodVisualRules.PulseCeiling) < 1e-4f, "pulse ceiling != mirror");
+            Chk(MoodRowCheck(mv.moods.steady, "steady"), "steady row != mirror");
+            Chk(MoodRowCheck(mv.moods.lively, "lively"), "lively row != mirror");
+            Chk(MoodRowCheck(mv.moods.festive, "festive"), "festive row != mirror");
+            Chk(MoodRowCheck(mv.moods.somber, "somber"), "somber row != mirror");
+            Chk(MoodRowCheck(mv.moods.hushed, "hushed"), "hushed row != mirror");
+            // degrade law: unknown / absent mood maps to the steady row x1.0
+            Chk(MoodVisualRules.NeonScaleFor("garbage") == 1f && MoodVisualRules.BreathScaleFor(null) == 1f,
+                "degrade law broken: unknown mood must map to steady x1.0");
+            // sign census: 17 modulated + 4 exempt == 21, exempt == the four named structures
+            Chk(MoodVisualRules.ModulatedSignCensus() == MoodVisualRules.ModulatedCount
+                && MoodVisualRules.ExemptSignCensus() == MoodVisualRules.ExemptCount,
+                "table census != manifest counts (17 modulated + 4 exempt)");
+            Chk(MoodVisualRules.ModulatedCount + MoodVisualRules.ExemptCount == NeonRules.Count,
+                "17 + 4 != 21: the exempt family account broke");
+            for (int i = 0; i < NeonRules.Count; i++)
+            {
+                bool ex = MoodVisualRules.IsExemptSign(i);
+                bool named = NeonRules.Name(i) == "NeonTowerAntM" || NeonRules.Name(i) == "NeonTowerAntL"
+                    || NeonRules.Name(i) == "NeonTowerAntR" || NeonRules.Name(i) == "NeonAntenna";
+                Chk(ex == named, "exempt family mismatch at " + NeonRules.Name(i));
+            }
+            // CEO precedence: the max effective breath peak stays under the pulse ceiling
+            Chk(MoodVisualRules.EffectiveBreathPeak(1.15f) < MoodVisualRules.PulseCeiling,
+                "CEO precedence broken: festive breath peak reached the pulse ceiling");
+            Chk(Mathf.Abs(MoodVisualRules.EffectiveBreathPeak(1f) - 0.8f) < 1e-4f, "breath base peak != 0.8");
+
             // ---- B. asset gate: importer laws on every consumed sprite (idempotent) ----
             int unique = 0;
             for (int i = 0; i < NeonRules.Count; i++)
@@ -231,6 +287,12 @@ namespace FluxVerse
             // ---- C. CityScene wiring: sweep -> build -> idempotent rebuild -> save ----
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             Chk(scene.isLoaded, "CityScene failed to open");
+            // r146: sweep stale AMBIENT RUNTIME children off the CityAmbient GO first
+            // (red-chain 3 self-heal: a D2 restore-save once persisted EnsureVisuals
+            // children into the disk scene - every ambient visual is runtime-only by
+            // the r13/r25 law, so any child found here is contamination)
+            int staleChildren = AmbientChildCount();
+            if (staleChildren > 0) SweepAmbientRuntime();
             BuildSigns();
             BuildSigns();   // idempotency: the second sweep+build must land on exactly 21
             Chk(CountSigns() == 21, "idempotent rebuild count != 21: " + CountSigns());
@@ -283,6 +345,8 @@ namespace FluxVerse
                 && TileCount("CityQUANT") > 0, "tilemap layers emptied by our save");
             Chk(GameObject.Find("SkylineFar") == null && GameObject.Find("AmbientTint") == null,
                 "runtime-only visuals persisted into the scene");
+            Chk(AmbientChildCount() == 0,
+                "ambient runtime children persisted into the scene (children=" + AmbientChildCount() + ", swept=" + staleChildren + ")");
 
             // ---- D. render gates (dusk anchor, then night) ----
             amb.EnsureVisuals();
@@ -336,6 +400,121 @@ namespace FluxVerse
             UnityEngine.Object.DestroyImmediate(duskBase); UnityEngine.Object.DestroyImmediate(duskOn);
             UnityEngine.Object.DestroyImmediate(nightBase); UnityEngine.Object.DestroyImmediate(nightOn);
 
+            // ---- D2. r146 mood-visual render gates (P-71(3) slice B) ----
+            // hushed dims / festive brightens the 17 modulated signs; the 4 exempt
+            // structure signs stay white; RestoreMoodNeutral gives back white BEFORE
+            // any save (r124 runtime law) and the reopen proves nothing persisted.
+            amb.ApplyAmbient(AmbientTier.Dusk);
+            Texture2D whiteDusk = Shot(cam, "m1-r146-mood-dusk-white.png");
+            int modIdx = 0, exIdx = 0;
+            SpriteRenderer[] modSr = new SpriteRenderer[MoodVisualRules.ModulatedCount];
+            SpriteRenderer[] exSr = new SpriteRenderer[MoodVisualRules.ExemptCount];
+            for (int i = 0; i < NeonRules.Count; i++)
+            {
+                if (MoodVisualRules.IsExemptSign(i)) exSr[exIdx++] = signs[i];
+                else modSr[modIdx++] = signs[i];
+            }
+            Chk(modIdx == MoodVisualRules.ModulatedCount && exIdx == MoodVisualRules.ExemptCount,
+                "mood census split wrong: " + modIdx + "+" + exIdx);
+            // hushed: 17 grayscale 0.85, exempt family untouched
+            amb.ApplyMoodVisual("hushed");
+            Chk(amb.CurrentMood == "hushed", "CurrentMood not applied (hushed)");
+            int hushedTinted = 0, exemptWhite = 0;
+            for (int i = 0; i < modSr.Length; i++)
+            {
+                Color c = modSr[i].color;
+                if (Mathf.Abs(c.r - 0.85f) < 1e-4f && Mathf.Abs(c.g - 0.85f) < 1e-4f
+                    && Mathf.Abs(c.b - 0.85f) < 1e-4f && Mathf.Abs(c.a - 1f) < 1e-4f) hushedTinted++;
+            }
+            for (int i = 0; i < exSr.Length; i++) if (exSr[i].color == Color.white) exemptWhite++;
+            Chk(hushedTinted == modSr.Length, "hushed grayscale tint count: " + hushedTinted + "/" + modSr.Length);
+            Chk(exemptWhite == exSr.Length, "exempt family was modulated: " + exemptWhite + "/" + exSr.Length);
+            GameObject cerGo = GameObject.Find("CityEventRouter");
+            CityEventRouter cer = cerGo != null ? cerGo.GetComponent<CityEventRouter>() : null;
+            Chk(cer != null, "CityEventRouter missing for the breath channel");
+            if (cer != null) Chk(Mathf.Abs(cer.Core.BreathPeakScale - 0.70f) < 1e-4f,
+                "hushed breath scale not wired: " + cer.Core.BreathPeakScale.ToString("F3"));
+            Texture2D hushedDusk = Shot(cam, "m1-r146-mood-dusk-hushed.png");
+            int hushedChanged; float hushedMean; float hushedMaxD; int hushedLitMid;
+            MoodDelta(hushedDusk, whiteDusk, cam, out hushedChanged, out hushedMean, out hushedMaxD, out hushedLitMid);
+            Chk(hushedChanged >= 150, "hushed dimming not visible: " + hushedChanged + "px changed");
+            Chk(hushedMean < -0.010f, "hushed is not a dimming: mean=" + hushedMean.ToString("F4"));
+            // festive (v0.2 re-derivation, r146 red-chain 1): the r145 pre-registered
+            // up-band rows (lively 1.10 / festive 1.15) were FALSIFIED engine-side by
+            // the physics probe - the sprite tint path clamps RGB > 1 at the render
+            // input (x2.0 moved 0px while litMid=17970 sub-saturated sampled pixels
+            // stood in the windows; night repeat 0px / litMid=18436). Neon domain =
+            // [0.85, 1.0] (manifest v0.2): the festive neon row IS 1.0 = physically
+            // inert white; the up-mood energy rides the breath channel (0.8 -> 0.92
+            // real alpha). The gates below ENFORCE the physics: any pixel motion
+            // under a >1 tint means the render path changed - re-derive, never fake.
+            amb.ApplyMoodVisual("festive");
+            Chk(amb.CurrentMood == "festive", "CurrentMood not applied (festive)");
+            int festiveTinted = 0;
+            for (int i = 0; i < modSr.Length; i++)
+            {
+                Color c = modSr[i].color;
+                if (Mathf.Abs(c.r - 1f) < 1e-4f && Mathf.Abs(c.g - 1f) < 1e-4f
+                    && Mathf.Abs(c.b - 1f) < 1e-4f && Mathf.Abs(c.a - 1f) < 1e-4f) festiveTinted++;
+            }
+            Chk(festiveTinted == modSr.Length, "festive neon row != 1.0 (v0.2 physics): " + festiveTinted + "/" + modSr.Length);
+            Texture2D festiveDusk = Shot(cam, "m1-r146-mood-dusk-festive.png");
+            int festiveChanged; float festiveMean; float duskMaxD; int duskLitMid;
+            MoodDelta(festiveDusk, whiteDusk, cam, out festiveChanged, out festiveMean, out duskMaxD, out duskLitMid);
+            Chk(festiveChanged == 0, "festive must be render-inert at neon (v0.2 physics): " + festiveChanged + "px moved");
+            // input-clamp law enforcement: a x2.0 direct-set must move NOTHING while
+            // sub-saturated pixels stand in the windows (litMid > 0) - motion here
+            // means the render path changed (HDR etc): re-derive, never fake it
+            for (int i = 0; i < modSr.Length; i++) modSr[i].color = new Color(2f, 2f, 2f, 1f);
+            Texture2D probe2 = Shot(cam, null);
+            int p2Changed; float p2Mean; float p2MaxD; int p2LitMid;
+            MoodDelta(probe2, whiteDusk, cam, out p2Changed, out p2Mean, out p2MaxD, out p2LitMid);
+            UnityEngine.Object.DestroyImmediate(probe2);
+            Chk(p2Changed == 0 && p2LitMid > 0,
+                "input-clamp law broken: x2.0 moved " + p2Changed + "px (litMid=" + p2LitMid + ") - render path changed, re-derive");
+            amb.RestoreMoodNeutral();
+            amb.ApplyAmbient(AmbientTier.Night);
+            Texture2D nightWhite = Shot(cam, null);
+            amb.ApplyMoodVisual("festive");
+            Texture2D nightFestive = Shot(cam, null);
+            int nfChanged; float nfMean; float nfMaxD; int nfLitMid;
+            MoodDelta(nightFestive, nightWhite, cam, out nfChanged, out nfMean, out nfMaxD, out nfLitMid);
+            UnityEngine.Object.DestroyImmediate(nightWhite); UnityEngine.Object.DestroyImmediate(nightFestive);
+            Chk(nfChanged == 0, "night festive must be render-inert too (v0.2 physics): " + nfChanged + "px moved");
+            amb.ApplyAmbient(AmbientTier.Dusk);
+            // deep-night record shot (the hushed face under the night tier)
+            amb.ApplyAmbient(AmbientTier.Night);
+            amb.ApplyMoodVisual("hushed");
+            Texture2D nightHushed = Shot(cam, "m1-r146-mood-night-hushed.png");
+            // restore + runtime law: neutral white + RELEASED runtime visuals BEFORE
+            // the save (r146 red-chain 3: the EnsureVisuals children must never ride
+            // a save - the r124 runtime law), then prove the saved scene learned
+            // neither the tint nor any ambient child
+            amb.RestoreMoodNeutral();
+            Chk(amb.CurrentMood == null, "restore did not clear the mood");
+            int whiteBack = 0;
+            for (int i = 0; i < signs.Length; i++) if (signs[i].color == Color.white) whiteBack++;
+            Chk(whiteBack == signs.Length, "restore left tinted signs: " + whiteBack + "/" + signs.Length);
+            if (cer != null) Chk(Mathf.Abs(cer.Core.BreathPeakScale - 1f) < 1e-4f, "restore left a scaled breath");
+            amb.ReleaseVisuals();
+            Chk(AmbientChildCount() == 0, "D2: ambient children not released before the save");
+            bool savedMood = EditorSceneManager.SaveScene(reopened);
+            Chk(savedMood, "mood-restore scene save failed");
+            Scene moodReopen = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            int persistedWhite = 0;
+            for (int i = 0; i < NeonRules.Count; i++)
+            {
+                GameObject go = GameObject.Find(NeonRules.Name(i));
+                SpriteRenderer sr = go != null ? go.GetComponent<SpriteRenderer>() : null;
+                if (sr != null && sr.color == Color.white) persistedWhite++;
+            }
+            Chk(persistedWhite == NeonRules.Count,
+                "mood tint persisted into the scene: " + persistedWhite + "/" + NeonRules.Count);
+            Chk(AmbientChildCount() == 0,
+                "ambient runtime children persisted into the scene: " + AmbientChildCount());
+            UnityEngine.Object.DestroyImmediate(whiteDusk); UnityEngine.Object.DestroyImmediate(hushedDusk);
+            UnityEngine.Object.DestroyImmediate(festiveDusk); UnityEngine.Object.DestroyImmediate(nightHushed);
+
             return "asserts=" + asserts
                 + " table=21 unique_sprites=" + unique
                 + " p69_prop=" + propGated + "/16"
@@ -343,7 +522,12 @@ namespace FluxVerse
                 + " render(dusk_px=" + duskTot + " worst=" + duskWorst + ":" + duskMin
                 + " night_px=" + nightTot + " worst=" + nightWorst + ":" + nightMin
                 + " lum dusk=" + duskLum.ToString("F3") + " night=" + nightLum.ToString("F3") + ")"
-                + " shots=2";
+                + " mood(hushed_px=" + hushedChanged + " mean=" + hushedMean.ToString("F3")
+                + ", festive_px=" + festiveChanged + " mean=" + festiveMean.ToString("F3")
+                + ", probe_x2=" + p2Changed + ", probe_night=" + nfChanged
+                + ", litMid_dusk=" + duskLitMid + "/night=" + nfLitMid
+                + ", exempt_white=" + exemptWhite + "/4, persisted_white=" + persistedWhite + "/21)"
+                + " shots=6";
         }
 
         static string ReloadProve()
@@ -377,6 +561,18 @@ namespace FluxVerse
             GameObject ambGo = GameObject.Find("CityAmbient");
             CityAmbient amb = ambGo != null ? ambGo.GetComponent<CityAmbient>() : null;
             Chk(amb != null && amb.skylineFar != null && amb.skylineNear != null, "r34 skyline lost after restart");
+            // r146: mood-visual runtime law across sessions - every sign color
+            // stayed neutral white on disk (the runtime mood tint never persisted)
+            int moodWhite = 0;
+            for (int i = 0; i < NeonRules.Count; i++)
+            {
+                GameObject go = GameObject.Find(NeonRules.Name(i));
+                SpriteRenderer sr = go != null ? go.GetComponent<SpriteRenderer>() : null;
+                if (sr != null && sr.color == Color.white) moodWhite++;
+            }
+            Chk(moodWhite == NeonRules.Count, "restart left non-white sign colors: " + moodWhite + "/" + NeonRules.Count);
+            int reloadChildren = AmbientChildCount();
+            Chk(reloadChildren == 0, "restart left ambient runtime children: " + reloadChildren);
             Chk(UnityEngine.Object.FindObjectsOfType<CityInterior>().Length >= 1, "CityInterior unresolved after restart");
             Chk(UnityEngine.Object.FindObjectsOfType<CityCameraRig>().Length >= 1, "CityCameraRig unresolved after restart");
             Chk(UnityEngine.Object.FindObjectsOfType<CityAmbientAudio>().Length >= 1, "CityAmbientAudio unresolved after restart");
@@ -396,7 +592,8 @@ namespace FluxVerse
             return "reload_gate=OK signs=21/21 persisted importers=sprite+point+ppu_manifest+nemip"
                 + " skyline=2/2 robots=" + robotsKept + "/" + RobotRules.Count
                 + " residents=" + residentsKept + "/" + ResidentRules.Count
-                + " neighbors=3 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
+                + " neighbors=3 mood_white=" + moodWhite + "/21 ambient_children=" + reloadChildren
+                + " cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
         }
 
         // sweep every root-level Neon* GO, then build the 21 from the manifest
@@ -454,6 +651,23 @@ namespace FluxVerse
             foreach (Vector3Int p in tm.cellBounds.allPositionsWithin)
                 if (tm.GetTile(p) != null) c++;
             return c;
+        }
+
+        // r146: the CityAmbient GO's child census + stale-ambient sweep (the r124
+        // runtime law's disk face): every ambient visual is a runtime-only child
+        // (r13/r25 law), so any child on disk is contamination - sweep them all.
+        static int AmbientChildCount()
+        {
+            GameObject ambGo = GameObject.Find("CityAmbient");
+            return ambGo != null ? ambGo.transform.childCount : 0;
+        }
+
+        static void SweepAmbientRuntime()
+        {
+            GameObject ambGo = GameObject.Find("CityAmbient");
+            if (ambGo == null) return;
+            for (int i = ambGo.transform.childCount - 1; i >= 0; i--)
+                UnityEngine.Object.DestroyImmediate(ambGo.transform.GetChild(i).gameObject);
         }
 
         // forces Sprite + Single + Point + manifest PPU tier + no mips (idempotent).
@@ -531,6 +745,77 @@ namespace FluxVerse
                 }
             deltaCount = n;
             avgLum = n > 0 ? (float)(lum / n) : 0f;
+        }
+
+        // ---- r146 mood-visual helpers ----
+        // manifest parse faces (JsonUtility fixed-field classes; unknown JSON keys
+        // are ignored by design - the manifest carries prose nodes too)
+        [Serializable] class MvRow { public float neon_intensity; public float breath_peak_scale; public string source; }
+        [Serializable] class MvChannel
+        {
+            public string carrier; public float[] band;
+            public int modulated_count; public int exempt_count;
+            public float base_peak_alpha; public float absolute_ceiling;
+        }
+        [Serializable] class MvChannels { public MvChannel neon_intensity; public MvChannel breath_peak_scale; }
+        [Serializable] class MvMoods { public MvRow steady, lively, festive, somber, hushed; }
+        [Serializable] class MvManifest { public string protocol; public int baked_round; public MvChannels channels; public MvMoods moods; }
+
+        // manifest mood row == the MoodVisualRules mirror (both channels)
+        static bool MoodRowCheck(MvRow r, string mood)
+        {
+            return r != null
+                && Mathf.Abs(r.neon_intensity - MoodVisualRules.NeonScaleFor(mood)) < 1e-4f
+                && Mathf.Abs(r.breath_peak_scale - MoodVisualRules.BreathScaleFor(mood)) < 1e-4f;
+        }
+
+        // signed mood-delta census over every MODULATED sign window (exempt family
+        // excluded): pixels whose channel-sum moved >0.02 count as changed; the
+        // mean is signed (on - off luminance) over the changed set only, so the
+        // direction law (dim vs brighten) reads through the unchanged background.
+        // maxDelta = the largest channel-sum move seen (input-clamp discriminator:
+        // 0.000 while colors differ = the render path clamped the >1 tint);
+        // litMid = sampled OFF pixels with luminance in (0.05, 0.87) - the
+        // sub-saturation census a real brightening would have to move.
+        static void MoodDelta(Texture2D on, Texture2D off, Camera cam,
+            out int changed, out float signedMean, out float maxDelta, out int litMid)
+        {
+            double sum = 0; int n = 0; float maxD = 0f; int mid = 0;
+            float halfH = cam.orthographicSize;
+            float halfW = halfH * (1920f / 1080f);
+            float cx = cam.transform.position.x, cy = cam.transform.position.y;
+            for (int i = 0; i < NeonRules.Count; i++)
+            {
+                if (MoodVisualRules.IsExemptSign(i)) continue;
+                Vector2 c = NeonRules.Pos(i);
+                float hw = NeonRules.WorldW(i) / 2f + 0.4f;
+                float hh = NeonRules.WorldH(i) / 2f + 0.4f;
+                int px0 = (int)(((c.x - hw - cx) / (2f * halfW) + 0.5f) * 1920f);
+                int px1 = (int)(((c.x + hw - cx) / (2f * halfW) + 0.5f) * 1920f);
+                int py0 = (int)(((c.y - hh - cy) / (2f * halfH) + 0.5f) * 1080f);
+                int py1 = (int)(((c.y + hh - cy) / (2f * halfH) + 0.5f) * 1080f);
+                px0 = Math.Max(0, px0); px1 = Math.Min(1919, px1);
+                py0 = Math.Max(0, py0); py1 = Math.Min(1079, py1);
+                for (int y = py0; y <= py1; y += 2)
+                    for (int x = px0; x <= px1; x += 2)
+                    {
+                        Color ca = on.GetPixel(x, y);
+                        Color cb = off.GetPixel(x, y);
+                        float lb = (cb.r + cb.g + cb.b) / 3f;
+                        if (lb > 0.05f && lb < 0.87f) mid++;
+                        float d = Math.Abs(ca.r - cb.r) + Math.Abs(ca.g - cb.g) + Math.Abs(ca.b - cb.b);
+                        if (d > maxD) maxD = d;
+                        if (d > 0.02f)
+                        {
+                            n++;
+                            sum += (ca.r + ca.g + ca.b) / 3.0 - lb;
+                        }
+                    }
+            }
+            changed = n;
+            signedMean = n > 0 ? (float)(sum / n) : 0f;
+            maxDelta = maxD;
+            litMid = mid;
         }
     }
 }

@@ -65,6 +65,31 @@ namespace FluxVerse
         public bool BreathAlive { get { return breath != null; } }
         public float BreathAlpha { get { return breath != null ? breath.Alpha : 0f; } }
 
+        // r146 (P-71(3) slice B): mood-visual channel 2 - the city mood director
+        // scales the per-OS-round breath ring peak (MoodVisualRules closed band
+        // [0.70, 1.15], manifest mirror). Default 1.0 = the r115 baseline
+        // bit-identical (steady zero-drift law). The setter clamps to the band
+        // and re-hangs a LIVE breath immediately (mood-flip law); a breath
+        // spawned later inherits the current effective peak.
+        float breathPeakScale = 1f;
+        public float BreathPeakScale
+        {
+            get { return breathPeakScale; }
+            set
+            {
+                breathPeakScale = MoodVisualRules.ClampBreathScale(value);
+                if (breath != null) breath.Peak = EffectiveBreathPeak;
+            }
+        }
+
+        public float EffectiveBreathPeak
+        {
+            get { return MoodVisualRules.EffectiveBreathPeak(breathPeakScale); }
+        }
+
+        // proof tap: the live breath's current peak (0 = no breath)
+        public float CurrentBreathPeak { get { return breath != null ? breath.Peak : 0f; } }
+
         public float LastPulseAlpha
         {
             get { return pulses.Count > 0 ? pulses[pulses.Count - 1].Alpha : 0f; }
@@ -259,7 +284,11 @@ namespace FluxVerse
                     pulses.Add(new GlowPulse(AntennaPos(), new Color(1f, 1f, 1f)));
                     break;
                 case "OS_TICK_START":               // one breath per OS round, long envelope
-                    if (breath == null) breath = new BreathGlow(AnchorPos());
+                    if (breath == null)
+                    {
+                        breath = new BreathGlow(AnchorPos());
+                        breath.Peak = EffectiveBreathPeak;   // r146: mood-scaled peak at spawn
+                    }
                     breath.RampIn();
                     break;
                 case "OS_TICK_DONE":
@@ -423,7 +452,7 @@ namespace FluxVerse
     // (DESIGN 9: super-body blue belongs to the brain tower).
     public class BreathGlow
     {
-        const float PeakAlpha = 0.8f;       // visible breathe, still below the CEO pulse (0.95)
+        public const float PeakAlpha = 0.8f;   // r146: BASE peak (mood-visual manifest breath base); Peak field below is the live value
         const float RampInPerSec = 0.55f;  // ~1.8s breath-in
         const float RampOutPerSec = 0.85f; // ~1.2s breath-out
 
@@ -435,6 +464,13 @@ namespace FluxVerse
         float t;
 
         public float Alpha { get { return alpha; } }
+
+        // r146 (P-71(3) slice B): mood-visual channel 2 - the peak is the base
+        // 0.8 scaled by the city mood row (steady 1.0 = the r115 baseline
+        // bit-identical, zero-drift law), hard-capped below the CEO pulse
+        // (effective max 0.92 < 0.95 - the CEO light is never outranked by
+        // ambient choreography). The router owns the scale; the proof reads Peak.
+        public float Peak = PeakAlpha;
 
         public BreathGlow(Vector3 pos)
         {
@@ -498,7 +534,7 @@ namespace FluxVerse
                 renderAlpha = 0.85f + 0.15f * Mathf.Sin(t * 0.9f);
             }
             else renderAlpha = alpha;
-            sr.color = new Color(color.r, color.g, color.b, PeakAlpha * renderAlpha);
+            sr.color = new Color(color.r, color.g, color.b, Peak * renderAlpha);
             if (target <= 0f && alpha <= 0.0001f)
             {
                 Kill();

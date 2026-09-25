@@ -1,7 +1,8 @@
 {
-  "protocol": "fluxverse-lightfx/0.1",
+  "protocol": "fluxverse-lightfx/0.2",
   "baked_round": 157,
   "sources": [
+    "r158 z physics correction (v0.1 -> v0.2, protocol semantic change per the r146 v0.2 precedent): CityCamera sits at z -10 looking +z (scene-verified), so SMALLER z = nearer = renders ON TOP within one sortingOrder (the r155 water line authored it correctly). The r157 sandbox authored the z map under the inverted convention; every z sign is re-anchored to the physically verified law - without the flip the wet strips render BEHIND the Roads tilemap (same order 2, z 0) = invisible, the cones hide behind the Props tilemap, and the bloom/stars/horizon stack in front of what they must sit behind. Assets untouched (24 baked files carry no z); geometry/orders/alphas all unchanged from v0.1.",
     "cph4/research/R-20260925-water-daynight.md sec2 item3 (light-sense trio: sign bloom + lamp cone + wet road sheen) + item4 (restrained sky: night stars twinkle + dawn/dusk horizon band) + sec3 verdict5, CEO order 09-25 ~18:00 fast lane <=24h close 09-26 ~18:00",
     "City/Assets/Editor/CitySkeletonBuilder.cs: south road rows -8/-7 + north road rows 7/8 + vcol avenues +-17/+-18; t_prop_post lamp posts row 3 x {-28,-20,-12,12,20,28} + row -4 x {-24,-16,-8,8,16,24} (tile 136 = lamp post, head arm faces EAST, multimodal forensics this round)",
     "City/Assets/Scripts/NeonSigns.cs Table: 21 rows = 17 shop signs + 4 MountExempt structure family (NeonAntenna r87 + NeonTowerAntM/L/R r132); sign centers + px tiers = bloom mount single source",
@@ -13,7 +14,7 @@
       "mounts": "17 shop signs (every Table row except the 4 MountExempt); one halo per sign, centered on the sign center",
       "px_law": "bloom px = round-half-up(sign world size * 1.7 wide / * 1.6 tall * 16); all sprites at the default PPU16 tier = natural size, zero resampling, zero runtime scaling (r155 natural-size law)",
       "texture_law": "elliptical stepped halo on family color: 3 hard rings a 165/120/75 at normalized radius 0.45/0.75/0.92 + 1 checkerboard dither ring a 40 = pixel-soft glow (spec: pixel-style soft light)",
-      "z_law": "order 6 (the sign layer), z -0.4 = strictly behind its host sign (signs at z 0, same-order sibling z separation law r155); above rim 5, below street 7 / tint 8 / pulses 10",
+      "z_law": "order 6 (the sign layer), z +0.40 + 0.002 x mount index = strictly behind its host sign (signs at z 0; larger z = farther = behind, r158 physics law); the per-mount step enforces the r119 tie law - the wide halos overlap (Bigmoney crown x the QUANT flank pair) so no two blooms share one z; above rim 5, below street 7 / tint 8 / pulses 10",
       "tier_alpha_pct": { "day": 20, "dawn": 45, "dusk": 80, "night": 100 },
       "excluded": "NeonAntenna + NeonTowerAntM/L/R (exempt structure family - not shop signs)",
       "twin_law": "NeonQuantL/NeonQuantR are size+color twins -> share bloom-quant.png (16 files serve 17 mounts; r149 pair-dup precedent, honest share not duplicate bytes)"
@@ -45,8 +46,8 @@
       "pool_band_law": "north pool y 4.1875 lands on promenade row 4 (world 4..5); south pool y -4.3125 on promenade row -5 (world -5..-4); pool halfH 0.75 bleeds a half row onto the curb tile = light over the post foot",
       "texture": "lamp-pool.png 40x24 @PPU16 = 2.5x1.5u warm amber ellipse (255,205,130), stepped rings a 130/100/65 at radius 0.30/0.60/0.85 + checkerboard dither a 35 = cone of light falling on the pavement",
       "color_note": "warm ambient street lighting; tile 136's red head pixel stays signal vocabulary - red = alert semantics, never baked into an ambient pool (five-color law)",
-      "order": 4, "z": 0.5,
-      "z_law": "above the Props tilemap (order 4 z 0, pool reads over the post foot), below signs 6 / street 7 / tint 8; inside the tint band -16..+15 like all street furniture",
+      "order": 4, "z": -0.5,
+      "z_law": "above the Props tilemap (order 4 z 0): smaller z = nearer = on top (r158 physics law), so the pool reads over the post foot; below signs 6 / street 7 / tint 8; inside the tint band -16..+15 like all street furniture",
       "tier_alpha_pct": { "day": 0, "dawn": 40, "dusk": 80, "night": 100 },
       "asset": "Assets/ArtPacks/light-fx/lamp-pool.png", "px": [40, 24]
     },
@@ -65,8 +66,8 @@
       "mounts": "6 strips in front of the neon facades: south = the three city building rects (NeonRules.Buildings 4/5/6), north = the three low-rise rects (Buildings 1/2/3) carrying NOpen/Biglife, NMids, NEScroll/Bigstream",
       "texture_law": "per-strip exact px = span*16 wide x 32 tall (2u) @PPU16; base vertical sheen ramp a 55 (top, building side) -> 25 (bottom) + DE-REGULARIZED streak columns (hash law ((x*x*31 + x*7) mod 11 < 2 = irregular spacing, per-column brightness +16..30 - never a periodic grid, never moires on a scrolling road; horizontal dither bands removed entirely per the multimodal style-gate v2/v3 passes) + 5px horizontal edge fade (x0..4 and w-5..w-1, alpha x 0.25..1.0 ramp - blends into the road, never a painted rectangle); district color baked (five-color family)",
       "vcol_zero_overlap": "strip x-ranges end flush at the avenue cell boundaries (e.g. [-23,-18] touches cell -18 at x=-18.0, never covers world [-18,-17]) - lane-marking vcol tiles stay fully visible (asserted)",
-      "order": 2, "z": 0.15,
-      "z_law": "same order as the Roads tilemap (z 0) with positive z = above the road surface, below city tiles 3; spatially disjoint from WaterFx mounts (water band y -3..2); inside the tint band",
+      "order": 2, "z": -0.15,
+      "z_law": "same order as the Roads tilemap (z 0) with smaller z = nearer = on top (r158 physics law): the sheen reads OVER the road surface, below city tiles 3; spatially disjoint from WaterFx mounts (water band y -3..2); inside the tint band",
       "tier_alpha_pct": { "day": 0, "dawn": 15, "dusk": 40, "night": 60 }
     },
     "mounts": [
@@ -74,8 +75,8 @@
       { "id": "WetGame",   "asset": "Assets/ArtPacks/light-fx/wet-game.png",   "px": [80, 32], "rect": [-23, -8, -18, -6], "color": [51, 235, 219] },
       { "id": "WetMedia",  "asset": "Assets/ArtPacks/light-fx/wet-media.png",  "px": [96, 32], "rect": [19, -8, 25, -6],  "color": [242, 82, 168] },
       { "id": "WetNorthW", "asset": "Assets/ArtPacks/light-fx/wet-nw.png",     "px": [48, 32], "rect": [-9, 7, -6, 9],     "color": [240, 185, 110] },
-      { "id": "WetNorthM", "asset": "Assets/ArtPacks/light-fx/wet-nm.png",     "px": [48, 32], "rect": [7, 7, 10, 9],      "color": [120, 225, 215] },
-      { "id": "WetNorthE", "asset": "Assets/ArtPacks/light-fx/wet-ne.png",     "px": [48, 32], "rect": [26, 7, 29, 9],     "color": [242, 82, 168] }
+      { "id": "WetNorthM", "asset": "Assets/ArtPacks/light-fx/wet-nm.png",      "px": [48, 32], "rect": [7, 7, 10, 9],      "color": [120, 225, 215] },
+      { "id": "WetNorthE", "asset": "Assets/ArtPacks/light-fx/wet-ne.png",      "px": [48, 32], "rect": [26, 7, 29, 9],     "color": [242, 82, 168] }
     ]
   },
   "stars": {
@@ -87,7 +88,7 @@
       "x_band": "x16 -544..537 (|x| <= 34.0, frame halfwidth 35.556 minus drift margin)",
       "exclusions": "tower zone x16 [-56,56] (tower rect x -2..3 + three antenna needles) + CameraProof x=13 column gap x16 [198,218]",
       "snap": "all positions on the 1/16 art grid (r147 law); min pairwise distance 28 grid units (1.75u) - restrained low-density field (spec: one-place principle, no abuse)",
-      "occlusion": "order -9 (= SkylineRules.FarOrder), z -0.5 = behind the far skyline layer (z 0): stars peek between distant spires, depth-correct",
+      "occlusion": "order -9 (= SkylineRules.FarOrder), z +0.5 = behind the far skyline layer (z 0; larger z = farther = behind, r158 physics law): stars peek between distant spires, depth-correct",
       "twinkle": "alpha steps [100, 55, 25, 55] at 0.5s per step (2s cycle), per-star phase = index mod 4",
       "tier_alpha_pct": { "day": 0, "dawn": 0, "dusk": 0, "night": 100 }
     },
@@ -105,8 +106,8 @@
       "band_law": "bottom edge 16.75 = above the SkylineProof census band (15.4..16.6, zero-touch); top 18.875 = below the AmbientProof zenith window (19.04); a deeper roofline-hugging reach = v1 candidate with SkylineProof re-anchor",
       "gradient": "vertical alpha ramp strongest at the bottom (horizon line) fading to zero at top; white texture, per-tier color tint",
       "colors": { "dusk": [250, 148, 82], "dawn": [250, 173, 133], "law": "= AmbientWheel skyBottom dusk/dawn family - ambient scenery channel, warm/pink only ever ambient (DESIGN sec9)" },
-      "order": -9, "z": -1.0,
-      "z_law": "same order as the far skyline with the deepest z: behind stars (-0.5) and skyline far (0) - sunset glow sits BEHIND the distant silhouettes (physically correct)",
+      "order": -9, "z": 1.0,
+      "z_law": "same order as the far skyline with the largest z = deepest (r158 physics law: larger z = farther = behind): behind stars (+0.5) and skyline far (z 0) - sunset glow sits BEHIND the distant silhouettes (physically correct)",
       "tier_alpha_pct": { "day": 0, "dawn": 35, "dusk": 50, "night": 0 },
       "blend_ride": "tier flip eases with the D1 blend window (adapter rides the r156 AmbientBlend progress, never hard-cuts)"
     },
@@ -118,14 +119,16 @@
   "render_laws": {
     "tier_source": "CityAmbient existing tier + 10s poll hands every family its alpha (r155/r146 pattern, zero new probe/poll face)",
     "tier_sweep": "adapter sweeps mount alphas per tier each poll; grandfathers on missing data = last tier held (honest degrade)",
-    "order_map": { "bloom": [6, -0.4], "cone": [4, 0.5], "wet": [2, 0.15], "stars": [-9, -0.5], "horizon": [-9, -1.0] },
+    "z_physics": "r158 v0.2: camera z -10 -> smaller z = nearer = on top; bloom +0.40..+0.432 behind signs / cone -0.5 over props / wet -0.15 over roads / stars +0.5 behind far skyline / horizon +1.0 deepest",
+    "order_map": { "bloom": [6, 0.40], "cone": [4, -0.5], "wet": [2, -0.15], "stars": [-9, 0.5], "horizon": [-9, 1.0] },
     "mood_channel": "reserved candidate v1 (r146 mood couples neon/breath only; light-fx v0 rides the tier axis)",
     "weather_channel": "reserved candidate v1 (rain: brighter pools + dimmed stars)"
   },
   "honest_notes": [
+    "r158 v0.2 physical correction: the v0.1 z signs were authored under the inverted depth convention and are re-anchored this round (assets untouched); the wet strip is the make-or-break case - at z +0.15 it renders behind the Roads tilemap and vanishes",
     "bloom halo is wider than its host building on the big plates (Bigmoney 8.07u vs tower 5u) - glow spill is the point of a halo, geometry gates measure the sign not the glow",
     "kiosk bloom bottom edge -15.906 vs tint floor -16: 0.094u margin, inside the tint band proper (the stricter InTintBand 0.1 margin is a sign law, bloom is glow)",
-    "stars partially occluded by skyline spires = depth-correct reading (order behind far skyline), census counts them all regardless (world-fixed mounts)",
+    "stars partially occluded by skyline spires = depth-correct reading (order behind far skyline), census counts them all regardless (world-fixed mounts); render census gates the star field in aggregate for exactly this reason",
     "lamp cone color = warm ambient street lighting; the 136 tile's red head pixel is signal vocabulary and red stays alert-only (five-color law)",
     "horizon band bottom lifted to 16.75 keeps SkylineProof zero-touch; a roofline-hugging v1 = separate slice with proof re-anchor (r51 drift law)",
     "NeonProof render gates re-run in the engine round: bloom is a separate family (family-diff censuses immune); any absolute-window red = re-anchor per the r51 law",
@@ -133,7 +136,7 @@
   ],
   "family": {
     "go_prefix": "LightFx",
-    "adapter": "CityLightFx.cs (r158 plan): scene-persistent mounts (r124/r155 law), 10s poll, tier alpha sweep, star twinkle accumulator 0.5s"
+    "adapter": "CityLightFx.cs (r158): scene-persistent mounts (r124/r155 law), 10s-tier-change sweep + 0.5s twinkle accumulator, horizon band = CityAmbient EnsureVisuals family"
   },
   "coupled_updates_r158": [
     "City/Assets/Scripts/LightFxRules.cs pure table (manifest mirror, WaterFxRules/OfficeRules family)",

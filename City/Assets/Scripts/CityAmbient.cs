@@ -26,6 +26,11 @@
 // entries converge on identical visuals at settle, which AmbientProof asserts as the
 // parity/no-pop gate. Play pumps the blend from Update -> StepAmbient; proofs pump
 // the SAME Advance core directly (CameraRig law).
+// r158 (P-20260925-09 D4): two dawn/dusk horizon glow quads join this runtime-only
+// family (LightFxRules.Horizon* mirror of the lightfx manifest v0.2). The glow rides
+// the SAME D1 blend - color = the interpolated palette's skyBottom family, alpha
+// eased with the same zero-end-velocity curve (never a hard cut, manifest blend_ride
+// law); ApplyAmbient settles it instantly like every other instant-family face.
 // Polls world/world-state.json READ-ONLY every ~10s (perceptor owns all writes).
 // Pure 2D: sky/tint/band = SpriteRenderer quads; rain/snow = recycled sprite field.
 using System;
@@ -56,6 +61,8 @@ namespace FluxVerse
         SpriteRenderer skylineFarR, skylineNearR;
         SpriteRenderer[] drops;
         SpriteRenderer[] rims;        // r148: 11 dusk roofline rim bands (runtime-only)
+        SpriteRenderer[] horizon;     // r158: 2 dawn/dusk horizon glow quads (runtime-only)
+        float horizonA, horizonAFrom, horizonATo;   // r158: horizon alpha blend state (rides the D1 window)
         float pollTimer = 999f;      // poll on first Update
         float bandPhase, bandAlpha;
         AmbientTier tier = AmbientTier.Night;
@@ -80,6 +87,7 @@ namespace FluxVerse
         public string CurrentMood { get { return curMood; } }   // r146 proof tap
         public bool BlendActive { get { return blend.Active; } }               // r156 D1 proof tap
         public Sprite CurrentSkySprite { get { return sky != null ? sky.sprite : null; } }   // r156 proof tap
+        public float CurrentHorizonAlpha { get { return horizonA; } }          // r158 proof tap
 
         // r156 proof tap: the cached per-tier gradient sprite (settle/no-pop parity gate)
         public static Sprite CachedSkyFor(AmbientTier t) { return SkySprite(t); }
@@ -186,7 +194,7 @@ namespace FluxVerse
         }
 
         // r146 (r23 owned-lifetime law face): destroy every runtime visual child.
-        // All ambient visuals (sky/skyline/tint/band/drops) are runtime-only
+        // All ambient visuals (sky/skyline/tint/band/drops/rims/horizon) are runtime-only
         // children by the r13/r25 law - nothing is ever serialized - so ANY child
         // on disk is stale contamination (the r146 red-chain: a restore-save once
         // persisted EnsureVisuals children into CityScene). Proofs call this
@@ -203,6 +211,7 @@ namespace FluxVerse
             skylineFarR = null; skylineNearR = null;
             drops = null;
             rims = null;               // r148: rim bands die with the family
+            horizon = null;            // r158: horizon quads die with the family
             field = null;
         }
 
@@ -276,17 +285,21 @@ namespace FluxVerse
         {
             if (sky == null) EnsureVisuals();
             tier = t;
+            horizonAFrom = horizonATo = LightFxRules.HorizonAlphaFor(t);   // r158: instant path settles at once
             ApplyInstantFamilies(t);
             SettleAt(t);
         }
 
         // r156 D1: PLAY-path tier entry - ease the five-value palette family over
         // BlendSeconds instead of the hard cut. Skyline fog + rims stay instant per
-        // their own family laws (r34 fog gates / r148 manifest tier_gate).
+        // their own family laws (r34 fog gates / r148 manifest tier_gate); the
+        // r158 horizon glow rides the blend window (manifest blend_ride law).
         public void TransitionAmbient(AmbientTier t)
         {
             if (sky == null) EnsureVisuals();
             tier = t;
+            horizonAFrom = horizonA;                        // r158: ride from the CURRENT applied value
+            horizonATo = LightFxRules.HorizonAlphaFor(t);   // eases with the D1 blend window
             AmbientPalette target = AmbientWheel.PaletteFor(t);
             ApplyInstantFamilies(t);
             if (PaletteNear(curPal, target)) { SettleAt(t); return; }   // same tier = no-op settle
@@ -321,6 +334,17 @@ namespace FluxVerse
                     for (int x = 0; x < W; x++) _blendTex.SetPixel(x, y, c);
                 }
                 _blendTex.Apply();
+            }
+            if (horizon != null)
+            {
+                // r158: the horizon glow rides the SAME blend - color = the
+                // interpolated palette's skyBottom family, alpha eased with the
+                // same zero-end-velocity curve (never a hard cut, manifest law)
+                float k = blend.Active ? RigMath.EaseInOut(blend.Progress01) : 1f;
+                horizonA = Mathf.Lerp(horizonAFrom, horizonATo, k);
+                Color hc = new Color(p.skyBottom.r, p.skyBottom.g, p.skyBottom.b, horizonA);
+                for (int i = 0; i < horizon.Length; i++)
+                    if (horizon[i] != null) horizon[i].color = hc;
             }
         }
 
@@ -471,6 +495,14 @@ namespace FluxVerse
             // tilemaps, below signs/tint/band/pulses (CEO pulse stays above, law).
             rims = new SpriteRenderer[RimLightRules.SegmentCount];
             for (int i = 0; i < rims.Length; i++) rims[i] = MakeRimBand(i);
+            // r158 (P-20260925-09 D4): two dawn/dusk horizon glow quads - runtime
+            // gradient sprite (white, vertical alpha ramp strongest at the horizon
+            // line) tinted per tier with the palette skyBottom family; order -9
+            // with the DEEPEST z of that family = the sunset glow sits behind
+            // the distant silhouettes (physics law r158, manifest v0.2).
+            horizon = new SpriteRenderer[LightFxRules.HorizonCount];
+            for (int i = 0; i < horizon.Length; i++) horizon[i] = MakeHorizonQuad(i);
+            horizonA = horizonAFrom = horizonATo = LightFxRules.HorizonAlphaFor(tier);
             ApplyAmbient(tier);
             SyncDrops();
         }
@@ -499,6 +531,44 @@ namespace FluxVerse
                 (RimLightRules.Y0(i) + RimLightRules.Y1(i)) * 0.5f, 0f);
             go.transform.SetParent(transform, false);
             return sr;
+        }
+
+        // r158: one horizon glow quad - a runtime-only child of CityAmbient.
+        // The sprite is a 4x34 vertical alpha ramp (quadratic, strongest at the
+        // bottom = the horizon line); scale is RELATIVE per the r13 MakeQuad law.
+        SpriteRenderer MakeHorizonQuad(int i)
+        {
+            float x0 = LightFxRules.HorizonX0(i), x1 = LightFxRules.HorizonX1(i);
+            float y0 = LightFxRules.HorizonY0, y1 = LightFxRules.HorizonY1;
+            Sprite s = HorizonSprite();
+            GameObject go = new GameObject(LightFxRules.HorizonName(i));
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = s;
+            sr.sortingOrder = LightFxRules.HorizonOrder;
+            Vector3 n = s.bounds.size;   // natural world size: scale must be RELATIVE
+            go.transform.localScale = new Vector3((x1 - x0) / n.x, (y1 - y0) / n.y, 1f);
+            go.transform.position = new Vector3((x0 + x1) * 0.5f, (y0 + y1) * 0.5f,
+                LightFxRules.HorizonZ);
+            go.transform.SetParent(transform, false);
+            return sr;
+        }
+
+        static Sprite _horizon;
+        static Sprite HorizonSprite()   // 4x34: white, alpha ramp strongest at the bottom
+        {
+            if (_horizon != null) return _horizon;
+            const int W = 4, H = 34;   // 2.125u tall @ ppu16 = the 1/16u art grid band
+            Texture2D tex = new Texture2D(W, H, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Point;
+            for (int y = 0; y < H; y++)
+            {
+                float t = y / (float)(H - 1);          // texture y=0 = bottom row
+                float a = (1f - t) * (1f - t);         // quadratic: strongest at the horizon line
+                for (int x = 0; x < W; x++) tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+            }
+            tex.Apply();
+            _horizon = Sprite.Create(tex, new Rect(0, 0, W, H), new Vector2(0.5f, 0.5f), 16f);
+            return _horizon;
         }
 
         void SyncDrops()

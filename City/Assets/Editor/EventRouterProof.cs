@@ -200,16 +200,7 @@ namespace FluxVerse
             for (int i = 0; i < 38; i++) sandbox.Tick(0.1f);   // 3.8s > 3.16s stream life
             if (sandbox.EffectsCount != 0) throw new InvalidOperationException("commit stream leak: " + sandbox.EffectsCount);
 
-            // ---- A4. BISECT STUB (temporary: A4 body disabled to isolate the
-            // ceo-before 120px bleed; restore from TECH row after the verdict) ----
-            // sub-bisect B1: manifest read + rect assertions ONLY (pure read face)
-            string manifest = File.ReadAllText(Path.Combine(RepoRoot, "Tools", "city", "southbank-manifest.json"));
-            AssertManifestRect(manifest, "QUANT", TaskLights.RectFor("quant"));
-            AssertManifestRect(manifest, "QUANT", TaskLights.RectFor("test"));   // fleet default
-            AssertManifestRect(manifest, "MEDIA", TaskLights.RectFor("media"));
-            AssertManifestRect(manifest, "GAME_MAIN", TaskLights.RectFor("gaming"));
-            int f7 = 1, f8 = 1;
-
+            // ---- A-block leak sweep (r119: A4 relocated BELOW the render shots) ----
             foreach (string n in LeakNames)
                 if (GameObject.Find(n) != null) throw new InvalidOperationException("boot-scene GO residue: " + n);
 
@@ -420,6 +411,99 @@ namespace FluxVerse
             // ---- D. leak sweep: nothing presenter-ish survives in the open scene ----
             foreach (string n in LeakNames)
                 if (GameObject.Find(n) != null) throw new InvalidOperationException("scene GO residue: " + n);
+
+            // ---- A4. task-faces sandbox (r117 spec; body restored AND relocated r119) ----
+            // Root-cause verdict (r119 probes): the evidence frames are sensitive to
+            // the editor process's PRE-LOAD object-creation history -- running A4's
+            // spawn segment before CityScene loads flips ~120px at two south-bank
+            // resident spots in every shot (stub run at the same hour reproduced the
+            // committed bytes; A4 run dirtied the same two clusters; the r118
+            // empty-scene isolation did NOT cure it -- the channel is process-global
+            // object/asset state at scene-load time, not scene residency). Fix = the
+            // shooting-order path pre-registered in the r118 debt row: base frames
+            // first, A4 last. A4's creations can no longer reach any evidence frame.
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            // B1 pure-read face: manifest containment (TaskLights rects == r103
+            // southbank footprints, single geometry source; the bisect verdict kept
+            // this face live through the stub period).
+            string manifest = File.ReadAllText(Path.Combine(RepoRoot, "Tools", "city", "southbank-manifest.json"));
+            AssertManifestRect(manifest, "QUANT", TaskLights.RectFor("quant"));
+            AssertManifestRect(manifest, "QUANT", TaskLights.RectFor("test"));   // fleet default
+            AssertManifestRect(manifest, "MEDIA", TaskLights.RectFor("media"));
+            AssertManifestRect(manifest, "GAME_MAIN", TaskLights.RectFor("gaming"));
+
+            // B2 spawn segment: TASK_CLAIM gaming -> windows stagger in + robot
+            // walks out (canon windows-up / robot-out).
+            File.AppendAllText(SandboxPath,
+                "{\"ts_utc\":\"2026-09-23T10:15:00Z\",\"type\":\"TASK_CLAIM\",\"zone\":\"gaming\",\"summary\":\"claim in game city\"}\n" +
+                "{\"ts_utc\":\"2026-09-23T10:16:00Z\",\"type\":\"FX_TICK\",\"summary\":\"noise\"}\n");
+            int f7 = sandbox.PollOnce();
+            if (f7 != 1) throw new InvalidOperationException("TASK_CLAIM poll fired=" + f7 + " (expected 1)");
+            if (sandbox.EffectsCount != 1) throw new InvalidOperationException("claim face count=" + sandbox.EffectsCount);
+            if (sandbox.PulseCount != 0)
+                throw new InvalidOperationException("TASK_CLAIM must stay pulse-silent (fx face, r30 pulse-list law)");
+            GameObject claimParent = GameObject.Find("TaskClaim");
+            if (claimParent == null) throw new InvalidOperationException("claim face GO missing in sandbox scene");
+            int claimGrid = claimParent.transform.childCount;
+            if (claimGrid != 13)   // GridFor gaming = 4x3 windows + robot
+                throw new InvalidOperationException("claim face grid arity: " + claimGrid + " (expected 13)");
+            for (int i = 0; i < 3; i++) sandbox.Tick(0.1f);   // 0.3s: stagger mid-ramp
+            int claimMid = LitWindowCensus(claimParent, 0f);
+            if (claimMid <= 0 || claimMid >= 12)
+                throw new InvalidOperationException("claim windows not staggered: lit=" + claimMid + " of 12");
+            for (int i = 0; i < 12; i++) sandbox.Tick(0.1f);   // 1.5s: every window in hold
+            int claimFull = LitWindowCensus(claimParent, 0.80f);
+            if (claimFull != 12)
+                throw new InvalidOperationException("claim windows not all lit at hold: " + claimFull + "/12");
+            GameObject claimRobot = GameObject.Find("TaskRobot");
+            if (claimRobot == null) throw new InvalidOperationException("claim robot missing mid-walk");
+            if (claimRobot.transform.position.y < -8.5f)   // GameRect front y=-11 + 2.6u ingress
+                throw new InvalidOperationException("claim robot never walked out: y=" + claimRobot.transform.position.y.ToString("F2"));
+            for (int i = 0; i < 24; i++) sandbox.Tick(0.1f);   // 3.9s > 3.75s claim life
+            if (sandbox.EffectsCount != 0) throw new InvalidOperationException("claim face leak in sandbox: " + sandbox.EffectsCount);
+            if (GameObject.Find("TaskClaim") != null) throw new InvalidOperationException("claim face GO survived its life");
+
+            // TASK_DONE quant: windows lit at spawn, staggered off sweep (windows-off
+            // law), robot walks home, one in-face pulse; the router pulse list stays
+            // empty (the pulse is a face child, not a glow pulse).
+            File.AppendAllText(SandboxPath,
+                "{\"ts_utc\":\"2026-09-23T10:17:00Z\",\"type\":\"TASK_DONE\",\"zone\":\"quant\",\"summary\":\"work session ends\"}\n" +
+                "{\"ts_utc\":\"2026-09-23T10:18:00Z\",\"type\":\"FX_TICK\",\"summary\":\"noise\"}\n");
+            int f8 = sandbox.PollOnce();
+            if (f8 != 1) throw new InvalidOperationException("TASK_DONE poll fired=" + f8 + " (expected 1)");
+            if (sandbox.EffectsCount != 1) throw new InvalidOperationException("done face count=" + sandbox.EffectsCount);
+            if (sandbox.PulseCount != 0)
+                throw new InvalidOperationException("TASK_DONE pulse lives inside the face; router list must stay empty (r30 law)");
+            GameObject doneParent = GameObject.Find("TaskDone");
+            if (doneParent == null) throw new InvalidOperationException("done face GO missing in sandbox scene");
+            int doneGrid = doneParent.transform.childCount;
+            if (doneGrid != 18)   // GridFor quant = 4x4 windows + robot + pulse
+                throw new InvalidOperationException("done face grid arity: " + doneGrid + " (expected 18)");
+            sandbox.Tick(0.1f);   // 0.1s: lit-at-spawn law + pulse rising
+            int doneLit = LitWindowCensus(doneParent, 0.80f);
+            if (doneLit != 16)
+                throw new InvalidOperationException("done windows not lit at spawn: " + doneLit + "/16");
+            GameObject donePulse = GameObject.Find("TaskPulse");
+            if (donePulse == null) throw new InvalidOperationException("done pulse missing at spawn");
+            SpriteRenderer donePulseSr = donePulse.GetComponent<SpriteRenderer>();
+            if (donePulseSr.color.a < 0.05f)
+                throw new InvalidOperationException("done pulse dead at spawn: a=" + donePulseSr.color.a.ToString("F3"));
+            for (int i = 0; i < 7; i++) sandbox.Tick(0.1f);   // 0.8s: off sweep mid-flight
+            int doneMid = LitWindowCensus(doneParent, 0.40f);
+            if (doneMid <= 0 || doneMid >= 16)
+                throw new InvalidOperationException("done off-sweep not staggered: lit=" + doneMid + " of 16");
+            for (int i = 0; i < 9; i++) sandbox.Tick(0.1f);   // 1.7s: windows-off law, face still alive
+            if (sandbox.EffectsCount != 1) throw new InvalidOperationException("done face died before its life: " + sandbox.EffectsCount);
+            if (LitWindowCensus(doneParent, 0.01f) != 0)
+                throw new InvalidOperationException("done windows-off law broken (lights still on)");
+            if (donePulse == null || donePulse.GetComponent<SpriteRenderer>().color.a > 0.01f)
+                throw new InvalidOperationException("done pulse survived its 1.5s envelope");
+            for (int i = 0; i < 10; i++) sandbox.Tick(0.1f);   // 2.7s > 2.6s done life
+            if (sandbox.EffectsCount != 0) throw new InvalidOperationException("done face leak in sandbox: " + sandbox.EffectsCount);
+            if (GameObject.Find("TaskDone") != null) throw new InvalidOperationException("done face GO survived its life");
+
+            foreach (string n in LeakNames)
+                if (GameObject.Find(n) != null) throw new InvalidOperationException("boot-scene GO residue: " + n);
             if (File.Exists(SandboxPath)) File.Delete(SandboxPath);   // clean sandbox evidence file
             return "sandbox(f0=" + f0 + ",f1=" + f1 + ",f2=" + f2 + ",f3=" + f3 + ",f4=" + f4 + ",f5=" + f5 + ",f6=" + f6 + ",leaks=0)"
                 + " router_saved=" + routerSaved
@@ -553,6 +637,23 @@ namespace FluxVerse
                     if (bri > 0.50f && (c.r - c.b) > 0.38f) count++;
                 }
             return count;
+        }
+
+        // r119 A4: count TaskWindow children whose alpha sits above a threshold --
+        // stagger / hold / off-sweep census gates for the sandbox task faces.
+        static int LitWindowCensus(GameObject parent, float threshold)
+        {
+            int lit = 0, windows = 0;
+            foreach (Transform c in parent.transform)
+            {
+                if (c.name != "TaskWindow") continue;
+                windows++;
+                SpriteRenderer sr = c.GetComponent<SpriteRenderer>();
+                if (sr == null) throw new InvalidOperationException("A4 census: window without renderer");
+                if (sr.color.a > threshold) lit++;
+            }
+            if (windows == 0) throw new InvalidOperationException("A4 census: no TaskWindow children under " + parent.name);
+            return lit;
         }
 
         // r117 A4: TaskLights rects must equal the r103 southbank-manifest

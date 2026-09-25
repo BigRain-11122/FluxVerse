@@ -1,0 +1,69 @@
+{
+  "protocol": "fluxverse-rimlight/0.1",
+  "baked_round": 147,
+  "sources": [
+    "docs/research/R-20260924-hd-pixel-aesthetics.md six.1 (dusk rim layer, P1)",
+    "docs/design/art-target-dusk.png multimodal extraction (r147 first-hand, four questions)",
+    "City/Assets/Scripts/NeonSigns.cs Buildings table (rect single source for the 8 majors)",
+    "City/Assets/Editor/CitySkeletonBuilder.cs PaintSouth + PaintTower (annex + wedge steps)"
+  ],
+  "glow": {
+    "center_x": 0.5,
+    "note": "sunset horizon band sits behind the QUANT twist tower (target-image hero position). Rims face the band (centripetal law) - NOT a uniform west side. Buildings left of the band light their east-facing edge, right of it light their west-facing edge, in-band light both. Strength falls off with horizontal distance."
+  },
+  "tier_gate": {
+    "tiers": ["dusk"],
+    "note": "dusk-only v0 per R-20260924-hd-pixel-aesthetics six.1. Dawn rim reserved."
+  },
+  "color": {
+    "main": [1.0, 0.745, 0.49],
+    "core": [1.0, 0.851, 0.627],
+    "core_max_dist": 1.5,
+    "hex_reference": { "main": "#FFBE7D", "core": "#FFD9A0" },
+    "law": "honey orange = AMBIENT channel (same family as the dusk tint r13), five-color functional law untouched; not a functional light"
+  },
+  "dither": {
+    "art_rows": [0.8, 0.38],
+    "edge": "hard top row + 1-step dither decay (pixel-art law from target image: no blur, no glow halo)"
+  },
+  "render": {
+    "order": 5,
+    "note": "first free slot above tilemaps 0..4, below signs 6 / street 7 / tint 8 / band 9 / pulses 10 / drops 12. Sign occlusion over rim = physical (sign nearer camera). Tint 22pct warm shift = unified light script (signs live under tint too). CEO pulse (order 10) stays ABOVE rim = CEO priority law (r146 mood gate) preserved."
+  },
+  "falloff": {
+    "metric": "abs(segment_center_x - glow.center_x)",
+    "bands": [
+      { "max_dist": 10.0, "strength": 1.0 },
+      { "max_dist": 24.0, "strength": 0.55 },
+      { "max_dist": 99.0, "strength": 0.25 }
+    ],
+    "note": "target image: rims strongest on towers flanking the central band, fade to near-nothing at the frame edges"
+  },
+  "thickness": { "roof_art_px": 2, "world_u": 0.125 },
+  "segments": [
+    { "id": "RimQuantTop", "kind": "roof", "building": "NeonSigns.Buildings[4]", "rect": [-2.0, -8.125, 3.0, -8.0] },
+    { "id": "RimGameMainTop", "kind": "roof", "building": "NeonSigns.Buildings[5]", "rect": [-23.0, -11.125, -18.0, -11.0] },
+    { "id": "RimGameAnnexTop", "kind": "roof", "building": "builder.PaintSouth.GAME_ANNEX", "rect": [-26.0, -13.125, -25.0, -13.0] },
+    { "id": "RimMediaTop", "kind": "roof", "building": "NeonSigns.Buildings[6]", "rect": [19.0, -8.125, 25.0, -8.0] },
+    { "id": "RimNWTop", "kind": "roof", "building": "NeonSigns.Buildings[0]", "rect": [-28.0, 11.875, -25.0, 12.0] },
+    { "id": "RimNWMidTop", "kind": "roof", "building": "NeonSigns.Buildings[1]", "rect": [-9.0, 11.875, -6.0, 12.0] },
+    { "id": "RimNEMidTop", "kind": "roof", "building": "NeonSigns.Buildings[2]", "rect": [7.0, 11.875, 10.0, 12.0] },
+    { "id": "RimNETop", "kind": "roof", "building": "NeonSigns.Buildings[3]", "rect": [26.0, 11.875, 29.0, 12.0] },
+    { "id": "RimBrainTip", "kind": "roof", "building": "builder.PaintTower.tip", "rect": [0.0, 18.875, 1.0, 19.0] },
+    { "id": "RimBrainShoulderW", "kind": "roof", "building": "builder.PaintTower.shoulder17.exposed_west", "rect": [-1.0, 17.875, 0.0, 18.0] },
+    { "id": "RimBrainShoulderE", "kind": "roof", "building": "builder.PaintTower.shoulder17.exposed_east", "rect": [1.0, 17.875, 2.0, 18.0] }
+  ],
+  "segment_law": {
+    "containment": "every roof segment = the top 2 art px of its building rect (inside the silhouette by construction, zero floating pixels)",
+    "media_note": "MEDIA dual-sphere is a full rectangular Block() in the builder (narrative name only) - a full-width roofline strip is silhouette-faithful",
+    "brain_note": "wedge top: tip cell [0,1] row 18 top at 19; shoulder row 17 top at 18 exposed only outside the tip footprint (x -1..0 and 1..2)"
+  },
+  "reserved": {
+    "vertical_edges": "glow-facing corner strips 0.5-1 art px (GAME_MAIN east x1, MEDIA west x0, QUANT both edges, brain shoulder sides) - v1 pending silhouette survey",
+    "sprite_buildings": "Office* / Terrace* / LabPod* sprite roofs - v1 expansion (rect tops known, cheap rows)",
+    "brain_plinth_ledge": "exposed plinth top shoulders at y=11 (x -2..-1 and 2..3) - stepped-ledge candidate v1",
+    "dawn_rim": "dawn-tier cool-pink rim - reserved",
+    "alpha_ramp": "instant tier switch (ApplyAmbient tint family behavior); smooth ramp reserved",
+    "additive_glow": "r146 reserved-candidates family (real brightening needs additive/glow carriers, input-clamp law) - v1 carrier candidate for far-edge pop"
+  }
+}

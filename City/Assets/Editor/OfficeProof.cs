@@ -61,10 +61,13 @@ namespace FluxVerse
         static string ScenePath { get { return "Assets/Scenes/CityScene.unity"; } }
         static int asserts;
 
-        // r111 anchor canon (CitySkeletonBuilder MakeAnchor calls - live-checked in C)
+        // r111 anchor canon (CitySkeletonBuilder MakeAnchor calls - live-checked in C).
+        // r133 fix: BrainTower (0,11) -> (0.5,14) per tower-v2 manifest item 5 -
+        // the r132 re-anchor updated the builder but missed this canon (office
+        // pass red). Zone anchors unmoved.
         static readonly Vector2[] AnchorCanon =
         {
-            new Vector2(0f, 11f),       // BrainTower
+            new Vector2(0.5f, 14f),     // BrainTower (tower-v2 visual center)
             new Vector2(-20.5f, -11f), // Zone_GAME
             new Vector2(0.5f, -12f),   // Zone_QUANT
             new Vector2(22f, -11f),    // Zone_MEDIA

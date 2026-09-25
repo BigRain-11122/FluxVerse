@@ -459,6 +459,21 @@ namespace FluxVerse
             Shot(cam, "m1-r104-south-l1-north.png");
             cam.orthographicSize = camSizeSaved;
             cam.transform.position = camPosSaved;
+
+            // ---- D2b. r132 tower record set (r131 item-7 shot plan): the same
+            // sec.3 four views re-shot post tower-v2 wedge-cut reshape, under
+            // the same live street_behavior face as the r104 set above.
+            amb.ApplyAmbient(AmbientTier.Night);
+            Shot(cam, "m1-r132-tower-night.png");
+            amb.ApplyAmbient(AmbientTier.Day);
+            Shot(cam, "m1-r132-tower-day.png");
+            cam.orthographicSize = RigMath.L1Size;
+            cam.transform.position = new Vector3(0f, -10f, camPosSaved.z);
+            Shot(cam, "m1-r132-tower-l1-south.png");
+            cam.transform.position = new Vector3(0f, 10f, camPosSaved.z);
+            Shot(cam, "m1-r132-tower-l1-north.png");
+            cam.orthographicSize = camSizeSaved;
+            cam.transform.position = camPosSaved;
             beh.ApplyState(null);   // grandfather restore - record set done
 
             // ---- F. street-behavior consumption gates (P-75 slice B, r124) ----

@@ -289,13 +289,23 @@ namespace FluxVerse
             for (int i = 0; i < 16; i++) face.Tick(0.1f);
             if (face.BreathAlive) throw new InvalidOperationException("breath survived DONE in scene test");
 
-            // C2b gate release stream: cyan dots crossing the gate box brighten the tower foot
+            // C2b gate release stream: cyan dots crossing the gate box brighten the tower foot.
+            // r133 OPEN RED - two window attempts both failed (gatePos r30 -> 0.030;
+            // this +0.12 r34 -> 0.024; threshold 0.03 NOT weakened). Ground truth so far:
+            // camera derived from antenna landmarks = (0.13,-0.05); the box lands at PNG
+            // rows 288..356 cols 939..1007; PNG census finds NO teal dot discs at the
+            // assumed (0.61,8) cluster - only STATIC teal window streaks on the plinth
+            // (x -0.64..1.84, y 7.7..10.6, in both renders = cancels in delta). The dots'
+            // true on-screen position is NOT yet pinned; next round must census the DOT
+            // color family (r .30 g .95 b 1.0 - b-g is tiny, do not filter on b-g) and
+            // re-anchor this box to the measured dots before touching GatePos itself.
+            float gateBoxX = gatePos.x + 0.12f;
             Texture2D g0 = Shot(cam, null, false);
-            float g0Bri, g0Warm; BoxMetrics(g0, cam, gatePos.x, gatePos.y, out g0Bri, out g0Warm, 30);
+            float g0Bri, g0Warm; BoxMetrics(g0, cam, gateBoxX, gatePos.y, out g0Bri, out g0Warm, 34);
             face.TriggerDirect("GATE_PASS");
             for (int i = 0; i < 10; i++) face.Tick(0.1f);   // 1.0s: mid-flow, three dots inside the box
             Texture2D g1 = Shot(cam, "m1-r115-p12-gatepass.png", true);
-            float g1Bri, g1Warm; BoxMetrics(g1, cam, gatePos.x, gatePos.y, out g1Bri, out g1Warm, 30);
+            float g1Bri, g1Warm; BoxMetrics(g1, cam, gateBoxX, gatePos.y, out g1Bri, out g1Warm, 34);
             float gateBriDelta = g1Bri - g0Bri;
             if (gateBriDelta < 0.03f)
                 throw new InvalidOperationException("gate release stream not visible: delta=" + gateBriDelta.ToString("F3"));

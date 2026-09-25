@@ -249,6 +249,14 @@ foreach ($sk in @('ctx','generated_utc','total','visible','nodata','seats')) {
   if ($stateParts.ContainsKey('streetbeh_' + $sk)) { $streetBeh[$sk] = $stateParts['streetbeh_' + $sk] }
 }
 
+# r165: census birth-station face (probe census, P-39 birth-station data leg)
+# - additive section; generated_utc (census export mtime) forwarded for
+# snapshot-freshness honesty; wall = PUBLIC-WHITELIST public-face fields only
+$censusSec = @{}
+foreach ($ck in @('total','generated_utc','wall')) {
+  if ($stateParts.ContainsKey('census_' + $ck)) { $censusSec[$ck] = $stateParts['census_' + $ck] }
+}
+
 # resident minds (probe residents.ps1): latest AI line per resident -> state.residents
 $residents = @{}
 if ($stateParts.ContainsKey('residents')) { $residents = $stateParts.residents }
@@ -300,6 +308,10 @@ if ($inboxSec.Count -gt 0) { $state['inbox'] = $inboxSec }
 # r121: street resident behavior face - additive section; absent entirely while
 # the BigLife behavior export is missing (zero consumer impact when idle)
 if ($streetBeh.Count -gt 0) { $state['street_behavior'] = $streetBeh }
+
+# r165: census birth-station face - additive section; absent entirely while the
+# census export is missing or torn (zero consumer impact when idle)
+if ($censusSec.Count -gt 0) { $state['census'] = $censusSec }
 
 # ---------- write outputs (state -> .new, verify promotes on PASS) ----------
 [System.IO.File]::WriteAllText($newFile, ($state | ConvertTo-Json -Depth 6), $utf8)

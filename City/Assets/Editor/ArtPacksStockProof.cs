@@ -21,7 +21,10 @@
 // and the PPU write is a pure serialization change. This IS the deliberate
 // importer-edit batch the pipeline comments reserve stock value fixes for.
 // Sections:
-//  S0 inventory: exactly 488 under Assets/ArtPacks, per-package counts pinned
+//  S0 inventory: exactly 488 .png under Assets/ArtPacks, per-package
+//     counts pinned (census-method note r129: FindAssets t:Texture2D
+//     also returns 44 unconsumed psd/gif authoring sources outside the
+//     r128 png census; the scope filter is .png, see S0 body);
 //     (r128 census); all 27 FIX paths present; PPU expectations asserted
 //     (16 for 19 files, 32/48 for the 8 keep files - census-pinned, drift =
 //     throw); guid + meta bytes snapshot for all 488 (stray-touch guard);
@@ -207,12 +210,18 @@ namespace FluxVerse
 
         static string Prove()
         {
-            // ---- S0 inventory ----
-            var found = new List<string>(AssetDatabase.FindAssets("t:Texture2D", new[] { "Assets/ArtPacks" }));
-            if (found.Count != 488)
-                throw new InvalidOperationException("S0: total shifted " + found.Count);
+            // ---- S0 inventory (census scope = the 488 .png; the 44 psd/gif
+            // authoring sources also count as Texture2D but sit outside the
+            // r128 png census - filtered here, r129 census-method fix) ----
+            var foundRaw = new List<string>(AssetDatabase.FindAssets("t:Texture2D", new[] { "Assets/ArtPacks" }));
             var all = new List<string>();
-            foreach (string g in found) all.Add(AssetDatabase.GUIDToAssetPath(g));
+            foreach (string g in foundRaw)
+            {
+                string ap = AssetDatabase.GUIDToAssetPath(g);
+                if (ap.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) all.Add(ap);
+            }
+            if (all.Count != 488)
+                throw new InvalidOperationException("S0: total shifted " + all.Count);
             all.Sort();
             var byPkg = new Dictionary<string, int>();
             foreach (string p in all)
@@ -251,13 +260,25 @@ namespace FluxVerse
             {
                 var i0 = AssetImporter.GetAtPath(p) as TextureImporter;
                 if (i0 == null) throw new InvalidOperationException("S0: not a texture importer " + p);
-                if (i0.textureCompression == TextureImporterCompression.Uncompressed)
-                    throw new InvalidOperationException("S0: FIX file already uncompressed " + p);
-                if (i0.userData != STOCK && i0.userData != MARK && i0.userData != "")
-                    throw new InvalidOperationException("S0: FIX file unexpected stamp '" + i0.userData + "' " + p);
-                if (i0.spritePixelsPerUnit != ExpectedPpuOf(p))
-                    throw new InvalidOperationException("S0: FIX file ppu drift " + p + " expected="
-                        + ExpectedPpuOf(p) + " actual=" + i0.spritePixelsPerUnit);
+                if (i0.userData == MARK)
+                {
+                    // post-fix state (idempotent re-run / crash-recovery path,
+                    // r129 repair of the dead S1 skip branch): full compliance
+                    // required here, S1 then asserts + skips; the memBefore sum
+                    // below becomes the already-fixed baseline (honest for a
+                    // no-op stability pass)
+                    AssertStock(i0, p);
+                }
+                else
+                {
+                    if (i0.textureCompression == TextureImporterCompression.Uncompressed)
+                        throw new InvalidOperationException("S0: FIX file already uncompressed " + p);
+                    if (i0.userData != STOCK && i0.userData != "")
+                        throw new InvalidOperationException("S0: FIX file unexpected stamp '" + i0.userData + "' " + p);
+                    if (i0.spritePixelsPerUnit != ExpectedPpuOf(p))
+                        throw new InvalidOperationException("S0: FIX file ppu drift " + p + " expected="
+                            + ExpectedPpuOf(p) + " actual=" + i0.spritePixelsPerUnit);
+                }
                 var t0 = AssetDatabase.LoadAssetAtPath<Texture2D>(p);
                 if (t0 == null) throw new InvalidOperationException("S0: not loadable " + p);
                 dimsBefore[p] = new int[] { t0.width, t0.height };

@@ -1,0 +1,50 @@
+{
+  "protocol": "fluxverse-moodvisual/0.1",
+  "baked_round": 145,
+  "sources": [
+    "TECH.md sec9 r143 item 5 (mood->visual mapping candidates, slice B pre-registration) + r144 row (MoodDirector.cs mirror landed, slice A closed)",
+    "DESIGN.md sec.7 no-decoration law: every visual maps to real data - mood is 100% data-derived (event density / law-source festivals / deep-night window / weather alert)",
+    "DESIGN.md sec.9 five-color law: functional colors fixed, pink/purple ambient-only, brightness modulation is structurally hue-free",
+    "BigLife cognition/MOOD-DIRECTOR.md v1.0 (mood contract, T-20260924-16c; python Tools/mood_director.py = the LAW SOURCE)",
+    "City/Assets/Scripts/MoodDirector.cs (r144 engine mirror: five-state closed set, DenseDefault=12, priority somber > festive > lively > hushed > steady)",
+    "City/Assets/Scripts/NeonRules.cs (21 persistent scene signs, MountExempt=3 tower-antenna needles)",
+    "City/Assets/Scripts/EventRouter.cs (BreathGlow per-OS-round ring, PeakAlpha=0.8; GlowPulse CEO pulse MaxAlpha=0.95)"
+  ],
+  "law": {
+    "purpose": "P-71(3) slice B step 1 (r143 item 5, sandbox-first r103/r111/r123/r137/r141 pattern): the director state (engine-mirrored r144) drives a CLOSED-BAND multiplicative modulation of exactly two existing visual channels. This manifest = the single parameter source for the r146 engine round; assertion gate logs/devloop-r145-moodvisual-test.ps1. Zero editor budget this round.",
+    "no_decoration_law": "mood is 100% real-data derived (events 24h >= DenseDefault 12 / law-source festivals with legal pointers / deep-night window / WEATHER_ALERT + somber weather kinds) - the modulation inherits that traceability; zero invented states, zero timed decorative loops (DESIGN sec.7).",
+    "five_color_law": "every modulation value is a single grayscale scalar (equal-RGB brightness multiplier) - structurally hue-free. Functional light colors, ambient palettes, tint quads and every proof-baseline hue are untouched.",
+    "zero_drift_law": "steady AND somber rows are exactly 1.0 on every channel (the baseline never drifts; somber's visual IS the existing r13 ALERT red band + rain/snow field - linkage without new construction, r143 law).",
+    "ceo_pulse_precedence": "effective breath peak = PeakAlpha(0.8) x breath_peak_scale must stay strictly below the CEO pulse MaxAlpha(0.95): max scale 1.15 -> 0.92 < 0.95. The CEO light is never outranked by ambient choreography.",
+    "exempt_family_law": "the MountExempt structure family (4 signs: NeonTowerAntM/L/R r132 crown needles - CEO throne pin always-on + fleet pins - plus NeonAntenna, the QUANT rooftop lattice antenna, r87 exempt precedent) is tower/antenna structure, NOT street mood scenery: excluded from neon modulation. Modulated set = 21 - 4 = 17 signs.",
+    "degrade_law": "mood absent (calendar null / world-state absent / events stream unreadable / unknown mood string) => steady row (x1.0 everywhere, grandfather face, honest silence - MoodDirector null law r144).",
+    "proof_surface_law": "channels deliberately avoid AmbientTint / sky palette / skyline fog (AmbientProof + CameraProof baselines stay untouched); the engine face applies runtime-only and restores neutral white before any scene save (r124 runtime law)."
+  },
+  "channels": {
+    "neon_intensity": {
+      "carrier": "NeonRules table sprites (persistent scene objects) - runtime sr.color grayscale multiplier, white = neutral",
+      "band": [0.85, 1.15],
+      "modulated_count": 17,
+      "exempt_count": 4,
+      "exempt_family": "MountExempt structure family: NeonTowerAntM/L/R (r132 crown needles) + NeonAntenna (QUANT rooftop lattice, r87 exempt precedent)"
+    },
+    "breath_peak_scale": {
+      "carrier": "EventRouter.BreathGlow per-OS-round ring (OS_TICK_START ramp-in / OS_TICK_DONE ramp-out, one breathe per 10-min city round)",
+      "band": [0.7, 1.15],
+      "base_peak_alpha": 0.8,
+      "absolute_ceiling": 0.95
+    }
+  },
+  "moods": {
+    "steady":  { "neon_intensity": 1.0,  "breath_peak_scale": 1.0,  "source": "baseline - zero overlay" },
+    "lively":  { "neon_intensity": 1.1,  "breath_peak_scale": 1.15, "source": "density: events 24h >= DenseDefault 12" },
+    "festive": { "neon_intensity": 1.15, "breath_peak_scale": 1.1,  "source": "calendar: law-source festival (10-01 National Day = first natural acceptance window)" },
+    "somber":  { "neon_intensity": 1.0,  "breath_peak_scale": 1.0,  "source": "alert/weather: the r13 red band + rain/snow field IS the visual - no new overlay" },
+    "hushed":  { "neon_intensity": 0.85, "breath_peak_scale": 0.7,  "source": "night-window: deep night 00:00-05:00 (05:00 included)" }
+  },
+  "reserved_candidates": {
+    "window_light_density": "no persistent window-light carrier exists today (TASK_CLAIM/DONE faces are transient seconds-life; tile windows are baked static) - the hushed window-dim folds into P-38(3) heat-driven window line when that carrier is built",
+    "festive_ambient_warm": "a warm ambient accent would touch AmbientTint and the AmbientProof/CameraProof baselines - needs its own slice with re-derived gates, NOT v0",
+    "aa034_fireworks": "festival fireworks unlock stays a separate CEO decision (hard-block line: no real event source; law-source festivals now exist in the calendar but the asset line is not this slice's call)"
+  }
+}

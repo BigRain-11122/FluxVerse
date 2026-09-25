@@ -30,6 +30,8 @@ public class CityImportPostprocessor : AssetPostprocessor
         if (path.StartsWith("Assets/ArtPacks/residents-atlas/")) return 24;
         // r102 office ladder: 48px boards @ 24 = 2u/floor (P-69(1) tile ladder, r101 list)
         if (path.StartsWith("Assets/ArtPacks/office-ladder/")) return 24;
+        // r140 lab glass (P-39(1) labs): 48px-cell pods @ 24 = 2u/cell, pods capped 3u (r139)
+        if (path.StartsWith("Assets/ArtPacks/lab-glass/")) return 24;
         return 16;
     }
 

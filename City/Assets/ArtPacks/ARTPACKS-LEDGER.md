@@ -110,3 +110,9 @@ AA-016.02 车辆 / AA-034 光效粒子 193 PNG / FT-011 缝合像素（霓虹中
 - 内容：**脑塔 v2.0 楔尖三天线针**（tower-v2-manifest antennas law——中间=CEO 面壁者位最粗最高·纯白常亮；两侧=机队心跳针）——mid 4×14px（0.25×0.875u@16ppu）+side 2×9px（0.125×0.5625u）两件
 - 来源：**本仓自焙**（`Tools/city/bake-tower-antennas.ps1` GDI+ 程序化白针·零外采零第三方许可义务·确定性双跑 SHA256 稳：mid 9A15DBE98370/side CFF920F5A169）
 - 消费实况（r132 引擎落地）：`NeonSigns.cs` 表 21 行（NeonTowerAntM/L/R·MountExempt 豁免族=r87 天线先例——招牌框架律不适用，NeonProof 针族门〔楔尖 x 域 [0,1]·中间严格最高最宽·顶 ≤19.9 帧边距律〕执法）
+
+## lab-glass（8 件·本仓自焙·r140 P-39① 实验区静态件预置）——集团自产件
+
+- 内容：**CPH4 Labs 实验区玻璃设施八件**（DESIGN §十六 16.3 视觉令——超体蓝〔CPH4 64,196,255 主谱锚=脑深层蓝·r139 ③〕玻璃拟态五原子〔半透明渐变 alpha 85..150 带+发光描边+外发光晕+高光斜条+暗冷基座·P-18 同技法入世界层〕+白大褂区洁净冷光·红灯仅 FAIL 语义禁入静态件）——孵化舱群 3（lab-pod-tall 48×72=2×3u·lab-pod-mid 48×48=2×2u·lab-pod-wide 96×48=4×2u 双舱+中支柱流光点）+居民诞生站 lab-birth 96×72=4×3u（中央出生舱+仪器墙 2×4 窗格+出生墙 15 卡槽三亮位〔最近出生卡滚动语义〕）+城市未来沙盘台 lab-sandbox 96×48=4×2u（桌面微缩城六楼+最高楼天线〔孤立白像素=设计件〕+全息光带）+数据管道段 3（lab-pipe-h 48×16／lab-pipe-v 16×48／lab-pipe-node 16×16·流光窗格段=西行入塔「研究结论回流治理层」语义件）——舱体 ≤3u 低伏律（r139 ②·顶 ≤12<办公 13<脑塔 19）。
+- 来源：**本仓自焙**（`Tools/city/bake-lab-glass.ps1` GDI+ 程序化·零外采零第三方许可义务）——确定性双跑 SHA256 幂等（pod-tall 76D288CED89F／pod-mid 6EB250327031／pod-wide 3C74F195C6C6／birth 4D9D747FF1BE／sandbox 8D990ABF185A／pipe-h EF03FACC2C3C／pipe-v B73796407809／node F5B2666A42E3）+带位自检四门（透明角×8·超体蓝 lit 计数 332/236/502/476/40/48/48/16·玻璃带 1271/752/1648/1211·8 件互异）全绿+4× 拼图多模态抽验 8/8 可辨零缺陷（logs/devloop-r140-sheet.ps1）。
+- 消费实况（r140 预置）：**引擎布设待 r141 布设沙盒轮**（labs-manifest.json 唯一几何源·落位窗双案终裁 r139 ②）→r142 引擎轮 LabsRules 精灵族 GO（OfficeRules 先例）；.meta 随首个编辑器轮导入生成（P-27⑤ 先例·CityImportPostprocessor PPU 表已增 lab-glass→24 行）。

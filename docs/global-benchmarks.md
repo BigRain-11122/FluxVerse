@@ -2,7 +2,7 @@
 
 > 溯源：CEO 令 2026-09-24 ~16:00「各子公司和实验室，对自身业务和研发等，全面建立全球化的视野和执行标准，适合AI执行的，全面调研，各方面采集，不准闭门造车，且要按周期去更新。每条线都要。」（ledger P-2026-09-24-56）·正典=`cph4/global-vision.md` v1.0（§四 分工域图 FluxVerse 行）·T2 否决窗至 2026-10-01
 > 本仓线焦点：**数字孪生对标**——Kritzinger 2018 真孪生升格线（环B 令行通道=升格唯一通道·P-12 行）·组织孪生 DTO=文献空白坐标（R-20260923-academic §三判词「构件皆有出处·组合确属空白」）
-> 纪律：源分级 A/B/C/D/M·零断言（确认/待证两态标注）·零 key·**本版零新增网络采集**（全复用仓内已验证调研=R-20260923-academic〔web_fetch 17 次验证声明在册〕+R-20260924-hd-pixel-aesthetics）
+> 纪律：源分级 A/B/C/D/M·零断言（确认/待证两态标注）·零 key·**v1.1 新增 web_fetch 2 次**（NVIDIA Omniverse 官网+Siemens sw 域官网·2026-09-27·T-FV-134 首扫）·其余复用仓内已验证调研=R-20260923-academic〔web_fetch 17 次验证声明在册〕+R-20260924-hd-pixel-aesthetics
 
 ## ①视野面
 
@@ -24,7 +24,8 @@
 - 组织孪生（DTO）空白：2026-09-23 arXiv 检索实测无成熟独立脉络（S25 负结果·单源局限在案·建议 Scopus/WoS 复核）+van der Aalst 2016 过程挖掘=数据底座（S24）
 - 元宇宙对标（教训面）：Meta 2021 押注→元宇宙部门当年亏损超 $10B·Reality Labs 2025 营收 $2.2B/营业亏损 $19.1B·重心转 AI（S08·维基实数·确认）→本仓定位=镜窗与工具非乐园（S09 工业转向同判）
 - 硬约束域动态：**《人工智能生成合成内容标识办法》2025-09-01 施行**——AI 生成内容显著标识（P-40 已接线·季度全扫+事件即时）
-- [M·待证·下轮核验] NVIDIA Omniverse 城市级 DT 平台最新动向·Siemens 等商用城市孪生产品线——本版零新增网络采集·标待证
+- [B·确认·2026-09-27 官网实查（T-FV-134 首扫）] **NVIDIA Omniverse 主页已转「Simulation/Blueprints」面**——「Integrate Generative AI and Synthetic Data Generation into 3D Workflows」+NVIDIA Blueprints=AI agents/digital twins 参考工作流目录（build.nvidia.com）；在册 DT 蓝图=**MEGA 多机器人机队工业孪生**（官方原文「Simulate, test, and optimize physical AI and robotic fleets at scale in industrial digital twins **before real-world deployment**」=先仿真后部署方法论锚）+交互流体孪生蓝图；CAE 微服务目录=Ansys Fluent/**Siemens Simcenter STAR-CCM+**/Cadence Fidelity·Spectre-X（Rescale CAE Hub 宣称至快 100x）；页面未载=版本号/价格/城市级 AEC 专案
+- [B·确认·2026-09-27 官网实查（T-FV-134 首扫）] **Siemens 商用孪生线=Simcenter**（定位原文「uniquely combines system simulation, 3D CAE and test」三合一）·2026 发布节奏在证（Simcenter Testlab 2606 版本新闻 2026-09-22·STAR-CCM+ SPH 热耦合帖 2026-07）·NVIDIA 耦合双源在证（STAR-CCM+ 同件上架 NVIDIA API 目录·NVIDIA 侧页面载）；**城市级专案面两官网页均未载**=商用前沿实况「工业/机队级先行·城市级未产品化页」→本仓「城市级实时孪生」差异化空间入册
 
 ## ②执行标准表（发现→可执行标准→落地指针·L0 轮内纪律/L1 门禁/L2 司级判据/L3 集团律）
 
@@ -58,8 +59,8 @@
 | Sugarscape 1996·Generative Agents（arXiv:2304.03442）·MetaGPT（arXiv:2308.00352）·ChatDev（arXiv:2307.07924） | A | arXiv/专著（S18-S20·验证） | 确认 |
 | The Last Night 官方·Eastward（Pixpil）·Octopath HD-2D（SE）·Waneella | A/B | 官方页（R-20260924-hd-pixel-aesthetics·A/B 双源带 URL） | 确认 |
 | 《人工智能生成合成内容标识办法》（2025-09-01 施行） | A | 法规（P-40 接线在册·集团验证） | 确认 |
-| NVIDIA Omniverse 城市级 DT 平台动向 | M | 官网/发布（下轮司级刷新核验） | 待证 |
-| Siemens 等商用城市孪生产品线 | M | 官网（下轮深潜核验） | 待证 |
+| NVIDIA Omniverse 平台动向（Simulation/Blueprints 面·MEGA 机队 DT 蓝图·CAE 微服务目录） | B | 官网 web_fetch 2026-09-27（nvidia.com/en-us/omniverse） | 确认（版本号/价格/城市级 AEC 专案页面未载） |
+| Siemens Simcenter 商用孪生线（系统仿真+3D CAE+test 三合一·2606 版本节奏·STAR-CCM+×NVIDIA 目录） | B | 官网 web_fetch 2026-09-27（sw.siemens.com/en-US/simcenter/·siemens.com 域两 URL 404 通道病如实标注） | 确认（城市级专案页面未载） |
 
 零 key：全表零付费 API 零 key；robots/ToS：公开页 web_fetch 合规（R-20260923-academic 方法节在册）。
 
@@ -68,3 +69,4 @@
 | 日期 | 要点 | 下次到期 |
 |---|---|---|
 | 2026-09-24 | 首版 v1.0（P-56①·r79）：四节齐备——视野面=五对标对象+判据史/综述前沿 2024-25/DTO 空白/元宇宙教训/硬约束动态；执行标准 10 条（L0-L3 层标+数字化判据+落地指针·✓8/⬜2 态如实分标）；源 15 项（确认 13/待证 2·全复用仓内已验证调研零新增网络采集） | 司级 7 天=**2026-10-01**（M 待证两项核验+三域快讯）；深潜 30 天=**2026-10-24**（城市孪生 2025-2026 新文献·Scopus/WoS 面）；硬约束域=事件即时+季度全扫 |
+| 2026-09-27 | **v1.1 刷新（T-FV-134 调研部首扫·周日演化日窗·r219）**：两项 M·待证债核销（Omniverse/Siemens 官网双源实查·web_fetch 2 次）——Omniverse=Simulation/Blueprints 面+MEGA 机队 DT 蓝图+CAE 微服务目录；Simcenter=三合一+2606 节奏；**城市级专案两页均未载=如实标注·差异化空间入册**；零 hot（无 24h 级新事=零 F- 速报行） | 司级 7 天=**2026-10-04**；深潜 30 天=**2026-10-24** 不变（城市孪生 2025-2026 新文献·Scopus/WoS 面）；硬约束域=事件即时+季度全扫 |

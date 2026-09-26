@@ -37,8 +37,8 @@ namespace FluxVerse
 {
     public static class LightFxRules
     {
-        public const string Protocol = "fluxverse-lightfx/0.3";
-        public const int BakedRound = 184;
+        public const string Protocol = "fluxverse-lightfx/0.4";
+        public const int BakedRound = 208;
         public const string NamePrefix = "LightFx";
 
         // ---- families ----
@@ -206,8 +206,9 @@ namespace FluxVerse
             return t == AmbientTier.Dusk ? FogAlphaDusk : 0f;   // day/dawn/night zero
         }
 
-        // single source = the skyline mauve fog family (SkylineRules.FogFar
-        // dusk = 0.62/0.58/0.78 = rgb 158,148,199 per the manifest)
+        // single source = the skyline blue-purple haze family (r208 re-pin, batch-2
+        // order item 4: SkylineRules.FogFar dusk = 0.50/0.54/0.92 = rgb 128,138,235
+        // per the manifest v0.4)
         public static Color FogWashColor()
         { return SkylineRules.FogFar(AmbientTier.Dusk); }
 

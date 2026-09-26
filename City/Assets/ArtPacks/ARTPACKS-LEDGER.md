@@ -29,7 +29,7 @@
 - **验图：适配度=中**——层次结构适合远景视差，色调偏粉紫日落。
 - **风格闸判定（r29 三选一收口）=条件过闸·仅作 L0 远景雾化层**。r29 复验勘正前判：**画风实为硬边像素**（composite 最近邻预览+layer-3 直验双证——阶梯锯齿零抗锯齿、窗点单像素阵；前判「平滑矢量/数字绘」系验图台架双线性缩放伪影误读，与 warped-city 注 2 同罪），「像素化转译」径作废。过闸附五条律：①point filter+整数倍缩放（非整数/双线性=硬边糊死）；②雾化降饱和 tint 并入锚图粉紫雾带（原包高饱和玫粉会压前景可读性）；③只取最远 2-3 剪影层（淡粉低对比层），近黑前景层弃（与暗色 tile 黏连难分）；④左右边缘构图不对称=禁无缝循环声明（循环须先镜像/重制）；⑤五色律与世界层像素正典零改动。
 - 用途：远景天际线大气透视层（P-28② 接线面·雾化处理后入城）。
-- **消费实况（r34 首件入城）**：layer-2（远·淡粉剪影）+ layer-3（近·鲑红剪影）两件入城=CityAmbient 序列化 sprite 双字段（场景布线 r34·SkylineProof 双会话 48 断言绿）；五条律全落位=PPU16+point+×2 整数缩放（law①·首跑实证导入器默认 PPU100 显微陷阱已修）/四档雾化乘色入锚图粉紫带（law②·dusk 实测 r−g 0.240 b−g 0.134）/只取最远两层（law③·layer-4 起弃）/单张不循环覆盖门 Covers 全相机位（law④·L0 极值余量 0.194u）/五色律零改动（law⑤·粉紫=环境色通道）；layer-1（云底）/layer-4~7（暗前景/合成底）未消费留池。
+- **消费实况（r34 首件入城·r208 S4 换装勘注）**：layer-3（近·鲑红剪影）现役=CityAmbient 序列化 skylineNear 字段（场景布线 r34）；**layer-2（远·淡粉剪影）r208 退役留盘**（S4 换装=far 槽改指 skyline-shanghai/far-shanghai.png·P-21④ 义·OGA-BY 许可义务随留盘件永在）；五条律全落位=PPU16+point+×2 整数缩放（law①·首跑实证导入器默认 PPU100 显微陷阱已修）/四档雾化乘色（law②·**r208 dusk 蓝雾重定：mauve→蓝紫霾带**·SkylineProof A1 重基线+雾强压缩门 0.75x→0.50x+偏蓝门 b−r>0.05）/只取最远两层（law③·layer-4 起弃）/单张不循环覆盖门 Covers 全相机位（law④·L0 极值余量 0.194u）/五色律零改动（law⑤·粉紫=环境色通道）；layer-1（云底）/layer-4~7（暗前景/合成底）未消费留池。
 
 ## residents-crowd/（31 件·OGA-BY 3.0·CraftPix·/content/residents-of-the-city-pixel-art-sprite-sheets）
 
@@ -183,4 +183,4 @@ AA-016.02 车辆 / AA-034 光效粒子 193 PNG / FT-011 缝合像素（霓虹中
 - 来源：本仓 GDI+ 程序化自焙（`Tools/city/bake-skyline-far.ps1`·ASCII 律·零外采零许可义务·LCG hash 确定性·双跑 SHA 幂等+stale 拒写+盘字节回验+pack 源只读门）；OGA layer-2 退役面=留盘不动（S4 换装后 P-21④ 义）。
 - 验证门（r207）：烘焙器自检（角透明×4/行契约 0..60 与 235..323 全透明/row61 tips=11 地标独占/row234 满铺/带覆盖四窗/五形 run-width 识别器 13 项/顶剖面变奏 census ≥8/色 census rose≥55%·peach≥200·slate≤2%）+harness **34 断言全绿**（logs/devloop-r207-skyline-test.ps1·LockBits 盘读独立复算非信任烘焙打印·SHA pin **28E97574B38F**+对 OGA layer-2 SHA 互异=真新焙非拷贝+复跑 already-current 安装幂等+pack 8 件 census 不动）。
 - 风格闸（接触表 logs/devloop-r207-skyline-sheet.png 四面板多模态）：**4/4 PASS**——P1 变奏读法（「无两相邻同高同宽同处理」·棋盘透明面洁净）/P2 五形逐 tick 点名可辨（twist=「节段错位锥」读法注记=扭转暗示·缩尺 salience 注记）/P3 雾色带=「远雾气质零伪影零 banding」最强面板/P4 五裁片全结构可辨；**两 follow-up 诚实注记**=地标基座下天隙+基座大平涂均落 rows 94..119（world y<15 北岸涂装带遮挡域·与 OGA 原件同覆盖 regime·引擎内不可见面非缺陷）。
-- 消费实况（r207 预置）：**引擎接线待 S4 天际线引擎轮**（r202 施工序 S4 段：CityAmbient 序列化 sprite 重指+SkylineProof FarPath 改指+**FogFar dusk 蓝移雾强〔批2 令文④ 远楼偏蓝偏雾〕**+SkylineProof 重基线+邻接〔天顶窗 19.04/相机列/塔区〕+四截图 §三 复扫）→S5 复扫轮（AlbumShot 四象+天际线辨识度 census+图册回执）。
+- 消费实况（**r208 引擎消费落地**·S4 施工序兑现）：far-shanghai.png 入城=CityAmbient 序列化 skylineFar 字段（SkylineProof C 段幂等布线+持久名镜像门 far-shanghai·场景存盘随 r208 管线）+**FogFar dusk 蓝雾重定**（0.62/0.58/0.78→0.50/0.54/0.92=rgb 128,138,235·批2 令文④ 远楼偏蓝偏雾·SkylineProof A1 重基线=雾强压缩 0.50x+偏蓝门·LightFxRules.FogWashColor 单源随移·lightfx-manifest v0.4 重钉）；.meta 随 r208 首编辑器轮导入（P-27⑤）→**S5 复扫轮**（AlbumShot 四象+天际线辨识度 S 门 census 终验+图册回执 F-13 承件）。

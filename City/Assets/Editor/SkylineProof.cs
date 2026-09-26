@@ -1,12 +1,17 @@
 // FluxVerse P-28 item 2 (r34): batch proof for the parallax skyline background layer
-// (parallax-skyline pack, OGA-BY 3.0). Sentinel pattern (r11/r31 style):
+// (parallax-skyline pack, OGA-BY 3.0). r208 (T-FV-122 S4, batch-2 order items 2+4):
+// the FAR slot re-points to the in-house far-shanghai.png strip (five named Shanghai
+// silhouettes, r207 bake) and FogFar dusk re-authors to the blue-purple haze - section
+// C wires the serialized sprite (idempotent), A1 re-baselines the fog law.
+// Sentinel pattern (r11/r31 style):
 //   pass 1: logs/skyline.run        -> FluxVerse.SkylineProof.BatchRun  -> logs/skyline.done
 //   pass 2: logs/skyline-reload.run -> FluxVerse.SkylineProof.ReloadGate -> logs/skyline-reload.done
 // Sections:
 //  A pure-core gates (SkylineRules, headless):
-//    A1 fog law: dusk fog product is mauve (pink-purple), spread-compressed vs the
-//       pack's native rose; day haze lighter than dusk; night fog dark + blue-lean;
-//       FogNear == FogFar x 0.85 exactly (depth cue),
+//    A1 fog law (r208 re-baseline, batch-2 order item 4): the dusk fog product is a
+//       BLUE-PURPLE HAZE (rose kinship kept, blue-lean asserted, spread compressed to
+//       <= 0.50x native = the "more fog" half of the order word); day haze lighter
+//       than dusk; night fog dark + blue-lean; FogNear == FogFar x 0.85 exactly,
 //    A2 no-loop coverage law: the single non-tiled quad spans the view at every
 //       camera position (L0 drift extremes +-2.5 @ half-view 35.556; L1 focus
 //       extremes +-34 @ half-view 16); razor-margin print at the L0 extreme,
@@ -40,7 +45,7 @@ namespace FluxVerse
         static string ReloadRunPath { get { return Path.Combine(RepoRoot, "logs", "skyline-reload.run"); } }
         static string ReloadDonePath { get { return Path.Combine(RepoRoot, "logs", "skyline-reload.done"); } }
         static string ScenePath { get { return "Assets/Scenes/CityScene.unity"; } }
-        const string FarPath = "Assets/ArtPacks/parallax-skyline/layer-2.png";
+        const string FarPath = "Assets/ArtPacks/skyline-shanghai/far-shanghai.png";
         const string NearPath = "Assets/ArtPacks/parallax-skyline/layer-3.png";
         static int asserts;
 
@@ -109,10 +114,15 @@ namespace FluxVerse
                 + duskProd.r.ToString("F3") + "/" + duskProd.g.ToString("F3"));
             Chk(duskProd.b - duskProd.g > 0.01f, "dusk product not purple-leaning: "
                 + duskProd.b.ToString("F3") + "/" + duskProd.g.ToString("F3"));
-            Chk((duskProd.r - duskProd.g) < nativeSpread * 0.75f, "fog did not compress the r-g spread: "
-                + (duskProd.r - duskProd.g).ToString("F3") + " vs " + nativeSpread.ToString("F3"));
-            Chk((duskProd.r - duskProd.b) < 0.15f, "dusk product still pink not mauve: "
+            // r208 (batch-2 order item 4 "lean blue, more fog"): the compression band
+            // tightens 0.75x -> 0.50x of the native spread (the "more fog" half) and the
+            // product must now lean BLUE (b - r > 0.05, the r208 FogFar dusk re-author).
+            Chk((duskProd.r - duskProd.g) < nativeSpread * 0.50f, "fog did not deepen the r-g compression: "
+                + (duskProd.r - duskProd.g).ToString("F3") + " vs " + (nativeSpread * 0.50f).ToString("F3"));
+            Chk((duskProd.r - duskProd.b) < 0.15f, "dusk product still pink not haze: "
                 + (duskProd.r - duskProd.b).ToString("F3"));
+            Chk(duskProd.b - duskProd.r > 0.05f, "r208 blue-lean law broken (order item 4): b-r="
+                + (duskProd.b - duskProd.r).ToString("F3"));
             Color dayFog = SkylineRules.FogFar(AmbientTier.Day);
             float duskLum = (duskFog.r + duskFog.g + duskFog.b) / 3f;
             float dayLum = (dayFog.r + dayFog.g + dayFog.b) / 3f;
@@ -183,6 +193,8 @@ namespace FluxVerse
             Chk(amb2 != null, "CityAmbient lost after save");
             Chk(amb2.skylineFar != null && amb2.skylineNear != null, "skyline sprites not persisted to disk");
             Chk(Math.Abs(amb2.skylineFar.rect.width - 576f) < 0.5f, "persisted far sprite wrong size");
+            Chk(amb2.skylineFar.name == "far-shanghai",
+                "persisted far sprite is not the r208 Shanghai strip (T-FV-122 S4): " + amb2.skylineFar.name);
             Chk(GameObject.Find("SkylineFar") == null, "skyline GO leaked into the saved scene (runtime-only law)");
             // r31 bed wiring regression (our save must not drop earlier serialized wiring)
             CityAmbientAudio bed = amb2.GetComponent<CityAmbientAudio>();
@@ -261,7 +273,7 @@ namespace FluxVerse
             UnityEngine.Object.DestroyImmediate(edgeShot);
 
             return "asserts=" + asserts
-                + " fog(dusk_mauve,day>dusk,night=" + nightLum.ToString("F3") + ")"
+                + " fog(dusk_bluehaze,day>dusk,night=" + nightLum.ToString("F3") + ")"
                 + " cover(razor=" + razor.ToString("F3") + "u,L0/L1 extremes ok)"
                 + " geom(farC=" + farC.ToString("F3") + ",nearC=" + nearC.ToString("F3") + ")"
                 + " assets(sprite+point,576x324)"

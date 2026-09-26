@@ -199,7 +199,7 @@ namespace FluxVerse
         static void MirrorGate(MRoot m, string json, int[][] starPts)
         {
             Chk(m.protocol == LightFxRules.Protocol, "protocol mismatch: " + m.protocol);
-            Chk(m.protocol == "fluxverse-lightfx/0.3", "protocol must be the r181 v0.3 salience+fog round");
+            Chk(m.protocol == "fluxverse-lightfx/0.4", "protocol must be the r208 v0.4 blue-haze re-pin round");
             Chk(m.baked_round == LightFxRules.BakedRound, "baked_round mismatch");
 
             // z physics map (r158 v0.2): camera z -10 -> smaller z = on top.
@@ -449,13 +449,13 @@ namespace FluxVerse
 
             // ---- r181 depth fog wash: geometry + color family + tier law + variant B order ----
             Chk(m.depth_fog_wash.mounts.Length == 1, "fog wash mount count");
-            Chk(m.depth_fog_wash.law.color_rgb[0] == 158 && m.depth_fog_wash.law.color_rgb[1] == 148
-                && m.depth_fog_wash.law.color_rgb[2] == 199, "fog color rgb 158,148,199");
+            Chk(m.depth_fog_wash.law.color_rgb[0] == 128 && m.depth_fog_wash.law.color_rgb[1] == 138
+                && m.depth_fog_wash.law.color_rgb[2] == 235, "fog color rgb 128,138,235 (r208 blue haze)");
             Color fogC = LightFxRules.FogWashColor();
-            float halfQ = 0.5f / 255f;  // 255-quantization half-step: 0.62f -> 158 etc.
-            Chk(Eq(fogC.r, 158f / 255f, halfQ) && Eq(fogC.g, 148f / 255f, halfQ)
-                && Eq(fogC.b, 199f / 255f, halfQ),
-                "fog color single source = SkylineRules.FogFar(Dusk) mauve family");
+            float halfQ = 0.5f / 255f;  // 255-quantization half-step: 0.50f -> 128 etc.
+            Chk(Eq(fogC.r, 128f / 255f, halfQ) && Eq(fogC.g, 138f / 255f, halfQ)
+                && Eq(fogC.b, 235f / 255f, halfQ),
+                "fog color single source = SkylineRules.FogFar(Dusk) blue-purple haze family (r208)");
             Chk(Eq(fogC.r, SkylineRules.FogFar(AmbientTier.Dusk).r, 1e-6f)
                 && Eq(fogC.g, SkylineRules.FogFar(AmbientTier.Dusk).g, 1e-6f)
                 && Eq(fogC.b, SkylineRules.FogFar(AmbientTier.Dusk).b, 1e-6f),
@@ -752,7 +752,7 @@ namespace FluxVerse
             Chk(EditorSceneManager.SaveScene(scene), "SaveScene failed");
 
             return "asserts=" + asserts
-                + " mirror(v0.3 salience+fog, bloom17-live-signs, cone12-posts, wet6-buildings, stars22, horizon2_a75, fog1_vB)"
+                + " mirror(v0.4 blue-haze-repin, bloom17-live-signs, cone12-posts, wet6-buildings, stars22, horizon2_a85, fog1_vB128_138_235)"
                 + " night_px_sum=" + SumPx(nightPx)
                 + " star_field=" + starLit
                 + " dusk_horizon=" + horLit

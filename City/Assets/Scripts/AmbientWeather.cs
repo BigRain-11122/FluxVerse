@@ -242,14 +242,19 @@ namespace FluxVerse
 
         // law 2: per-tier fog multiplier on the pack's native rose (240,147,161)/255.
         // Multiplication compresses the r-g spread (desaturation) and can only darken,
-        // which is exactly "recede into fog". Dusk pushes mauve (anchor fog band).
+        // which is exactly "recede into fog". r208 (T-FV-122 S4, batch-2 order item 4
+        // "far buildings lean blue, more fog"): dusk re-authors the mauve band into a
+        // BLUE-PURPLE HAZE - the product on the rose base goes b-r +0.11 (the blue lean
+        // of the order word) and the r-g spread compresses to ~0.44x native (was
+        // ~0.69x = the "more fog" half). Single source law: LightFxRules.FogWashColor()
+        // rides this same constant (r181), re-pinned in lightfx-manifest v0.4.
         public static Color FogFar(AmbientTier t)
         {
             switch (t)
             {
                 case AmbientTier.Dawn: return new Color(0.86f, 0.72f, 0.80f);  // dusty rose haze
                 case AmbientTier.Day:  return new Color(0.85f, 0.88f, 0.98f);  // pale cool haze
-                case AmbientTier.Dusk: return new Color(0.62f, 0.58f, 0.78f);  // mauve fog band
+                case AmbientTier.Dusk: return new Color(0.50f, 0.54f, 0.92f);  // r208 blue-purple haze band
                 default:               return new Color(0.10f, 0.10f, 0.18f);  // dark blue mass
             }
         }

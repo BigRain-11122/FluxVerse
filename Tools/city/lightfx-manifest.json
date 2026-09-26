@@ -1,7 +1,8 @@
 {
-  "protocol": "fluxverse-lightfx/0.3",
-  "baked_round": 184,
+  "protocol": "fluxverse-lightfx/0.4",
+  "baked_round": 208,
   "sources": [
+    "r208 v0.4 (T-FV-122 S4, batch-2 order item 4 'far buildings lean blue, more fog'): depth_fog_wash color re-pins to the SkylineRules.FogFar(Dusk) re-authored family 158,148,199 -> 128,138,235 (mauve -> blue-purple haze; protocol semantic change per the r146 version law); the single-source law is UNCHANGED (LightFxRules.FogWashColor() == SkylineRules.FogFar(Dusk), proof gate); geometry/alpha/z all carry v0.3 as-is.",
     "r184 band salience closure (T-FV-002 S6b census2): horizon_band dusk alpha 75 -> 85 - the faithful-baseline census (git fea8a7d r179 alpha-50 frame, copy-swap extracted, byte-verified vs blob) measured +3.11 < the pre-registered +4.0 full-window gate; the quad's authored vertical ramp (fades to zero at top) dilutes the window mean (row profile: rows 30-39 +0.29 / 70-79 +5.46 / below-band control rows 89-100 delta exactly 0.00 = clean attribution, the band is the only variable); alpha blend is linear in delta-alpha so 85 re-anchors the estimate to ~+4.35; the acceptance gate (>= +4.0) itself is UNCHANGED - parameter closure, not a gate cut (the r183 fog 15 -> 25 the same law).",
     "r183 fog alpha closure (T-FV-002 S6b c4): depth_fog_wash dusk alpha 15 -> 25 - the r182 census measured delta 11.1 < gate 12.0 at alpha 15; linear lift ~0.27 lum per alpha-unit re-anchors the estimate to ~13; the acceptance gate (>= 12.0) itself is UNCHANGED - parameter closure, not a gate cut.",
     "r181 v0.3 (T-FV-002 S6b, duskgold-manifest r180 - the round's parameter single source): horizon_band tier_alpha_pct dusk 50 -> 75 (salience promotion; the golden glow read faint at dusk = the r158 honest note + the sky_low census 320deg pink-mauve = the 'purple only, no gold' critique root) + the depth_fog_wash family (census-triggered atmospheric perspective, north bank veil). Assets untouched (v0.2 bake set carries every png); geometry unchanged except the new fog band.",
@@ -124,8 +125,8 @@
     "law": {
       "family": "runtime quad (CityAmbient EnsureVisuals family with the sky/tint/horizon quads, r181; released by ReleaseVisuals - r146 save-purity law); NO baked asset - one flat quad, constant mauve tint on sr.color, alpha tier-swept through the same D1 blend ride",
       "geometry": "world rect x -36..36, y 8.0..14.0 (the north building band; top edge 14.0 < the AmbientProof far-shore window 14.26..14.74 = zero-touch; brain tower plinth/shaft in band = physically correct, crown 18..19 clear)",
-      "color_rgb": [158, 148, 199],
-      "color_source": "SkylineRules.FogFar(Dusk) 0.62/0.58/0.78 = the skyline mauve fog family single source - ambient scenery channel, no five-color functional light touched",
+      "color_rgb": [128, 138, 235],
+      "color_source": "SkylineRules.FogFar(Dusk) 0.50/0.54/0.92 = the skyline blue-purple haze family single source (r208 re-pin, batch-2 order item 4) - ambient scenery channel, no five-color functional light touched",
       "tier_alpha_pct": { "day": 0, "dawn": 0, "dusk": 25, "night": 0 },
       "order": 4, "z": -0.1,
       "z_law": "variant B tile-city-only fog (duskgold-manifest decision procedure): the authored 'order 4.5' slot realized as sortingOrder 4 + z -0.1 - nearer than the Props tilemap (same order, z 0) = renders above it; above the order-3 facades/labs/windowlights/office; BELOW rim 5 / signs 6 / street 7 / tint 8 (r158 physics law) = zero RimLight/Neon/Robot coupling. Variant A (order 8, over signs/street too) = strictly larger coupling surface AND veils the bright band signs (reduces the north-band lift) - B wins both axes of the manifest pick procedure",

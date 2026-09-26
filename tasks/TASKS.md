@@ -9,7 +9,7 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-120 | DESIGN §十二 M2 行 stale 勘注：「全量判据待 P-12 核心行为事件源（待 CEO 签名）」已过时——D-20260925-02 已解锁 P-12+r94~r134 五型演出族全交付+r116~r120/r177 P-41 正典映射落地（门面把已收口面载成待签面=r54/r55 stale-header 族·M2 格改指针式状态·实况以 TECH §九 行为准） | DESIGN §十二 里程碑表；判据=M2 格零「待 CEO 签名」stale 面+指针式状态落格（纯文档轮 scan+verify 免跑 r52/r54 先例） | open |
+| T-FV-121 | r172 回执双轨律存量执法：本司令-回执映射审计——orders.md/evolution-ledger 涉本司 T1/T2 令行 × 本仓根 HQ-FEEDBACK.md F- 行逐条对账（缺行即按 r172 律当轮补面·收取面归属滑动面〔午班 15:07 括注〕背景下收口） | 源=..\..\docs\orders.md+..\..\cph4\evolution-ledger.md+本仓根 HQ-FEEDBACK.md（全只读对账）；判据=映射账落 §九 一行+缺口清单（零缺口=收口行·纯文档轮 scan+verify 免跑 r52/r54 先例） | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

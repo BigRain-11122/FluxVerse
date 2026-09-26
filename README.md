@@ -14,7 +14,7 @@
 - **M0 全闭**：设定书 v3.1·风格已定案=1 号高清赛博像素（CEO 三裁决 2026-09-23·`DESIGN.md` §九）·概念稿双档 `docs/design/m0-city-concept-{dusk,night}.png`
 - **M1 全判据已证（2026-09-24 r26）**：`City/` 团结引擎原生 2D 工程在仓（四档环境色轮+天气粒子+事件路由器+内景窗+相机双档+UI 壳）·M1.5 现实链接感知侧落地（clock/weather/fx/market/github_events 五探针）
 - **观城台（停役注记 2026-09-24·P-59③）**：CityWatch 面板停役为观测入口（CEO 唯一观测窗令——唯一指定窗=MiniGame《硅基生命元宇宙.html》）·数据面保留维护（人口普查/居民之声照常产出）；`watch/` 桌面快捷方式安装器已改道直开唯一观测窗（P-26 分发批改道）·引擎城建设本体照建不停（P0 不变）
-- **remote**：origin 已配（`git@github.com:BigRain-11122/FluxVerse.git`）·首推未落（CEO 物理件 GitHub 私库就绪后 `git push -u origin main`）
+- **remote**：origin 已推通（`git@github.com:BigRain-11122/FluxVerse.git`·CEO 私库物理件已到位——2026-09-25 起值守轮每班 push 同步城市进度·origin/main=HEAD·r200 勘注）
 
 ## 读序
 

@@ -1,7 +1,9 @@
 {
   "protocol": "fluxverse-lightfx/0.3",
-  "baked_round": 181,
+  "baked_round": 184,
   "sources": [
+    "r184 band salience closure (T-FV-002 S6b census2): horizon_band dusk alpha 75 -> 85 - the faithful-baseline census (git fea8a7d r179 alpha-50 frame, copy-swap extracted, byte-verified vs blob) measured +3.11 < the pre-registered +4.0 full-window gate; the quad's authored vertical ramp (fades to zero at top) dilutes the window mean (row profile: rows 30-39 +0.29 / 70-79 +5.46 / below-band control rows 89-100 delta exactly 0.00 = clean attribution, the band is the only variable); alpha blend is linear in delta-alpha so 85 re-anchors the estimate to ~+4.35; the acceptance gate (>= +4.0) itself is UNCHANGED - parameter closure, not a gate cut (the r183 fog 15 -> 25 the same law).",
+    "r183 fog alpha closure (T-FV-002 S6b c4): depth_fog_wash dusk alpha 15 -> 25 - the r182 census measured delta 11.1 < gate 12.0 at alpha 15; linear lift ~0.27 lum per alpha-unit re-anchors the estimate to ~13; the acceptance gate (>= 12.0) itself is UNCHANGED - parameter closure, not a gate cut.",
     "r181 v0.3 (T-FV-002 S6b, duskgold-manifest r180 - the round's parameter single source): horizon_band tier_alpha_pct dusk 50 -> 75 (salience promotion; the golden glow read faint at dusk = the r158 honest note + the sky_low census 320deg pink-mauve = the 'purple only, no gold' critique root) + the depth_fog_wash family (census-triggered atmospheric perspective, north bank veil). Assets untouched (v0.2 bake set carries every png); geometry unchanged except the new fog band.",
     "r158 z physics correction (v0.1 -> v0.2, protocol semantic change per the r146 v0.2 precedent): CityCamera sits at z -10 looking +z (scene-verified), so SMALLER z = nearer = renders ON TOP within one sortingOrder (the r155 water line authored it correctly). The r157 sandbox authored the z map under the inverted convention; every z sign is re-anchored to the physically verified law - without the flip the wet strips render BEHIND the Roads tilemap (same order 2, z 0) = invisible, the cones hide behind the Props tilemap, and the bloom/stars/horizon stack in front of what they must sit behind.",
     "cph4/research/R-20260925-water-daynight.md sec2 item3 (light-sense trio: sign bloom + lamp cone + wet road sheen) + item4 (restrained sky: night stars twinkle + dawn/dusk horizon band) + sec3 verdict5, CEO order 09-25 ~18:00 fast lane <=24h close 09-26 ~18:00",
@@ -109,7 +111,7 @@
       "colors": { "dusk": [250, 148, 82], "dawn": [250, 173, 133], "law": "= AmbientWheel skyBottom dusk/dawn family - ambient scenery channel, warm/pink only ever ambient (DESIGN sec9)" },
       "order": -9, "z": 1.0,
       "z_law": "same order as the far skyline with the largest z = deepest (r158 physics law: larger z = farther = behind): behind stars (+0.5) and skyline far (z 0) - sunset glow sits BEHIND the distant silhouettes (physically correct)",
-      "tier_alpha_pct": { "day": 0, "dawn": 35, "dusk": 75, "night": 0 },
+      "tier_alpha_pct": { "day": 0, "dawn": 35, "dusk": 85, "night": 0 },
       "dusk_promotion_r181": "50 -> 75 per duskgold-manifest.horizon_band_salience (color/geometry/order/z/blend_ride all unchanged; acceptance = coherent dusk frame band census rows 30..88 cols 297..920+1000..1623 mean lum delta vs the r180 baseline >= +4.0)",
       "blend_ride": "tier flip eases with the D1 blend window (adapter rides the r156 AmbientBlend progress, never hard-cuts)"
     },
@@ -124,7 +126,7 @@
       "geometry": "world rect x -36..36, y 8.0..14.0 (the north building band; top edge 14.0 < the AmbientProof far-shore window 14.26..14.74 = zero-touch; brain tower plinth/shaft in band = physically correct, crown 18..19 clear)",
       "color_rgb": [158, 148, 199],
       "color_source": "SkylineRules.FogFar(Dusk) 0.62/0.58/0.78 = the skyline mauve fog family single source - ambient scenery channel, no five-color functional light touched",
-      "tier_alpha_pct": { "day": 0, "dawn": 0, "dusk": 15, "night": 0 },
+      "tier_alpha_pct": { "day": 0, "dawn": 0, "dusk": 25, "night": 0 },
       "order": 4, "z": -0.1,
       "z_law": "variant B tile-city-only fog (duskgold-manifest decision procedure): the authored 'order 4.5' slot realized as sortingOrder 4 + z -0.1 - nearer than the Props tilemap (same order, z 0) = renders above it; above the order-3 facades/labs/windowlights/office; BELOW rim 5 / signs 6 / street 7 / tint 8 (r158 physics law) = zero RimLight/Neon/Robot coupling. Variant A (order 8, over signs/street too) = strictly larger coupling surface AND veils the bright band signs (reduces the north-band lift) - B wins both axes of the manifest pick procedure",
       "purpose": "atmospheric depth: the r180 census north 144.7 vs south 137.7 lum delta 7.0 < trigger 12.0 read flat ('one sheet of blue-purple'); acceptance = coherent dusk frame north band (rows 189..297) minus south band (rows 756..972) mean lum >= 12.0, day/night numerically unchanged (alpha 0)"

@@ -435,13 +435,13 @@ namespace FluxVerse
                 && Math.Abs(m.horizon_band.law.colors.dawn[2] - dawnC.b * 255f) < 0.6f,
                 "horizon dawn color = AmbientWheel skyBottom family");
             Chk(Eq(LightFxRules.HorizonAlphaFor(AmbientTier.Dawn), 0.35f, 1e-6f), "horizon dawn alpha");
-            Chk(Eq(LightFxRules.HorizonAlphaFor(AmbientTier.Dusk), 0.75f, 1e-6f),
-                "horizon dusk alpha (r181 v0.3 salience promotion 50 -> 75)");
+            Chk(Eq(LightFxRules.HorizonAlphaFor(AmbientTier.Dusk), 0.85f, 1e-6f),
+                "horizon dusk alpha (r184 closure 50 -> 75 -> 85, gate +4.0 unchanged)");
             Chk(LightFxRules.HorizonAlphaFor(AmbientTier.Day) == 0f
                 && LightFxRules.HorizonAlphaFor(AmbientTier.Night) == 0f, "horizon day/night zero");
             Chk(m.horizon_band.law.tier_alpha_pct.day == 0 && m.horizon_band.law.tier_alpha_pct.dawn == 35
-                && m.horizon_band.law.tier_alpha_pct.dusk == 75 && m.horizon_band.law.tier_alpha_pct.night == 0,
-                "horizon tier pct row (v0.3 dusk 75)");
+                && m.horizon_band.law.tier_alpha_pct.dusk == 85 && m.horizon_band.law.tier_alpha_pct.night == 0,
+                "horizon tier pct row (r184 dusk 85)");
             Chk(m.horizon_band.law.family.Contains("ReleaseVisuals"), "horizon family law text");
             Chk(m.horizon_band.law.blend_ride.Contains("D1 blend"), "horizon blend_ride text");
             Chk(LightFxRules.HorizonOrder == -9 && Eq(LightFxRules.HorizonZ, 1.0f, 1e-6f),
@@ -461,9 +461,9 @@ namespace FluxVerse
                 && Eq(fogC.b, SkylineRules.FogFar(AmbientTier.Dusk).b, 1e-6f),
                 "fog color accessor parity");
             Chk(m.depth_fog_wash.law.tier_alpha_pct.day == 0 && m.depth_fog_wash.law.tier_alpha_pct.dawn == 0
-                && m.depth_fog_wash.law.tier_alpha_pct.dusk == 15
+                && m.depth_fog_wash.law.tier_alpha_pct.dusk == 25
                 && m.depth_fog_wash.law.tier_alpha_pct.night == 0, "fog tier pct row");
-            Chk(Eq(LightFxRules.FogWashAlphaFor(AmbientTier.Dusk), 0.15f, 1e-6f), "fog dusk alpha 0.15");
+            Chk(Eq(LightFxRules.FogWashAlphaFor(AmbientTier.Dusk), 0.25f, 1e-6f), "fog dusk alpha 0.25");
             Chk(LightFxRules.FogWashAlphaFor(AmbientTier.Day) == 0f
                 && LightFxRules.FogWashAlphaFor(AmbientTier.Dawn) == 0f
                 && LightFxRules.FogWashAlphaFor(AmbientTier.Night) == 0f, "fog day/dawn/night zero");
@@ -807,7 +807,7 @@ namespace FluxVerse
                 GameObject h = GameObject.Find(LightFxRules.HorizonName(i));
                 Chk(h != null, "horizon quad not rebuilt on boot: " + LightFxRules.HorizonName(i));
                 SpriteRenderer hsr = h.GetComponent<SpriteRenderer>();
-                Chk(Eq(hsr.color.a, 0.75f, 1e-4f), "horizon dusk alpha lost after restart");
+                Chk(Eq(hsr.color.a, LightFxRules.HorizonAlphaFor(AmbientTier.Dusk), 1e-4f), "horizon dusk alpha lost after restart");
                 Color sc2 = AmbientWheel.PaletteFor(AmbientTier.Dusk).skyBottom;
                 Chk(Eq(hsr.color.r, sc2.r, 1e-3f) && Eq(hsr.color.g, sc2.g, 1e-3f)
                     && Eq(hsr.color.b, sc2.b, 1e-3f), "horizon dusk color lost after restart");
@@ -816,7 +816,7 @@ namespace FluxVerse
             GameObject fogRe = GameObject.Find(LightFxRules.FogWashName);
             Chk(fogRe != null, "fog wash not rebuilt on boot");
             SpriteRenderer fogReSr = fogRe.GetComponent<SpriteRenderer>();
-            Chk(Eq(fogReSr.color.a, 0.15f, 1e-4f), "fog dusk alpha lost after restart");
+            Chk(Eq(fogReSr.color.a, 0.25f, 1e-4f), "fog dusk alpha lost after restart");
             Color fcl2 = LightFxRules.FogWashColor();
             Chk(Eq(fogReSr.color.r, fcl2.r, 1e-3f) && Eq(fogReSr.color.g, fcl2.g, 1e-3f)
                 && Eq(fogReSr.color.b, fcl2.b, 1e-3f), "fog color lost after restart");
@@ -945,8 +945,9 @@ namespace FluxVerse
         static void HorizonBattery(CityAmbient amb)
         {
             amb.ApplyAmbient(AmbientTier.Dusk);
-            AssertHorizon(amb, AmbientTier.Dusk, 0.75f);
-            AssertFog(amb, AmbientTier.Dusk, 0.15f);
+            float lawDusk = LightFxRules.HorizonAlphaFor(AmbientTier.Dusk);   // r184: single-source (no re-pin on future alpha closure)
+            AssertHorizon(amb, AmbientTier.Dusk, lawDusk);
+            AssertFog(amb, AmbientTier.Dusk, 0.25f);
             amb.ApplyAmbient(AmbientTier.Dawn);
             AssertHorizon(amb, AmbientTier.Dawn, 0.35f);
             AssertFog(amb, AmbientTier.Dawn, 0f);
@@ -958,16 +959,16 @@ namespace FluxVerse
             AssertFog(amb, AmbientTier.Night, 0f);
 
             // blend ride: dusk -> night eases (never hard-cuts), monotonic, settles
-            amb.ApplyAmbient(AmbientTier.Dusk);   // settle at 0.75
+            amb.ApplyAmbient(AmbientTier.Dusk);   // settle at the law alpha
             amb.TransitionAmbient(AmbientTier.Night);
             Chk(amb.BlendActive, "blend not active after dusk->night transition");
-            Chk(Eq(amb.CurrentHorizonAlpha, 0.75f, 1e-4f), "blend start must hold the current value");
-            Chk(Eq(amb.CurrentFogAlpha, 0.15f, 1e-4f), "fog blend start must hold the current value");
+            Chk(Eq(amb.CurrentHorizonAlpha, lawDusk, 1e-4f), "blend start must hold the current value");
+            Chk(Eq(amb.CurrentFogAlpha, 0.25f, 1e-4f), "fog blend start must hold the current value");
             amb.StepAmbient(0.625f);   // k = 0.25
             float mid = amb.CurrentHorizonAlpha;
-            Chk(mid > 0f && mid < 0.75f, "mid-blend horizon alpha not in (0, 0.75): " + mid);
+            Chk(mid > 0f && mid < lawDusk, "mid-blend horizon alpha not in (0, " + lawDusk + "): " + mid);
             float midFog = amb.CurrentFogAlpha;
-            Chk(midFog > 0f && midFog < 0.15f, "mid-blend fog alpha not in (0, 0.15): " + midFog);
+            Chk(midFog > 0f && midFog < 0.25f, "mid-blend fog alpha not in (0, 0.25): " + midFog);
             float prev = mid;
             for (int i = 0; i < 3; i++)
             {
@@ -988,8 +989,8 @@ namespace FluxVerse
             amb.StepAmbient(0.3f);
             Chk(amb.BlendActive, "re-flip blend not active");
             amb.StepAmbient(3.0f);
-            Chk(Eq(amb.CurrentHorizonAlpha, 0.75f, 1e-5f), "settled back to dusk 0.75");
-            Chk(Eq(amb.CurrentFogAlpha, 0.15f, 1e-5f), "fog settled back to dusk 0.15");
+            Chk(Eq(amb.CurrentHorizonAlpha, lawDusk, 1e-5f), "settled back to dusk law alpha");
+            Chk(Eq(amb.CurrentFogAlpha, 0.25f, 1e-5f), "fog settled back to dusk 0.25");
             amb.ApplyAmbient(AmbientTier.Dusk);   // leave a settled state
         }
 
@@ -1126,7 +1127,7 @@ namespace FluxVerse
             litPx = n;
         }
 
-        // r181 fog veil census: DEDICATED 0.02 threshold - the 0.15-alpha
+        // r181 fog veil census: DEDICATED 0.02 threshold - the 0.25-alpha
         // veil under the 0.22 tint blends at ~0.12, so the mean veil delta
         // (~0.04) sits UNDER the family 0.06 census line; 0.02 is the
         // documented fog law (a law note, not a silent gate cut - the day and

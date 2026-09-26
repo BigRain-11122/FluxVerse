@@ -119,7 +119,7 @@ namespace FluxVerse
             // DUSK hero frames - the golden-hour quadrant the album never had
             // (r174 finding: the CEO critique "no dusk light" traced to zero
             // dusk frames in the acceptance album). Coherent apply: palette +
-            // fog veil + gold band a75 + rose water wash + window lights at
+            // fog veil + gold band a85 + rose water wash + window lights at
             // the REAL world-state rates through the v2 law (~24 pct lit at
             // the 0.55 dusk alpha = the order's "windows just lighting up").
             ApplyScene(amb, water, light, wl, AmbientTier.Dusk, WaveTick);

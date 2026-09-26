@@ -62,7 +62,8 @@
     "geometry": "world rect x -36..36, y 8.0..14.0 (top edge 14.0 < the AmbientProof far-shore window 14.26..14.74 - zero-touch constraint; brain tower plinth/shaft in band = physically correct, crown 18..19 clear)",
     "color_rgb": [158, 148, 199],
     "color_source": "skyline mauve fog family (AmbientWeather FogFor dusk 0.62/0.58/0.78) - ambient scenery channel, no five-color function light touched",
-    "tier_alpha": { "day": 0.0, "dawn": 0.0, "dusk": 0.15, "night": 0.0 },
+    "tier_alpha": { "day": 0.0, "dawn": 0.0, "dusk": 0.25, "night": 0.0 },
+    "r183_note": "alpha 15 measured delta 11.1 (r182 census) < gate 12.0 -> dusk alpha 25 (linear lift ~0.27 lum/alpha-unit, estimate ~13); the acceptance gate is UNCHANGED - parameter closure, not a gate cut",
     "variant_decision_procedure": "S6b renders BOTH orders once and picks by the named couplings: variant A order 8 z 0 (full physical fog over rim/signs/street-beings - requires RimLightProof dusk north-segment + NeonProof dusk + RobotProof re-anchor) vs variant B order 4.5 z -0.1 (tile-city-only fog - zero rim/neon/robot coupling; sits over order-3 facades/labs/windowlights/office in band: WindowLightProof dusk-presence margin + LabsProof + OfficeProof dusk re-anchor). Pick the smaller coupling surface with delta met.",
     "acceptance": "post-wash dusk frame delta (north band 189..297 mean lum - south band 756..972 mean lum) >= 12.0; day/night numerically unchanged (alpha 0)"
   },
@@ -92,6 +93,7 @@
     "bloom_wet_morning_salience": "r158 authored-alpha morning trio - album re-view surface"
   },
   "honest_notes": [
+    "r183 band-gate baseline re-anchor: the band_salience 'before' frame = the git-recovered r179 commit (fea8a7d) version of m1-r177-landmarks-dusk.png (alpha-50 band era, the exact frame the r180 census measured) - the working-tree copy was refreshed to alpha 75 by the r181 pipeline record-frame law (cf4d265), so a live-tree 'baseline' is structurally the AFTER state (r182's delta-0.00 root cause; the 'window missed the band' hypothesis is disproven - rows 30..88 re-derived from LightFxRules band geometry y16 268..302 = y 16.75..18.875 stand as authored)",
     "The r180 census frame is proof-scope: windowlight/water-fx/light-fx families were absent, so every 'before' number here is a base-city baseline; the S6b gates all measure the COHERENT dusk frame (AlbumShot law)",
     "Rate v2 keeps 100 pct determinism: same-input-same-output per day preserved (date seed unchanged), cross-day variety preserved, only the threshold mapping changes",
     "No static baked numbers anywhere: BASE_RATE is a law constant, activity stays live, floor_factor is geometry-derived",

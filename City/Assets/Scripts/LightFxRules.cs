@@ -38,7 +38,7 @@ namespace FluxVerse
     public static class LightFxRules
     {
         public const string Protocol = "fluxverse-lightfx/0.3";
-        public const int BakedRound = 181;
+        public const int BakedRound = 184;
         public const string NamePrefix = "LightFx";
 
         // ---- families ----
@@ -157,8 +157,11 @@ namespace FluxVerse
         public const float HorizonY1 = 302f / 16f;               // 18.875
         // r181 v0.3 (duskgold-manifest.horizon_band_salience): dusk 50 -> 75 -
         // the golden glow read faint at dusk (r158 honest note; the sky_low
-        // census 320deg pink-mauve = "purple only no gold" critique root)
-        public const float HorizonAlphaDawn = 0.35f, HorizonAlphaDusk = 0.75f;
+        // census 320deg pink-mauve = "purple only no gold" critique root).
+        // r184 closure: 75 -> 85 - the faithful-baseline census measured
+        // +3.11 < the +4.0 gate (the authored top-fade ramp dilutes the
+        // full-window mean); blend is linear in delta-alpha, gate unchanged.
+        public const float HorizonAlphaDawn = 0.35f, HorizonAlphaDusk = 0.85f;
 
         public static float HorizonX0(int i) { return i == 0 ? -736f / 16f : 218f / 16f; }
         public static float HorizonX1(int i) { return i == 0 ? 198f / 16f : 736f / 16f; }
@@ -196,7 +199,7 @@ namespace FluxVerse
         public const int FogWashOrder = 4;
         public const float FogWashZ = -0.1f;
         public const float FogWashX0 = -36f, FogWashY0 = 8f, FogWashX1 = 36f, FogWashY1 = 14f;
-        public const float FogAlphaDusk = 0.15f;
+        public const float FogAlphaDusk = 0.25f;   // r183: 15 -> 25 - c4 near-miss closure (alpha 15 measured delta 11.1 < gate 12.0; linear lift ~0.27 lum/alpha-unit, gate unchanged)
 
         public static float FogWashAlphaFor(AmbientTier t)
         {

@@ -9,7 +9,7 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-116 | 状态档写侧执法件 `Tools/devloop/write-fastpath-state.ps1`（r194 破写=fastpath-state 失 ledger/dec 两键实锤·r95 写侧律在册复发案·r188「律在册仍复发→正确形钉进可执行件」径）：三 sha 参数+WriteAllLines 显式换行+写后读回三键断言 fail-loud | TECH §九 r195 行③；判据=脚本纯 ASCII+沙盒两路（好参三行落盘/坏参 fail-loud）+下轮收尾实装换用 | open |
+| T-FV-117 | orders.md 快道接线（⑦查·r196 开单）——r173 漏领根因自侧闭合（orders-only 令零进 ledger=③查/哨兵结构性盲区·r167~r172 五轮漏+12h 延误实锤·F-08 集团侧建议 decisions 尾至 D-20260926-11 零采纳）：mandate 六查→七查+状态档四行化（orders_sha12=）+write-fastpath-state.ps1 扩 -OrdersSha12（KEEP 同律）+沙盒扩容 | TECH §九 r196 行⑤·实址=..\..\docs\orders.md（已勘定）；判据=沙盒四行落盘/坏参 fail-loud+七查接线+收尾实装换用 | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

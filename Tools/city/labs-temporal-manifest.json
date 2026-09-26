@@ -1,0 +1,130 @@
+{
+  "protocol": "fluxverse-labstemporal/0.1",
+  "baked_round": 188,
+  "sources": [
+    "DESIGN sec.16 v3.2 - three-facility temporal law (incubator standby / birth station half-alive / sandbox the only live face)",
+    "D-20260926-06 - P-39 unlock ruling, judging = D-02 three items + 1u piece proportion gate",
+    "r164 evolution probe - proposals state leg (governance.evolution.total/applied/open_proposals)",
+    "r165 census probe - census state leg (state.census.total + wall top-15 cards)",
+    "schema/events-registry.json - RESIDENT_BIRTH / PROPOSAL_NEW / PROPOSAL_APPLIED emitting since r164/r165; LAB_INCUBATE_* stay reserved (T-FV-104)"
+  ],
+  "digits": {
+    "asset": "Assets/ArtPacks/lab-glass/lab-digits.png",
+    "px": [80, 10],
+    "ppu": 24,
+    "cell_px": [7, 10],
+    "pitch_px": 8,
+    "digit_world_wh": [0.29167, 0.41667],
+    "on_color": [200, 240, 255, 235],
+    "off_color": [50, 90, 140, 70],
+    "sha12": "A73F354E5F14",
+    "note": "seven-segment counter strip; slices one sprite per digit at runtime (Sprite.Create, residents-atlas r99 precedent); display = emitted light, sign family: constant alpha, no tier modulation; glyphs only - values are live-derived, never baked numbers (D-02 stale honesty law)"
+  },
+  "art_to_world": {
+    "birth": "L2 [23,9,24,12], canvas 24x72: wx0 = 23 + ax0/24; wx1 = 23 + (ax1+1)/24; wyTop = 12 - ay0/24; wyBot = 12 - (ay1+1)/24",
+    "sandbox": "L3 [-6,9,-5,11], canvas 24x48: wx0 = -6 + ax0/24; wx1 = -6 + (ax1+1)/24; wyTop = 11 - ay0/24; wyBot = 11 - (ay1+1)/24"
+  },
+  "readout_row_law": {
+    "center_anchored": true,
+    "span_px": "ndigits * 8 - 1",
+    "backing_pad": [0.06, 0.05],
+    "backing_color": [10, 18, 34, 150],
+    "backing_order": 6, "backing_z": 0.30,
+    "digits_order": 6, "digits_z": 0.28,
+    "note": "backing z greater = farther, digits z smaller = closer = on top (r158 z physics); row width derives from the LIVE digit count (dynamic sizing, no pinned width)"
+  },
+  "birth": {
+    "facility": "L2",
+    "rect": [23, 9, 24, 12],
+    "readout": {
+      "value_path": "state.census.total",
+      "center": [23.5, 14.1],
+      "max_digits": 6,
+      "cap_backing_rect": [22.4608, 13.8417, 24.5392, 14.3583],
+      "mount_note": "population beacon floats above the data conduit band (band top 13.667 + 0.175 clearance; below the star field 16.271); the S5 street life (EAVE-N01 body top 11.667, ResN02) stays far below"
+    },
+    "wall_slots": {
+      "reading_order_to_wall": "slot i <-> census.wall[i] (wall[0] = newest = highest id, r165 frontier law)",
+      "lit_law": "slot i lights iff census.wall[i] exists; alpha = 235 if i == 0 (newest card) else 160; census section missing -> every overlay off (grandfather: baked art is authored vocabulary, never a fake live state)",
+      "overlay_order": 6, "overlay_z": -0.5,
+      "slot_art_rects": [
+        [8, 49, 10, 50], [14, 49, 16, 50],
+        [8, 54, 10, 55], [14, 54, 16, 55],
+        [8, 59, 10, 60], [14, 59, 16, 60]
+      ],
+      "slot_art_rects_note": "bake-lab-glass.ps1 r185 canon: inner lit core 3x2 px per 5x4 slot, cols @(7,13) rows @(48,53,58); reading order = row-major from the top-left newest slot (the baked-lit (0,0) slot)"
+    },
+    "ceremony": {
+      "event": "RESIDENT_BIRTH",
+      "city_action_ref": "birth_station_cabin_print",
+      "chamber_art_rect": [5, 8, 18, 43],
+      "peak_alpha": 220,
+      "newest_slot_burst_alpha": 255,
+      "duration_s": 2.5,
+      "note": "cabin-print pulse: chamber glow + newest card burst; TriggerDirect injection in proof mode (r115 precedent), live tail-cursor trigger in play"
+    }
+  },
+  "sandbox": {
+    "facility": "L3",
+    "rect": [-6, 9, -5, 11],
+    "readout": {
+      "value_path": "state.governance.evolution.open_proposals",
+      "center": [-5.4, 11.4],
+      "max_digits": 3,
+      "cap_backing_rect": [-5.9392, 11.1417, -4.8608, 11.6583],
+      "mount_note": "center pinned 0.1u east of the sandbox axis so the 3-digit cap clears B1's east wall (x=-6): cap west edge -5.939, margin 0.061u; ResN01 body east stays 0.69u clear; live 2-digit rows sit further inside"
+    },
+    "pulses": [
+      {
+        "event": "PROPOSAL_NEW",
+        "city_action_ref": "sandbox_model_lights_up",
+        "art_rect": [8, 6, 15, 13],
+        "art_rect_note": "hologram projector band (the future being projected)",
+        "peak_alpha": 180,
+        "duration_s": 2.5
+      },
+      {
+        "event": "PROPOSAL_APPLIED",
+        "city_action_ref": "sandbox_district_lights_canon",
+        "art_rects": [[7, 18, 13, 29], [15, 15, 21, 29]],
+        "art_rects_note": "both mini-city district blocks (the canon lighting)",
+        "peak_alpha": 160,
+        "duration_s": 2.5
+      }
+    ],
+    "overlay_order": 6, "overlay_z": -0.5
+  },
+  "incubator": {
+    "facility": "L1",
+    "rect": [21, 9, 23, 12],
+    "standby": true,
+    "pulses": [],
+    "reason": "LAB_INCUBATE_START/PASS/FAIL stay reserved in the registry (T-FV-104 blocked-on:BigDomain Phase 1); D-02 standby law: no real incubation task, no fake animation (pod stays dark-quiet static art)"
+  },
+  "poll": {
+    "interval_s": 10,
+    "state_source": "world/world-state.json (read-only, P-43 single-writer law; CityStreetBehavior r124 precedent)",
+    "event_source": "world/world-events.jsonl tail read with a line cursor; cursor beyond line count after the daily rotation -> reset to 0 (r3 self-check law)",
+    "pulse_events": ["RESIDENT_BIRTH", "PROPOSAL_NEW", "PROPOSAL_APPLIED"],
+    "grandfather": "census section missing -> birth readout hidden + all wall overlays off; evolution section missing -> sandbox readout hidden; facility sprites stay as authored (honest fallback, zero fake numbers)",
+    "note": "the sandbox is the only LIVE face (D-02); the birth station is half-alive: wall + total always on, the ceremony waits for a real birth event (never a timer)"
+  },
+  "rejected": {
+    "runtime_cjk_on_wall_cards": "engine has no runtime CJK text path (r17 deferred line; all city text is pre-baked GDI+) - at 1u scale a card is 5x4 art px anyway; cards render as LIT PRESENCE, names stay in state.census.wall for data consumers",
+    "sandbox_total_or_applied_readout": "the sandbox is the CITY FUTURE face: open proposals (19) is the future-facing count; applied (27) lands as the canon pulse + closed history, total (103) mixes closed rows - neither reads as 'future'",
+    "tier_alpha_on_readouts": "displays are emitted light, the sign family law (neon stays on through the night tint); constant alpha, ambient tint applies to the readout like every world object",
+    "baked_wall_numbers": "any number baked into a sprite would go stale (D-02 stale honesty law) - the digits asset carries glyphs only, every value is read live each poll"
+  },
+  "honest_notes": [
+    "the birth readout floats above the conduit band - a census beacon on the data pipe (census flows west to the tower, the count shines above it); mount swept vs band/PV1/street life in the r188 gate",
+    "wall overlays are additive presence on top of the baked 2-lit art: the baked lit slots are authored vocabulary, the runtime overlays are the live layer (all six light when six wall cards exist)",
+    "star field (y16.271+), horizon band (y16.75+) and every light layer (bloom/cone/wet) sit clear of both readouts by y-band; light layers are report-only per the r169 A4b law"
+  ],
+  "coupled_updates_r189": [
+    "LabsTemporalRules.cs pure table - manifest mirror (LabsRules family law, single source = this manifest)",
+    "CityLabsTemporal.cs adapter - scene-persistent root (CityStreetBehavior r124 precedent, zero serialized fields), 10s poll + event tail cursor, digit-row builder (Sprite.Create slicing, r99 precedent), overlays built runtime, ReleaseMounts on save (r146 disk-purity law)",
+    "LabsProof temporal extension - readout census + backing/digit law + wall overlay law (live values vs state) + pulse TriggerDirect trio + poll/grandfather + incubator standby assertion (zero incubator hooks) + reload gate",
+    "AlbumShot coherence: apply census + evolution live values in the dusk/night hero frames (r161 law)",
+    "screenshots m1-r189-temporal-{day,dusk,night,l1-north} + multimodal verdict; scan + verify double green; registry zero-touch (all three pulse types already emitting)"
+  ]
+}

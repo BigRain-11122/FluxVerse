@@ -9,7 +9,7 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-109 | 打磨池勘定轮：夜帧小读出可辨性定谳（r189⑤·机械在证/多模态弱读）+沙盘 L0 缩尺弱读 salience（r187⑤）+pod/birth 边缘辉 4px 收紧 re-bake（r187⑤） | TECH §九 r187/r189 行打磨池段；勘定=判据定标→实施或负定谳（r169 负定谳范式） | open |
+| T-FV-110 | 技能 harness 模板 PS 参数态正确形：r170 city-sandbox+r171 bake-pipeline 模板 FILL 点开箱自带 OK 调用形（r159c 逗号律）+@() 括号包裹形（r95 律） | TECH §九 r180 新法行③+r188④（FILL 点候选）；判据=模板改+安装副本 SHA 同步+烟测复绿 | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 
@@ -23,6 +23,7 @@
 | T-FV-106 | RV/OR 城区居民身份池开池 | 城区落图 | blocked-on:城区落图 |
 | T-FV-107 | P-27⑥ BGM 四档试听校准 | 人耳物理听感 | blocked-on:人耳 |
 | T-FV-108 | P-45 直播推流线 | M2 判据过→P2 冻结解除 | blocked-on:M2 |
+| T-FV-111 | pod/birth 接缝辉 4px 收紧 re-bake（r187⑤·r190 GATED 保留现态） | CEO 复验批 F-20260926-10 翻面点名 | blocked-on:CEO 复验 |
 
 ## 三、翻面律
 

@@ -1,6 +1,6 @@
 {
-  "protocol": "fluxverse-labs/0.1",
-  "baked_round": 141,
+  "protocol": "fluxverse-labs/0.2",
+  "baked_round": 186,
   "sources": [
     "TECH.md sec9 r139 row (window survey + 4-stage build order this manifest fulfills, stage 3 of 4) + r140 row (lab-glass 8-piece bake, PPU24 importer row, ARTPACKS-LEDGER self-bake section)",
     "DESIGN.md sec16 v3.2 (CPH4 Labs physical embodiment: three facilities, honest-state law, superbody-blue, glass-pod + data-conduit visual order)",
@@ -8,12 +8,16 @@
     "Tools/city/eaveslots-manifest.json r123 (EAVE-N01/N01 slot geometry + the runner-up whose post-r132 death this round discovers)",
     "Tools/city/terraces-manifest.json r137 (T1 rect joins the building set) + officeband-manifest r111 (N1-N4 rects + north cap law) + southbank-manifest r103 (masses)",
     "CitySkeletonBuilder (ground bands rows 9..14 pavement / grass 5..6 / water -3..2; avenue vcols -18/-17/17/18 rows 3..14; north low-rise Block calls; props tiles)",
-    "cph4/research/R-20260924-m1-visual-fix.md sec2-1/2-2 (proportion + north low-rise laws)"
+    "cph4/research/R-20260924-m1-visual-fix.md sec2-1/2-2 (proportion + north low-rise laws)",
+    "r169 full-bank re-census (D-20260926-02 remedy-iii sufficiency test, 108 assertions): five 1u x 3u additive slots S1..S5 machine-certified clean under the full gate family - S5 [23,24] = the labs-cluster adjacent east flank of L1, S4 [-6,-5] = the B1 east face tower-side plaza",
+    "D-20260926-06 ruling (F-20260926-04 escalation closed): candidate iv adopted - 1u variant self-bake line, birth station + sandbox first, S5 cluster-adjacent + S4 tower-side priority double drop; acceptance = D-02 three clauses + the 1u piece proportion gate",
+    "r185 1u asset bake: lab-birth-1u 24x72 + lab-sandbox-1u 24x48 (native 1u-wide redraw, zero downsampling), six-face gate green, style-gate dual-read PASS",
+    "r179 two-piece seat law: world-layer nameplates retired to the UI shell (screen-space) - the sandbox obstacle census runs seats/slots x body+shadow, plates are no longer world geometry"
   ],
   "law": {
     "district": "CPH4 Labs physical embodiment, north governance bank (DESIGN sec16.1). The tower-side semantics the r139 main window lost is carried by the data conduit: the pod feeds the tower = research conclusions flowing back to the governance layer (west-run visual story).",
     "low_rise": "lab pod tops stay <= 12.0 (2-3u on base row 9): pods 12 < offices 13 < brain tower 19 - the block reads by its glass-glow, never by height (sec16.1 basis 3). The conduit band is structure-class above the rooflines (NeonAntenna r87 exempt precedent), capped under the tint band top 14 and clear of the far-shore strip (y 14.26..14.74).",
-    "zero_move": "v0.1 places 1 pod + the conduit with ZERO seat/robot/vehicle/sign/eave-slot moves (r111 law). Seat or fixture moves are a CEO-visible trade, never a silent default (r137 quota-ledger law) - the remedy candidates below are registered options, none exercised (and the ResN01 path is probe-proven DEAD: the seat is cage-locked).",
+    "zero_move": "v0.1 placed 1 pod + the conduit, v0.2 adds the birth station + sandbox - all four drops ZERO seat/robot/vehicle/sign/eave-slot moves (r111 law). Seat or fixture moves are a CEO-visible trade, never a silent default (r137 quota-ledger law) - the r141 remedy candidates closed via the decision trail (D-20260926-02 candidate iii -> r169 geometric infeasibility -> D-20260926-06 candidate iv; the ResN01 path stays probe-proven DEAD: the seat is cage-locked).",
     "sprite_family": "Labs* GOs at sorting order 3 (OfficeRules family idiom), LabsPipe* at order 6 (mounting/structure tier, signs 6 < street 7 < tint 8), pivot center, GO pos = world rect center, localScale 1 - NEVER painted into CityGAME/CityQUANT/CityMEDIA tilemaps (IdentityProof district derivation stays untouched).",
     "glass_door_debt": "the glass-pod vocabulary carries no street door (r136 door-census family). Registered open debt like the v1 five-office door debt (terraces verdict) - CEO sees it at the pin-formation re-review.",
     "honest_states": "statics only this round. The incubator pod sits dormant (low-glass sleep) until BigDomain Phase 1 lights real incubation tasks - no fake running animation (decoration ban). Birth wall / sandbox exhibits wire with the M2 state round; the statics never bake dead numbers (stale honesty law).",
@@ -34,6 +38,28 @@
       "world": [21.0, 9.0, 23.0, 12.0],
       "slacks": { "res_n02_body_x": 0.333, "res_n02_nameplate_y": 0.0, "eave_body_x": 1.0, "eave_nameplate_x": 0.292, "b3_ne_x": 3.0, "vehicle_stopn_x": 4.188 },
       "role": "the west front field of the NE low-rise (B3, BIGSTREAM plate), across the east avenue from the bus stop - the labs' first physical presence, zero-move"
+    },
+    {
+      "id": "L2", "name": "LabBirth01", "family": "birth",
+      "asset": "Assets/ArtPacks/lab-glass/lab-birth-1u.png",
+      "asset_role": "resident birth station, 1u variant (upper glass cabin + lower 2x5 six-slot birth wall, two lit card positions = display backlight hardware; rolling card semantics wire with the M2 temporal round)",
+      "px": [24, 72], "ppu": 24,
+      "cells": [23, 23, 9, 11],
+      "world": [23.0, 9.0, 24.0, 12.0],
+      "slot": "S5 (r169) - flush at the L1 pod east face x=23 and the EAVE-N01 body west edge x=24.0: the ONLY 1u x 3u position in that stretch (pod face to eave body = exactly 1.000u)",
+      "slacks": { "l1_body_x": 0.0, "eave_body_x": 0.0, "res_n02_body_x": 2.333, "band_clear_y": 1.0 },
+      "role": "D-20260926-06 candidate-iv double drop 1/2: the birth station joins the incubation cluster at the east labs block - new life arrives where strategies are hatched; street face on the ResN02 / EAVE-N01 / bus-stop life stretch"
+    },
+    {
+      "id": "L3", "name": "LabSandbox01", "family": "sandbox",
+      "asset": "Assets/ArtPacks/lab-glass/lab-sandbox-1u.png",
+      "asset_role": "city-future sand table, 1u variant (holo band + two-building micro city + tallest-building antenna), proposals state face wires with the M2 temporal round",
+      "px": [24, 48], "ppu": 24,
+      "cells": [-6, -6, 9, 10],
+      "world": [-6.0, 9.0, -5.0, 11.0],
+      "slot": "S4 (r169) - flush at the B1 east face x=-6; the 1u position family spans x0 in [-6, -5.1667] (B1 face to the ResN01 body west edge, 6 grid steps) and pins at the face-flush end = the r169 certified slot",
+      "slacks": { "b1_body_x": 0.0, "res_n01_body_x": 0.833, "tower_plinth_x": 3.0 },
+      "role": "D-20260926-06 candidate-iv double drop 2/2: the city-future sand table sits in the tower-side plaza between B1 and the brain tower plinth - the governor's model table at the brain's side"
     },
     {
       "id": "P01", "name": "LabPipeH01", "family": "pipe",
@@ -163,16 +189,21 @@
     },
     "eave_ru_postmortem": {
       "finding": "NEW DEBT DISCOVERY: the r123 runner-up EAVE-N01RU (B2 west face, window x6.25..6.333, y11) DIED to the r132 tower-v2 seat move - ResT01 stepped 3.5 -> 4.5, so the RU now sits 1.79u from the anchor (>= 2.2 required) and its nameplate sits 1.833u away in tag-tag terms (>= 2.75 required) - infeasible; EAVE-N01 has NO relocation destination (treated as pinned above); the eaveslots manifest runner_up note is stale post-r132 (dormant candidate, no live consumer - registered as an errata finding for the eaveslots line, not a repair)"
+    },
+    "u1_drop_r186": {
+      "window": "D-20260926-06 candidate-iv double drop: lab-birth-1u (1x3u) at S5 [23,9,24,12] + lab-sandbox-1u (1x2u) at S4 [-6,9,-5,11]",
+      "verdict": "CLEAN DOUBLE DROP - both placements clear every physical gate under the r179 two-piece census (seats/slots x body+shadow, world plates retired to the UI shell); S5 is the unique 1x3u position between the L1 pod east face and the EAVE-N01 body west edge; S4 pins at the B1-face-flush end of its 0.833u position family (6 grid steps, face-flush = the r169 certified slot); zero seat/robot/vehicle/sign/slot moves; step-out probes pin every wall (west/east named blockers, top-12 cap, base-9 law, vcol road); the landed rain-shelter seat at EAVE-N01 stays strict-adjacent (no overlap) so the P-75 shelter face regresses nothing",
+      "light_report": "S4/S5 occlude zero bloom halos / zero rim segments / zero wet strips (r169 pinned, re-confirmed against lightfx v0.3); the r184 dusk fog wash (overlay rect x -36..36 y 8..14) covers both pieces like the whole north band = atmospheric overlay, not a gate; the warm wash sits south of the river, zero interaction"
     }
   },
   "quota_ledger": {
     "pre_registered": "r139: three facilities as ONE contiguous block (incubator pods tall+mid+wide + birth station 4x3 + sandbox 4x2 = 5 pieces, ~38u2)",
-    "feasible_zero_move": 1,
-    "selected": 1,
-    "shortfall": 4,
-    "shortfall_pieces": ["lab-pod-mid 2x2", "lab-pod-wide 4x2", "lab-birth 4x3", "lab-sandbox 4x2"],
+    "feasible_zero_move": 3,
+    "selected": 3,
+    "shortfall": 2,
+    "shortfall_pieces": ["lab-pod-mid 2x2 (incubation shell)", "lab-pod-wide 4x2 (incubation shell)"],
     "root_cause": "the north walkway is SATURATED under the full gate family: the east avenue splits every wide window; the r104 seat ring + the r123 eave quota slot + street furniture (bus, stop sign) own the remaining stretches; no 4u-wide clean span exists anywhere (west span killed by the cage-locked ResN01 - no legal out-cell survives the underfoot/halo/plate gates; east span by the pinned EAVE-N01 + ResN02)",
-    "honest_note": "the labs open as a presence (pod + conduit), not the full block - the three-facility block is a CEO-visible trade, never a silent scope cut"
+    "honest_note": "v0.2: three of five facility pieces stand (pod + birth-1u + sandbox-1u, all zero-move additive); the two incubation shells stay open with Phase-1-gated performance (D-06: shell buildable, performance dormant with Phase 1) - spare 1u slots S1..S3 remain machine-certified for a future 1u pod variant line, never silently built"
   },
   "remedy_candidates": {
     "a_eave_relocation": "DEAD - no destination survives (RU postmortem above: every other face was probe-blocked in the r123 survey)",
@@ -193,6 +224,13 @@
     "CameraProof L1-north baseline re-derivation: the conduit crosses the brain-area L1 view (r111 rederivations law; r138 |camX|<=30 street-cam law)",
     "ARTPACKS-LEDGER lab-glass section: r142 consumption line (pod-tall 1, pipe-h 10, pipe-v 1)",
     "real-machine scan+verify double green (tick 10min self-runs; editor round re-confirms)"
+  ],
+  "coupled_updates_r187": [
+    "City/Assets/Scripts/LabsRules.cs: extend the pure table 12 -> 14 (LabBirth01 world [23,9,24,12] px 24x72 family birth + LabSandbox01 world [-6,9,-5,11] px 24x48 family sandbox; Labs* sprite family order 3, persisted static, localScale 1, GO pos = world rect center, zero tilemap strokes)",
+    "City/Assets/Editor/LabsProof.cs: census mirror +2 (placements 14, master-set counts, both new rects vs all live sources under the r179 two-piece seat census, feet-cell pavement re-derivation cells [23]x rows 9..11 and [-6]x rows 9..10, low-rise top gates 12.0/11.0, conduit-band + COMMIT/TRANSFER zone disjointness re-assert, idempotent swept rebuild + cross-session reload gate)",
+    "pipeline: LabsProof joins the pass list + four screenshots sec3 rescan (m1-r187-labs1u-*) + r44 harmony read vs art-target-dusk; CameraProof L1-north baseline re-derivation if either piece enters the street-cam frame (r142 conduit precedent)",
+    "ARTPACKS-LEDGER lab-glass section: r187 consumption line (birth-1u 1 + sandbox-1u 1; the r185 bake rows already in) + .meta first editor import (P-27 sec-5 law; the importer lab-glass -> 24 row already in place)",
+    "M2 temporal round follows the engine round (not merged): birth wall rolling cards <- census state wall top-15 + population total (r165 data leg live), sandbox <- evolution proposals state face (r164 data leg live); LAB_INCUBATE_* stays reserved until BigDomain Phase 1; statics never bake dead numbers (stale honesty law)"
   ],
   "token_gate": "L1 deterministic math + on-disk checks, zero generation touchpoints"
 }

@@ -29,9 +29,9 @@
   },
   "reflections": [
     { "id": "ReflTower",  "asset": "Assets/ArtPacks/water-fx/refl-tower.png",          "px": [80, 48],  "ppu": 16, "rect": [-2.0, 0.0, 3.0, 3.0],     "bank": "north", "source": "tower-v2 lower 3u composed from REAL tiles (glass 189 plinth x2 rows + shaft row with glow props 132/133 overlay), pre-mirrored layout (plinth at bank edge), darkened 0.4" },
-    { "id": "ReflQuant",  "asset": "Assets/ArtPacks/water-fx/facades/refl-quant.png",  "px": [120, 72], "ppu": 24, "rect": [-2.0, -3.0, 3.0, 0.0],    "bank": "south", "source": "facade-quant top-72px crop, raw-ARGB vertical flip (r93 law), darkened 0.4; roof crown lands on the bank line" },
+    { "id": "ReflQuant",  "asset": "Assets/ArtPacks/water-fx/facades/refl-quant.png",  "px": [120, 72], "ppu": 24, "rect": [-2.0, -3.0, 3.0, 0.0],    "bank": "south", "source": "quant-twist top-72px crop, raw-ARGB vertical flip (r93 law), darkened 0.4; roof crown lands on the bank line; r176 re-source from the r175 landmark silhouette (00:10 art-rectify swap face, landmarks-manifest; old facade-quant derivation sha12 C007613EFAE7 retired via the bake provenance pin)" },
     { "id": "ReflGame",   "asset": "Assets/ArtPacks/water-fx/facades/refl-game.png",   "px": [120, 72], "ppu": 24, "rect": [-23.0, -3.0, -18.0, 0.0],  "bank": "south", "source": "facade-game top-72px crop, v-flip, darkened 0.4" },
-    { "id": "ReflMedia",  "asset": "Assets/ArtPacks/water-fx/facades/refl-media.png",  "px": [144, 72], "ppu": 24, "rect": [19.0, -3.0, 25.0, 0.0],   "bank": "south", "source": "facade-media top-72px crop, v-flip, darkened 0.4" }
+    { "id": "ReflMedia",  "asset": "Assets/ArtPacks/water-fx/facades/refl-media.png",  "px": [144, 72], "ppu": 24, "rect": [19.0, -3.0, 25.0, 0.0],   "bank": "south", "source": "media-pearl top-72px crop, v-flip, darkened 0.4; r176 re-source from the r175 landmark silhouette (old facade-media derivation sha12 4BA113444F98 retired via the bake provenance pin)" }
   ],
   "shimmer": [
     { "id": "ShimGameW",  "asset": "Assets/ArtPacks/water-fx/shimmer-cyan.png",   "rect": [-23.25, -3.0, -21.75, -0.5], "sign": "NeonGameWest",  "sign_x": -22.5, "color": "cyan",    "family": "GAME" },
@@ -88,7 +88,8 @@
     "GAME_ANNEX reflection omitted v0 (sign table external, spec W2 scope = three cities)",
     "tower band tile pick 132/133 alternating inside the glow family = editor-round tunable within family (tower-v2 vocabulary law)",
     "W3 embankment gradient v0 = the foam sparse second row; a deeper dithered bank gradient = v1 candidate line",
-    "depth fade of reflections = engine-round tunable within reflection semantics (bake is pure crop+flip+darken per spec)"
+    "depth fade of reflections = engine-round tunable within reflection semantics (bake is pure crop+flip+darken per spec)",
+    "r176: refl-quant/refl-media re-sourced from the r175 landmark silhouettes (bake-water-fx deliberate-regeneration mode behind old-derivation sha12 provenance pins; rect/path/px unchanged = WaterFxRules zero change, content-only swap consumed by the same S4 editor round); refl-game keeps the facade-game source (GAME_MAIN keeps its facade this batch)"
   ],
   "family": {
     "go_prefix": "WaterFx",

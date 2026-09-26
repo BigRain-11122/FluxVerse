@@ -1,0 +1,86 @@
+{
+  "protocol": "fluxverse-landmarks/0.1",
+  "baked_round": 176,
+  "sources": [
+    "CEO order 09-26 00:10 art rectification (orders.md, T-FV-002; TECH sec9 r173 claim + r174 survey S2-S7 + r175 S2 bake)",
+    "TECH sec9 r175: bake-landmark-silhouettes.ps1 three pieces (quant-twist / media-pearl / brain-crown, style-gate PASS)",
+    "Tools/city/facades-manifest.json r152 (rect-equality law, mount family idiom)",
+    "Tools/city/southbank-manifest.json r103 (mass world rects, bitwise equality source)",
+    "Tools/city/tower-v2-manifest.json r131 (tip cell [0,1]x[18,19], zenith floor 19.04, B7 whole rect)",
+    "Tools/city/waterfx-manifest.json r154 (refl-quant/refl-media mounts, top-72px crop law)",
+    "City/Assets/Scripts/NeonSigns.cs (Buildings live mount-host table + tower antenna trio)"
+  ],
+  "order_scope": "T-FV-002 S3 = layout sandbox round: mount matrix verdict + census gates + reflection re-source bake (done this round, bake-water-fx.ps1 r176 mode); engine wiring = S4 per coupled_updates_r177.",
+  "law": {
+    "family": "facade-family alpha-sprite overlay (r152 law verbatim): supplants the tile face, order 3 = LabsRules.PodOrder building tier, pivot center, GO pos = rect center, localScale 1, natural size = px/PPU zero-resample, NEVER painted into south tilemaps (IdentityProof district law + 40/49/54 tile canon untouched)",
+    "persistence": "static built-city scenery persisted in the scene like signs/offices (NeonSigns law); NOT CityAmbient runtime children (r146 red-chain-3 law)",
+    "rect_equality": "swap rects == southbank masses == facades-manifest mounts == NeonRules.Buildings[4/6], bitwise; zero migration by construction (r152 A2 law re-asserted per swap)",
+    "z_tie_idiom": "order 3 / z 0 exactly as FacadeProof.BuildFacades mounts (the r162 empirically-stable same-order idiom over tilemaps at z 0); WindowLight rides z -0.5 above, signs ride order 6 above, rim rides order 5 above - all pre-registered interplay, no new z constant invented",
+    "unlit_windows": "landmarks carry ZERO static lit windows: twist bright>80 = gold seams only (359 px), pearl bright>80 = magenta rings only (94 px), crown bright>80 = Lucy-blue sepal ridges only (43 px) - r175 bake gates re-pinned in the sandbox; lit rate stays reserved to the P-38(3) activity heat line (S6 rate-map fix face)",
+    "crown_law": {
+      "mount": "brain-crown 48x24 @PPU24 = 2x1u, rect [-0.5, 18.0, 1.5, 19.0], pos (0.5, 18.5) - canvas centered on the tip cell x-center; RESHAPE ONLY inside the tip zone, no added height (r174 note 5a): canvas top == tower top 19.0 < zenith floor 19.04 (r131 A10 law)",
+      "containment": "crown rect is CONTAINED in NeonRules.Buildings[7] whole [-2,9,3,19] (tower-ornament identity law - the facade census 'no north-building overlap' clause does NOT apply to the host tower itself; containment is the gate, disjointness would be a bug)",
+      "tint_exemption": "crown y18..19 sits ABOVE the r51 tint ceiling +15 - by-design tower-top glow zone (r132 tint_band_note law, verbatim precedent); FacadeRules.InTintBand is NOT a crown gate",
+      "grounding": "bud opaque base row (canvas y22..23, world y~18.04..18.08, span x -0.25..1.25) rests fully on the shoulder row top plane (row 17 spans x -1..2) - constructive zero-floating; blade tip cell (row 18, x 0..1) stays rendered under the crown's transparent flanks = intended composite (bud-on-blade calyx read)",
+      "needles": "tower antenna trio (NeonTowerAntM/L/R, MountExempt signs family, order 6 above crown) rises from the y19 plane: mid needle (0.5,19.44) lands on the bud tip where the lit sepal ridges converge; side needle bottoms dip 0.006u into the canvas zone over TRANSPARENT columns only (bud top row opaque span x 0.375..0.583, needles at x 0.0875..0.2125 / 0.7875..0.9125 - disjoint, sandbox-asserted); zero needle occlusion of bud pixels",
+      "rim_interplay": "RimBrainTip band [0, 18.875, 1, 19] stays UNCHANGED (zero r147 manifest edit): the blade cell top edge = the composite roof silhouette at the tip zone, so the full-width band remains silhouette-faithful with zero floating px (r147 media_note rectangular-Block precedent); rim order 5 rides above crown order 3 - the bud top 3px melts into the dusk roofline honey (intended stacking, dusk-only alpha); shoulder rim bands (y17.875..18) zero-overlap the crown (canvas starts at y18)"
+    },
+    "reflection_re_source": "refl-quant/refl-media re-derive from the NEW landmark tops (top-72px crop, v-flip, x0.4 - r154 law unchanged): baked THIS round via bake-water-fx.ps1 r176 mode (deliberate regeneration behind old-sha12 provenance pins C007613EFAE7 / 4BA113444F98; the stale-refuse law stays intact for the other 13 assets, all verified already-current); WaterFxRules zero change - asset paths and mount rects are identical, so the swap is content-only; refl-game keeps the r151 facade-game source (GAME_MAIN keeps its facade this batch); refl-tower composed from real tiles = crown not in the lower-3u mirror, zero coupling",
+    "ppu": 24
+  },
+  "swaps": [
+    { "id": "LandmarkQUANT", "asset": "Assets/ArtPacks/office-towers/quant-twist.png", "px": [120, 192], "sha12": "D713172B83C3", "rect": [-2.0, -16.0, 3.0, -8.0], "accent": "gold", "replaces": "FacadeRules row 0 (FacadeQUANT) - asset path swap only, GO name/rect/px identical", "source": "r175 bake: base-wide top-narrow taper, 2.2rad-offset gold helix seam pair (rotating read), 2x3 micro-window grid, dark plinth; unlit law gold-only" },
+    { "id": "LandmarkMEDIA", "asset": "Assets/ArtPacks/office-towers/media-pearl.png", "px": [144, 144], "sha12": "325E701ABFD6", "rect": [19.0, -14.0, 25.0, -8.0], "accent": "magenta", "replaces": "FacadeRules row 3 (FacadeMEDIA) - asset path swap only, GO name/rect/px identical", "source": "r175 bake: lower big sphere r34 + upper small sphere r16 + antenna rod + tripod splayed legs, magenta equator deck rings 94 px; unlit law magenta-only" }
+  ],
+  "crown": {
+    "id": "BrainCrown",
+    "asset": "Assets/ArtPacks/office-towers/brain-crown.png",
+    "px": [48, 24],
+    "sha12": "D0CDC03794A0",
+    "rect": [-0.5, 18.0, 1.5, 19.0],
+    "pos": [0.5, 18.5],
+    "accent": "lucy-blue",
+    "order": 3,
+    "z": 0.0,
+    "ppu": 24,
+    "source": "r175 bake: magnolia bud in anchor-indigo glass, two converging sepal ridges lit Lucy-blue (96,160,255 r140 spectral anchor), dark base band; bud widest row 36px = 1.5u at the base, tip 6px at canvas top"
+  },
+  "rim_verdict": {
+    "topic": "RimBrainTip segment after the crown lands",
+    "verdict": "zero change",
+    "reasoning": "composite roof silhouette at the tip zone = blade cell top edge (x 0..1 at y19) with the bud inside it; band [0,18.875,1,19] stays inside the silhouette (blade beneath crown transparent flanks) = zero floating px; narrowing the band to the bud would strand the blade's pale top corners rimless and float the side needles' footing - the full-width band IS the correct roofline",
+    "proof_face": "RimLightProof zero re-baseline expected (band census unchanged); render diff re-shoot rides the S4 evidence-frame law anyway"
+  },
+  "light_layer_report": {
+    "law": "r169 A4b: light overlaps are reported honestly, never gated",
+    "rim_tip_band_over_crown": "intended (roofline stacking, dusk-only)",
+    "windowlight": "brain tower is EXCLUDED from the 8-building window census (r159 own-vocabulary law) - zero overlap with crown; QUANT/MEDIA window grids overlay the landmarks at order 3 z -0.5 by design (night lit windows over the new skins; grid-coherence vs baked micro-windows = S6 window-rate face, NOT this round)",
+    "bloom17": "derived from sign positions (unchanged) - zero geometry coupling; tower needles are bloom-exempt (r157 law)",
+    "stars22": "tower-zone exclusion (r157 law) already covers the crown zone - stars stay out",
+    "horizon_band": "far order -9 background, dawn/dusk only - renders behind order 3 by construction"
+  },
+  "distinctness_law": {
+    "commit_river": "Y -4.6..+4.6 (r116) vs crown y18..19: disjoint by 13.4u",
+    "transfer_street_band": "y -7.5 (r114) vs crown y18..19: disjoint",
+    "labs_pipe_band": "y13..13.667 x3..23 (r141) vs crown x -0.5..1.5: disjoint (pipe band west end x3 docks the tower EAST face at plinth level, crown is tip level)"
+  },
+  "honest_notes": [
+    "facade-quant.png / facade-media.png retire-retained on disk (P-21(4) discard-trace duty; they remain the provenance sources for the pre-r176 reflections in git history and stay in the remap pool)",
+    "crown blade-flank peek: the bud is narrower than the 1u blade in its top half (max peek 0.375u/side at the very top) - reads as the bud's calyx on the blade stem; widening the bud base to full blade coverage = v1 candidate, needs a re-bake (not silent)",
+    "window-light grid coherence: QUANT 106 / MEDIA 120 tile-derived lit windows draw over the landmark micro-window grids at night - rate-map fix + grid governance = S6 face (r174 3b verdict), pre-registered here so S4 does not silently absorb it",
+    "reflection transient: NONE in practice - the re-sourced reflections ride identical mount paths, and the in-scene swap (FacadeRules path change) lands in the same S4 editor round",
+    "GAME_MAIN keeps facade-game this batch: the order's three silhouettes are magnolia-crown / Shanghai-Center-twist / Pearl-double-spheres (QUANT/MEDIA/brain); a GAME silhouette is not in the order text"
+  ],
+  "coupled_updates_r177": [
+    "City/Assets/Scripts/FacadeRules.cs: row 0 path -> quant-twist.png, row 3 path -> media-pearl.png (px/rect/name/accent identical; header comment refresh - the family now hosts landmark silhouettes)",
+    "NEW City/Assets/Scripts/BrainCrownRules.cs pure table (LabsRules idiom): Count 1, Order 3, PPU 24, mount mirror of manifest crown node",
+    "NEW City/Assets/Editor/BrainCrownProof.cs: build/idempotent-x2/persist/reload gates + containment-in-B7 + zenith 19.04 + needle-sliver transparent-column assertion + rim-interplay census + render diff (dusk bud lit ridges visible / day zero-leak vs blade) + disk-purity census (r146 law)",
+    "FacadeProof: render diff census re-shoot (twist/pearl replace skins; mirror gate asset rows update); CensusMobile laws unchanged (rects identical)",
+    "evidence frames re-shoot per r119 law: every tower-view proof frame (EventRouter 11 performance frames, Neon tower-view frames, Ambient/Camera zenith frames) re-shoots after the crown lands; pre-registered zero-touch: AmbientProof zenith window (crown top 19.0 < 19.04), CameraProof x=13 column, LabsProof, ResidentProof/TagProof/IdentityProof (crown is not a tilemap stroke)",
+    "NeonProof: antenna-exempt census unchanged (signs do not move); render frames re-shoot",
+    "four screenshots m1-r177-landmarks-{day,dusk,night,l1-south} + multimodal: three silhouettes readable (bud crown / twist helix / double spheres), no blue-tile read, city zero holes; r44 in-city harmony vs art-target-dusk composite verdict (S6 chromatography rescan follows)",
+    "ARTPACKS-LEDGER office-towers consumption row: +3 landmark pieces (r175), refl re-source note (r176)",
+    "real-machine scan+verify double-green (zero probe/schema face this round)"
+  ],
+  "token_gate": "L1 deterministic geometry + GDI+ crop/flip/darken re-source, zero generation touchpoints"
+}

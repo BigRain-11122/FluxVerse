@@ -1,10 +1,16 @@
 # FluxVerse DevLoop r154: water-fx asset bake (P-20260925-09 water & daynight
 # CEO order 09-25 ~18:00, spec R-20260925-water-daynight.md W1-W4 bake half).
 # Bakes 15 PNGs:
-#  (1) facade-crop reflections x3 - top-72px crop of the r151/152 facade skins,
+#  (1) face-crop reflections x3 - top-72px crop of the MOUNTED city faces,
 #      raw-ARGB vertical flip (r93 zero-resample flip law), darkened 60% (x0.4),
 #      roof crown lands on the bank edge (mirror semantics: object edge nearest
-#      the water appears at the bank line);
+#      the water appears at the bank line); r176 re-source: QUANT/MEDIA now
+#      crop the r175 landmark silhouettes (quant-twist / media-pearl, the 00:10
+#      art-rectify order T-FV-002 swap faces), GAME keeps the r151 facade skin;
+#      the re-source is a DELIBERATE regeneration gated by old-derivation
+#      sha12 provenance pins (the stale-refuse law stays intact for the other
+#      13 assets - a re-sourced piece may only replace a disk file that still
+#      IS the r154 derivation, anything else fails loud);
 #  (2) brain-tower reflection x1 - composed from the REAL CleanCity tile PNGs
 #      per tower-v2-manifest lower 3u (plinth 5 cells x2 rows glass 189 +
 #      shaft row with glow band props 132/133 overlay), pre-mirrored layout
@@ -253,14 +259,25 @@ function Bake-Foam($dstPath, $solidTop, $frame) {
     return @{ solid = $solidN; sparse = $sparseN }
 }
 
-function Install-Asset($tmpA, $tmpB, $dst, $label) {
+function Install-Asset($tmpA, $tmpB, $dst, $label, $oldPin) {
     $s1 = Get-FileSha $tmpA
     $s2 = Get-FileSha $tmpB
     if ($s1 -ne $s2) { throw ("double-bake SHA mismatch: determinism broken [" + $label + "]") }
     if (Test-Path $dst) {
         $oldSha = Get-FileSha $dst
-        if ($oldSha -ne $s1) { throw ("existing asset differs from fresh bake: stale file, refusing silent overwrite [" + $label + "]") }
-        Write-Host ("  already-current " + $label + " sha12=" + $s1.Substring(0, 12))
+        if ($oldSha -ne $s1) {
+            if ($oldPin -and ($oldSha.Substring(0, 12) -eq $oldPin)) {
+                # deliberate re-source (r176): provenance proven, replace + reverify
+                [IO.File]::Copy($tmpA, $dst, $true)
+                $nowSha = Get-FileSha $dst
+                if ($nowSha -ne $s1) { throw ("re-source verify fail on disk [" + $label + "]") }
+                Write-Host ("  re-sourced " + $label + " old_sha12=" + $oldPin + " new_sha12=" + $s1.Substring(0, 12))
+            } else {
+                throw ("existing asset differs from fresh bake: stale file, refusing silent overwrite [" + $label + "]")
+            }
+        } else {
+            Write-Host ("  already-current " + $label + " sha12=" + $s1.Substring(0, 12))
+        }
     } else {
         [IO.File]::Copy($tmpA, $dst)
         Write-Host ("  baked " + $label + " sha12=" + $s1.Substring(0, 12))
@@ -275,9 +292,9 @@ if (-not (Test-Path $packDir)) { New-Item -ItemType Directory -Path $packDir | O
 if (-not (Test-Path $facDir))  { New-Item -ItemType Directory -Path $facDir  | Out-Null }
 
 $srcPaths = @(
-    (Join-Path $towersDir 'facade-quant.png'),
+    (Join-Path $towersDir 'quant-twist.png'),
     (Join-Path $towersDir 'facade-game.png'),
-    (Join-Path $towersDir 'facade-media.png'),
+    (Join-Path $towersDir 'media-pearl.png'),
     (Join-Path $tilesDir 'GuttyKreum_CleanCity_189.png'),
     (Join-Path $tilesDir 'GuttyKreum_CleanCity_132.png'),
     (Join-Path $tilesDir 'GuttyKreum_CleanCity_133.png')
@@ -291,12 +308,15 @@ foreach ($p in $srcPaths) {
 
 $shaList = @()
 
-Write-Output "facade-crop reflections (top 72px, v-flip, x0.4):"
+Write-Output "face-crop reflections (top 72px, v-flip, x0.4; r176: QUANT/MEDIA = landmark silhouettes):"
 $facJobs = @(
-    @{ n = 'refl-quant'; src = (Join-Path $towersDir 'facade-quant.png'); pw = 120; ph = 192 },
+    @{ n = 'refl-quant'; src = (Join-Path $towersDir 'quant-twist.png'); pw = 120; ph = 192 },
     @{ n = 'refl-game';  src = (Join-Path $towersDir 'facade-game.png');  pw = 120; ph = 120 },
-    @{ n = 'refl-media'; src = (Join-Path $towersDir 'facade-media.png'); pw = 144; ph = 144 }
+    @{ n = 'refl-media'; src = (Join-Path $towersDir 'media-pearl.png'); pw = 144; ph = 144 }
 )
+# r176 re-source provenance pins: the disk files these two jobs replace must
+# still be the r154 facade-skin derivations (old sha12) - see landmarks-manifest.
+$reSourcePin = @{ 'refl-quant' = 'C007613EFAE7'; 'refl-media' = '4BA113444F98' }
 foreach ($j in $facJobs) {
     $t1 = Join-Path $env:TEMP ("fv-wfx-" + $j.n + "-a.png")
     $t2 = Join-Path $env:TEMP ("fv-wfx-" + $j.n + "-b.png")
@@ -304,7 +324,9 @@ foreach ($j in $facJobs) {
     $a2 = Bake-ReflFacade $j.src $t2 72 $j.pw $j.ph
     if ($a1 -ne $a2) { throw ("asym count differs: determinism broken [" + $j.n + "]") }
     $dst = Join-Path $facDir ($j.n + '.png')
-    $sha = Install-Asset $t1 $t2 $dst ("facades/" + $j.n)
+    $pin = $null
+    if ($reSourcePin.ContainsKey($j.n)) { $pin = $reSourcePin[$j.n] }
+    $sha = Install-Asset $t1 $t2 $dst ("facades/" + $j.n) $pin
     $shaList += $sha
     Write-Output ("  refl " + $j.n + " 72px-crop asym=" + $a1)
 }

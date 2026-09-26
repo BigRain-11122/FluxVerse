@@ -452,8 +452,9 @@ namespace FluxVerse
             Chk(m.depth_fog_wash.law.color_rgb[0] == 158 && m.depth_fog_wash.law.color_rgb[1] == 148
                 && m.depth_fog_wash.law.color_rgb[2] == 199, "fog color rgb 158,148,199");
             Color fogC = LightFxRules.FogWashColor();
-            Chk(Eq(fogC.r, 158f / 255f, 1e-4f) && Eq(fogC.g, 148f / 255f, 1e-4f)
-                && Eq(fogC.b, 199f / 255f, 1e-4f),
+            float halfQ = 0.5f / 255f;  // 255-quantization half-step: 0.62f -> 158 etc.
+            Chk(Eq(fogC.r, 158f / 255f, halfQ) && Eq(fogC.g, 148f / 255f, halfQ)
+                && Eq(fogC.b, 199f / 255f, halfQ),
                 "fog color single source = SkylineRules.FogFar(Dusk) mauve family");
             Chk(Eq(fogC.r, SkylineRules.FogFar(AmbientTier.Dusk).r, 1e-6f)
                 && Eq(fogC.g, SkylineRules.FogFar(AmbientTier.Dusk).g, 1e-6f)

@@ -80,7 +80,7 @@
       "acceptance": "coherent S6b dusk frame: water band mean hue in [320, 20] (wrap) AND mean lum in [120, 180] (duskgold-manifest c5 gate)"
     },
     "mounts": [
-      { "id": "WaterFxWarmWash", "rect": [-50, -3, 50, 3] }
+      { "id": "WarmWash", "rect": [-50, -3, 50, 3] }
     ]
   },
   "render_laws": {

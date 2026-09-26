@@ -27,6 +27,6 @@
 - **stale 拒写与源只读**：已提交件 SHA 同=跳写（ALREADY CURRENT）；源资产 size+mtime 双不动自证；外置数据件（canopy-sources.txt/landmark-sheets.txt 模式）承 CJK 路径。
 - **in-script 自检门电池**（fail-loud）：尺寸界 w/h bounds → 角透明 ×4 → 带位计数（lit/glass/alpha band 各自阈值）→ 互异 → 双跑；全部 print 进报告件（logs/devloop-r<N>-<name>.txt）。
 
-## 验证门六面（r168 定谳序）
+## 验证门六面（r168 定谳序·r212 增 A0b）
 
-A0 烘焙器 ASCII 审计（字节扫描零非 ASCII）→ A1 盘 census+IHDR 精确（PNG 头直读禁猜）→ A2 存量 SHA 对 r 前提交版逐位同+新件 SHA 钉版 → A3 双跑幂等+件间互异 → A4 角透明盘读 → A5 独立 lit/glass 复算（**非信任烘焙打印**——门面自身 bug 会假绿，独立复算面才逮产物面真错·r154 A6b 先例）。
+A0 烘焙器 ASCII 审计（字节扫描零非 ASCII）→ **A0b PSA 高值子集顾问位**（r212 T-FV-125：auto-var 赋值/null 序/BOM 三律·噪音层 grandfather 排除表声明在 Tools/devloop/psa-advisor.ps1 头注·模板自带）→ A1 盘 census+IHDR 精确（PNG 头直读禁猜）→ A2 存量 SHA 对 r 前提交版逐位同+新件 SHA 钉版 → A3 双跑幂等+件间互异 → A4 角透明盘读 → A5 独立 lit/glass 复算（**非信任烘焙打印**——门面自身 bug 会假绿，独立复算面才逮产物面真错·r154 A6b 先例）。

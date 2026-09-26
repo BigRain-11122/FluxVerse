@@ -22,7 +22,7 @@ description: FluxVerse 超体宇宙城「GDI+ 自焙管线」——City 一切�
 
 **Phase 1 烘焙器施工**：`Tools/city/bake-<name>.ps1`（配方族与 in-script 门 = `references/bake-recipes.md`）——GDI+ 绘制面 + stale 拒写 + 源只读门（size+mtime 双不动自证）+ 自检门全带。
 
-**Phase 2 验证门**：复制 `scripts/bake-harness-template.ps1` → `logs/devloop-r<N>-<name>-test.ps1`，填 FILL 段，跑六面：A0 烘焙器 ASCII 审计 / A1 盘 census+IHDR / A2 SHA 钉（存量对 r 前提交版·新件本轮钉版）/ A3 双跑幂等+件间互异 / A4 角透明像素门 / A5 独立复算（lit/glass/带位盘上重数）。全绿才继续。
+**Phase 2 验证门**：复制 `scripts/bake-harness-template.ps1` → `logs/devloop-r<N>-<name>-test.ps1`，填 FILL 段，跑六面：A0 烘焙器 ASCII 审计+**A0b PSA 高值子集顾问位**（T-FV-125：auto-var 赋值/null 序/BOM 三律·噪音层 grandfather 排除表声明在 psa-advisor 头注·PSA 模块缺席=可见 note 降级） / A1 盘 census+IHDR / A2 SHA 钉（存量对 r 前提交版·新件本轮钉版）/ A3 双跑幂等+件间互异 / A4 角透明像素门 / A5 独立复算（lit/glass/带位盘上重数）。全绿才继续。
 
 **Phase 3 风格闸**：4× 拼图多模态判（三轮定谳范式：首判负→改案→复判·FAIL 回退换件）→ 入世界层件加锚合成图预演（皮件贴现城实位合成·贴纸感判负·r151 C 组先例）。
 

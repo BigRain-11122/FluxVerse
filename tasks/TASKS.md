@@ -9,7 +9,7 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-125 | PSScriptAnalyzer 顾问位接线（P-2026-09-26-08 开源采用落地·OH-20260926-fluxverse 切片 1 后续）——高值规则子集（PSAvoidAssignmentToAutomaticVariable/PSPossibleIncorrectComparisonWithNull/PSUseBOMForUnicodeEncodedFile）入沙盒轮 A0 静态段+city-sandbox/bake-pipeline 双技能 harness 模板候选+风格噪音规则（位置参数 246/Probe- 命名族 89 等）grandfather 排除表声明 | 源=OH-20260926-fluxverse.md 采用→落点③+基线账 logs/devloop-oss-psa-baseline.json（416 findings 分层·空 catch 27/null 序 4/死变量 9 观察清单随轮消化）；判据=接线后任一沙盒轮 PSA 高值子集跑绿+双技能安装副本同步+验收回写 OH 台账 | open |
+| T-FV-126 | oss-harvest 切片 2 预置（P-2026-09-26-08 首窗 ≤09-29 21:40·OH-20260926-fluxverse 下窗指针①②）——Kenney 深分页扫（2D/pixel 分类页·伞与城市 props 面）+awesome-unity2d/awesome-pixel-art 清单面普查→候选五门评估+落点强制（实搜面全实录·parked 带理由禁悬空） | 源=cph4/oss-harvest/OH-20260926-fluxverse.md 下窗指针+切片 1 基线 logs/devloop-oss-psa-baseline-r212.json；判据=切片 2 落账同文件续写（注册表行承 r210）+实搜面零死面+结论应用表四行齐备 | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

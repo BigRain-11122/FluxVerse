@@ -124,8 +124,8 @@ function Bake-Frame($path, $frame) {
         }
     }
     if ($crest -lt 24 -or $crest -gt 60) { throw ("wave band fail frame " + $frame + ": crest=" + $crest) }
-    # blue-family law: every pixel b > r, average b-r >= 40
-    $bmin = 0; $sumDr = 0; $n = 0
+    # blue-family law: every pixel b > r, average b-r >= 40 (r212: dead $bmin digested)
+    $sumDr = 0; $n = 0
     for ($i = 0; $i -lt $bytes.Length; $i += 4) {
         $b = $bytes[$i]; $r = $bytes[$i + 2]
         if ($b -le $r) { throw ("blue-family violation frame " + $frame + " at px " + ($i / 4) + ": b=" + $b + " r=" + $r) }

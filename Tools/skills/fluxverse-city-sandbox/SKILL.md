@@ -20,7 +20,7 @@ description: FluxVerse 超体宇宙城「布设沙盒轮」门族——City 场�
 
 **Phase 0 勘定**：读正典（DESIGN 相关节 + TECH §九 对应行/r 系勘定行）+ 资产盘验（IHDR 尺寸直读禁猜路径）。三径判定（直用/自焙/外采）+ 风格闸（r44 律：环境 tint 乘性重映射 + 五色律光色归位 + art-target-dusk 锚；FAIL 回退换件禁静默留）。
 
-**Phase 1 活表 census**：复制 `scripts/sandbox-harness-template.ps1` → `logs/devloop-r<N>-<name>-test.ps1`，填 FILL 段（轮内专属面），跑 A0。锚点计数全绿才继续（表漂移当场 fail-loud）。
+**Phase 1 活表 census**：复制 `scripts/sandbox-harness-template.ps1` → `logs/devloop-r<N>-<name>-test.ps1`，填 FILL 段（轮内专属面），跑 A0 + **A0b PSA 高值子集顾问位**（T-FV-125：auto-var 赋值/null 序/BOM 三律自扫·噪音层 grandfather 排除·PSA 模块缺席=可见 note 降级）。锚点计数全绿才继续（表漂移当场 fail-loud）。
 
 **Phase 2 门族推导**：候选件 world rect 过全套物理门（常量与实体几何推导式 = `references/gate-family.md`：L0 框 ±35.256/带界 −16..+15/sec8 立足/整数 y/高度帽/席位 2.2/机 2.0/车 2.8/招牌包络 1.065/牌牌 2.75/檐下共边/MountX 夹持/相异律…）。主障碍集 = 全活源并集（r169 集合式：楼+办公+台面+大道带+在册 manifest 全件+席位×3+檐位×3+机×2+车+招牌+锚点），禁漏类。
 

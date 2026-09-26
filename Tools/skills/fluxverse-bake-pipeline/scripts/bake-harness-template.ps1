@@ -107,6 +107,22 @@ $a0Target = $BakerPath
 if ($a0Target -eq '') { $a0Target = $PSCommandPath }
 Chk 'A0 baker ASCII' (IsAsciiFile $a0Target)
 
+# A0b PSScriptAnalyzer advisor seat (T-FV-125, oss-harvest P-08): high-value
+# rule subset only (auto-variable assignment / null-side comparison / BOM-less
+# non-ASCII). Style/noise layer grandfather-excluded (declared at
+# OH-20260926-fluxverse.md). Round mode gates the REAL baker; sample mode
+# gates this template. Module missing = seat degrades with a VISIBLE note.
+$psaClean = $true
+if (Get-Module -ListAvailable -Name PSScriptAnalyzer) {
+  $psaRules = @('PSAvoidAssignmentToAutomaticVariable', 'PSPossibleIncorrectComparisonWithNull', 'PSUseBOMForUnicodeEncodedFile')
+  $psaHits = @(Invoke-ScriptAnalyzer -Path $a0Target -IncludeRule $psaRules -ErrorAction SilentlyContinue)
+  foreach ($ph in $psaHits) { Write-Output ('  psa ' + $ph.RuleName + ' ' + $ph.ScriptName + ':' + $ph.Line + ' ' + $ph.Message) }
+  $psaClean = ($psaHits.Count -eq 0)
+} else {
+  Write-Output '  note: PSScriptAnalyzer not installed - A0b advisor seat skipped (Install-Module PSScriptAnalyzer -Scope CurrentUser)'
+}
+Chk 'A0b PSA high-value subset clean' ($psaClean)
+
 # A1 disk census + IHDR (no path guessing: read PNG header directly)
 foreach ($f in $Files) {
   Chk ('A1 exists ' + (Split-Path $f.p -Leaf)) (Test-Path $f.p)

@@ -167,7 +167,7 @@ function Bake-Pearl($path) {
       # sphere surfaces (overdraw legs/axis where they meet) - membership
       # is per-sphere: a big-sphere pixel measured against the small-sphere
       # center is always far, so rim/win tests must never mix the two radii
-      if ($cls -eq $null) {
+      if ($null -eq $cls) {
         if ($dBig -le 34) {
           if ($dBig -gt 31) { $cls = 'RIM' }
           elseif ((($x % 6) -eq 2 -or ($x % 6) -eq 3) -and (($y % 6) -eq 2 -or ($y % 6) -eq 3)) { $cls = 'WIN' }
@@ -179,7 +179,7 @@ function Bake-Pearl($path) {
           else { $cls = 'BODY' }
         }
       }
-      if ($cls -eq $null) { continue }
+      if ($null -eq $cls) { continue }
       $c = $BODY
       switch ($cls) {
         'MAGENTA' { $c = $MAGENTA }

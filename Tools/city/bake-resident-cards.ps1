@@ -132,9 +132,10 @@ function Bake-Card($slot) {
     $footBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(255, 138, 150, 172))
 
     # row 1: name - warm glow -> +2px shadow -> gold fill (margin gate W-8, r108)
-    $wName = Draw-Row $g $slot.name $fontName $goldBrush $NameY $shBrush 2 $goldGlow $offsName $NamePx ($W - 8)
+    # r212: widths discarded ($null =), dead w-vars digested (PSA high-value layer)
+    $null = Draw-Row $g $slot.name $fontName $goldBrush $NameY $shBrush 2 $goldGlow $offsName $NamePx ($W - 8)
     # row 2: profession - +1px shadow -> pale cool core
-    $wR2 = Draw-Row $g $slot.profession $fontBody $coreBrush $R2Y $shBrush 1 $null $null $BodyPx ($W - 18)
+    $null = Draw-Row $g $slot.profession $fontBody $coreBrush $R2Y $shBrush 1 $null $null $BodyPx ($W - 18)
     # row 3: block / age+SUI - age sentinel law (r106): age<0 (census null,
     # anchor seat) renders BLOCK ONLY, no age is invented
     $ageVal = [int]$slot.age
@@ -143,16 +144,16 @@ function Bake-Card($slot) {
     } else {
         $ageLine = [string]$slot.block + " / " + [string]$ageVal + $sui
     }
-    $wR3 = Draw-Row $g $ageLine $fontBody $coreBrush $R3Y $shBrush 1 $null $null $BodyPx ($W - 18)
+    $null = Draw-Row $g $ageLine $fontBody $coreBrush $R3Y $shBrush 1 $null $null $BodyPx ($W - 18)
     # row 4: faction / species (ASCII passthrough)
     $fsLine = [string]$slot.faction + " / " + [string]$slot.species
-    $wR4 = Draw-Row $g $fsLine $fontBody $coreBrush $R4Y $shBrush 1 $null $null $BodyPx ($W - 18)
+    $null = Draw-Row $g $fsLine $fontBody $coreBrush $R4Y $shBrush 1 $null $null $BodyPx ($W - 18)
     # row 5: census id / layer-derived honesty marker (r106: narrative ->
     # narrative layer, anchor -> human-source anchor; P-58 disclosure on card)
     $mark = $narr
     if ([string]$slot.layer -eq 'anchor') { $mark = $anchorMark }
     $footLine = [string]$slot.id + " / " + $mark
-    $wFoot = Draw-Row $g $footLine $fontBody $footBrush $FootY $null 0 $null $null $BodyPx ($W - 18)
+    $null = Draw-Row $g $footLine $fontBody $footBrush $FootY $null 0 $null $null $BodyPx ($W - 18)
 
     $bmp.Save($outFile, [System.Drawing.Imaging.ImageFormat]::Png)
     $fontName.Dispose(); $fontBody.Dispose()

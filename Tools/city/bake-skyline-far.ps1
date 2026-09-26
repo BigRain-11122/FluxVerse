@@ -133,11 +133,11 @@ function Build-Strip {
     $i = 0
     while ($x -lt $script:W) {
         $z = ZoneAt $x
-        if ($z -ne $null) { $x = $z.x1 + 1; continue }
+        if ($null -ne $z) { $x = $z.x1 + 1; continue }
         $w = 10 + ((Hash (7 * $i + 1)) % 37)
         if (($x + $w) -gt $script:W) { $w = $script:W - $x }
         $z2 = ZoneAhead $x ($x + $w - 1)
-        if ($z2 -ne $null) {
+        if ($null -ne $z2) {
             $w = $z2.x0 - $x
             if ($w -lt 6) { $x = $z2.x1 + 1; continue }
         }

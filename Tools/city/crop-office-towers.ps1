@@ -14,17 +14,20 @@ $report = Join-Path $root 'logs\devloop-r151-towercrop.txt'
 $rep = New-Object System.Collections.ArrayList
 
 # resolve source path from UTF-8 data file (explicit encoding, r53 law)
+# r212: scriptblock-outer-var assignment retired (PSA dead-var false-positive
+# family, r171 scriptblock lesson) - the block only OUTPUTS candidate paths,
+# the assignment happens outside; Select -Last 1 keeps the r151 last-match-wins
+# behavior, empty list -> $null -> the -not check throws (behavior identical)
 $dataFile = Join-Path $PSScriptRoot 'landmark-sheets.txt'
-$srcPath = $null
-Get-Content -LiteralPath $dataFile -Encoding UTF8 | ForEach-Object {
+$srcPath = @(Get-Content -LiteralPath $dataFile -Encoding UTF8 | ForEach-Object {
     $t = $_.Trim()
     if ($t.StartsWith('f:')) {
         $rel = ($t.Substring(2) -split '\|')[0]
         if ([IO.Path]::GetFileName($rel) -eq '16_Office_48x48.png') {
-            $srcPath = [IO.Path]::GetFullPath((Join-Path $root $rel))
+            [IO.Path]::GetFullPath((Join-Path $root $rel))
         }
     }
-}
+}) | Select-Object -Last 1
 if (-not $srcPath) { throw 'FATAL: 16_Office_48x48.png not found in landmark-sheets.txt' }
 if (-not (Test-Path -LiteralPath $srcPath)) { throw 'FATAL: source missing on disk' }
 $fi = Get-Item -LiteralPath $srcPath
@@ -135,9 +138,11 @@ if ($shaProbe -ne $shaDisk) { throw 'FATAL: double-run idempotency failed for pr
 $fi2 = Get-Item -LiteralPath $srcPath
 if ($fi2.Length -ne $sizeBefore -or $fi2.LastWriteTimeUtc -ne $mtimeBefore) { throw 'FATAL: source file was modified' }
 
-# count gate
-$files = Get-ChildItem -LiteralPath $outDir -Filter *.png
-if ($files.Count -ne 11) { throw ('FATAL: output dir has ' + $files.Count + ' png, want 11') }
+# count gate (r212 re-scoped: office-towers is a SHARED dir - r152 facade skins
+# and r175 landmark silhouettes landed here after r151; census only this
+# cropper's own pieces so the stale "dir has 11 png" face cannot re-fire)
+$files = @(Get-ChildItem -LiteralPath $outDir -Filter *.png | Where-Object { $_.Name -match '^tower-(glass|mid)-' })
+if ($files.Count -ne 11) { throw ('FATAL: cropper pieces in shared dir = ' + $files.Count + ', want 11') }
 
 [void]$rep.Add('CROP OK pieces=11 distinct_sha=' + $shas.Count + ' double_run=PASS source_readonly=PASS')
 [IO.File]::WriteAllLines($report, $rep)

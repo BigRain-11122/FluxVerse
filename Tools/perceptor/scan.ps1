@@ -45,7 +45,8 @@ if (-not (Test-Path $worldDir)) { New-Item -ItemType Directory -Path $worldDir |
 $cursorFile = Join-Path $worldDir 'perceptor-state.txt'
 $eventsFile = Join-Path $worldDir 'world-events.jsonl'
 $quarFile   = Join-Path $worldDir 'world-events.quarantine.jsonl'
-$outFile    = Join-Path $worldDir 'world-state.json'        # promoted by verify.ps1
+# world-state.json (in worldDir) = the PROMOTED state file; verify.ps1 owns
+# the promotion, scan only ever writes the .new target below (r212 dead-var digest)
 $newFile    = Join-Path $worldDir 'world-state.json.new'    # scan target (pre-gate)
 $registryFile = Join-Path $repoRoot 'schema\events-registry.json'
 

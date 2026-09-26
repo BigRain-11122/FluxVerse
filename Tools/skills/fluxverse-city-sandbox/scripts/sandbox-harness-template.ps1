@@ -97,6 +97,24 @@ Chk (($vcols -join ',') -eq '-18,-17,17,18') 'A0: avenue vcols == -18/-17/17/18'
 # T1 terrace world rect, Paint band rows for the zone).
 #   L1 shape: Chk ($m.<field> -eq <n>) 'A0: <name> census'  -- never a comma between the two args.
 
+# ---------- A0b PSScriptAnalyzer advisor seat (T-FV-125, oss-harvest P-08) ----------
+# Self-scan with the high-value rule subset only (house trap families):
+# auto-variable assignment (r164 $pid family) / null-side comparison
+# (r28/r32) / BOM-less non-ASCII (r53). Style/noise layer is
+# grandfather-excluded (declared at OH-20260926-fluxverse.md) -- never
+# widen without a declared reason. Module missing = seat degrades with a
+# VISIBLE note (advisor unavailable), never silent.
+$psaClean = $true
+if (Get-Module -ListAvailable -Name PSScriptAnalyzer) {
+    $psaRules = @('PSAvoidAssignmentToAutomaticVariable', 'PSPossibleIncorrectComparisonWithNull', 'PSUseBOMForUnicodeEncodedFile')
+    $psaHits = @(Invoke-ScriptAnalyzer -Path $PSCommandPath -IncludeRule $psaRules -ErrorAction SilentlyContinue)
+    foreach ($ph in $psaHits) { Write-Host ('PSA ' + $ph.RuleName + ' ' + $ph.ScriptName + ':' + $ph.Line + ' ' + $ph.Message) }
+    $psaClean = ($psaHits.Count -eq 0)
+} else {
+    Write-Host 'note: PSScriptAnalyzer not installed - A0b advisor seat skipped (Install-Module PSScriptAnalyzer -Scope CurrentUser)'
+}
+Chk ($psaClean) 'A0b: PSA high-value subset clean (self)'
+
 # ---------- geometry derivations (r141 seat class law) ----------
 $half   = 32 / 48.0
 $shHW   = 32 / 48.0; $shHH = 8 / 48.0

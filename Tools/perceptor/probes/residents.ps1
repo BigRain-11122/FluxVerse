@@ -109,7 +109,6 @@ function Probe-residents {
       # never fabricating motives. Plus real location (RDR2 routine).
       $onlineNow = ($fleetOnline.ContainsKey($rid) -and $fleetOnline[$rid])
       $locRaw = Get-ResidentLocation $rid $onlineNow $hourBj
-      $selfParts = @()
       $locKey = ''
       if ($locCn.ContainsKey($locRaw)) { $locKey = $locCn[$locRaw] }
       $needsFact = ''

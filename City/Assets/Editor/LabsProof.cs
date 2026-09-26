@@ -43,8 +43,29 @@
 //    for the AA-016 daytime-flat family - the CPH4-blue glass family
 //    carries its own anchor palette, so harmony rides the multimodal frame
 //    while the atmosphere law stays gated).
+//  D-temporal (r189): the live temporal faces render in every L0 tier
+//    (baseline = grandfather ApplyState(null), ON = the live state):
+//    readout window deltas + the L1 temporal street frame (cam 19,6 - the
+//    r187 street view lifted 1u so the floating readout sits inside the
+//    18u L1 frame) carrying the ceremony TriggerDirect frame. Shots:
+//    docs/design/m1-r189-temporal-{day,dusk,night,l1-north}.png. The
+//    constant-alpha readouts sit under the ambient tint like every world
+//    object (D-02 emitted-light law - zero tier modulation).
+//  F temporal laws (r189, manifest = Tools/city/labs-temporal-manifest.json
+//    - the r188 bake 17 + sandbox 70 single source): F0 table==manifest
+//    mirror (digits strip law, row law, birth/sandbox readouts, wall slots,
+//    ceremony/pulse rects+alphas, incubator standby, poll trio, art->world
+//    hand pins); F1 digits asset gate (importer + .meta first import P-27v
+//    + the 10-glyph px truth table 28/8/26/26/18/26/30/14/34/30 + gap
+//    transparency + on/off color pins); F2 adapter root law (zero public
+//    fields, single root); F3 readout census on the LIVE state file
+//    (census.total + governance.evolution.open_proposals, live digit
+//    counts, cap containment, z/order laws); F4 wall overlay law (live +
+//    synthetic saturation + null grandfather with facilities untouched);
+//    F5 pulse TriggerDirect trio + linear decay + LAB_INCUBATE_* standby
+//    no-op (T-FV-104); F6 mounts released before any save (r146 law).
 //  E pass 2: everything survives an editor restart (14 persisted, importer
-//    settings, neighbors intact).
+//    settings, neighbors intact + the temporal root + zero LabTmp mounts).
 // Fail-loud: any broken assumption throws into the .done report. ASCII only. No 3D.
 using System;
 using System.Collections.Generic;
@@ -178,6 +199,43 @@ namespace FluxVerse
             int comma = text.IndexOf(',', colon);
             string s = text.Substring(colon + 1, comma - colon - 1).Trim();
             return float.Parse(s, CultureInfo.InvariantCulture);
+        }
+
+        // scalar whose value may end an object ('}' before any ',' - e.g. the
+        // pulse duration_s tails); the temporal manifest uses both shapes
+        static float ExtractScalarT(string text, int from, string key)
+        {
+            int k = text.IndexOf(key, from);
+            if (k < 0) throw new InvalidOperationException("manifest key missing: " + key);
+            int colon = text.IndexOf(':', k);
+            int comma = text.IndexOf(',', colon);
+            int brace = text.IndexOf('}', colon);
+            int end = (comma >= 0 && (brace < 0 || comma < brace)) ? comma : brace;
+            if (end < 0) throw new InvalidOperationException("manifest scalar terminator missing: " + key);
+            string s = text.Substring(colon + 1, end - colon - 1).Trim();
+            return float.Parse(s, CultureInfo.InvariantCulture);
+        }
+
+        // nested int-rect list: "key": [[a,b,c,d], ...] - count rects, strict ints
+        static int[][] ExtractRectListAfter(string text, int from, string key, int count)
+        {
+            int k = text.IndexOf(key, from);
+            if (k < 0) throw new InvalidOperationException("manifest key missing: " + key);
+            int open = text.IndexOf('[', k);
+            int[][] r = new int[count][];
+            for (int i = 0; i < count; i++)
+            {
+                int ro = text.IndexOf('[', open + 1);
+                int rc = text.IndexOf(']', ro);
+                if (ro < 0 || rc < 0) throw new InvalidOperationException("manifest rect list truncated: " + key);
+                string[] parts = text.Substring(ro + 1, rc - ro - 1).Split(',');
+                if (parts.Length < 4) throw new InvalidOperationException("manifest rect too short: " + key);
+                r[i] = new int[4];
+                for (int j = 0; j < 4; j++)
+                    r[i][j] = int.Parse(parts[j].Trim(), CultureInfo.InvariantCulture);
+                open = rc;
+            }
+            return r;
         }
 
         static string Prove()
@@ -501,6 +559,17 @@ namespace FluxVerse
                     && Mathf.Abs(go.transform.localScale.y - 1f) < 1e-5f,
                     "labs scale != 1 (sprite-family law): " + LabsRules.Name(i));
             }
+            // r189: the temporal adapter root joins the scene's permanent
+            // citizens BEFORE the save (zero serialized fields - r124 law);
+            // its LabTmp* mounts are runtime-only and stay off the disk
+            // (r146 law - asserted post-reopen + in the reload gate)
+            CityLabsTemporal tmpRoot = CityLabsTemporal.EnsureRoot();
+            Chk(tmpRoot != null && GameObject.Find(CityLabsTemporal.GoName) != null,
+                "CityLabsTemporal root failed to create pre-save");
+            System.Reflection.FieldInfo[] pubFields = typeof(CityLabsTemporal)
+                .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            Chk(pubFields.Length == 0,
+                "CityLabsTemporal must hold zero public fields (r124 serialized-purity law): " + pubFields.Length);
             bool saved = EditorSceneManager.SaveScene(scene);
             Chk(saved, "scene save failed");
 
@@ -563,6 +632,495 @@ namespace FluxVerse
             Chk(CountPrefix("IdentCard") == 0, "IdentCard persisted (runtime-only law)");
             Chk(GameObject.Find("SkylineFar") == null && GameObject.Find("AmbientTint") == null,
                 "runtime-only visuals persisted into the scene");
+            Chk(UnityEngine.Object.FindObjectsOfType<CityLabsTemporal>().Length == 1,
+                "r189 temporal adapter lost after our save");
+            Chk(CountPrefix("LabTmp") == 0,
+                "LabTmp runtime mounts persisted into the disk scene (r146 disk-purity law)");
+
+            // ---- F0. temporal table == the r188 manifest (single source law) ----
+            string tman = File.ReadAllText(Path.Combine(RepoRoot, "Tools", "city",
+                "labs-temporal-manifest.json"));
+            Chk(tman.Length > 1000, "labs-temporal-manifest.json unreadable");
+            Chk(ExtractStringAfter(tman, 0, "\"protocol\"") == LabsTemporalRules.Protocol,
+                "temporal manifest protocol != table");
+            int dg = tman.IndexOf("\"digits\"");
+            Chk(dg > 0, "manifest digits section missing");
+            Chk(ExtractStringAfter(tman, dg, "\"asset\"") == LabsTemporalRules.DigitsPath,
+                "manifest digits asset != table");
+            float[] dpx = ExtractFloatsAfter(tman, dg, "\"px\"", 2);
+            Chk((int)dpx[0] == LabsTemporalRules.DigitsPxW && (int)dpx[1] == LabsTemporalRules.DigitsPxH,
+                "manifest digits px != 80x10 table");
+            Chk(Mathf.Abs(ExtractScalarT(tman, dg, "\"ppu\"") - LabsTemporalRules.PPU) < 1e-4f,
+                "manifest digits ppu != PPU24");
+            float[] cell = ExtractFloatsAfter(tman, dg, "\"cell_px\"", 2);
+            Chk((int)cell[0] == LabsTemporalRules.CellW && (int)cell[1] == LabsTemporalRules.CellH,
+                "manifest cell_px != 7x10 table");
+            Chk(Mathf.Abs(ExtractScalarT(tman, dg, "\"pitch_px\"") - LabsTemporalRules.Pitch) < 1e-4f,
+                "manifest pitch_px != 8");
+            float[] dwh = ExtractFloatsAfter(tman, dg, "\"digit_world_wh\"", 2);
+            Chk(Mathf.Abs(dwh[0] - LabsTemporalRules.CellW / LabsTemporalRules.PPU) < 5e-4f
+                && Mathf.Abs(dwh[1] - LabsTemporalRules.CellH / LabsTemporalRules.PPU) < 5e-4f,
+                "manifest digit_world_wh != cell/PPU24");
+            float[] onc = ExtractFloatsAfter(tman, dg, "\"on_color\"", 4);
+            Chk(Mathf.Abs(onc[0] / 255f - LabsTemporalRules.OnColor.r) < 1e-3f
+                && Mathf.Abs(onc[1] / 255f - LabsTemporalRules.OnColor.g) < 1e-3f
+                && Mathf.Abs(onc[2] / 255f - LabsTemporalRules.OnColor.b) < 1e-3f
+                && Mathf.Abs(onc[3] / 255f - LabsTemporalRules.OnColor.a) < 1e-3f,
+                "manifest on_color != table: [" + onc[0] + "," + onc[1] + "," + onc[2] + "," + onc[3]
+                + "] vs [" + LabsTemporalRules.OnColor.r + "," + LabsTemporalRules.OnColor.g
+                + "," + LabsTemporalRules.OnColor.b + "," + LabsTemporalRules.OnColor.a + "]");
+            float[] ofc = ExtractFloatsAfter(tman, dg, "\"off_color\"", 4);
+            Chk(Mathf.Abs(ofc[0] / 255f - LabsTemporalRules.OffColor.r) < 1e-3f
+                && Mathf.Abs(ofc[1] / 255f - LabsTemporalRules.OffColor.g) < 1e-3f
+                && Mathf.Abs(ofc[2] / 255f - LabsTemporalRules.OffColor.b) < 1e-3f
+                && Mathf.Abs(ofc[3] / 255f - LabsTemporalRules.OffColor.a) < 1e-3f,
+                "manifest off_color != table");
+            Chk(ExtractStringAfter(tman, dg, "\"sha12\"") == LabsTemporalRules.DigitsSha12,
+                "manifest digits sha12 != the r188 bake pin");
+            int rl = tman.IndexOf("\"readout_row_law\"");
+            Chk(rl > dg, "manifest readout_row_law missing");
+            Chk(tman.Substring(rl, 60).Contains("\"center_anchored\": true"),
+                "row law must stay center-anchored");
+            Chk(tman.Contains("\"span_px\": \"ndigits * 8 - 1\""), "span law text drifted");
+            Chk(LabsTemporalRules.SpanPxOf(1) == 7f && LabsTemporalRules.SpanPxOf(6) == 47f,
+                "span law broken (ndigits*8-1)");
+            float[] pad = ExtractFloatsAfter(tman, rl, "\"backing_pad\"", 2);
+            Chk(Mathf.Abs(pad[0] - LabsTemporalRules.BackingPadX) < 1e-5f
+                && Mathf.Abs(pad[1] - LabsTemporalRules.BackingPadY) < 1e-5f,
+                "manifest backing_pad != table");
+            float[] bcol = ExtractFloatsAfter(tman, rl, "\"backing_color\"", 4);
+            Chk(Mathf.Abs(bcol[0] / 255f - LabsTemporalRules.BackingColor.r) < 1e-3f
+                && Mathf.Abs(bcol[1] / 255f - LabsTemporalRules.BackingColor.g) < 1e-3f
+                && Mathf.Abs(bcol[2] / 255f - LabsTemporalRules.BackingColor.b) < 1e-3f
+                && Mathf.Abs(bcol[3] / 255f - LabsTemporalRules.BackingColor.a) < 1e-3f,
+                "manifest backing_color != table");
+            Chk(Mathf.Abs(ExtractScalarT(tman, rl, "\"backing_order\"") - LabsTemporalRules.OverlayOrder) < 1e-4f,
+                "manifest backing_order != 6");
+            Chk(Mathf.Abs(ExtractScalarT(tman, rl, "\"backing_z\"") - LabsTemporalRules.BackingZ) < 1e-5f,
+                "manifest backing_z != 0.30");
+            Chk(Mathf.Abs(ExtractScalarT(tman, rl, "\"digits_order\"") - LabsTemporalRules.OverlayOrder) < 1e-4f,
+                "manifest digits_order != 6");
+            Chk(Mathf.Abs(ExtractScalarT(tman, rl, "\"digits_z\"") - LabsTemporalRules.DigitsZ) < 1e-5f,
+                "manifest digits_z != 0.28");
+            // birth section (scoped past rl: art_to_world carries "birth"/
+            // "sandbox" mapping KEYS before the readout_row_law section)
+            int bi = tman.IndexOf("\"birth\"", rl);
+            Chk(bi > rl, "manifest birth section missing");
+            float[] brect = ExtractFloatsAfter(tman, bi, "\"rect\"", 4);
+            Chk(Mathf.Abs(brect[0] - LabsTemporalRules.BirthX0) < 1e-4f
+                && Mathf.Abs(brect[1] - LabsTemporalRules.BirthY0) < 1e-4f
+                && Mathf.Abs(brect[2] - LabsTemporalRules.BirthX1) < 1e-4f
+                && Mathf.Abs(brect[3] - LabsTemporalRules.BirthY1) < 1e-4f,
+                "manifest birth rect != table");
+            int brd = tman.IndexOf("\"readout\"", bi);
+            Chk(brd > bi, "manifest birth readout missing");
+            Chk(ExtractStringAfter(tman, brd, "\"value_path\"") == "state.census.total",
+                "birth value path must be state.census.total");
+            float[] bctr = ExtractFloatsAfter(tman, brd, "\"center\"", 2);
+            Chk(Mathf.Abs(bctr[0] - LabsTemporalRules.BirthReadoutCenter.x) < 1e-4f
+                && Mathf.Abs(bctr[1] - LabsTemporalRules.BirthReadoutCenter.y) < 1e-4f,
+                "manifest birth readout center != (23.5, 14.1)");
+            Chk(Mathf.Abs(ExtractScalarT(tman, brd, "\"max_digits\"") - LabsTemporalRules.BirthMaxDigits) < 1e-4f,
+                "manifest birth max_digits != 6");
+            float[] capb = ExtractFloatsAfter(tman, brd, "\"cap_backing_rect\"", 4);
+            Chk(Mathf.Abs(capb[0] - LabsTemporalRules.BirthCapBacking.xMin) < 1e-3f
+                && Mathf.Abs(capb[1] - LabsTemporalRules.BirthCapBacking.yMin) < 1e-3f
+                && Mathf.Abs(capb[2] - LabsTemporalRules.BirthCapBacking.xMax) < 1e-3f
+                && Mathf.Abs(capb[3] - LabsTemporalRules.BirthCapBacking.yMax) < 1e-3f,
+                "manifest birth cap backing != table");
+            Rect capDerived = LabsTemporalRules.BackingRectOf(LabsTemporalRules.BirthReadoutCenter,
+                LabsTemporalRules.BirthMaxDigits);
+            Chk(Mathf.Abs(capDerived.xMin - LabsTemporalRules.BirthCapBacking.xMin) < 1e-3f
+                && Mathf.Abs(capDerived.yMin - LabsTemporalRules.BirthCapBacking.yMin) < 1e-3f
+                && Mathf.Abs(capDerived.width - LabsTemporalRules.BirthCapBacking.width) < 1e-3f
+                && Mathf.Abs(capDerived.height - LabsTemporalRules.BirthCapBacking.height) < 1e-3f,
+                "derived cap backing != manifest cap rect (row law drift)");
+            int ws = tman.IndexOf("\"wall_slots\"", bi);
+            Chk(ws > brd, "manifest wall_slots missing");
+            Chk(Mathf.Abs(ExtractScalarT(tman, ws, "\"overlay_order\"") - LabsTemporalRules.OverlayOrder) < 1e-4f,
+                "wall overlay_order != 6");
+            Chk(Mathf.Abs(ExtractScalarT(tman, ws, "\"overlay_z\"") - LabsTemporalRules.OverlayZ) < 1e-5f,
+                "wall overlay_z != -0.5");
+            int[][] slotRects = ExtractRectListAfter(tman, ws, "\"slot_art_rects\"", 6);
+            for (int i = 0; i < 6; i++)
+                Chk(slotRects[i][0] == LabsTemporalRules.WallSlotArt[i, 0]
+                    && slotRects[i][1] == LabsTemporalRules.WallSlotArt[i, 1]
+                    && slotRects[i][2] == LabsTemporalRules.WallSlotArt[i, 2]
+                    && slotRects[i][3] == LabsTemporalRules.WallSlotArt[i, 3],
+                    "manifest wall slot " + i + " art rect != table");
+            int ce = tman.IndexOf("\"ceremony\"", bi);
+            Chk(ce > ws, "manifest ceremony missing");
+            Chk(ExtractStringAfter(tman, ce, "\"event\"") == LabsTemporalRules.CeremonyEvent,
+                "manifest ceremony event != RESIDENT_BIRTH");
+            Chk(ExtractStringAfter(tman, ce, "\"city_action_ref\"") == LabsTemporalRules.CeremonyActionRef,
+                "manifest ceremony action ref != table");
+            float[] chamArt = ExtractFloatsAfter(tman, ce, "\"chamber_art_rect\"", 4);
+            Chk((int)chamArt[0] == LabsTemporalRules.ChamberArt[0]
+                && (int)chamArt[1] == LabsTemporalRules.ChamberArt[1]
+                && (int)chamArt[2] == LabsTemporalRules.ChamberArt[2]
+                && (int)chamArt[3] == LabsTemporalRules.ChamberArt[3],
+                "manifest chamber art rect != table");
+            Chk(Mathf.Abs(ExtractScalarT(tman, ce, "\"peak_alpha\"") / 255f
+                - LabsTemporalRules.CeremonyPeakAlpha) < 1e-4f, "manifest ceremony peak != 220");
+            Chk(Mathf.Abs(ExtractScalarT(tman, ce, "\"newest_slot_burst_alpha\"") / 255f
+                - LabsTemporalRules.BurstPeakAlpha) < 1e-5f, "manifest burst peak != 255");
+            Chk(Mathf.Abs(ExtractScalarT(tman, ce, "\"duration_s\"")
+                - LabsTemporalRules.CeremonyDuration) < 1e-4f, "manifest ceremony duration != 2.5");
+            // sandbox section (scoped past ce: same art_to_world key hazard)
+            int si = tman.IndexOf("\"sandbox\"", ce);
+            Chk(si > ce, "manifest sandbox section missing");
+            float[] srect = ExtractFloatsAfter(tman, si, "\"rect\"", 4);
+            Chk(Mathf.Abs(srect[0] - LabsTemporalRules.SbxC0) < 1e-4f
+                && Mathf.Abs(srect[1] - LabsTemporalRules.SbxY0) < 1e-4f
+                && Mathf.Abs(srect[2] - LabsTemporalRules.SbxX1) < 1e-4f
+                && Mathf.Abs(srect[3] - LabsTemporalRules.SbxY1) < 1e-4f,
+                "manifest sandbox rect != table");
+            int srd = tman.IndexOf("\"readout\"", si);
+            Chk(srd > si, "manifest sandbox readout missing");
+            Chk(ExtractStringAfter(tman, srd, "\"value_path\"") == "state.governance.evolution.open_proposals",
+                "sandbox value path must be state.governance.evolution.open_proposals");
+            float[] sctr = ExtractFloatsAfter(tman, srd, "\"center\"", 2);
+            Chk(Mathf.Abs(sctr[0] - LabsTemporalRules.SbxReadoutCenter.x) < 1e-4f
+                && Mathf.Abs(sctr[1] - LabsTemporalRules.SbxReadoutCenter.y) < 1e-4f,
+                "manifest sandbox readout center != (-5.4, 11.4)");
+            Chk(Mathf.Abs(ExtractScalarT(tman, srd, "\"max_digits\"") - LabsTemporalRules.SbxMaxDigits) < 1e-4f,
+                "manifest sandbox max_digits != 3");
+            float[] scap = ExtractFloatsAfter(tman, srd, "\"cap_backing_rect\"", 4);
+            Chk(Mathf.Abs(scap[0] - LabsTemporalRules.SbxCapBacking.xMin) < 1e-3f
+                && Mathf.Abs(scap[1] - LabsTemporalRules.SbxCapBacking.yMin) < 1e-3f
+                && Mathf.Abs(scap[2] - LabsTemporalRules.SbxCapBacking.xMax) < 1e-3f
+                && Mathf.Abs(scap[3] - LabsTemporalRules.SbxCapBacking.yMax) < 1e-3f,
+                "manifest sandbox cap backing != table");
+            int spn = tman.IndexOf("\"pulses\"", si);
+            Chk(spn > srd, "manifest sandbox pulses missing");
+            Chk(ExtractStringAfter(tman, spn, "\"event\"") == LabsTemporalRules.PulseNewEvent,
+                "first sandbox pulse != PROPOSAL_NEW");
+            Chk(ExtractStringAfter(tman, spn, "\"city_action_ref\"") == LabsTemporalRules.PulseNewActionRef,
+                "PROPOSAL_NEW action ref != table");
+            float[] holoArt = ExtractFloatsAfter(tman, spn, "\"art_rect\"", 4);
+            Chk((int)holoArt[0] == LabsTemporalRules.HoloArt[0]
+                && (int)holoArt[1] == LabsTemporalRules.HoloArt[1]
+                && (int)holoArt[2] == LabsTemporalRules.HoloArt[2]
+                && (int)holoArt[3] == LabsTemporalRules.HoloArt[3],
+                "manifest holo band art rect != table");
+            Chk(Mathf.Abs(ExtractScalarT(tman, spn, "\"peak_alpha\"") / 255f
+                - LabsTemporalRules.PulseNewPeakAlpha) < 1e-4f, "PROPOSAL_NEW peak != 180");
+            int ap = tman.IndexOf("\"" + LabsTemporalRules.PulseAppliedEvent + "\"", spn);
+            Chk(ap > spn, "PROPOSAL_APPLIED pulse missing");
+            Chk(ExtractStringAfter(tman, ap, "\"city_action_ref\"") == LabsTemporalRules.PulseAppliedActionRef,
+                "PROPOSAL_APPLIED action ref != table");
+            int[][] blkArt = ExtractRectListAfter(tman, ap, "\"art_rects\"", 2);
+            for (int b = 0; b < 2; b++)
+                Chk(blkArt[b][0] == LabsTemporalRules.BlockArt[b, 0]
+                    && blkArt[b][1] == LabsTemporalRules.BlockArt[b, 1]
+                    && blkArt[b][2] == LabsTemporalRules.BlockArt[b, 2]
+                    && blkArt[b][3] == LabsTemporalRules.BlockArt[b, 3],
+                    "manifest district block " + b + " art rect != table");
+            Chk(Mathf.Abs(ExtractScalarT(tman, ap, "\"peak_alpha\"") / 255f
+                - LabsTemporalRules.PulseAppliedPeakAlpha) < 1e-4f, "PROPOSAL_APPLIED peak != 160");
+            Chk(Mathf.Abs(ExtractScalarT(tman, si, "\"overlay_z\"") - LabsTemporalRules.OverlayZ) < 1e-5f,
+                "sandbox overlay_z != -0.5");
+            // incubator: standby + zero pulses + facility identity (the pod)
+            int ic = tman.IndexOf("\"incubator\"");
+            Chk(ic > si, "manifest incubator section missing");
+            float[] irect = ExtractFloatsAfter(tman, ic, "\"rect\"", 4);
+            Chk(Mathf.Abs(irect[0] - LabsRules.X0(podIdx)) < 1e-4f
+                && Mathf.Abs(irect[1] - LabsRules.Y0(podIdx)) < 1e-4f
+                && Mathf.Abs(irect[2] - LabsRules.X1(podIdx)) < 1e-4f
+                && Mathf.Abs(irect[3] - LabsRules.Y1(podIdx)) < 1e-4f,
+                "manifest incubator rect != the L1 pod placement (facility identity law)");
+            int sb = tman.IndexOf("\"standby\"", ic);
+            Chk(sb > ic && sb < ic + 200 && tman.Substring(sb, 24).Contains("true"),
+                "incubator standby law missing (D-02)");
+            int icp = tman.IndexOf("\"pulses\"", ic);
+            Chk(icp > ic, "incubator pulses key missing");
+            int ico = tman.IndexOf('[', icp);
+            Chk(ico > 0 && tman.IndexOf(']', ico) == ico + 1,
+                "incubator pulses must stay empty (T-FV-104 standby reservation)");
+            // poll law
+            int po = tman.IndexOf("\"poll\"");
+            Chk(po > ic, "manifest poll section missing");
+            Chk(Mathf.Abs(ExtractScalarT(tman, po, "\"interval_s\"")
+                - LabsTemporalRules.PollIntervalSec) < 1e-4f, "poll interval != 10s");
+            int pev = tman.IndexOf("\"pulse_events\"", po);
+            Chk(pev > po, "poll pulse_events missing");
+            Chk(tman.Substring(pev, 200).Contains("\"RESIDENT_BIRTH\"")
+                && tman.Substring(pev, 200).Contains("\"PROPOSAL_NEW\"")
+                && tman.Substring(pev, 200).Contains("\"PROPOSAL_APPLIED\""),
+                "poll pulse event trio missing");
+            Chk(LabsTemporalRules.PulseEventCount == 3, "pulse event count law broken");
+            // art->world hand pins (the r188 sandbox gate's hand-recompute,
+            // now the C# table law)
+            Rect s0w = LabsTemporalRules.WallSlotRect(0);
+            Chk(Mathf.Abs(s0w.xMin - 23.3333f) < 1e-3f && Mathf.Abs(s0w.yMin - 9.875f) < 1e-3f
+                && Mathf.Abs(s0w.xMax - 23.4583f) < 1e-3f && Mathf.Abs(s0w.yMax - 9.9583f) < 1e-3f,
+                "wall slot0 world rect off the r188 hand pin");
+            Rect chW = LabsTemporalRules.ChamberRect();
+            Chk(Mathf.Abs(chW.xMin - 23.2083f) < 1e-3f && Mathf.Abs(chW.yMin - 10.1667f) < 1e-3f
+                && Mathf.Abs(chW.xMax - 23.7917f) < 1e-3f && Mathf.Abs(chW.yMax - 11.6667f) < 1e-3f,
+                "chamber world rect off the r188 hand pin");
+            Rect hoW = LabsTemporalRules.HoloRect();
+            Chk(Mathf.Abs(hoW.xMin - (-5.6667f)) < 1e-3f && Mathf.Abs(hoW.yMin - 10.4167f) < 1e-3f
+                && Mathf.Abs(hoW.xMax - (-5.3333f)) < 1e-3f && Mathf.Abs(hoW.yMax - 10.75f) < 1e-3f,
+                "holo band world rect off the r188 hand pin");
+            Rect b0W = LabsTemporalRules.BlockRect(0);
+            Chk(Mathf.Abs(b0W.xMin - (-5.7083f)) < 1e-3f && Mathf.Abs(b0W.yMin - 9.75f) < 1e-3f
+                && Mathf.Abs(b0W.xMax - (-5.4167f)) < 1e-3f && Mathf.Abs(b0W.yMax - 10.25f) < 1e-3f,
+                "district block0 world rect off the r188 hand pin");
+            Rect b1W = LabsTemporalRules.BlockRect(1);
+            Chk(Mathf.Abs(b1W.xMin - (-5.375f)) < 1e-3f && Mathf.Abs(b1W.yMin - 9.75f) < 1e-3f
+                && Mathf.Abs(b1W.xMax - (-5.0833f)) < 1e-3f && Mathf.Abs(b1W.yMax - 10.375f) < 1e-3f,
+                "district block1 world rect off the r188 hand pin");
+            // derive laws sanity
+            Chk(LabsTemporalRules.DigitCountOf(0, 6) == 1 && LabsTemporalRules.DigitCountOf(9, 6) == 1
+                && LabsTemporalRules.DigitCountOf(10, 6) == 2 && LabsTemporalRules.DigitCountOf(10003, 6) == 5
+                && LabsTemporalRules.DigitCountOf(1234567, 6) == 6,
+                "digit count law broken (incl. the over-cap clamp)");
+            Chk(LabsTemporalRules.DigitAt(10003, 5, 0) == 1 && LabsTemporalRules.DigitAt(10003, 5, 1) == 0
+                && LabsTemporalRules.DigitAt(10003, 5, 4) == 3, "digit-at law broken");
+            Chk(LabsTemporalRules.DigitAt(1234567, 6, 0) == 2 && LabsTemporalRules.DigitAt(1234567, 6, 5) == 7,
+                "over-cap must keep the low-order digits");
+            Chk(LabsTemporalRules.WallLitCountOf(0) == 0 && LabsTemporalRules.WallLitCountOf(3) == 3
+                && LabsTemporalRules.WallLitCountOf(8) == 6 && LabsTemporalRules.WallLitCountOf(15) == 6,
+                "wall saturation law broken");
+
+            // ---- F1. digits strip: importer + .meta first import (P-27v) + px truth ----
+            Sprite dSp = ForceSprite(LabsTemporalRules.DigitsPath);
+            Chk(dSp != null, "digits sprite failed to load");
+            Chk(Mathf.Abs(dSp.rect.width - LabsTemporalRules.DigitsPxW) < 0.5f
+                && Mathf.Abs(dSp.rect.height - LabsTemporalRules.DigitsPxH) < 0.5f,
+                "digits rect != 80x10");
+            Chk(Mathf.Abs(dSp.bounds.size.x - LabsTemporalRules.DigitsPxW / LabsTemporalRules.PPU) < 0.01f
+                && Mathf.Abs(dSp.bounds.size.y - LabsTemporalRules.DigitsPxH / LabsTemporalRules.PPU) < 0.01f,
+                "digits natural bounds != world size");
+            Chk(File.Exists(Path.Combine(ProjectRoot, LabsTemporalRules.DigitsPath + ".meta")),
+                "digits .meta not generated by the first editor import (P-27v, r140 note 3)");
+            Texture2D dtex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            Chk(dtex.LoadImage(File.ReadAllBytes(Path.Combine(ProjectRoot, LabsTemporalRules.DigitsPath))),
+                "digits png byte-load failed (r18 law)");
+            Chk(dtex.width == LabsTemporalRules.DigitsPxW && dtex.height == LabsTemporalRules.DigitsPxH,
+                "digits png dims off the strip law");
+            int[] truth = { 28, 8, 26, 26, 18, 26, 30, 14, 34, 30 };   // r188 bake gate pins
+            int[] litCounts = new int[10];
+            for (int d = 0; d < 10; d++)
+            {
+                int lit = 0;
+                for (int y = 0; y < LabsTemporalRules.CellH; y++)
+                    for (int x = 0; x < LabsTemporalRules.CellW; x++)
+                    {
+                        Color c = dtex.GetPixel(d * LabsTemporalRules.Pitch + x, y);
+                        if (c.a > 0.55f)
+                        {
+                            lit++;
+                            Chk(Mathf.Abs(c.r - LabsTemporalRules.OnColor.r) < 0.02f
+                                && Mathf.Abs(c.g - LabsTemporalRules.OnColor.g) < 0.02f
+                                && Mathf.Abs(c.b - LabsTemporalRules.OnColor.b) < 0.02f,
+                                "lit px off the on color at glyph " + d);
+                        }
+                        else if (c.a > 0.2f)
+                            Chk(Mathf.Abs(c.r - LabsTemporalRules.OffColor.r) < 0.02f
+                                && Mathf.Abs(c.g - LabsTemporalRules.OffColor.g) < 0.02f
+                                && Mathf.Abs(c.b - LabsTemporalRules.OffColor.b) < 0.02f,
+                                "dim px off the off color at glyph " + d);
+                    }
+                litCounts[d] = lit;
+                Chk(lit == truth[d], "glyph " + d + " lit px " + lit + " != r188 pin " + truth[d]);
+                for (int y = 0; y < LabsTemporalRules.CellH; y++)
+                    Chk(dtex.GetPixel(d * LabsTemporalRules.Pitch + LabsTemporalRules.CellW, y).a < 0.08f,
+                        "gap column not transparent at glyph " + d);
+            }
+            Chk(litCounts[1] != litCounts[7],
+                "1 vs 7 must stay asymmetric (r188 mutual-distinction pin)");
+            UnityEngine.Object.DestroyImmediate(dtex);
+
+            // ---- F2. adapter root law (persisted by the C save) ----
+            CityLabsTemporal tmp = CityLabsTemporal.EnsureRoot();
+            Chk(tmp != null, "CityLabsTemporal root missing after the C save");
+            Chk(UnityEngine.Object.FindObjectsOfType<CityLabsTemporal>().Length == 1,
+                "duplicate temporal roots in the scene");
+
+            // ---- F3. readout census: the LIVE state file drives both rows ----
+            TemporalSnapshot live = LabsTemporalRules.LoadStateFile();
+            Chk(live != null && live.hasCensus, "live census leg missing (probe r165 face)");
+            Chk(live.hasEvolution, "live evolution leg missing (probe r164 face)");
+            tmp.ApplyState(live);
+            int bn = LabsTemporalRules.DigitCountOf(live.censusTotal, LabsTemporalRules.BirthMaxDigits);
+            Chk(tmp.BirthDigits == bn, "birth digit count " + tmp.BirthDigits + " != live total's " + bn);
+            Chk(tmp.BirthValue == live.censusTotal,
+                "birth value " + tmp.BirthValue + " != live census total " + live.censusTotal);
+            Chk(tmp.BirthVisible, "birth readout hidden while census is present");
+            Rect bbR = LabsTemporalRules.BackingRectOf(LabsTemporalRules.BirthReadoutCenter, bn);
+            Chk(Mathf.Abs(tmp.BirthBackingTap.transform.position.x - bbR.center.x) < 1e-4f
+                && Mathf.Abs(tmp.BirthBackingTap.transform.position.y - bbR.center.y) < 1e-4f,
+                "birth backing pos != live row center");
+            Chk(Mathf.Abs(tmp.BirthBackingTap.transform.position.z - LabsTemporalRules.BackingZ) < 1e-5f,
+                "birth backing z off the row law");
+            Chk(Mathf.Abs(tmp.BirthBackingTap.transform.localScale.x - bbR.width) < 1e-4f
+                && Mathf.Abs(tmp.BirthBackingTap.transform.localScale.y - bbR.height) < 1e-4f,
+                "birth backing scale != live row size (dynamic width law)");
+            Chk(bbR.xMin >= LabsTemporalRules.BirthCapBacking.xMin - 1e-4f
+                && bbR.xMax <= LabsTemporalRules.BirthCapBacking.xMax + 1e-4f
+                && bbR.yMin >= LabsTemporalRules.BirthCapBacking.yMin - 1e-4f
+                && bbR.yMax <= LabsTemporalRules.BirthCapBacking.yMax + 1e-4f,
+                "live birth backing escapes the r188-swept cap rect");
+            for (int k = 0; k < bn; k++)
+            {
+                int dv = LabsTemporalRules.DigitAt(live.censusTotal, bn, k);
+                Vector2 dc = LabsTemporalRules.DigitCenterOf(LabsTemporalRules.BirthReadoutCenter, bn, k);
+                SpriteRenderer dsr = tmp.BirthDigitTap(k);
+                Chk(dsr != null && dsr.enabled, "birth digit " + k + " missing/disabled");
+                Chk(dsr.sprite != null
+                    && Mathf.Abs(dsr.sprite.rect.x - dv * LabsTemporalRules.Pitch) < 0.5f,
+                    "birth digit " + k + " must slice glyph " + dv);
+                Chk(Mathf.Abs(dsr.transform.position.x - dc.x) < 1e-4f
+                    && Mathf.Abs(dsr.transform.position.y - dc.y) < 1e-4f,
+                    "birth digit " + k + " pos off the row law");
+                Chk(Mathf.Abs(dsr.transform.position.z - LabsTemporalRules.DigitsZ) < 1e-5f,
+                    "birth digit " + k + " z off the row law");
+                Chk(dsr.sortingOrder == LabsTemporalRules.OverlayOrder,
+                    "birth digit " + k + " sorting order off law");
+            }
+            int sn = LabsTemporalRules.DigitCountOf(live.openProposals, LabsTemporalRules.SbxMaxDigits);
+            Chk(tmp.SbxDigits == sn, "sandbox digit count != live open proposals' count");
+            Chk(tmp.SbxValue == live.openProposals,
+                "sandbox value " + tmp.SbxValue + " != live open proposals " + live.openProposals);
+            Chk(tmp.SbxVisible, "sandbox readout hidden while evolution is present");
+            Rect sbR = LabsTemporalRules.BackingRectOf(LabsTemporalRules.SbxReadoutCenter, sn);
+            Chk(Mathf.Abs(tmp.SbxBackingTap.transform.position.x - sbR.center.x) < 1e-4f
+                && Mathf.Abs(tmp.SbxBackingTap.transform.position.y - sbR.center.y) < 1e-4f,
+                "sandbox backing pos != live row center");
+            Chk(sbR.xMin >= LabsTemporalRules.SbxCapBacking.xMin - 1e-4f
+                && sbR.xMax <= LabsTemporalRules.SbxCapBacking.xMax + 1e-4f,
+                "live sandbox backing escapes the swept cap rect");
+            for (int k = 0; k < sn; k++)
+            {
+                int dv = LabsTemporalRules.DigitAt(live.openProposals, sn, k);
+                Vector2 dc = LabsTemporalRules.DigitCenterOf(LabsTemporalRules.SbxReadoutCenter, sn, k);
+                SpriteRenderer dsr = tmp.SbxDigitTap(k);
+                Chk(dsr != null && dsr.enabled, "sandbox digit " + k + " missing/disabled");
+                Chk(dsr.sprite != null
+                    && Mathf.Abs(dsr.sprite.rect.x - dv * LabsTemporalRules.Pitch) < 0.5f,
+                    "sandbox digit " + k + " must slice glyph " + dv);
+                Chk(Mathf.Abs(dsr.transform.position.x - dc.x) < 1e-4f
+                    && Mathf.Abs(dsr.transform.position.y - dc.y) < 1e-4f,
+                    "sandbox digit " + k + " pos off the row law");
+            }
+
+            // ---- F4. wall overlay law: live + synthetic saturation + grandfather ----
+            int wallLive = live.wallCount;
+            Chk(wallLive >= 1, "live census wall empty (r165 top-15 face)");
+            int expectLit = LabsTemporalRules.WallLitCountOf(wallLive);
+            Chk(tmp.WallLit == expectLit,
+                "wall lit " + tmp.WallLit + " != min(6, live wall " + wallLive + ")");
+            for (int i = 0; i < LabsTemporalRules.WallSlotCount; i++)
+            {
+                SpriteRenderer wsr = tmp.WallTap(i);
+                Rect wr = LabsTemporalRules.WallSlotRect(i);
+                Chk(Mathf.Abs(wsr.transform.position.x - wr.center.x) < 1e-4f
+                    && Mathf.Abs(wsr.transform.position.y - wr.center.y) < 1e-4f,
+                    "wall slot " + i + " pos off art->world");
+                Chk(Mathf.Abs(wsr.transform.localScale.x - wr.width) < 1e-4f
+                    && Mathf.Abs(wsr.transform.localScale.y - wr.height) < 1e-4f,
+                    "wall slot " + i + " scale off the slot size");
+                Chk(Mathf.Abs(wsr.transform.position.z - LabsTemporalRules.OverlayZ) < 1e-5f,
+                    "wall slot " + i + " z off law");
+                Chk(wsr.sortingOrder == LabsTemporalRules.OverlayOrder,
+                    "wall slot " + i + " sorting order off law");
+                if (i < expectLit)
+                {
+                    Chk(wsr.enabled, "wall slot " + i + " must be lit (wall holds " + wallLive + " cards)");
+                    float ea = i == 0 ? LabsTemporalRules.WallNewestAlpha : LabsTemporalRules.WallLitAlpha;
+                    Chk(Mathf.Abs(wsr.color.a - ea) < 1e-4f,
+                        "wall slot " + i + " alpha off the r165 frontier law");
+                }
+                else Chk(!wsr.enabled, "wall slot " + i + " must stay dark");
+            }
+            // synthetic saturation + zero value
+            TemporalSnapshot syn = new TemporalSnapshot();
+            syn.hasCensus = true; syn.censusTotal = 5; syn.wallCount = 3; syn.newestCardId = "C-test";
+            syn.hasEvolution = true; syn.openProposals = 0;
+            tmp.ApplyState(syn);
+            Chk(tmp.WallLit == 3, "synthetic wall 3 must light exactly 3 slots");
+            Chk(tmp.WallTap(2).enabled && !tmp.WallTap(3).enabled, "synthetic wall frontier wrong");
+            Chk(tmp.BirthDigits == 1, "value 5 must render one glyph");
+            Chk(tmp.SbxDigits == 1, "value 0 must render one glyph (live zero, never blank)");
+            // grandfather: null -> both faces hidden, wall off, facilities untouched
+            tmp.ApplyState(null);
+            Chk(!tmp.BirthVisible && !tmp.SbxVisible, "grandfather must hide both readouts");
+            Chk(tmp.WallLit == 0, "grandfather must turn the wall off");
+            for (int i = 0; i < LabsTemporalRules.WallSlotCount; i++)
+                Chk(!tmp.WallTap(i).enabled, "grandfather wall slot " + i + " still lit");
+            for (int i = 0; i < LabsRules.Count; i++)
+                Chk(GameObject.Find(LabsRules.Name(i)) != null,
+                    "grandfather must not touch the facility sprites: " + LabsRules.Name(i));
+            tmp.ApplyState(live);
+            Chk(tmp.BirthVisible && tmp.SbxVisible && tmp.WallLit == expectLit,
+                "live re-apply after the grandfather face");
+
+            // ---- F5. pulse TriggerDirect trio + decay + incubator standby ----
+            Chk(!tmp.ChamberTap.sr.enabled && !tmp.BurstTap.sr.enabled
+                && !tmp.HoloTap.sr.enabled && !tmp.BlockTap(0).sr.enabled,
+                "pulses must start dark");
+            tmp.TriggerPulse("LAB_INCUBATE_START");   // reserved -> standby no-op
+            Chk(!tmp.ChamberTap.sr.enabled && !tmp.BurstTap.sr.enabled
+                && !tmp.HoloTap.sr.enabled && !tmp.BlockTap(0).sr.enabled
+                && !tmp.BlockTap(1).sr.enabled,
+                "LAB_INCUBATE_START must be a standby no-op (T-FV-104 reservation)");
+            tmp.TriggerPulse(LabsTemporalRules.CeremonyEvent);
+            Chk(tmp.ChamberTap.sr.enabled, "chamber glow must fire on RESIDENT_BIRTH");
+            Chk(Mathf.Abs(tmp.ChamberTap.sr.color.a - LabsTemporalRules.CeremonyPeakAlpha) < 1e-4f,
+                "chamber peak alpha off 220");
+            Rect chR2 = LabsTemporalRules.ChamberRect();
+            Chk(Mathf.Abs(tmp.ChamberTap.sr.transform.position.x - chR2.center.x) < 1e-4f
+                && Mathf.Abs(tmp.ChamberTap.sr.transform.position.y - chR2.center.y) < 1e-4f,
+                "chamber glow pos off art->world");
+            Chk(Mathf.Abs(tmp.ChamberTap.sr.transform.localScale.x - chR2.width) < 1e-4f
+                && Mathf.Abs(tmp.ChamberTap.sr.transform.localScale.y - chR2.height) < 1e-4f,
+                "chamber glow scale off the art rect");
+            Chk(Mathf.Abs(tmp.BurstTap.sr.color.a - LabsTemporalRules.BurstPeakAlpha) < 1e-5f,
+                "newest-slot burst alpha off 255");
+            Rect sl0 = LabsTemporalRules.WallSlotRect(0);
+            Chk(Mathf.Abs(tmp.BurstTap.sr.transform.position.x - sl0.center.x) < 1e-4f
+                && Mathf.Abs(tmp.BurstTap.sr.transform.position.y - sl0.center.y) < 1e-4f,
+                "the burst must ride the newest wall slot");
+            Chk(!tmp.HoloTap.sr.enabled && !tmp.BlockTap(0).sr.enabled,
+                "the birth ceremony must not light the sandbox");
+            tmp.Step(LabsTemporalRules.CeremonyDuration * 0.5f);
+            Chk(Mathf.Abs(tmp.ChamberTap.sr.color.a
+                - LabsTemporalRules.CeremonyPeakAlpha * 0.5f) < 0.02f,
+                "the fade must be linear (half time -> half alpha)");
+            tmp.Step(LabsTemporalRules.CeremonyDuration);
+            Chk(!tmp.ChamberTap.sr.enabled && !tmp.BurstTap.sr.enabled,
+                "the ceremony must end after its duration");
+            tmp.TriggerPulse(LabsTemporalRules.PulseNewEvent);
+            Chk(tmp.HoloTap.sr.enabled, "the hologram band must fire on PROPOSAL_NEW");
+            Chk(Mathf.Abs(tmp.HoloTap.sr.color.a - LabsTemporalRules.PulseNewPeakAlpha) < 1e-4f,
+                "holo peak alpha off 180");
+            Rect hoR2 = LabsTemporalRules.HoloRect();
+            Chk(Mathf.Abs(tmp.HoloTap.sr.transform.position.x - hoR2.center.x) < 1e-4f
+                && Mathf.Abs(tmp.HoloTap.sr.transform.position.y - hoR2.center.y) < 1e-4f,
+                "holo band pos off art->world");
+            Chk(!tmp.BlockTap(0).sr.enabled, "PROPOSAL_NEW must not light the district blocks");
+            tmp.Step(LabsTemporalRules.PulseDuration + 0.01f);
+            Chk(!tmp.HoloTap.sr.enabled, "the hologram pulse must end");
+            tmp.TriggerPulse(LabsTemporalRules.PulseAppliedEvent);
+            Chk(tmp.BlockTap(0).sr.enabled && tmp.BlockTap(1).sr.enabled,
+                "both district blocks must fire on PROPOSAL_APPLIED");
+            Chk(Mathf.Abs(tmp.BlockTap(0).sr.color.a - LabsTemporalRules.PulseAppliedPeakAlpha) < 1e-4f
+                && Mathf.Abs(tmp.BlockTap(1).sr.color.a - LabsTemporalRules.PulseAppliedPeakAlpha) < 1e-4f,
+                "district block peak alpha off 160");
+            Rect bl0 = LabsTemporalRules.BlockRect(0), bl1 = LabsTemporalRules.BlockRect(1);
+            Chk(Mathf.Abs(tmp.BlockTap(0).sr.transform.position.x - bl0.center.x) < 1e-4f
+                && Mathf.Abs(tmp.BlockTap(1).sr.transform.position.x - bl1.center.x) < 1e-4f,
+                "district block pos off art->world");
+            Chk(!tmp.HoloTap.sr.enabled, "PROPOSAL_APPLIED must not re-light the hologram band");
+            tmp.Step(LabsTemporalRules.PulseDuration + 0.01f);
+            Chk(!tmp.BlockTap(0).sr.enabled && !tmp.BlockTap(1).sr.enabled,
+                "the applied pulse must end");
+            tmp.TriggerPulse(LabsTemporalRules.CeremonyEvent);
+            Chk(tmp.ChamberTap.sr.enabled, "the ceremony must re-fire for every real birth");
+            tmp.Step(LabsTemporalRules.CeremonyDuration + 0.01f);
+            Chk(!tmp.ChamberTap.sr.enabled, "the re-fired ceremony must end");
 
             // ---- D. render gates: day/dusk/night L0 + the L1 labs street view ----
             amb.EnsureVisuals();
@@ -698,6 +1256,76 @@ namespace FluxVerse
             cam.orthographicSize = origSize;
             cam.transform.position = origPos;
 
+            // ---- D-temporal (r189): live temporal faces in every L0 tier ----
+            // baseline = the grandfather face (ApplyState(null) hides the
+            // readouts + wall); ON = the live state. The readouts are
+            // constant-alpha emitted light - the ambient tint shades them
+            // like every world object, zero tier modulation (D-02).
+            CityLabsTemporal tmpR = CityLabsTemporal.EnsureRoot();
+            tmpR.ApplyState(null);
+            amb.ApplyAmbient(AmbientTier.Day);
+            Texture2D tDayOff = Shot(cam, null);
+            tmpR.ApplyState(live);
+            Texture2D tDayOn = Shot(cam, "m1-r189-temporal-day.png");
+            int rBirD, rSbxD; float rl2, rw2;
+            RectWinDelta(tDayOn, tDayOff, cam, out rBirD, out rl2, out rw2,
+                LabsTemporalRules.BirthReadoutCenter.x, LabsTemporalRules.BirthReadoutCenter.y, 1.14f, 0.36f);
+            RectWinDelta(tDayOn, tDayOff, cam, out rSbxD, out rl2, out rw2,
+                LabsTemporalRules.SbxReadoutCenter.x, LabsTemporalRules.SbxReadoutCenter.y, 0.62f, 0.36f);
+            amb.ApplyAmbient(AmbientTier.Dusk);
+            tmpR.ApplyState(null);
+            Texture2D tDuskOff = Shot(cam, null);
+            tmpR.ApplyState(live);
+            Texture2D tDuskOn = Shot(cam, "m1-r189-temporal-dusk.png");
+            int rBirK, rSbxK;
+            RectWinDelta(tDuskOn, tDuskOff, cam, out rBirK, out rl2, out rw2,
+                LabsTemporalRules.BirthReadoutCenter.x, LabsTemporalRules.BirthReadoutCenter.y, 1.14f, 0.36f);
+            RectWinDelta(tDuskOn, tDuskOff, cam, out rSbxK, out rl2, out rw2,
+                LabsTemporalRules.SbxReadoutCenter.x, LabsTemporalRules.SbxReadoutCenter.y, 0.62f, 0.36f);
+            amb.ApplyAmbient(AmbientTier.Night);
+            tmpR.ApplyState(null);
+            Texture2D tNightOff = Shot(cam, null);
+            tmpR.ApplyState(live);
+            Texture2D tNightOn = Shot(cam, "m1-r189-temporal-night.png");
+            int rBirN, rSbxN;
+            RectWinDelta(tNightOn, tNightOff, cam, out rBirN, out rl2, out rw2,
+                LabsTemporalRules.BirthReadoutCenter.x, LabsTemporalRules.BirthReadoutCenter.y, 1.14f, 0.36f);
+            RectWinDelta(tNightOn, tNightOff, cam, out rSbxN, out rl2, out rw2,
+                LabsTemporalRules.SbxReadoutCenter.x, LabsTemporalRules.SbxReadoutCenter.y, 0.62f, 0.36f);
+            // the L1 temporal street frame (dusk tier, r44 harmony kin): cam
+            // (19,6) - the r187 street view lifted 1u so the floating readout
+            // (top y 14.358) sits inside the 18u-tall L1 frame; carries the
+            // ceremony TriggerDirect frame (chamber glow + newest burst)
+            cam.orthographicSize = RigMath.L1Size;
+            cam.transform.position = new Vector3(19f, 6f, origPos.z);
+            tmpR.ApplyState(null);
+            Texture2D tL1Off = Shot(cam, null);
+            tmpR.ApplyState(live);
+            tmpR.TriggerPulse(LabsTemporalRules.CeremonyEvent);
+            Texture2D tL1On = Shot(cam, "m1-r189-temporal-l1-north.png");
+            int rBirL1, rWallL1;
+            RectWinDelta(tL1On, tL1Off, cam, out rBirL1, out rl2, out rw2,
+                LabsTemporalRules.BirthReadoutCenter.x, LabsTemporalRules.BirthReadoutCenter.y, 1.14f, 0.36f);
+            RectWinDelta(tL1On, tL1Off, cam, out rWallL1, out rl2, out rw2, 23.5f, 10.2f, 0.6f, 0.85f);
+            Chk(rBirD >= 25, "birth readout invisible in the day L0 frame: " + rBirD + "px");
+            Chk(rSbxD >= 8, "sandbox readout invisible in the day L0 frame: " + rSbxD + "px");
+            Chk(rBirK >= 20, "birth readout invisible at dusk: " + rBirK + "px");
+            Chk(rSbxK >= 6, "sandbox readout invisible at dusk: " + rSbxK + "px");
+            Chk(rBirN >= 8, "birth readout invisible at night: " + rBirN + "px");
+            Chk(rSbxN >= 3, "sandbox readout invisible at night: " + rSbxN + "px");
+            Chk(rBirL1 >= 40, "birth readout invisible in the L1 temporal frame: " + rBirL1 + "px");
+            Chk(rWallL1 >= 8, "wall overlays invisible in the L1 temporal frame: " + rWallL1 + "px");
+            // restore + save purity (the mounts never reach the disk scene)
+            cam.orthographicSize = origSize;
+            cam.transform.position = origPos;
+            tmpR.Step(LabsTemporalRules.CeremonyDuration + 0.01f);
+            tmpR.ReleaseMounts();
+            Chk(CountPrefix("LabTmp") == 0, "temporal mounts survived ReleaseMounts (r146 law)");
+            UnityEngine.Object.DestroyImmediate(tDayOff); UnityEngine.Object.DestroyImmediate(tDayOn);
+            UnityEngine.Object.DestroyImmediate(tDuskOff); UnityEngine.Object.DestroyImmediate(tDuskOn);
+            UnityEngine.Object.DestroyImmediate(tNightOff); UnityEngine.Object.DestroyImmediate(tNightOn);
+            UnityEngine.Object.DestroyImmediate(tL1Off); UnityEngine.Object.DestroyImmediate(tL1On);
+
             UnityEngine.Object.DestroyImmediate(dayBase); UnityEngine.Object.DestroyImmediate(dayOn);
             UnityEngine.Object.DestroyImmediate(duskBase); UnityEngine.Object.DestroyImmediate(duskOn);
             UnityEngine.Object.DestroyImmediate(nightBase); UnityEngine.Object.DestroyImmediate(nightOn);
@@ -718,6 +1346,10 @@ namespace FluxVerse
                 + " night=" + podNightLum.ToString("F3")
                 + " warm day=" + podDayWarm.ToString("F3") + " dusk=" + podDuskWarm.ToString("F3")
                 + " l1=" + l1Pod + "/" + l1Run + "/" + l1Stub + "/" + l1Bir + "/" + l1Sbx + ")"
+                + " temporal(live=" + live.censusTotal + "/open" + live.openProposals
+                + "/wall" + wallLive + "lit" + expectLit
+                + " render day=" + rBirD + "/" + rSbxD + " dusk=" + rBirK + "/" + rSbxK
+                + " night=" + rBirN + "/" + rSbxN + " l1=" + rBirL1 + "/" + rWallL1 + ")"
                 + " shots=4(+1 unsaved west pair)";
         }
 
@@ -774,6 +1406,29 @@ namespace FluxVerse
             GameObject camGo = GameObject.Find("CityCamera");
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && Mathf.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f, "L0 camera broken after restart");
+            // r189 temporal reload face: the root survives, the mounts never do
+            GameObject tgo = GameObject.Find(CityLabsTemporal.GoName);
+            Chk(tgo != null, "CityLabsTemporal root GO lost across the editor restart");
+            CityLabsTemporal ttmp = tgo != null ? tgo.GetComponent<CityLabsTemporal>() : null;
+            Chk(ttmp != null, "CityLabsTemporal component lost across the editor restart");
+            Chk(CountPrefix("LabTmp") == 0,
+                "LabTmp runtime mounts persisted across the restart (r146 disk-purity law)");
+            TextureImporter dImp = (TextureImporter)TextureImporter.GetAtPath(LabsTemporalRules.DigitsPath);
+            Chk(dImp != null && dImp.textureType == TextureImporterType.Sprite, "digits importer type lost");
+            Chk(dImp != null && dImp.filterMode == FilterMode.Point, "digits point filter lost");
+            Chk(dImp != null && Mathf.Abs(dImp.spritePixelsPerUnit - 24f) < 0.01f, "digits PPU24 lost");
+            Chk(dImp != null && !dImp.mipmapEnabled, "digits mips re-enabled");
+            TemporalSnapshot rl3 = LabsTemporalRules.LoadStateFile();
+            Chk(rl3 != null && rl3.hasCensus && rl3.hasEvolution, "live temporal legs missing at reload");
+            if (ttmp != null)
+            {
+                ttmp.ApplyState(rl3);
+                Chk(ttmp.BirthVisible && ttmp.SbxVisible,
+                    "temporal readouts failed to re-apply after the restart");
+                Chk(ttmp.BirthValue == rl3.censusTotal && ttmp.SbxValue == rl3.openProposals,
+                    "temporal live values lost after the restart");
+                ttmp.ReleaseMounts();
+            }
             return "reload_gate=OK labs=" + CountLabs() + "/" + LabsRules.Count
                 + " persisted south_tiles=" + q + "/" + g + "/" + m
                 + " importers=sprite+point+ppu24+nemip neon=" + neonKept + "/" + NeonRules.Count

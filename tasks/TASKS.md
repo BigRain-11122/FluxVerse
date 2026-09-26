@@ -9,7 +9,7 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-003 | P-39 时态接线轮（D-20260926-06 末段）：自焙 r185→布设沙盒 r186→引擎双落 r187 皆毕→**勘定+计数器条预置已毕（r188·lab-digits+labs-temporal-manifest+双门 87 断言）**→余引擎轮（r189 照单 coupled_updates_r189） | TECH §九 P-39 行 r188 段；Tools/city/labs-temporal-manifest.json（唯一源） | open |
+| T-FV-109 | 打磨池勘定轮：夜帧小读出可辨性定谳（r189⑤·机械在证/多模态弱读）+沙盘 L0 缩尺弱读 salience（r187⑤）+pod/birth 边缘辉 4px 收紧 re-bake（r187⑤） | TECH §九 r187/r189 行打磨池段；勘定=判据定标→实施或负定谳（r169 负定谳范式） | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

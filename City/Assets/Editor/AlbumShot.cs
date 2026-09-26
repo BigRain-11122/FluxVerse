@@ -153,6 +153,9 @@ namespace FluxVerse
             cam.transform.position = origPos;
             ApplyScene(amb, water, light, wl, AmbientTier.Day, 0);
             wl.ReleaseMounts();
+            GameObject tmpGo = GameObject.Find(CityLabsTemporal.GoName);
+            CityLabsTemporal tmpR = tmpGo != null ? tmpGo.GetComponent<CityLabsTemporal>() : null;
+            if (tmpR != null) tmpR.ReleaseMounts();   // r189: the disk scene never learns runtime mounts
             if (File.Exists(Path.Combine(RepoRoot, "docs", "design", "m1-r161-album-day-water.png"))
                 && File.Exists(Path.Combine(RepoRoot, "docs", "design", "m1-r161-album-day-street.png"))
                 && File.Exists(Path.Combine(RepoRoot, "docs", "design", "m1-r161-album-night-water.png"))
@@ -175,6 +178,13 @@ namespace FluxVerse
             water.RestoreWobble();         // bank-pinned base positions for the still
             light.ApplyState(t, 0);         // tier alpha law + twinkle step 0
             wl.Poll();                      // REAL world-state zone rates at amb.CurrentTier
+            // r189: the temporal faces join every tier frame - the census
+            // beacon + birth wall + open-proposals readout poll the SAME
+            // live state file the window lights do (constant-alpha emitted
+            // light; the first Poll seeks the event tail to end - history
+            // never pulses into the still frames)
+            CityLabsTemporal tmp = CityLabsTemporal.EnsureRoot();
+            tmp.Poll();
         }
 
         static void Shot(Camera cam, string name)

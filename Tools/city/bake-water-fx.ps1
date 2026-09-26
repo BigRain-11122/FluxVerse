@@ -1,8 +1,17 @@
 # FluxVerse DevLoop r154: water-fx asset bake (P-20260925-09 water & daynight
 # CEO order 09-25 ~18:00, spec R-20260925-water-daynight.md W1-W4 bake half).
+# r203 re-darken (00:10 art-rectify order batch2, T-FV-122 S1 item (3): CEO
+# review 09-26 ~15:20 - the x0.4 reflections read as a solid black wedge on
+# the dusk/night water): $dark 0.4 -> 0.6. The re-darken is a DELIBERATE
+# regeneration gated by fresh provenance pins pinning the four current x0.4
+# derivations on disk (r176 pins C007613EFAE7/4BA113444F98 retired - they
+# pinned the r154 facade-skin derivations already replaced in r176; the
+# stale-refuse law stays intact for the other 11 assets - a re-sourced piece
+# may only replace a disk file that still IS the pinned derivation).
 # Bakes 15 PNGs:
 #  (1) face-crop reflections x3 - top-72px crop of the MOUNTED city faces,
-#      raw-ARGB vertical flip (r93 zero-resample flip law), darkened 60% (x0.4),
+#      raw-ARGB vertical flip (r93 zero-resample flip law), darkened x0.6
+#      (r203 brightness law),
 #      roof crown lands on the bank edge (mirror semantics: object edge nearest
 #      the water appears at the bank line); r176 re-source: QUANT/MEDIA now
 #      crop the r175 landmark silhouettes (quant-twist / media-pearl, the 00:10
@@ -14,7 +23,7 @@
 #  (2) brain-tower reflection x1 - composed from the REAL CleanCity tile PNGs
 #      per tower-v2-manifest lower 3u (plinth 5 cells x2 rows glass 189 +
 #      shaft row with glow band props 132/133 overlay), pre-mirrored layout
-#      (plinth at bank edge), darkened x0.4;
+#      (plinth at bank edge), darkened x0.6 (r203);
 #  (3) three-color neon shimmer shards x3 - five-color law family tints
 #      (QUANT gold / GAME cyan / MEDIA magenta), deterministic per-column runs;
 #  (4) foam edge frames x8 - north (solid row top) / south (solid row bottom),
@@ -30,7 +39,7 @@ $towersDir = Join-Path $PSScriptRoot '..\..\City\Assets\ArtPacks\office-towers'
 $tilesDir  = Join-Path $PSScriptRoot '..\..\City\Assets\Art\CleanCityv3\Tiles'
 Add-Type -AssemblyName System.Drawing
 $fmt = [System.Drawing.Imaging.PixelFormat]::Format32bppArgb
-$dark = 0.4   # spec W2: darken 60%
+$dark = 0.6   # r203 batch2 item (3): x0.4 read as solid black wedge; darken 40%
 
 function Get-FileSha($p) {
     $sha = [System.Security.Cryptography.SHA256]::Create()
@@ -308,15 +317,16 @@ foreach ($p in $srcPaths) {
 
 $shaList = @()
 
-Write-Output "face-crop reflections (top 72px, v-flip, x0.4; r176: QUANT/MEDIA = landmark silhouettes):"
+Write-Output "face-crop reflections (top 72px, v-flip, x0.6 r203; QUANT/MEDIA = landmark silhouettes):"
 $facJobs = @(
     @{ n = 'refl-quant'; src = (Join-Path $towersDir 'quant-twist.png'); pw = 120; ph = 192 },
     @{ n = 'refl-game';  src = (Join-Path $towersDir 'facade-game.png');  pw = 120; ph = 120 },
     @{ n = 'refl-media'; src = (Join-Path $towersDir 'media-pearl.png'); pw = 144; ph = 144 }
 )
-# r176 re-source provenance pins: the disk files these two jobs replace must
-# still be the r154 facade-skin derivations (old sha12) - see landmarks-manifest.
-$reSourcePin = @{ 'refl-quant' = 'C007613EFAE7'; 'refl-media' = '4BA113444F98' }
+# r203 re-darken provenance pins: the disk files the four refl jobs replace
+# must still be the x0.4 derivations (r176 for quant/media, r154 for
+# game/tower) - anything else fails loud. See landmarks-manifest + TECH r203.
+$reSourcePin = @{ 'refl-quant' = 'D5E099FF1233'; 'refl-game' = '2A4F1867B936'; 'refl-media' = '098E58F50129'; 'refl-tower' = '18E50A1808F2' }
 foreach ($j in $facJobs) {
     $t1 = Join-Path $env:TEMP ("fv-wfx-" + $j.n + "-a.png")
     $t2 = Join-Path $env:TEMP ("fv-wfx-" + $j.n + "-b.png")
@@ -331,14 +341,16 @@ foreach ($j in $facJobs) {
     Write-Output ("  refl " + $j.n + " 72px-crop asym=" + $a1)
 }
 
-Write-Output "brain-tower reflection (real tiles 189/132/133, x0.4):"
+Write-Output "brain-tower reflection (real tiles 189/132/133, x0.6 r203):"
 $t1 = Join-Path $env:TEMP 'fv-wfx-tower-a.png'
 $t2 = Join-Path $env:TEMP 'fv-wfx-tower-b.png'
 $ov1 = Bake-ReflTower $t1
 $ov2 = Bake-ReflTower $t2
 if ($ov1 -ne $ov2) { throw "tower overlay count differs: determinism broken" }
 $dst = Join-Path $packDir 'refl-tower.png'
-$sha = Install-Asset $t1 $t2 $dst 'refl-tower'
+$tpin = $null
+if ($reSourcePin.ContainsKey('refl-tower')) { $tpin = $reSourcePin['refl-tower'] }
+$sha = Install-Asset $t1 $t2 $dst 'refl-tower' $tpin
 $shaList += $sha
 Write-Output ("  refl-tower 80x48 overlay_px=" + $ov1)
 

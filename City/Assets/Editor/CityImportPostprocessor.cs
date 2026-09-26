@@ -39,6 +39,9 @@ public class CityImportPostprocessor : AssetPostprocessor
         if (path.StartsWith("Assets/ArtPacks/water-fx/facades/")) return 24;
         // r151 office towers (P-38(2) hi-bit facades): 48px-cell crops + facade skins @ 24 (r150 list)
         if (path.StartsWith("Assets/ArtPacks/office-towers/")) return 24;
+        // r178 resident UI labels (00:10 art-fix T-FV-002 S5): uGUI shell sprites mount
+        // 1:1 canvas px - UI shell carries no world PPU law (100 keeps native-size honest)
+        if (path.StartsWith("Assets/ArtPacks/resident-labels/")) return 100;
         return 16;
     }
 

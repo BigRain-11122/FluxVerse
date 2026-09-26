@@ -9,20 +9,21 @@
 // idempotently (CityAmbient precedent).
 //
 // FULL RE-DERIVE per apply (r122 law b): presence (SetActive) and position are
-// ALWAYS state-derived - never incremental, never sticky. The SEAT is the
-// body+shadow+nameplate TRIO: all three toggle and travel together (a hidden
-// body with a floating shadow or plate would be a ghost face). Positions: home
-// = ResidentRules table (restore on any non-shelter state), eave = the r123
-// manifest slots (shelter law). Shadow derives from the feet line, plate from
-// the head law - same single-source formulas, evaluated at the live position.
+// ALWAYS state-derived - never incremental, never sticky. The seat is the
+// body+shadow DUO (r179 S5b: the nameplate face moved to the UI shell,
+// ResidentLabelsUI - a hidden body with a floating shadow would be a ghost
+// face; the LABEL inherits the trio law on the UI side: hidden seat -> no
+// label). Positions: home = ResidentRules table (restore on any non-shelter
+// state), eave = the r123 manifest slots (shelter law). Shadow derives from
+// the feet line - the single-source formula, evaluated at the live position.
 //
 // CACHE LAW: GameObject.Find skips INACTIVE objects (r34 law), so references
 // resolve ONCE on the first apply while the scene still holds every seat
 // scene-default active; later ticks reuse the cache - a hidden seat still
 // restores. Proofs drive ApplyState directly: the same path Poll() walks
 // (r115 TriggerDirect precedent). Missing/broken state file -> ApplyState(null)
-// -> grandfather face (all visible, all home) - honest absence, the PROOF fails
-// loud instead. Pure 2D. ASCII. No 3D.
+// -> grandfather face (all visible, all home) - honest absence, the PROOF
+// fails loud instead. Pure 2D. ASCII. No 3D.
 using UnityEngine;
 
 namespace FluxVerse
@@ -35,7 +36,6 @@ namespace FluxVerse
         GameObject[] roots;
         Transform[] bodies;
         GameObject[] shadows;
-        GameObject[] plates;
         float pollTimer = 999f;      // poll on first Update
 
         void Update()
@@ -68,17 +68,12 @@ namespace FluxVerse
                 if (root.activeSelf != vis) root.SetActive(vis);
                 if (shadows[i] != null && shadows[i].activeSelf != vis)
                     shadows[i].SetActive(vis);
-                if (plates[i] != null && plates[i].activeSelf != vis)
-                    plates[i].SetActive(vis);
-                if (!vis) continue;           // hidden trio: position irrelevant, keep home
+                if (!vis) continue;           // hidden duo: position irrelevant, keep home
                 Vector3 p = new Vector3(plans[i].pos.x, plans[i].pos.y, 0f);
                 bodies[i].position = p;
                 if (shadows[i] != null)
                     shadows[i].transform.position = new Vector3(p.x,
                         p.y - ResidentRules.HalfSide - ResidentRules.ShadowDropY, 0f);
-                if (plates[i] != null)
-                    plates[i].transform.position = new Vector3(p.x,
-                        p.y + ResidentTagRules.OffsetY, 0f);
             }
         }
 
@@ -89,7 +84,6 @@ namespace FluxVerse
             roots = new GameObject[StreetBehaviorRules.Count];
             bodies = new Transform[StreetBehaviorRules.Count];
             shadows = new GameObject[StreetBehaviorRules.Count];
-            plates = new GameObject[StreetBehaviorRules.Count];
             for (int i = 0; i < StreetBehaviorRules.Count; i++)
             {
                 GameObject r = GameObject.Find(ResidentRules.Name(i));
@@ -98,8 +92,6 @@ namespace FluxVerse
                 bodies[i] = r.transform;
                 GameObject sh = GameObject.Find(ResidentRules.ShadowName(i));
                 if (sh != null) shadows[i] = sh;
-                GameObject pl = GameObject.Find(ResidentTagRules.Name(i));
-                if (pl != null) plates[i] = pl;
             }
         }
     }

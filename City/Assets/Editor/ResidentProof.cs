@@ -357,8 +357,8 @@ namespace FluxVerse
             int tagsKept = 0;
             foreach (Transform tg in UnityEngine.Object.FindObjectsOfType<Transform>())
                 if (tg.parent == null && tg.name.StartsWith(ResidentTagRules.NamePrefix)) tagsKept++;
-            Chk(tagsKept == ResidentTagRules.Count,
-                "nameplates lost after our save: " + tagsKept);
+            Chk(tagsKept == 0,
+                "world nameplates must stay retired after our save (r179 S5b): " + tagsKept);
             // neighbor regressions (our save must not drop earlier serialized wiring)
             int robotsKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
@@ -479,16 +479,15 @@ namespace FluxVerse
             // ---- F. street-behavior consumption gates (P-75 slice B, r124) ----
             int fEaveReloc = 0; string fMediaPick = "-", fNorthPick = "-";
             {
-                // seat trio references - resolved while every seat is active
-                // (GameObject.Find skips inactive objects, r34 law)
+                // seat DUO references - resolved while every seat is active
+                // (GameObject.Find skips inactive objects, r34 law). r179 S5b:
+                // the nameplate face moved to the UI shell (ResidentLabelsUI),
+                // so the world trio is now a body+shadow duo.
                 GameObject[] shads = new GameObject[ResidentRules.Count];
-                GameObject[] plats = new GameObject[ResidentRules.Count];
                 for (int i = 0; i < ResidentRules.Count; i++)
                 {
                     shads[i] = GameObject.Find(ResidentRules.ShadowName(i));
-                    plats[i] = GameObject.Find(ResidentTagRules.Name(i));
                     Chk(shads[i] != null, "shadow missing for the F gates: " + ResidentRules.ShadowName(i));
-                    Chk(plats[i] != null, "plate missing for the F gates: " + ResidentTagRules.Name(i));
                 }
 
                 // F0 manifest mirror census: the C# eave table must mirror
@@ -605,12 +604,6 @@ namespace FluxVerse
                     && AtPlan(shads[northPick].transform,
                         new Vector2(eN.x, eN.y - ResidentRules.HalfSide - ResidentRules.ShadowDropY)),
                     "NORTH pick shadow must follow to the eave");
-                Chk(plats[mediaPick].activeSelf
-                    && AtPlan(plats[mediaPick].transform, new Vector2(eM.x, eM.y + ResidentTagRules.OffsetY)),
-                    "MEDIA pick plate must follow to the eave");
-                Chk(plats[northPick].activeSelf
-                    && AtPlan(plats[northPick].transform, new Vector2(eN.x, eN.y + ResidentTagRules.OffsetY)),
-                    "NORTH pick plate must follow to the eave");
                 // capacity-1: overflow members stay home
                 foreach (int s in mediaBucket)
                     if (s != mediaPick)
@@ -625,8 +618,8 @@ namespace FluxVerse
                     {
                         Chk(!folk[i].activeSelf,
                             "hidden seat must follow the data face: " + ResidentRules.Name(i));
-                        Chk(!shads[i].activeSelf && !plats[i].activeSelf,
-                            "hidden trio law (shadow+plate) at " + ResidentRules.Name(i));
+                        Chk(!shads[i].activeSelf,
+                            "hidden duo law (shadow) at " + ResidentRules.Name(i));
                         continue;
                     }
                     Chk(folk[i].activeSelf,
@@ -651,8 +644,6 @@ namespace FluxVerse
                         "grandfather home at " + ResidentRules.Name(i));
                     Chk(shads[i].activeSelf && AtPlan(shads[i].transform, ResidentRules.ShadowPos(i)),
                         "grandfather shadow at " + ResidentRules.Name(i));
-                    Chk(plats[i].activeSelf && AtPlan(plats[i].transform, ResidentTagRules.Pos(i)),
-                        "grandfather plate at " + ResidentRules.Name(i));
                 }
 
                 // F5 live-file smoke: the real state file drives the same invariant
@@ -685,7 +676,7 @@ namespace FluxVerse
             return "asserts=" + asserts
                 + " table=32 zones=Q" + q + "/G" + g + "/M" + m + "/N" + n + "/T" + t + "/V" + v
                 + " roster=32coupled sprites=" + sprites + " plates=" + plates.Count + "/32"
-                + " scene(saved=" + saved + ",32+32shadow+tags" + tagsKept + "+adapter persisted,"
+                + " scene(saved=" + saved + ",32+32shadow+world_tags" + tagsKept + "+adapter persisted,"
                 + "stand_gate=sec8_underfoot_pavement+body_clear,"
                 + "robots8_kept,neon" + NeonRules.Count + "_kept,neighbors_ok)"
                 + " render(dusk_px=" + duskTot + " worst=" + duskWorst + ":" + duskMin
@@ -743,13 +734,13 @@ namespace FluxVerse
             int tagsKeptR = 0;
             foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
                 if (t.parent == null && t.name.StartsWith(ResidentTagRules.NamePrefix)) tagsKeptR++;
-            Chk(tagsKeptR == ResidentTagRules.Count,
-                "nameplates lost across restart: " + tagsKeptR);
+            Chk(tagsKeptR == 0,
+                "world nameplates resurrected across restart (r179 S5b): " + tagsKeptR);
             GameObject camGo = GameObject.Find("CityCamera");
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f, "L0 camera broken after restart");
-            return "reload_gate=OK residents=32/32 persisted shadows=32/32 tags=" + tagsKeptR
-                + "/32 adapter=resolved children_resolved robots=8/8 neon="
+            return "reload_gate=OK residents=32/32 persisted shadows=32/32 world_tags=" + tagsKeptR
+                + "/0 adapter=resolved children_resolved robots=8/8 neon="
                 + NeonRules.Count + "/" + NeonRules.Count
                 + " importers=atlas_multiple9+point+ppu24+nemip"
                 + " skyline=2/2 neighbors=4 cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");

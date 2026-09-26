@@ -407,7 +407,7 @@ namespace FluxVerse
             Chk(neonKept == NeonRules.Count, "neon signs lost after our save: " + neonKept);
             Chk(robotKept == RobotRules.Count, "robots lost after our save: " + robotKept);
             Chk(resKept == ResidentRules.Count, "r99 residents lost after our save: " + resKept);
-            Chk(tagKept == ResidentTagRules.Count, "r99 nameplates lost after our save: " + tagKept);
+            Chk(tagKept == 0, "world nameplates must stay retired after our save (r179 S5b): " + tagKept);
             Chk(vehKept == VehicleRules.Count, "r93 vehicles lost after our save: " + vehKept);
             Chk(offKept == OfficeRules.Count, "offices lost after our save: " + offKept);
             Chk(terKept == OfficeRules.GroundCount, "terrace lost after our save: " + terKept);

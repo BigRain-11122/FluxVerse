@@ -625,7 +625,7 @@ namespace FluxVerse
             int tagsKept = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
                 if (sr.name.StartsWith(ResidentTagRules.NamePrefix)) tagsKept++;
-            Chk(tagsKept == ResidentTagRules.Count, "r40 nameplates lost: " + tagsKept);
+            Chk(tagsKept == 0, "world nameplates must stay retired (r179 S5b): " + tagsKept);
             GameObject ambGo = GameObject.Find("CityAmbient");
             CityAmbient amb = ambGo != null ? ambGo.GetComponent<CityAmbient>() : null;
             Chk(amb != null, "CityAmbient lost");

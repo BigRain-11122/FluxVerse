@@ -267,7 +267,7 @@ namespace FluxVerse
             Chk(neonKept == NeonRules.Count, "r35+r38 neon signs lost after our save: " + neonKept);
             Chk(robotKept == RobotRules.Count, "r36 robots lost after our save: " + robotKept);
             Chk(resKept == ResidentRules.Count, "r99 residents lost after our save: " + resKept);
-            Chk(tagKept == ResidentTagRules.Count, "r99 nameplates lost after our save: " + tagKept);
+            Chk(tagKept == 0, "world nameplates must stay retired after our save (r179 S5b): " + tagKept);
             GameObject ambGo = GameObject.Find("CityAmbient");
             CityAmbient amb = ambGo != null ? ambGo.GetComponent<CityAmbient>() : null;
             Chk(amb != null, "CityAmbient lost after save");

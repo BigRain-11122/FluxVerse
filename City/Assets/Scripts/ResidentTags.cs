@@ -1,4 +1,13 @@
 // FluxVerse P-22(2) r40/r99: resident nameplates (pure rules).
+// r179 S5b (00:10 art-fix order 4): the WORLD-LAYER plate GOs (NameTag00..31)
+// are RETIRED - the name face moved to the UI shell (ResidentLabelsUI +
+// ResidentLabelRules, pre-baked pills r178). This file survives as the PURE
+// GEOMETRIC LAW the faces still derive from: the bubble layer mounts above
+// the plate line (ResidentBubbles.Pos, unchanged - the order names only the
+// name tags, the barks stay world sprites) and the F2 bubble-stack ceiling
+// in ResidentProof walks OffsetY/WorldH. PlatePath stays as the retired
+// stock pointer (b1 plates remain on disk, P-21 discard-trace duty).
+//
 // The r99 32-seat swap carries the b1 plate batch (r97 bake): 32 pre-baked
 // plates by Tools/city/bake-resident-plates.ps1 (b1 mode) from the SAME street
 // roster the proofs couple against (Assets/Data/residents-street.json) - a

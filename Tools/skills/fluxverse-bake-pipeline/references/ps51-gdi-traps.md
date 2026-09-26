@@ -24,7 +24,7 @@
 12. **变量大小写不敏感碰撞（r159a）**：$B 与 $b 同一变量——`foreach ($b in $B)` 首遍覆写表数组；表变量专名+循环变量禁同异名。
 13. **$LASTEXITCODE 未设陷阱（r97）**：纯 cmdlet 脚本链 `if ($LASTEXITCODE -ne 0)` 对 $null 恒真=误杀后段；链内门以脚本自身 exit 传播或显式置 0。
 14. **别名优先于函数（09-24）**：自定义 function R 被内置别名 r=Invoke-History 抢占——函数命名避开全部内置别名（R/ls/cat/rm/ac/gp/sp）。
-15. **外壳会话变量展开（r180）**：外层 shell 命令内联双引号串中 `$var` 被外层会话先展开（未定义=空串）→ 内联 `.Replace` 类文件手术把替换材料毁成空串全场污染——文件内容手术一律走专用 replace 工具或单引号字面量。
+15. **外壳会话变量展开（r180·r204/r213 三击）**：外层 shell 命令内联双引号串中 `$var` 被外层会话先展开（未定义=空串）→ 内联 `.Replace` 类文件手术把替换材料毁成空串全场污染——律在册仍复发（r204 预检/r213 普查）；执法形=**内联 -Command 带 $vars=禁区·一律落盘 .ps1 后 -File 执行**（r204⑤/r213）；文件内容手术一律走专用 replace 工具或单引号字面量。
 16. **-match 捕获组 $Matches[1] 裸串无 .Value（r198）**：捕获组取值已是裸串——`.Value` 属性不存在 = 静默 $null → [int]::TryParse 恒 false 假静（check-fastpath 心跳连串首版 hb_streak=0 双红实锤）。修：捕获组取值一律 [regex]::Match + Groups[1].Value（r197 writer 正解）；-match 族禁照抄 .Value 后缀。
 
 ## 编码（烘焙面零例外）

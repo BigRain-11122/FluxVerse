@@ -21,6 +21,7 @@
 - **ConvertFrom-Json 小数 = System.Decimal**：IsPrimitive 对 Decimal=false → 数值标量门 10 红全假（r145）。修：ValueType + `^-?\d+(\.\d+)?$` 字符串形态法。
 - **2MB ConvertFrom-Json 上限**：大件零全量 parse（r95 transfers 2.35MB 头 40 行正则先例）。
 - **$LASTEXITCODE 未设**：纯 cmdlet 链 `if ($LASTEXITCODE -ne 0)` 对 $null 恒真 = 链式门误杀后段（r97）。修：显式置 0 或脚本自身 exit 传播。
+- **网页抓取正则 0 命中假象**：外站 HTML 属性常单引号 + href 绝对 URL（kenney.nl 实证·`?q=` 搜索参服务端不接=四查恒返默认首页同族）——按「双引号+相对径」预写的 `href="(/assets/…)"` 恒 0 命中（r213·17 URL 逐页扫描实锤）。修：锚域名 `kenney\.nl/assets/([a-z0-9\-]+)['"]` 兼容单双引号收尾。
 
 ## 变量与类型族
 
@@ -31,7 +32,7 @@
 - **子进程退出码读空**：Start-Process -PassThru 重定向下 .ExitCode = ''（r66 测量病）。修：.NET Process 类持句柄。
 - **Get-Content -Tail 显示塌并假象**：-Tail 40 中文 CRLF 日志显示 1 行 ≠ 文件病（r163）。修：[IO.File]::ReadAllText 归一化复扫再判。
 - **十六进制字面量补码**：PS5.1 把 `0xFFFFFFFF` 解析为 Int32 −1（32 位补码语义非 4294967295）→ `-band 0xFFFFFFFF` 恒等掩码失效、乘法溢出 int64 自动升 double（6.09E+23 实测炸点）（r180）。修：mod-2^32 位算一律 `0xFFFFFFFFL` 长后缀。
-- **外壳会话变量展开**：外层 shell 命令内联双引号串中 `$var` 被外层会话先展开（未定义=空串）→ `.Replace("'x", "$v")` 类内联文件手术把替换材料毁成空串全场污染（r180）。修：文件内容手术一律走专用 replace 工具或单引号字面量。
+- **外壳会话变量展开**：外层 shell 命令内联双引号串中 `$var` 被外层会话先展开（未定义=空串）→ `.Replace("'x", "$v")` 类内联文件手术把替换材料毁成空串全场污染（r180）——律在册仍复发（r204 预检/r213 普查两度=三击实锤）。修：**内联 -Command 带 $vars=禁区·一律落盘 .ps1 后 -File 执行**（r204⑤/r213 执法形）；文件内容手术一律走专用 replace 工具或单引号字面量。
 - **-match 捕获组 $Matches[1] 裸串无 .Value**：捕获组取值已是裸串——`.Value` 属性不存在 → 静默 $null 进 [int]::TryParse = 恒 false 假静（r198 心跳连串首版 hb_streak=0 双红实锤）。修：捕获组取值一律 [regex]::Match + Groups[1].Value（r197 writer 正解）——-match 族禁照抄 .Value 后缀。
 
 ## 工序律（纪律面）

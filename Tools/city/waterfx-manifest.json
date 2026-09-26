@@ -1,11 +1,13 @@
 {
-  "protocol": "fluxverse-waterfx/0.2",
-  "baked_round": 181,
+  "protocol": "fluxverse-waterfx/0.3",
+  "baked_round": 204,
   "sources": [
-    "r181 v0.2 (T-FV-002 S6b, duskgold-manifest.water_warm_wash - the round's parameter source): the warm_wash family - one dusk-only rose quad over the river base (the golden-hour water the target paints rose-grey-pink; the r180 census read the dusk water base violet hue 269 vs target 342). RUNTIME family, NO baked asset (r157 horizon-band precedent); the 12 baked v0.1 assets are untouched",
+    "r204 v0.3 (T-FV-122 S2, orders.md 09-26 ~15:20 batch-2 art-rectification order, item 1 'water semi-transparent blue-purple, keep the flipped reflection sprites, slight ripples, delete the pink-brick texture'): the rose wash family is RETIRED (the r180 pre-registered rose parameter is overturned by the later CEO order text - r202 sec.6a compliant-change ruling); the 'semi-transparent' lands on the WATER TILEMAP renderer color (tile_alpha below); the r203 WaterTiles bake carries the authored blue-purple art",
+    "r181 v0.2 (T-FV-002 S6b, duskgold-manifest.water_warm_wash - now RETIRED, see warm_wash_retired): the historical rose-wash definition lives in git history + the r180 duskgold census",
+    "r203 (T-FV-122 S1): Tools/city/bake-water-tiles.ps1 -> Assets/Art/CleanCityv3/WaterTiles/water_wave_00..07.png (16x16 @ppu16 = 1u/tile, blue->purple vertical gradient 44,52,118 -> 52,58,130 + dual soft wave bands + sparse crest sparkles, phase law 2px/frame x 8 = one full tile width cycle) + bake-water-fx.ps1 refl re-darkening 0.4 -> 0.6 (the batch-2 item-3 'solid black wedge' reading = over-darkened reflections; 0.6 reads back as reflection)",
     "cph4/research/R-20260925-water-daynight.md sec1 W1-W5 + sec3 verdicts (CEO order 09-25 ~18:00, fast-lane <= 24h, close 09-26 ~18:00)",
     "TECH.md sec9 r153 verdict: W3 commit-stream = r116 CommitStream reuse (zero new build), W6 daynight dual-channel = r146 MoodVisualRules reuse; W1/W2/W3-foam/W4/W5 = true construction faces of this line",
-    "City/Assets/Editor/CitySkeletonBuilder.cs L225-229: water band live anchor (cells x -50..50, rows -3..2, static hash h=((x*31+y*17)&7) over 4 registered variants)",
+    "City/Assets/Editor/CitySkeletonBuilder.cs L225-229: water band live anchor (cells x -50..50, rows -3..2, static hash h=((x*31+y*17)&7) over the registered variants); r204: MK vocabulary re-pointed Tiles_Extract -> WaterTiles + MakeLayer Water tint (1,1,1,TileAlpha)",
     "Tools/city/tower-v2-manifest.json: brain tower whole rect + lower 3u cells (single source for the north reflection span and tile vocabulary)",
     "Tools/city/facades-manifest.json r152: three south city face mounts (reflection x-spans, rect equality)",
     "City/Assets/Scripts/NeonSigns.cs Table: south sign x positions (shimmer anchors, dual-source cross-check)"
@@ -19,7 +21,7 @@
   },
   "frame_cycle": {
     "verdict": "tilemap SetTile frame cycling (NOT a water-band quad)",
-    "rationale": "reuses the in-project 8-frame vocabulary (Art/CleanCityv3/Tiles_Extract/water_wave_00..07.png, all 16px, only 4 registered as tiles today); zero new big textures; the tilemap keeps the dusk/night tint interplay untouched (a band quad would re-derive the tint + proof baseline family); census-count identity gate is provable",
+    "rationale": "reuses the in-project 8-frame vocabulary (r204: Art/CleanCityv3/WaterTiles/water_wave_00..07.png - the r203 GDI+ bake; the old Tiles_Extract navy brick-grid art retired per the batch-2 order item 1, kept on disk per the P-21 discard-record law); zero new big textures; the tilemap keeps the dusk/night tint interplay untouched (a band quad would re-derive the tint + proof baseline family); census-count identity gate is provable",
     "sequence": "frames 00..07 (engine round registers t_water_1/5/6/7 via 4 builder MK lines)",
     "index_law": "at water tick t, cell (x,y) shows frame index ((x*31 + y*17 + t) mod 8); the existing spatial hash becomes the per-cell phase offset (31 mod 8 = 7 -> neighbors mostly anti-phase, staggered wavefront)",
     "rate_fps": 2,
@@ -29,10 +31,10 @@
     "fallback": "4-frame degraded mode (mod 4 over registered t_water_0/2/3/4) stays legal if tile import hiccups"
   },
   "reflections": [
-    { "id": "ReflTower",  "asset": "Assets/ArtPacks/water-fx/refl-tower.png",          "px": [80, 48],  "ppu": 16, "rect": [-2.0, 0.0, 3.0, 3.0],     "bank": "north", "source": "tower-v2 lower 3u composed from REAL tiles (glass 189 plinth x2 rows + shaft row with glow props 132/133 overlay), pre-mirrored layout (plinth at bank edge), darkened 0.4" },
-    { "id": "ReflQuant",  "asset": "Assets/ArtPacks/water-fx/facades/refl-quant.png",  "px": [120, 72], "ppu": 24, "rect": [-2.0, -3.0, 3.0, 0.0],    "bank": "south", "source": "quant-twist top-72px crop, raw-ARGB vertical flip (r93 law), darkened 0.4; roof crown lands on the bank line; r176 re-source from the r175 landmark silhouette (00:10 art-rectify swap face, landmarks-manifest; old facade-quant derivation sha12 C007613EFAE7 retired via the bake provenance pin)" },
-    { "id": "ReflGame",   "asset": "Assets/ArtPacks/water-fx/facades/refl-game.png",   "px": [120, 72], "ppu": 24, "rect": [-23.0, -3.0, -18.0, 0.0],  "bank": "south", "source": "facade-game top-72px crop, v-flip, darkened 0.4" },
-    { "id": "ReflMedia",  "asset": "Assets/ArtPacks/water-fx/facades/refl-media.png",  "px": [144, 72], "ppu": 24, "rect": [19.0, -3.0, 25.0, 0.0],   "bank": "south", "source": "media-pearl top-72px crop, v-flip, darkened 0.4; r176 re-source from the r175 landmark silhouette (old facade-media derivation sha12 4BA113444F98 retired via the bake provenance pin)" }
+    { "id": "ReflTower",  "asset": "Assets/ArtPacks/water-fx/refl-tower.png",          "px": [80, 48],  "ppu": 16, "rect": [-2.0, 0.0, 3.0, 3.0],     "bank": "north", "source": "tower-v2 lower 3u composed from REAL tiles (glass 189 plinth x2 rows + shaft row with glow props 132/133 overlay), pre-mirrored layout (plinth at bank edge), darkened 0.6 (r203 re-darkening: the 0.4 era read as the batch-2 item-3 solid-black wedge)" },
+    { "id": "ReflQuant",  "asset": "Assets/ArtPacks/water-fx/facades/refl-quant.png",  "px": [120, 72], "ppu": 24, "rect": [-2.0, -3.0, 3.0, 0.0],    "bank": "south", "source": "quant-twist top-72px crop, raw-ARGB vertical flip (r93 law), darkened 0.6 (r203); roof crown lands on the bank line; r176 re-source from the r175 landmark silhouette (00:10 art-rectify swap face, landmarks-manifest; old facade-quant derivation sha12 C007613EFAE7 retired via the bake provenance pin)" },
+    { "id": "ReflGame",   "asset": "Assets/ArtPacks/water-fx/facades/refl-game.png",   "px": [120, 72], "ppu": 24, "rect": [-23.0, -3.0, -18.0, 0.0],  "bank": "south", "source": "facade-game top-72px crop, v-flip, darkened 0.6 (r203)" },
+    { "id": "ReflMedia",  "asset": "Assets/ArtPacks/water-fx/facades/refl-media.png",  "px": [144, 72], "ppu": 24, "rect": [19.0, -3.0, 25.0, 0.0],   "bank": "south", "source": "media-pearl top-72px crop, v-flip, darkened 0.6 (r203); r176 re-source from the r175 landmark silhouette (old facade-media derivation sha12 4BA113444F98 retired via the bake provenance pin)" }
   ],
   "shimmer": [
     { "id": "ShimGameW",  "asset": "Assets/ArtPacks/water-fx/shimmer-cyan.png",   "rect": [-23.25, -3.0, -21.75, -0.5], "sign": "NeonGameWest",  "sign_x": -22.5, "color": "cyan",    "family": "GAME" },
@@ -67,21 +69,17 @@
     "sync": "foam frame index = water tick mod 4 (W3: moves with the wave frames)",
     "solid_row": "1px foam line at the bank interface (north strip: solid row on top = y3 bank line; south strip: solid row on bottom = y-3 bank line); sparse bubbles row = the W3 embankment gradient v0"
   },
-  "warm_wash": {
-    "law": {
-      "family": "runtime quad (adapter-owned child of the CityWaterFx root, r181; released by ReleaseWash before every scene save - r146 save-purity law); NO baked asset (r157 horizon-band precedent): a white 4x4 runtime texture with a RELATIVE scale, rose tint on sr.color",
-      "geometry": "world rect x -50..50, y -3..3 (the WaterFxRules census band, zero cell drift; census 606 SetTile untouched)",
-      "color_rgb": [255, 128, 152],
-      "tier_alpha": { "day": 0.0, "dawn": 0.0, "dusk": 0.45, "night": 0.0 },
-      "order": 2,
-      "z": 0.35,
-      "z_law": "deepest of the order-2 water family: every sibling is nearer = crisper on top (refl 0.3 / shimmer 0.2 / foam 0.1 in the rules table; smaller z = on top, r158 physics law) - the wash tints ONLY the base water under them; day/night alpha 0 = the night frame stays numerically identical (zero coupling with the r155 night asserts)",
-      "wobble": "never - base-water family with the foam (bank-pinned semantics)",
-      "acceptance": "coherent S6b dusk frame: water band mean hue in [320, 20] (wrap) AND mean lum in [120, 180] (duskgold-manifest c5 gate)"
-    },
-    "mounts": [
-      { "id": "WarmWash", "rect": [-50, -3, 50, 3] }
-    ]
+  "tile_alpha": {
+    "law": "water TILEMAP renderer color alpha (the batch-2 order's 'semi-transparent'): the r203 tiles bake OPAQUE blue-purple art, the sky quad behind shows through the band - dusk warm under-glow at the low rows = the water mirrors the sky, physically. r155-era light-blue tint (0.75, 0.85, 1) retired WITH the old navy art: tint goes neutral white, only the alpha carries the order text",
+    "alpha": 0.92,
+    "band": [0.85, 0.95],
+    "tint_rgb": [255, 255, 255],
+    "owners": "full-build face = CitySkeletonBuilder.MakeLayer('Water', 1, (1,1,1,TileAlpha)); no-rebuild face = WaterFxProof B-section idempotent re-assert + E save persists the disk boot state; single constant source = WaterFxRules.TileAlpha",
+    "note": "value pinned 0.92 inside the r202 pre-registered band [0.85,0.95]: keeps the blue-purple saturation while the under-blend still reads (at 0.85 the warm sky under-lift drags the hue toward 267-277 deg violet edge; at 0.95 the band reads near-opaque)"
+  },
+  "warm_wash_retired": {
+    "round": 204,
+    "note": "the r181 dusk rose wash quad (255,128,152 alpha 0.45, runtime child of CityWaterFx) is RETIRED by the 09-26 ~15:20 batch-2 order item 1 ('water semi-transparent blue-purple... delete the pink-brick texture'): the r180 pre-registered rose parameter is overturned by the later CEO order text (r202 sec.6a compliant-change ruling). Family removed from CityWaterFx + WaterFxRules + WaterFxProof (census 13 -> 12, 'WaterFxWarmWash' GO name now a retirement-law probe). Historical definition: git history of this file (v0.2) + duskgold-manifest.water_warm_wash"
   },
   "render_laws": {
     "order": 2,
@@ -106,12 +104,23 @@
     "tower band tile pick 132/133 alternating inside the glow family = editor-round tunable within family (tower-v2 vocabulary law)",
     "W3 embankment gradient v0 = the foam sparse second row; a deeper dithered bank gradient = v1 candidate line",
     "depth fade of reflections = engine-round tunable within reflection semantics (bake is pure crop+flip+darken per spec)",
-    "r176: refl-quant/refl-media re-sourced from the r175 landmark silhouettes (bake-water-fx deliberate-regeneration mode behind old-derivation sha12 provenance pins; rect/path/px unchanged = WaterFxRules zero change, content-only swap consumed by the same S4 editor round); refl-game keeps the facade-game source (GAME_MAIN keeps its facade this batch)"
+    "r176: refl-quant/refl-media re-sourced from the r175 landmark silhouettes (bake-water-fx deliberate-regeneration mode behind old-derivation sha12 provenance pins; rect/path/px unchanged = WaterFxRules zero change, content-only swap consumed by the same S4 editor round); refl-game keeps the facade-game source (GAME_MAIN keeps its facade this batch)",
+    "r203: the four refl sources re-darkened 0.4 -> 0.6 (new derivation sha12 pins EBF8D26A1B15 / B674D68221E9 / 783F534691FD / 5EE3872684E0); the 0.4 era central reflections read as the batch-2 item-3 'solid black wedge' - the r202 verdict: fix = brighter reflection, NOT mount deletion (the order's item 1 keeps reflections in the same window)",
+    "r204: the dusk water acceptance door moves from the retired rose band to the batch-2 blue-purple band - coherent dusk frame water-band mean hue [220, 280] + mean lum [25, 110] + refl-quant window mean lum >= 15 (the solid-black reading zeroed) = the census3 gates (logs/devloop-r204-census3.ps1); the old [320,20]/[120,180] rose door is superseded with the family (duskgold-manifest c5 annotation)"
   ],
   "family": {
     "go_prefix": "WaterFx",
-    "adapter": "CityWaterFx.cs (r155): Update accumulator 0.5s, full-band SetTile sweep + mount alpha/wobble from tier; tier + weather handed by CityAmbient existing fields (zero new poll face); r181 warm wash = runtime child of this root (EnsureWash/ReleaseWash)"
+    "adapter": "CityWaterFx.cs (r155): Update accumulator 0.5s, full-band SetTile sweep + mount alpha/wobble from tier; tier + weather handed by CityAmbient existing fields (zero new poll face); r204: the r181 warm-wash runtime child is RETIRED with the family (all wash code paths removed, live census back to the 12 mount table)"
   },
+  "coupled_updates_r204": [
+    "CitySkeletonBuilder: 12 MK path strings Tiles_Extract -> WaterTiles (EnsureCatalog 8 + EnsureWaterCycleTiles now covers ALL EIGHT slots - the proof-only no-rebuild path must re-point the legacy static-paint set t_water_0/2/3/4 too) + MakeLayer('Water', 1, (1,1,1,WaterFxRules.TileAlpha))",
+    "City/Assets/Scripts/WaterFxRules.cs v0.3: wash constants removed (WashName/WashCount/WashZ/WashAlphaDusk/WashTint/WashAlphaFor/Wash rect+centers) + TileAlpha 0.92 / band [0.85,0.95] / TileTint neutral",
+    "CityWaterFx.cs: wash field + EnsureWash + ReleaseWash + the ApplyTier wash sweep removed",
+    "WaterFxProof: wash mirror/census/D2b/D3-leak/TierBattery/reload-wash gates removed + tile_alpha mirror + B-section tilemap color re-assert + reload disk-color gate + 'WaterFxWarmWash' retirement probes; census 13 -> 12",
+    "AlbumShot: comment refresh only (the coherent ApplyScene path is wash-free by construction)",
+    "census3: logs/devloop-r204-census3.ps1 redefines the water door (c5 blue-purple band + NEW c5b refl-window lum floor); duskgold-manifest water_warm_wash annotated SUPERSEDED",
+    "record frames: m1-r155-water-* four shots re-shot by the proof D-section; m1-r161/m1-r181 album + dusk heroes re-shot by the AlbumShot pass (r134 advance law)"
+  ],
   "coupled_updates_r155": [
     "CitySkeletonBuilder: +4 MK lines (t_water_1/5/6/7 from Tiles_Extract/water_wave_01/05/06/07.png)",
     "City/Assets/Scripts/WaterFxRules.cs pure table (OfficeRules family: manifest mirror, single geometry source)",

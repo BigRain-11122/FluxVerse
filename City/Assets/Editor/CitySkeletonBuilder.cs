@@ -78,29 +78,41 @@ public static class CitySkeletonBuilder
         MK("t_prop_b", "Tiles/GuttyKreum_CleanCity_133.png");
         MK("t_prop_post", "Tiles/GuttyKreum_CleanCity_136.png");
         MK("t_prop_box", "Tiles/GuttyKreum_CleanCity_296.png");
-        MK("t_water_0", "Tiles_Extract/water_wave_00.png");
+        // r203/r204 (T-FV-122 S1/S2, batch-2 order item 1): the water tiles
+        // re-point to the r203 GDI+ bake - blue-purple vertical gradient +
+        // phase-shifted wave bands; the old Tiles_Extract navy brick-grid art
+        // is retired on disk (P-21 discard-record law).
+        MK("t_water_0", "WaterTiles/water_wave_00.png");
         // r155 (P-20260925-09 W1): the full 8-frame cycle vocabulary - the
         // cycling law ((x*31+y*17+t) mod 8) needs all eight; the static paint
         // below keeps the legacy 4-variant hash as the boot state.
-        MK("t_water_1", "Tiles_Extract/water_wave_01.png");
-        MK("t_water_2", "Tiles_Extract/water_wave_02.png");
-        MK("t_water_3", "Tiles_Extract/water_wave_03.png");
-        MK("t_water_4", "Tiles_Extract/water_wave_04.png");
-        MK("t_water_5", "Tiles_Extract/water_wave_05.png");
-        MK("t_water_6", "Tiles_Extract/water_wave_06.png");
-        MK("t_water_7", "Tiles_Extract/water_wave_07.png");
+        MK("t_water_1", "WaterTiles/water_wave_01.png");
+        MK("t_water_2", "WaterTiles/water_wave_02.png");
+        MK("t_water_3", "WaterTiles/water_wave_03.png");
+        MK("t_water_4", "WaterTiles/water_wave_04.png");
+        MK("t_water_5", "WaterTiles/water_wave_05.png");
+        MK("t_water_6", "WaterTiles/water_wave_06.png");
+        MK("t_water_7", "WaterTiles/water_wave_07.png");
         AssetDatabase.SaveAssets();
     }
 
-    // r155: create-if-missing the four cycle tiles WITHOUT a full build -
+    // r155: create-if-missing the cycle tiles WITHOUT a full build -
     // WaterFxProof calls this so the adapter's serialized frameTiles[8] can
     // be wired (MK is idempotent create-if-missing, r10 vocabulary law).
+    // r204 (T-FV-122 S2): covers ALL EIGHT slots - the proof-only path (no
+    // full build) must re-point the whole vocabulary to the r203 WaterTiles
+    // art, including the legacy static-paint set t_water_0/2/3/4 (the tile
+    // assets keep their GUIDs, the scene picks the new sprites up as-is).
     public static void EnsureWaterCycleTiles()
     {
-        MK("t_water_1", "Tiles_Extract/water_wave_01.png");
-        MK("t_water_5", "Tiles_Extract/water_wave_05.png");
-        MK("t_water_6", "Tiles_Extract/water_wave_06.png");
-        MK("t_water_7", "Tiles_Extract/water_wave_07.png");
+        MK("t_water_0", "WaterTiles/water_wave_00.png");
+        MK("t_water_1", "WaterTiles/water_wave_01.png");
+        MK("t_water_2", "WaterTiles/water_wave_02.png");
+        MK("t_water_3", "WaterTiles/water_wave_03.png");
+        MK("t_water_4", "WaterTiles/water_wave_04.png");
+        MK("t_water_5", "WaterTiles/water_wave_05.png");
+        MK("t_water_6", "WaterTiles/water_wave_06.png");
+        MK("t_water_7", "WaterTiles/water_wave_07.png");
         AssetDatabase.SaveAssets();
     }
 
@@ -232,7 +244,13 @@ public static class CitySkeletonBuilder
         _grid = null;
 
         Tilemap ground = MakeLayer("Ground", 0, Color.white);
-        Tilemap water = MakeLayer("Water", 1, new Color(0.75f, 0.85f, 1f));
+        // r204 (T-FV-122 S2, batch-2 order item 1 "semi-transparent blue-purple"):
+        // the r155-era light-blue tint (0.75, 0.85, 1) retired WITH the old navy
+        // art - the r203 tiles carry the authored gradient, tint goes neutral
+        // white and the tilemap renderer alpha 0.92 = the order's
+        // "semi-transparent" (the sky quad shows through the band; single
+        // source = WaterFxRules.TileAlpha).
+        Tilemap water = MakeLayer("Water", 1, new Color(1f, 1f, 1f, FluxVerse.WaterFxRules.TileAlpha));
         Tilemap roads = MakeLayer("Roads", 2, Color.white);
         Tilemap cityGame = MakeLayer("CityGAME", 3, new Color(0.20f, 0.92f, 0.86f));   // data cyan
         Tilemap cityQuant = MakeLayer("CityQUANT", 3, new Color(0.98f, 0.75f, 0.20f));  // capital gold

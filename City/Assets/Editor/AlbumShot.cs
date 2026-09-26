@@ -4,11 +4,12 @@
 // +1 variant-A fog diagnostic - the golden-hour quadrant the album never
 // had (r174 finding); the S6b census gates measure the dusk-water frame.
 // COHERENT per-scene tier apply: every family lands on the SAME tier before
-// each shot (ambient palette + fog veil + water fx incl. the rose wash +
-// light fx incl. the a75 gold band + window lights at the REAL world-state
-// zone rates via the adapter's own Poll path) - the per-family proof shots
-// only pull their own family to tier, so the album needs this integration
-// pass to exist.
+// each shot (ambient palette + fog veil + water fx [r204: blue-purple
+// WaterTiles + tilemap alpha 0.92 - the rose wash retired by the batch-2
+// order] + light fx incl. the a75 gold band + window lights at the REAL
+// world-state zone rates via the adapter's own Poll path) - the per-family
+// proof shots only pull their own family to tier, so the album needs this
+// integration pass to exist.
 // Read-only law: opens the scene, applies runtime state, shoots, restores
 // the camera + window-light mounts, and NEVER saves the scene - the disk
 // keeps the day-law boot state (r124/r146 disk law). ASCII. No 3D.
@@ -119,9 +120,11 @@ namespace FluxVerse
             // DUSK hero frames - the golden-hour quadrant the album never had
             // (r174 finding: the CEO critique "no dusk light" traced to zero
             // dusk frames in the acceptance album). Coherent apply: palette +
-            // fog veil + gold band a85 + rose water wash + window lights at
-            // the REAL world-state rates through the v2 law (~24 pct lit at
-            // the 0.55 dusk alpha = the order's "windows just lighting up").
+            // fog veil + gold band a85 + the r204 blue-purple semi-transparent
+            // water (rose wash retired by the batch-2 order item 1) + window
+            // lights at the REAL world-state rates through the v2 law
+            // (~24 pct lit at the 0.55 dusk alpha = the order's "windows
+            // just lighting up").
             ApplyScene(amb, water, light, wl, AmbientTier.Dusk, WaveTick);
             cam.orthographicSize = origSize;
             cam.transform.position = origPos;

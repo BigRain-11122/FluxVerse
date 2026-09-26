@@ -33,8 +33,8 @@ namespace FluxVerse
 {
     public static class WaterFxRules
     {
-        public const string Protocol = "fluxverse-waterfx/0.2";
-        public const int BakedRound = 181;
+        public const string Protocol = "fluxverse-waterfx/0.3";
+        public const int BakedRound = 204;
 
         // ---- water band (builder live anchor) ----
         public const int CellX0 = -50, CellX1 = 50, RowY0 = -3, RowY1 = 2;
@@ -85,28 +85,24 @@ namespace FluxVerse
             return "Assets/ArtPacks/water-fx/foam-" + (north ? "n" : "s") + "-" + frame + ".png";
         }
 
-        // ---- S6b warm wash (r181, duskgold-manifest.water_warm_wash) ----
-        // Dusk-only rose wash over the river base (the golden-hour water the
-        // target paints rose-grey-pink; the r180 census read the dusk water
-        // base violet hue 269 vs target 342). RUNTIME family - no baked asset
-        // (r157 horizon-band precedent): the adapter owns a white quad child
-        // with the rose tint on sr.color; deepest of the order-2 water family
-        // so it tints ONLY the base water under refl/shim/foam; day/night
-        // alpha 0 = zero coupling with the r155 night asserts.
-        public const string WashName = "WaterFxWarmWash";
-        public const int WashCount = 1;          // runtime child, census 12 -> 13 live
-        public const float WashZ = 0.35f;          // deepest of the order-2 family (refl 0.3)
-        public const float WashAlphaDusk = 0.45f;
-        public const float WashX0 = -50f, WashY0 = -3f, WashX1 = 50f, WashY1 = 3f;
-        public static readonly Color WashTint = new Color(255f / 255f, 128f / 255f, 152f / 255f, 1f);
-
-        public static float WashAlphaFor(AmbientTier t)
-        {
-            return t == AmbientTier.Dusk ? WashAlphaDusk : 0f;   // day/dawn/night zero
-        }
-
-        public static float WashCenterX() { return (WashX0 + WashX1) * 0.5f; }
-        public static float WashCenterY() { return (WashY0 + WashY1) * 0.5f; }
+        // ---- r204 tile alpha (T-FV-122 S2, batch-2 order item 1
+        // "semi-transparent blue-purple") ----
+        // The r181 dusk rose wash is RETIRED: the r180 pre-registered rose
+        // parameter is overturned by the later CEO order text (r202 sec.6a
+        // compliant-change ruling); the r203 WaterTiles bake carries the
+        // authored blue-purple gradient, the wash family is removed and the
+        // live census returns to the 12 mount table (retirement face =
+        // waterfx-manifest v0.3 warm_wash_retired).
+        // The order's "semi-transparent" lands on the WATER TILEMAP renderer
+        // color: the r203 tiles bake opaque art, the sky quad behind shows
+        // through the band (dusk warm under-glow at the low rows = the water
+        // mirrors the sky, physically). Band [0.85, 0.95] pre-registered
+        // r202; value pinned 0.92 (sandbox: keeps the blue-purple saturation
+        // while the under-blend still reads). The r155-era light-blue tint
+        // (0.75, 0.85, 1) retired WITH the old navy art - tint neutral white.
+        public const float TileAlpha = 0.92f;
+        public const float TileAlphaMin = 0.85f, TileAlphaMax = 0.95f;
+        public static readonly Color TileTint = new Color(1f, 1f, 1f, TileAlpha);
 
         // ---- W5 wobble ----
         public const float WobbleStepU = 0.0625f;   // 1 art px @ ppu16

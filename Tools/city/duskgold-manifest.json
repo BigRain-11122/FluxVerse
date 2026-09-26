@@ -46,6 +46,7 @@
     "acceptance": "coherent S6b dusk frame: band census rows 30..88 (world y 16.74..18.89), cols 297..920 + 1000..1623 (brain-crown/antenna column excluded), mean lum delta vs r180 baseline >= +4.0"
   },
   "water_warm_wash": {
+    "r204_superseded": "RETIRED by the 09-26 ~15:20 batch-2 order item 1 ('water semi-transparent blue-purple... delete the pink-brick texture') - the later CEO order text overturns this slice's rose parameter (r202 sec.6a compliant-change ruling). The family is removed (waterfx-manifest v0.3 warm_wash_retired); this section is kept as the historical definition for the r180/r181 census provenance. The [320,20] hue / [120,180] lum acceptance below is SUPERSEDED by the census3 blue-purple door (hue [220,280] + lum [25,110] + refl-window lum floor) - T-FV-122 S2.",
     "slice": "dusk-only rose wash quad over the river base (the golden-hour water base the target paints rose-grey-pink)",
     "geometry": "world rect x -50..50, y -3..3 (the WaterFxRules census band, zero cell drift)",
     "color_rgb": [255, 128, 152],
@@ -82,7 +83,7 @@
     "c2_multilayer": "RimLightProof (dusk) + NeonProof dusk + WindowLightProof dusk re-run green",
     "c3_dark_hue": "census repeat + REPORT ONLY (F-17 CEO surface, no gate)",
     "c4_depth": "depth wash acceptance delta >= 12.0 (gate)",
-    "c5_water": "water wash acceptance hue [320,20] + lum [120,180] (gate)",
+    "c5_water": "water wash acceptance hue [320,20] + lum [120,180] (gate) - SUPERSEDED r204 by the batch-2 order item 1: the rose door retired with the wash family; the live door = census3 (T-FV-122): hue [220,280] + lum [25,110] + refl-quant window lum >= 15 (solid-black reading zeroed)",
     "c6_silhouettes": "existing landmark/crown proofs re-run green (zero geometry change this round)",
     "band_salience": "rows 30..88 lum delta >= +4.0 (gate)"
   },

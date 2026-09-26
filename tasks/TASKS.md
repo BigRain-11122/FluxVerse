@@ -9,7 +9,7 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-117 | orders.md 快道接线（⑦查·r196 开单）——r173 漏领根因自侧闭合（orders-only 令零进 ledger=③查/哨兵结构性盲区·r167~r172 五轮漏+12h 延误实锤·F-08 集团侧建议 decisions 尾至 D-20260926-11 零采纳）：mandate 六查→七查+状态档四行化（orders_sha12=）+write-fastpath-state.ps1 扩 -OrdersSha12（KEEP 同律）+沙盒扩容 | TECH §九 r196 行⑤·实址=..\..\docs\orders.md（已勘定）；判据=沙盒四行落盘/坏参 fail-loud+七查接线+收尾实装换用 | open |
+| T-FV-118 | 轮首七查机械化只读脚本（fastpath-check.ps1）——会话每轮手查五命令=token 成本+显示面假象不确定族（r163 tick 首查塌并假象/r195 状态档失键勘定/r197 tick 尾捕获吞行·r163「红扫读法以 ReadAllText 归一化直读为准」律已在册）：单件只读脚本七行判读输出（①tick 红扫归一化直读②树豁免③④⑥⑦四 SHA 对表⑤BigStream html 快查）+沙盒断言+轮首实装对照（脚本判读 vs 会话七查一致） | TECH §九 r197 行⑥；判据=沙盒绿+下轮轮首脚本/会话双跑判读一致 | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

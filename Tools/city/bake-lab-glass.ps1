@@ -15,6 +15,17 @@
 #                                  + 10-slot card wall (3 lit) right
 #   lab-sandbox-2u 48x48 = 2x2u    compact sandbox table: 4-block mini city
 #                                  + antenna + hologram band
+# r185 1u-wide variants (D-20260926-06 candidate 4, T-FV-003 segment 1;
+# r169 all-shore census: max net span 1.8333u < 2u kills every 2u slot,
+# five native 1u x 3u slots S1..S5 in evidence - S5 [23,9,24,12] labs
+# cluster-adjacent + S4 [-6,-5] tower-side are the priority pair):
+#   lab-birth-1u    24x72 = 1x3u    slim birth station: glass chamber top
+#                                   + 6-slot card wall below (2 lit)
+#   lab-sandbox-1u  24x48 = 1x2u    slim sandbox table: hologram band +
+#                                   2-block mini city + antenna
+# Proportion law (D-06): native redraw at 24px width (1u @PPU24), never
+# a downscaled 2u sprite; family technique intact (glass morph atoms,
+# card wall, tabletop slab, dark cool plinth).
 # Visual law (DESIGN 16.3 + r139): silicon-ultimate blue (CPH4 64,196,255
 # core spectrum), glass morph = translucent gradient + glow rim + outer
 # halo + highlight streak + dark cool plinth; clean-lab cold light only
@@ -266,6 +277,62 @@ function Build-Sandbox2U($bmp) {
     Fill-Rect $bmp 32 38 37 43 255 40 52 66
 }
 
+function Build-Birth1U($bmp) {
+    # slim 1u birth station (r185): glass chamber top, card wall below
+    Draw-GlassPod $bmp 5 8 18 43 3
+    # card wall (birth wall, 2 cols x 3 rows = 6 slots, 2 lit)
+    Fill-Rect $bmp 4 46 19 63 255 42 54 70
+    for ($x = 4; $x -le 19; $x++) {
+        Set-Px $bmp $x 46 255 90 110 130
+        Set-Px $bmp $x 63 255 30 40 54
+    }
+    $cols = @(7, 13)
+    $rows = @(48, 53, 58)
+    for ($c = 0; $c -lt 2; $c++) {
+        for ($rw = 0; $rw -lt 3; $rw++) {
+            $sx = $cols[$c]
+            $sy = $rows[$rw]
+            Fill-Rect $bmp $sx $sy ($sx + 4) ($sy + 3) 200 30 42 58
+            $litup = (($c -eq 0 -and $rw -eq 0) -or ($c -eq 1 -and $rw -eq 2))
+            if ($litup) {
+                Fill-Rect $bmp ($sx + 1) ($sy + 1) ($sx + 3) ($sy + 2) 235 200 240 255
+            } else {
+                for ($x = $sx; $x -le ($sx + 4); $x++) { Set-Px $bmp $x ($sy + 1) 140 90 110 130 }
+            }
+        }
+    }
+    Draw-Plinth $bmp 4 64 19 71
+}
+
+function Build-Sandbox1U($bmp) {
+    # slim 1u sandbox table (r185): hologram band + 2-block mini city
+    for ($y = 6; $y -le 13; $y++) {
+        $a = [int](25 + 50 * ($y - 6) / 7)
+        for ($x = 8; $x -le 15; $x++) { Set-Px $bmp $x $y $a 100 210 255 }
+    }
+    # mini city (flat stride-4 list: x0,y0,x1,y1), bottoms sit on tabletop
+    $bld = @(7, 18, 13, 29, 15, 15, 21, 29)
+    for ($i = 0; $i -lt $bld.Count; $i += 4) {
+        $bx0 = $bld[$i]; $by0 = $bld[$i + 1]; $bx1 = $bld[$i + 2]; $by1 = $bld[$i + 3]
+        Fill-Rect $bmp $bx0 $by0 $bx1 $by1 255 38 52 70
+        for ($x = $bx0; $x -le $bx1; $x++) { Set-Px $bmp $x $by0 255 70 95 120 }
+        for ($xx = ($bx0 + 2); $xx -le ($bx1 - 1); $xx += 3) {
+            for ($yy = ($by0 + 2); $yy -le ($by1 - 1); $yy += 4) { Set-Px $bmp $xx $yy 220 140 220 255 }
+        }
+    }
+    # antenna on the tallest mini tower
+    Set-Px $bmp 18 13 255 255 255 255
+    Set-Px $bmp 18 14 255 255 255 255
+    # tabletop slab + legs
+    Fill-Rect $bmp 4 30 19 37 255 52 66 84
+    for ($x = 4; $x -le 19; $x++) {
+        Set-Px $bmp $x 30 255 96 116 140
+        Set-Px $bmp $x 37 255 30 40 54
+    }
+    Fill-Rect $bmp 6 38 9 43 255 40 52 66
+    Fill-Rect $bmp 15 38 18 43 255 40 52 66
+}
+
 function Build-PipeH($bmp) {
     Fill-Rect $bmp 0 4 47 11 255 44 58 76
     for ($x = 0; $x -le 47; $x++) {
@@ -319,6 +386,8 @@ function Build-One($name, $w, $h) {
         'lab-sandbox.png'     { Build-Sandbox $bmp }
         'lab-birth-2u.png'    { Build-Birth2U $bmp }
         'lab-sandbox-2u.png'  { Build-Sandbox2U $bmp }
+        'lab-birth-1u.png'    { Build-Birth1U $bmp }
+        'lab-sandbox-1u.png'  { Build-Sandbox1U $bmp }
         'lab-pipe-h.png'      { Build-PipeH $bmp }
         'lab-pipe-v.png'      { Build-PipeV $bmp }
         'lab-pipe-node.png'   { Build-PipeNode $bmp }
@@ -331,11 +400,13 @@ $litMin = @{
     'lab-pod-tall.png' = 200; 'lab-pod-mid.png' = 150; 'lab-pod-wide.png' = 300;
     'lab-birth.png' = 350; 'lab-sandbox.png' = 25; 'lab-pipe-h.png' = 30;
     'lab-pipe-v.png' = 30; 'lab-pipe-node.png' = 12;
-    'lab-birth-2u.png' = 250; 'lab-sandbox-2u.png' = 12
+    'lab-birth-2u.png' = 250; 'lab-sandbox-2u.png' = 12;
+    'lab-birth-1u.png' = 140; 'lab-sandbox-1u.png' = 8
 }
 $glassMin = @{
     'lab-pod-tall.png' = 400; 'lab-pod-mid.png' = 250;
-    'lab-pod-wide.png' = 400; 'lab-birth.png' = 400; 'lab-birth-2u.png' = 500
+    'lab-pod-wide.png' = 400; 'lab-birth.png' = 400; 'lab-birth-2u.png' = 500;
+    'lab-birth-1u.png' = 320
 }
 
 function Test-Sprite($bmp, $name) {
@@ -370,7 +441,9 @@ $specs = @(
     'lab-pipe-v.png', 16, 48,
     'lab-pipe-node.png', 16, 16,
     'lab-birth-2u.png', 48, 72,
-    'lab-sandbox-2u.png', 48, 48
+    'lab-sandbox-2u.png', 48, 48,
+    'lab-birth-1u.png', 24, 72,
+    'lab-sandbox-1u.png', 24, 48
 )
 
 Write-Output 'pass 1: bake + gates'

@@ -259,5 +259,53 @@ namespace FluxVerse
         public static Color FogNear(AmbientTier t) { return FogFar(t) * 0.85f; }
     }
 
+    // r206 (T-FV-122 S2b, batch-2 order 09-26 ~15:20 item 1): the tint band
+    // splits into THREE blocks. The r13 single quad covered -16..+15 with one
+    // alpha; in LINEAR color space (r205 forensics: ProjectSettings
+    // m_ActiveColorSpace=1) the warm dusk tint (1,0.62,0.42 @ a0.22) over the
+    // dark blue-purple water reads ROSE (measured hue 319 vs the order door
+    // [220,280] - the "pink-brick texture" critique root). The batch-2 order
+    // text ("water semi-transparent blue-purple") is the later CEO word and
+    // overturns the r13 coverage domain (r202 sec.6a compliant-change family).
+    // LAW: the RIVER block mirrors the water world rect EXACTLY (WaterFxRules
+    // cells x -50..50 rows -3..2) and carries alpha ONLY AT NIGHT (the night
+    // tint is blue-family: water stays in-door, r205 measured 233/67; dusk and
+    // dawn read the authored blue-purple, r205 probe preview 239/92). The two
+    // CITY blocks keep the four-tier wheel law untouched (r51 pilot bottom
+    // -16 / painted top +15, 92u family width). Seams are flush by constant:
+    // S top == river bottom == -3, river top == N bottom == +3.
+    public static class TintBandRules
+    {
+        public const string NameS = "AmbientTintS", NameN = "AmbientTintN", NameRiver = "AmbientTintRiver";
+        public const int Order = 8;                 // the legacy tint family slot (above street 7, below band 9)
+
+        // south city block (paved band below the water)
+        public const float CityW = 92f;              // legacy family width: x -46..+46 (L1 |camX|<=30 law consumer)
+        public const float Sy0 = -16f, Sy1 = -3f;    // r51 pilot bottom law / flush with the water south edge
+        public const float SyH = Sy1 - Sy0;          // 13
+        public const float SyCy = (Sy0 + Sy1) * 0.5f;
+
+        // north city block (painted band up to the r51 +15 top)
+        public const float Ny0 = 3f, Ny1 = 15f;
+        public const float NyH = Ny1 - Ny0;          // 12
+        public const float NyCy = (Ny0 + Ny1) * 0.5f;
+
+        // river block = the water world rect exactly (single source = WaterFxRules)
+        public const float Rx0 = WaterFxRules.CellX0;                // -50
+        public const float Rx1 = WaterFxRules.CellX1 + 1f;           // +51 (cells x -50..50)
+        public const float Ry0 = WaterFxRules.RowY0;                 // -3
+        public const float Ry1 = WaterFxRules.RowY1 + 1f;             // +3 (rows -3..2)
+        public const float RiverW = Rx1 - Rx0;                        // 101
+        public const float RiverH = Ry1 - Ry0;                        // 6
+        public const float RiverCx = (Rx0 + Rx1) * 0.5f;              // +0.5 (MakeQuad centers at x0)
+        public const float RiverCy = (Ry0 + Ry1) * 0.5f;              // 0
+
+        // the S2b river alpha law: night carries the wheel alpha, dusk/dawn/day exempt
+        public static float RiverAlphaFor(AmbientTier t)
+        {
+            return t == AmbientTier.Night ? AmbientWheel.PaletteFor(t).tintAlpha : 0f;
+        }
+    }
+
     // scene adapter CityAmbient lives in CityAmbient.cs (SEPARATE FILE LAW, r14)
 }

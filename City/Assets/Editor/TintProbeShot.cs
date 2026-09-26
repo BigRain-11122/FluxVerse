@@ -99,11 +99,21 @@ namespace FluxVerse
             CityLabsTemporal tmp = CityLabsTemporal.EnsureRoot();
             tmp.Poll();
 
-            // the actual runtime colors (verify against WaterFxRules/AmbientWheel)
-            GameObject tintGo = GameObject.Find("AmbientTint");
-            if (tintGo == null) throw new InvalidOperationException("AmbientTint quad missing");
-            SpriteRenderer tintSr = tintGo.GetComponent<SpriteRenderer>();
-            Color tintC0 = tintSr.color;
+            // the actual runtime colors (verify against WaterFxRules/AmbientWheel).
+            // r206 S2b: the tint band is THREE blocks (TintBandRules) - the dusk
+            // river alpha is 0 BY LAW now, so this probe's tint-off shot isolates
+            // the CITY blocks' contribution; the river block color is logged as
+            // the law face (alpha 0 at dusk = the S2b exemption live).
+            string[] tintNames = new string[] { TintBandRules.NameS, TintBandRules.NameN, TintBandRules.NameRiver };
+            SpriteRenderer[] tintSrs = new SpriteRenderer[tintNames.Length];
+            Color[] tintC0 = new Color[tintNames.Length];
+            for (int i = 0; i < tintNames.Length; i++)
+            {
+                GameObject tintGo = GameObject.Find(tintNames[i]);
+                if (tintGo == null) throw new InvalidOperationException(tintNames[i] + " quad missing");
+                tintSrs[i] = tintGo.GetComponent<SpriteRenderer>();
+                tintC0[i] = tintSrs[i].color;
+            }
             GameObject waterTileGo = GameObject.Find("Water");
             if (waterTileGo == null) throw new InvalidOperationException("Water tilemap GO missing");
             Tilemap waterTm = waterTileGo.GetComponent<Tilemap>();
@@ -113,8 +123,9 @@ namespace FluxVerse
             // shot 1: baseline dusk (tint on, water a0.92)
             Shot(cam, "r205-tintprobe-dusk-full.png");
 
-            // shot 2: tint off
-            tintSr.color = new Color(tintC0.r, tintC0.g, tintC0.b, 0f);
+            // shot 2: tint off (all three blocks)
+            for (int i = 0; i < tintSrs.Length; i++)
+                tintSrs[i].color = new Color(tintC0[i].r, tintC0[i].g, tintC0[i].b, 0f);
             Shot(cam, "r205-tintprobe-dusk-notint.png");
 
             // shot 4: water reveal + tint off (pure under-layer)
@@ -122,7 +133,7 @@ namespace FluxVerse
             Shot(cam, "r205-tintprobe-dusk-under-notint.png");
 
             // shot 3: water reveal + tint on (under-layer under the tint)
-            tintSr.color = tintC0;
+            for (int i = 0; i < tintSrs.Length; i++) tintSrs[i].color = tintC0[i];
             Shot(cam, "r205-tintprobe-dusk-under-tint.png");
 
             // restore every runtime state (scene NEVER saved)
@@ -137,8 +148,9 @@ namespace FluxVerse
             cam.orthographicSize = origSize;
             cam.transform.position = origPos;
 
-            string report = "tint_color=" + tintC0.r.ToString("0.000") + "," + tintC0.g.ToString("0.000")
-                + "," + tintC0.b.ToString("0.000") + " alpha=" + tintC0.a.ToString("0.000")
+            string report = "tintN_color=" + tintC0[1].r.ToString("0.000") + "," + tintC0[1].g.ToString("0.000")
+                + "," + tintC0[1].b.ToString("0.000") + " alpha=" + tintC0[1].a.ToString("0.000")
+                + " river_alpha=" + tintC0[2].a.ToString("0.000") + " (S2b dusk law: 0)"
                 + " water_color=" + waterC0.r.ToString("0.000") + "," + waterC0.g.ToString("0.000")
                 + "," + waterC0.b.ToString("0.000") + " alpha=" + waterC0.a.ToString("0.000")
                 + " shots=4 (full/notint/under-tint/under-notint) scene_not_saved";

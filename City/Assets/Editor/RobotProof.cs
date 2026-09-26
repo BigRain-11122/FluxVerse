@@ -266,7 +266,8 @@ namespace FluxVerse
                 "L0 camera broken after save");
             Chk(TileCount("Ground") > 0 && TileCount("Water") > 0 && TileCount("Roads") > 0
                 && TileCount("CityQUANT") > 0, "tilemap layers emptied by our save");
-            Chk(GameObject.Find("SkylineFar") == null && GameObject.Find("AmbientTint") == null,
+            Chk(GameObject.Find("SkylineFar") == null && GameObject.Find("AmbientTintS") == null
+                && GameObject.Find("AmbientTintN") == null && GameObject.Find("AmbientTintRiver") == null,
                 "runtime-only visuals persisted into the scene");
 
             // ---- D. render gates (dusk anchor, then night) ----

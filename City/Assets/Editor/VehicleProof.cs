@@ -287,7 +287,8 @@ namespace FluxVerse
                 && TileCount("CityQUANT") > 0, "tilemap layers emptied by our save");
             Chk(CountPrefix("BarkBubble") == 0, "BarkBubble persisted (runtime-only law)");
             Chk(CountPrefix("IdentCard") == 0, "IdentCard persisted (runtime-only law)");
-            Chk(GameObject.Find("SkylineFar") == null && GameObject.Find("AmbientTint") == null,
+            Chk(GameObject.Find("SkylineFar") == null && GameObject.Find("AmbientTintS") == null
+                && GameObject.Find("AmbientTintN") == null && GameObject.Find("AmbientTintRiver") == null,
                 "runtime-only visuals persisted into the scene");
 
             // ---- D. render gates (dusk anchor, then night) ----

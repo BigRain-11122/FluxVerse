@@ -35,6 +35,13 @@
 // joins the same runtime-only family - one dusk-only mauve veil over the north
 // bank (atmospheric perspective, census-triggered), constant SkylineRules.FogFar
 // dusk tint, alpha riding the same blend window (variant B: tile-city-only).
+// r206 (T-FV-122 S2b, batch-2 order item 1): the tint band splits into THREE
+// blocks (TintBandRules): city south / river / city north. The RIVER block is
+// EXEMPT at dusk and dawn (the authored blue-purple water reads rose under the
+// warm tint in linear color space - r205 forensics) and rides its own alpha
+// window through the D1 blend (night carries the wheel alpha; the water
+// darkens into the night with the same zero-end-velocity curve). The city
+// blocks keep the r13/r51 four-tier wheel law untouched.
 // Polls world/world-state.json READ-ONLY every ~10s (perceptor owns all writes).
 // Pure 2D: sky/tint/band/fog = SpriteRenderer quads; rain/snow = recycled sprite field.
 using System;
@@ -61,7 +68,7 @@ namespace FluxVerse
         public Sprite skylineFar, skylineNear;
 
         WeatherField field;
-        SpriteRenderer sky, tint, band;
+        SpriteRenderer sky, tintS, tintN, tintRiver, band;   // r206 S2b: tint = three blocks
         SpriteRenderer skylineFarR, skylineNearR;
         SpriteRenderer[] drops;
         SpriteRenderer[] rims;        // r148: 11 dusk roofline rim bands (runtime-only)
@@ -69,6 +76,7 @@ namespace FluxVerse
         float horizonA, horizonAFrom, horizonATo;   // r158: horizon alpha blend state (rides the D1 window)
         SpriteRenderer fogWash;       // r181: depth fog wash quad (runtime-only, duskgold-manifest)
         float fogA, fogAFrom, fogATo;               // r181: fog alpha blend state (rides the D1 window)
+        float riverA, riverAFrom, riverATo;         // r206 S2b: river block alpha (rides the same window)
         float pollTimer = 999f;      // poll on first Update
         float bandPhase, bandAlpha;
         AmbientTier tier = AmbientTier.Night;
@@ -95,6 +103,7 @@ namespace FluxVerse
         public Sprite CurrentSkySprite { get { return sky != null ? sky.sprite : null; } }   // r156 proof tap
         public float CurrentHorizonAlpha { get { return horizonA; } }          // r158 proof tap
         public float CurrentFogAlpha { get { return fogA; } }                  // r181 proof tap
+        public float CurrentRiverAlpha { get { return riverA; } }              // r206 S2b proof tap
 
         // r156 proof tap: the cached per-tier gradient sprite (settle/no-pop parity gate)
         public static Sprite CachedSkyFor(AmbientTier t) { return SkySprite(t); }
@@ -214,7 +223,7 @@ namespace FluxVerse
                 if (Application.isPlaying) Destroy(c.gameObject);
                 else DestroyImmediate(c.gameObject);
             }
-            sky = null; tint = null; band = null;
+            sky = null; tintS = null; tintN = null; tintRiver = null; band = null;   // r206 S2b: three blocks die with the family
             skylineFarR = null; skylineNearR = null;
             drops = null;
             rims = null;               // r148: rim bands die with the family
@@ -295,6 +304,7 @@ namespace FluxVerse
             tier = t;
             horizonAFrom = horizonATo = LightFxRules.HorizonAlphaFor(t);   // r158: instant path settles at once
             fogAFrom = fogATo = LightFxRules.FogWashAlphaFor(t);            // r181: fog settles with the same law
+            riverAFrom = riverATo = TintBandRules.RiverAlphaFor(t);        // r206 S2b: river settles at once (night=wheel, else 0)
             ApplyInstantFamilies(t);
             SettleAt(t);
         }
@@ -311,6 +321,8 @@ namespace FluxVerse
             horizonATo = LightFxRules.HorizonAlphaFor(t);   // eases with the D1 blend window
             fogAFrom = fogA;                                // r181: the fog rides the same window
             fogATo = LightFxRules.FogWashAlphaFor(t);
+            riverAFrom = riverA;                            // r206 S2b: the river rides the same window
+            riverATo = TintBandRules.RiverAlphaFor(t);
             AmbientPalette target = AmbientWheel.PaletteFor(t);
             ApplyInstantFamilies(t);
             if (PaletteNear(curPal, target)) { SettleAt(t); return; }   // same tier = no-op settle
@@ -330,7 +342,19 @@ namespace FluxVerse
         void ApplyPalette(AmbientPalette p)
         {
             curPal = p;
-            tint.color = new Color(p.tint.r, p.tint.g, p.tint.b, p.tintAlpha);
+            // r206 S2b: the two CITY blocks keep the four-tier wheel law; the
+            // RIVER block rides its own alpha window (dusk/dawn exempt = the
+            // authored blue-purple reads; night carries the wheel alpha - the
+            // water darkens into the night on the same eased curve).
+            Color cityTint = new Color(p.tint.r, p.tint.g, p.tint.b, p.tintAlpha);
+            if (tintS != null) tintS.color = cityTint;
+            if (tintN != null) tintN.color = cityTint;
+            if (tintRiver != null)
+            {
+                float kr = blend.Active ? RigMath.EaseInOut(blend.Progress01) : 1f;
+                riverA = Mathf.Lerp(riverAFrom, riverATo, kr);
+                tintRiver.color = new Color(p.tint.r, p.tint.g, p.tint.b, riverA);
+            }
             Camera cam = Cam();
             if (cam != null) cam.backgroundColor = p.camBg;
             if (blend.Active && _blendTex != null)
@@ -491,8 +515,23 @@ namespace FluxVerse
             // tier (r22 finding; fixed by the r51 pilot, TECH sec.9 debt line). Atmosphere
             // between buildings, sky strips stay pure gradient. Above tilemaps 0..4, below
             // band 9 / pulses 10.
-            tint = MakeQuad("AmbientTint", 8, WhiteSprite(), 92f, 31f, -0.5f);
-            tint.transform.SetParent(transform, false);
+            // r206 S2b (batch-2 order item 1): the single quad splits into THREE blocks
+            // (TintBandRules) - city south (-16..-3) / river (the water world rect
+            // exactly) / city north (+3..+15). The river block is EXEMPT at dusk and
+            // dawn (the warm tint over the dark blue-purple water reads rose in
+            // linear color space - r205 forensics) and carries the wheel alpha at
+            // night only; the city blocks keep the r13/r51 law (92u family width,
+            // bottom -16, painted top +15). Seams flush by constant.
+            tintS = MakeQuad(TintBandRules.NameS, TintBandRules.Order, WhiteSprite(),
+                TintBandRules.CityW, TintBandRules.SyH, TintBandRules.SyCy);
+            tintS.transform.SetParent(transform, false);
+            tintRiver = MakeQuad(TintBandRules.NameRiver, TintBandRules.Order, WhiteSprite(),
+                TintBandRules.RiverW, TintBandRules.RiverH, TintBandRules.RiverCy);
+            tintRiver.transform.position = new Vector3(TintBandRules.RiverCx, TintBandRules.RiverCy, 0f);
+            tintRiver.transform.SetParent(transform, false);
+            tintN = MakeQuad(TintBandRules.NameN, TintBandRules.Order, WhiteSprite(),
+                TintBandRules.CityW, TintBandRules.NyH, TintBandRules.NyCy);
+            tintN.transform.SetParent(transform, false);
             // city-wide alert band (gale / severe WMO): functional red, river level
             band = MakeQuad("AmbientAlertBand", 9, WhiteSprite(), 92f, 4f, 0f);
             band.transform.SetParent(transform, false);

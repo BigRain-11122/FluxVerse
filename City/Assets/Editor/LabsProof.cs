@@ -630,7 +630,8 @@ namespace FluxVerse
                 "base tilemaps emptied by our save");
             Chk(CountPrefix("BarkBubble") == 0, "BarkBubble persisted (runtime-only law)");
             Chk(CountPrefix("IdentCard") == 0, "IdentCard persisted (runtime-only law)");
-            Chk(GameObject.Find("SkylineFar") == null && GameObject.Find("AmbientTint") == null,
+            Chk(GameObject.Find("SkylineFar") == null && GameObject.Find("AmbientTintS") == null
+                && GameObject.Find("AmbientTintN") == null && GameObject.Find("AmbientTintRiver") == null,
                 "runtime-only visuals persisted into the scene");
             Chk(UnityEngine.Object.FindObjectsOfType<CityLabsTemporal>().Length == 1,
                 "r189 temporal adapter lost after our save");

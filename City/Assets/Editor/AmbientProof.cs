@@ -206,14 +206,29 @@ namespace FluxVerse
                 + (dayTowerBri - nightTowerBri).ToString("F3"));
 
             // ---- C2. r51 pilot gates (TECH sec.9 r22 debt: paving-vs-tint 1u offset) ----
-            // (a) GEOMETRY: the tint quad must cover the painted band exactly - bottom -16,
-            //     top +15 (the builder paves to +15; a 30u quad topping at +14 left the top
-            //     paved row untinted = the night far-shore bright strip).
-            SpriteRenderer tintR = GameObject.Find("AmbientTint").GetComponent<SpriteRenderer>();
-            Bounds tb = tintR.bounds;
-            Chk(tb.min.y <= -15.9f, "tint must cover the band bottom -16, got " + tb.min.y.ToString("F2"));
-            Chk(Mathf.Abs(tb.max.y - 15f) <= 0.05f,
-                "tint top must sit at the painted +15, got " + tb.max.y.ToString("F2"));
+            // (a) GEOMETRY (r206 S2b re-anchor): the tint band is THREE blocks - the
+            //     city south block keeps the r51 pilot bottom law, the north block the
+            //     +15 painted-top law, the river block mirrors the water world rect
+            //     EXACTLY (WaterFxRules cells, single source), and the two seams are
+            //     flush (the coverage union equals the legacy -16..+15 band).
+            SpriteRenderer tS = GameObject.Find(TintBandRules.NameS).GetComponent<SpriteRenderer>();
+            SpriteRenderer tN = GameObject.Find(TintBandRules.NameN).GetComponent<SpriteRenderer>();
+            SpriteRenderer tR = GameObject.Find(TintBandRules.NameRiver).GetComponent<SpriteRenderer>();
+            Bounds bs = tS.bounds, bn = tN.bounds, br = tR.bounds;
+            Chk(bs.min.y <= -15.9f, "tint south must cover the band bottom -16, got " + bs.min.y.ToString("F2"));
+            Chk(Mathf.Abs(bs.max.y - TintBandRules.Sy1) <= 0.05f,
+                "tint south top must sit flush at the water south edge -3, got " + bs.max.y.ToString("F2"));
+            Chk(Mathf.Abs(br.min.y - TintBandRules.Ry0) <= 0.05f && Mathf.Abs(br.max.y - TintBandRules.Ry1) <= 0.05f,
+                "tint river must mirror the water world rect y, got " + br.min.y.ToString("F2") + ".." + br.max.y.ToString("F2"));
+            Chk(Mathf.Abs(br.min.x - TintBandRules.Rx0) <= 0.05f && Mathf.Abs(br.max.x - TintBandRules.Rx1) <= 0.05f,
+                "tint river must mirror the water world rect x, got " + br.min.x.ToString("F2") + ".." + br.max.x.ToString("F2"));
+            Chk(Mathf.Abs(bn.min.y - TintBandRules.Ny0) <= 0.05f,
+                "tint north bottom must sit flush at +3, got " + bn.min.y.ToString("F2"));
+            Chk(Mathf.Abs(bn.max.y - 15f) <= 0.05f,
+                "tint top must sit at the painted +15, got " + bn.max.y.ToString("F2"));
+            Chk(Mathf.Abs(bs.max.y - br.min.y) <= 1e-4f && Mathf.Abs(br.max.y - bn.min.y) <= 1e-4f,
+                "tint block seams must be flush (no gap, no overlap)");
+            Bounds tb = bn;   // report alias: the band top face is the north block
             // (b) RENDER: the far-shore strip window (rows 925..938 = world y 14.26..14.74,
             //     x 300..1600 = well inside the painted map, no sky/edge leak) must darken
             //     at night vs day by the tint amount - untinted it stayed day-bright (the
@@ -301,7 +316,18 @@ namespace FluxVerse
             float d1DuskZen, d1W2; RegionAvg(d1DuskAnchor, 0, 1054, 1920, 1079, out d1DuskZen, out d1W2);
             Chk(d1DuskZen > d1NightZen + 0.10f,
                 "D1 anchors must be far apart for the between-ness gate: d=" + (d1DuskZen - d1NightZen).ToString("F3"));
-            SpriteRenderer d1Tint = GameObject.Find("AmbientTint").GetComponent<SpriteRenderer>();
+            SpriteRenderer d1Tint = GameObject.Find(TintBandRules.NameN).GetComponent<SpriteRenderer>();   // r206: a CITY block carries the wheel law
+            SpriteRenderer d1TintS = GameObject.Find(TintBandRules.NameS).GetComponent<SpriteRenderer>();
+            SpriteRenderer d1River = GameObject.Find(TintBandRules.NameRiver).GetComponent<SpriteRenderer>();
+            // r206 S2b river law gates (batch-2 item 1): dusk EXEMPT (the authored
+            // blue-purple reads - r205 forensics: the warm tint read rose in linear
+            // space), night carries the FULL wheel alpha (water stays in-door
+            // 233/67), city blocks untouched.
+            Chk(Mathf.Abs(amb.CurrentRiverAlpha - 0f) < 1e-5f,
+                "S2b: dusk river tint must be exempt (alpha 0), got " + amb.CurrentRiverAlpha.ToString("F3"));
+            Chk(Mathf.Abs(d1River.color.a - 0f) < 1e-5f, "S2b: dusk river quad alpha must be 0 on the adapter");
+            Chk(Mathf.Abs(d1TintS.color.a - d1DuskP.tintAlpha) < 1e-4f,
+                "S2b: dusk city south block must keep the wheel alpha, got " + d1TintS.color.a.ToString("F3"));
             amb.TransitionAmbient(AmbientTier.Night);
             Chk(amb.BlendActive, "dusk->night flip must start an eased blend");
             amb.StepAmbient(AmbientBlend.BlendSeconds * 0.5f);
@@ -310,6 +336,11 @@ namespace FluxVerse
             float d1ExpA = (d1DuskP.tintAlpha + d1NightP.tintAlpha) * 0.5f;
             Chk(ColorNear(d1Tint.color, new Color(d1ExpTint.r, d1ExpTint.g, d1ExpTint.b, d1ExpA), 2e-3f),
                 "mid-blend tint quad must be the palette lerp: " + d1Tint.color.ToString("F3"));
+            // r206 S2b: the river rides its OWN window through the same blend
+            // (from the dusk-exempt 0 toward the night wheel alpha, same easing)
+            float d1RiverMid = d1NightP.tintAlpha * 0.5f;   // EaseInOut(0.5) = 0.5 exactly (r14 law)
+            Chk(Mathf.Abs(amb.CurrentRiverAlpha - d1RiverMid) < 2e-3f,
+                "S2b: mid-blend river alpha must ride the eased window: " + amb.CurrentRiverAlpha.ToString("F3"));
             Chk(ColorNear(cam.backgroundColor, Color.Lerp(d1DuskP.camBg, d1NightP.camBg, 0.5f), 2e-3f),
                 "mid-blend camBg must be the palette lerp");
             Texture2D d1MidShot = Shot(cam, "m1-r156-d1-transition.png");   // evidence: the cross-fade frame
@@ -325,6 +356,10 @@ namespace FluxVerse
                 "settle must swap back to the cached tier sprite (content-identical, zero pop)");
             Chk(ColorNear(d1Tint.color, new Color(d1NightP.tint.r, d1NightP.tint.g, d1NightP.tint.b, d1NightP.tintAlpha), 1e-4f),
                 "settled blend state must equal the instant-apply state (parity law)");
+            Chk(Mathf.Abs(amb.CurrentRiverAlpha - d1NightP.tintAlpha) < 1e-4f,
+                "S2b: settled night river alpha must equal the wheel night alpha, got " + amb.CurrentRiverAlpha.ToString("F3"));
+            Chk(ColorNear(d1River.color, new Color(d1NightP.tint.r, d1NightP.tint.g, d1NightP.tint.b, d1NightP.tintAlpha), 1e-4f),
+                "S2b: settled night river color must equal the night palette (in-door 233/67 law)");
             // re-flip mid-flight: the new blend must start from the CURRENT mid palette
             amb.TransitionAmbient(AmbientTier.Dusk);
             Chk(amb.BlendActive, "night->dusk must start a blend");
@@ -341,6 +376,8 @@ namespace FluxVerse
             Chk(!amb.BlendActive, "ApplyAmbient must never start a blend");
             Chk(ColorNear(d1Tint.color, new Color(d1DuskP.tint.r, d1DuskP.tint.g, d1DuskP.tint.b, d1DuskP.tintAlpha), 1e-4f),
                 "ApplyAmbient must apply the target palette immediately");
+            Chk(Mathf.Abs(amb.CurrentRiverAlpha - 0f) < 1e-5f,
+                "S2b: ApplyAmbient dusk must zero the river alpha instantly, got " + amb.CurrentRiverAlpha.ToString("F3"));
             amb.ApplyAmbient(AmbientTier.Night);        // canonical close: settled night
 
             // cleanup in-memory evidence textures
@@ -368,6 +405,9 @@ namespace FluxVerse
                 + " d1(blend_s=" + AmbientBlend.BlendSeconds.ToString("F1")
                 + ", zen_n=" + d1NightZen.ToString("F3") + ", zen_m=" + d1MidZen.ToString("F3")
                 + ", zen_d=" + d1DuskZen.ToString("F3") + ", settle=cache-swap)"
+                + " s2b(tint_blocks=3, river dusk=0.000"
+                + ", mid=" + d1RiverMid.ToString("F3")
+                + ", night=" + d1NightP.tintAlpha.ToString("F3") + ")"
                 + " scene_saved=" + saved + " shots=8";
         }
 

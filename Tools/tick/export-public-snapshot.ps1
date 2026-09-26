@@ -46,7 +46,7 @@ $WL_EVENT_TYPES = @('COMMIT','TASK_CLAIM','TASK_DONE','GAME_STAGE','MEDIA_OUTPUT
 $WL_ZONES = @('id','name','status','activity')
 $WL_FLOWS = @('id','zone')
 $WL_CITY  = @('fleet_online','games_total','games_active','renders_total','last_render_utc','commits_total')
-$WL_REAL  = @('city_day_phase','weather_kind','weather_temp_c','weekday','beijing_hhmm')
+$WL_REAL  = @('city_day_phase','weather_kind','weather_temp_c','weekday','beijing_hhmm','season')
 $WL_EVENT = @('ts_utc','type','zone')
 $WL_TOP   = @('protocol','ts_utc','zones','flows','city','reality_public','events_tail')
 $MAX_BYTES = 1048576
@@ -156,12 +156,16 @@ try {
     commits_total    = To-Int (Get-Val (Get-Val $state 'history') 'commits_total') 0
   }
   $re = Get-Val $state 'reality'
+  # T-FV-132 (P-20260926-05, U155-5): season rides the new top-level state
+  # field - the git-visible snapshot is the machine-derived data face for the
+  # city card (phase+weather+season+heartbeat fleet_online all derivable).
   $realPub = [PSCustomObject][ordered]@{
     city_day_phase = [string](Get-Val $re 'city_day_phase')
     weather_kind   = [string](Get-Val $re 'weather_kind')
     weather_temp_c = Get-Val $re 'weather_temp_c'
     weekday        = [string](Get-Val $re 'weekday')
     beijing_hhmm  = [string](Get-Val $re 'beijing_hhmm')
+    season         = [string](Get-Val $state 'season')
   }
 
   # events tail: cheap type pre-filter, then parse, then exact type check

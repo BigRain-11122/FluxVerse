@@ -81,10 +81,17 @@ function Probe-clock {
     $ctx.cursor['clock_mkt_rank'] = [string]$rank
     $ctx.cursor['clock_mkt_day'] = $day
 
+    # T-FV-132 boundary fix (canon = U232 temporal canon GLOBAL, sec 2 is the
+    # sole authority, 09-26 post-dates the r13-era bounds): day starts AT
+    # 08:00 - dawn 5:00-7:59, day 8:00-16:59, dusk 17:00-19:59, night else.
+    # Matches the MiniGame window implementation (dawn<8 / day<17 / dusk<20).
+    # The engine bootstrap fallback (AmbientWeather.TierForHour) still carries
+    # the legacy 5-8 bound - dormant path (state name is the primary source),
+    # logged as debt in TECH section 9.
     $h = $bj.Hour
-    if ($h -ge 5 -and $h -le 8) { $dp = 'dawn' }
-    elseif ($h -ge 9 -and $h -le 16) { $dp = 'day' }
-    elseif ($h -ge 17 -and $h -le 19) { $dp = 'dusk' }
+    if ($h -ge 5 -and $h -lt 8) { $dp = 'dawn' }
+    elseif ($h -ge 8 -and $h -lt 17) { $dp = 'day' }
+    elseif ($h -ge 17 -and $h -lt 20) { $dp = 'dusk' }
     else { $dp = 'night' }
 
     return @{ state = @{

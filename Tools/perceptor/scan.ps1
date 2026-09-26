@@ -268,6 +268,38 @@ foreach ($ik in @('mode','batches','files','lines','events','bad_lines','replaye
   if ($stateParts.ContainsKey('inbox_' + $ik)) { $inboxSec[$ik] = $stateParts['inbox_' + $ik] }
 }
 
+# T-FV-132 (P-20260926-05): time-layer four fields per the temporal canon
+# (U232 = Design/configs/GLOBAL/<silicon city time & rhythm canon>.md,
+# sections 2/4/7) - additive top-level keys (protocol 0.1: adding fields is
+# free). Enums copied verbatim: phase dawn/day/dusk/night (sec 2), season
+# spring/summer/autumn/winter by Beijing month (sec 4). city_phase prefers
+# the clock probe fragment (single writer); the local fallback repeats the
+# same canon formula so the field survives a probe hiccup. Real clock only -
+# no fake time (U155-5 honesty).
+$bjNow = [DateTime]::UtcNow.AddHours(8)
+if ($reality.ContainsKey('city_day_phase')) { $cityPhase = [string]$reality['city_day_phase'] }
+else {
+  $dpH = $bjNow.Hour
+  if ($dpH -ge 5 -and $dpH -lt 8) { $cityPhase = 'dawn' }
+  elseif ($dpH -ge 8 -and $dpH -lt 17) { $cityPhase = 'day' }
+  elseif ($dpH -ge 17 -and $dpH -lt 20) { $cityPhase = 'dusk' }
+  else { $cityPhase = 'night' }
+}
+$seasM = $bjNow.Month
+$citySeason = 'winter'
+if ($seasM -ge 3 -and $seasM -le 5) { $citySeason = 'spring' }
+elseif ($seasM -ge 6 -and $seasM -le 8) { $citySeason = 'summer' }
+elseif ($seasM -ge 9 -and $seasM -le 11) { $citySeason = 'autumn' }
+# load tide: real fleet + zone activity aggregate (canon sec 7, window-light
+# source face). Derived only - counters recomputed from the merged fleet list.
+$tideOn = 0
+foreach ($tm in $fleet) { if ($tm.online) { $tideOn++ } }
+$loadTide = @{
+  fleet_online = $tideOn
+  fleet_total  = @($fleet).Count
+  activity_avg = [math]::Round((($za['gaming'] + $za['quant'] + $za['media']) / 3), 2)
+}
+
 $state = [ordered]@{
   protocol = 'fluxverse/0.1'
   ts_utc = $now
@@ -298,9 +330,17 @@ $state = [ordered]@{
   }
   history = @{ commits_total = $total; last_commit_ts = $lastC }
   reality = $reality
+  city_phase = $cityPhase
+  season = $citySeason
+  load_tide = $loadTide
   media_outputs = $mediaOut
   game_tasks = $gameTasks
   residents = $residents
+}
+# T-FV-132: weather face - honest omission when the reality weather probe
+# degraded (canon sec 7 weather{kind,temp_c}; no fake weather, sec 3 honesty).
+if ($reality.ContainsKey('weather_kind') -and $reality.ContainsKey('weather_temp_c')) {
+  $state['weather'] = @{ kind = [string]$reality['weather_kind']; temp_c = $reality['weather_temp_c'] }
 }
 # r65: fleet inbox ingest face - additive section; absent entirely while no repo
 # carries an inbox/ dir (zero consumer impact when the feature is idle)

@@ -720,7 +720,12 @@ namespace FluxVerse
             WindowLightRules.Building bq = WindowLightRules.At(0);
             RectDelta(l1On, l1Off, cam, bq.x0 - 0.15f, bq.y0 - 0.15f,
                 bq.x1 + 0.15f, bq.y1 + 0.15f, out l1Q);
-            Chk(l1Q >= 2000, "L1 south QUANT census: " + l1Q);
+            // r181 v2 re-anchor: the v1-era absolute 2000 dated from the
+            // all-lit face (106 windows, 7124 px measured); under the v2 rate
+            // law ~25 windows light (artPx[0] ~265 law px) - the gate follows
+            // the D1 convention (>= 1.8 x the law's own art px, self-scaling).
+            Chk(l1Q >= artPx[0] * 1.8, "L1 south QUANT census: " + l1Q
+                + " (v2 art-px gate " + ((int)(artPx[0] * 1.8)) + ")");
             UnityEngine.Object.DestroyImmediate(l1On);
             UnityEngine.Object.DestroyImmediate(l1Off);
             cam.orthographicSize = origSize;

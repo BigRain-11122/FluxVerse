@@ -7,12 +7,20 @@
 # is the canonical geometry source that enters git.
 # Gate constants and derivation laws: see references/gate-family.md.
 # PS5.1 trap laws (read BEFORE editing): see references/ps51-traps.md.
+# PARAMETER-MODE CALL LAWS -- pinned here because they recurred in r180/r188
+# AFTER the reference docs existed (copy-the-template beats read-the-docs):
+#  L1 (r159c): helper calls pass two args SPACE-SEPARATED: Chk (<cond>) '<name>'.
+#     A comma between the args binds ONE array to the first param, the second
+#     stays null, and every check silently fails. Never put a comma between args.
+#  L2 (r64/r95): inside @(...), parenthesize every COMPUTED element -- comma
+#     binds tighter than binary operators, so bare arithmetic splits or merges
+#     elements. Shape: @(($x - $w), ($y - $h), ($x + $w), ($y + $h))
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $pass = 0; $fail = 0
 
-function Chk([bool]$cond, [string]$name) {
+function Chk([bool]$cond, [string]$name) {   # L1 call law (r159c): two space-separated args; a comma between them = silent all-FAIL
     if ($cond) { $script:pass++ } else { $script:fail++; Write-Host ('FAIL: ' + $name) }
 }
 function Ov($a, $b) {   # strict rect overlap [x0,y0,x1,y1]
@@ -87,6 +95,7 @@ Chk (($vcols -join ',') -eq '-18,-17,17,18') 'A0: avenue vcols == -18/-17/17/18'
 # FILL: named census anchors for the zone under test (pin 2-3 known rects, e.g.
 # ResN01 (-3.5,11), brain tower B7 [-2,9,3,19], VehicleBusN @ (12,8),
 # T1 terrace world rect, Paint band rows for the zone).
+#   L1 shape: Chk ($m.<field> -eq <n>) 'A0: <name> census'  -- never a comma between the two args.
 
 # ---------- geometry derivations (r141 seat class law) ----------
 $half   = 32 / 48.0
@@ -126,6 +135,7 @@ foreach ($g in $nsign) {
 # FILL: slot/mount rect tables from coupled manifests (eaveslots slots, lightfx
 # bloom/wet mounts, rimlight segments...). Light layers are NOT physical gates:
 # report overlaps honestly, never enforce (r169 A4b).
+#   L2 shape for computed rects: $r = @(($cx - $hw), ($cy - $hh), ($cx + $hw), ($cy + $hh))
 
 # ---------- master obstacle set (r169 composition law) ----------
 # 8 neon buildings + 6 office rows + T1 terrace + 2 avenue road bands

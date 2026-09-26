@@ -3,11 +3,18 @@
 #   corner transparency / independent recount (non-trusting baker print).
 # ASCII-only (GBK law). Copy to logs/devloop-r<N>-<name>-test.ps1 and replace FILL 1-8.
 # Out-of-box = sample mode: bakes deterministic sample PNGs and gates them (machinery proof).
+# PARAMETER-MODE CALL LAWS -- pinned here because they recurred in r180/r188
+# AFTER the reference docs existed (this harness takes name FIRST):
+#  L1 (r159c): Chk 'name' (cond) -- two args SPACE-SEPARATED. A comma between
+#     the args binds ONE array to $name and leaves $cond null = silent all-FAIL.
+#  L2 (r64/r95): inside @(...), parenthesize every COMPUTED element -- comma
+#     binds tighter than binary operators. k=v tables build line by line
+#     ($h[$k1] = <v1>; $h[$k2] = <v2>), never @() with embedded concatenation.
 $ErrorActionPreference = 'Stop'
 $script:PASS = 0
 $script:FAIL = 0
 
-function Chk($name, $cond) {
+function Chk($name, $cond) {   # L1 call law (r159c): Chk 'name' (cond) -- space-separated; comma between args = one array into $name, $cond null
   if ($cond) { $script:PASS = $script:PASS + 1; Write-Output ('PASS ' + $name) }
   else { $script:FAIL = $script:FAIL + 1; Write-Output ('FAIL ' + $name) }
 }
@@ -74,6 +81,8 @@ $Files = @(
   @{ p = (Join-Path $RunDir3 'sample.png'); w = 24; h = 12 }
 )
 # FILL 5: pinned SHA12 per file path (round: committed/stable values; sample: pinned at runtime)
+#   k=v build law (r95): line by line -- $ShaPins[$p1] = '<sha12>'; $ShaPins[$p2] = '<sha12>'
+#   (never @() with embedded + concatenation: comma splits or merges elements silently)
 $ShaPins = @{}
 # FILL 6: bake invocation (round: invoke real baker twice into RunDir/RunDir2 + variant for distinct)
 if (Test-Path $RunDir)  { Remove-Item $RunDir  -Recurse -Force }

@@ -9,7 +9,7 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-110 | 技能 harness 模板 PS 参数态正确形：r170 city-sandbox+r171 bake-pipeline 模板 FILL 点开箱自带 OK 调用形（r159c 逗号律）+@() 括号包裹形（r95 律） | TECH §九 r180 新法行③+r188④（FILL 点候选）；判据=模板改+安装副本 SHA 同步+烟测复绿 | open |
+| T-FV-112 | city-sandbox 结构化烟测门（r171 镜像）：A 模板副本 A0 census 绿 / B 五件 census+脚本 ASCII / C 零 TODO 哨兵 / D 安装副本 SHA==源 | TECH §九 r191 行④（现役 r170 烟测=模板副本直跑零 D 门=不对称面）；判据=新门件落 logs/ 复跑全绿 | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

@@ -1,11 +1,11 @@
 ---
 name: fluxverse-bake-pipeline
-description: FluxVerse 超体宇宙城「GDI+ 自焙管线」——City 一切程序化资产（影子/名牌/身份卡/气泡/发光体/玻璃舱/篷面/立面皮/水象/光效/倒影翻转/裁切镜像）烘焙前的配方勘定、确定性烘焙器施工、fail-loud 验证门与多模态风格闸。Use when a FluxVerse DevLoop/tick round must bake, crop, mirror, or re-bake any City asset (new ArtPacks/Data png, plates, cards, glows, facades, water-fx, light-fx), add a PpuFor importer row, or run a 烘焙断言门. 九代实证 r87/r97/r113/r140/r149/r151/r154/r157/r168.
+description: FluxVerse 超体宇宙城「GDI+ 自焙管线」——City 一切程序化资产（影子/名牌/身份卡/气泡/发光体/玻璃舱/篷面/立面皮/水象/光效/倒影翻转/裁切镜像）烘焙前的配方勘定、确定性烘焙器施工、fail-loud 验证门与多模态风格闸。Use when a FluxVerse DevLoop/tick round must bake, crop, mirror, or re-bake any City asset (new ArtPacks/Data png, plates, cards, glows, facades, water-fx, light-fx), add a PpuFor importer row, or run a 烘焙断言门. 十二代实证 r87/r97/r113/r140/r149/r151/r154/r157/r168/r175/r185/r188.
 ---
 
 # FluxVerse 烘焙轮（GDI+ 确定性自焙管线）
 
-城市场景一切程序化资产的生产正道（外采判负/直用不适时的第三径）：GDI+ 确定性烘焙 + SHA 幂等门 + fail-loud 自检 + 多模态风格闸。本技能 = 烘焙轮固定工序 + 配方族 + PS5.1/GDI+ 陷阱律的跨会话固化（源 = TECH §九 九代烘焙轮 r87→r168 定谳）。
+城市场景一切程序化资产的生产正道（外采判负/直用不适时的第三径）：GDI+ 确定性烘焙 + SHA 幂等门 + fail-loud 自检 + 多模态风格闸。本技能 = 烘焙轮固定工序 + 配方族 + PS5.1/GDI+ 陷阱律的跨会话固化（源 = TECH §九 十二代烘焙轮 r87→r188 定谳·三役 r175/r185/r188）。
 
 ## 硬律（每轮先读）
 

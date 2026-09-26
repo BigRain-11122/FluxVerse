@@ -9,7 +9,7 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-112 | city-sandbox 结构化烟测门（r171 镜像）：A 模板副本 A0 census 绿 / B 五件 census+脚本 ASCII / C 零 TODO 哨兵 / D 安装副本 SHA==源 | TECH §九 r191 行④（现役 r170 烟测=模板副本直跑零 D 门=不对称面）；判据=新门件落 logs/ 复跑全绿 | open |
+| T-FV-114 | 双技能 references 律册滚动更新：建队后新法沉淀（r180①②/r181/r185/r189）带 r 号溯源入 ps51-traps/ps51-gdi-traps | TECH §九 r193 行④（新法散在 §九 历史行=技能「跨会话自持」存在理由正体）；判据=条目入 references+安装副本同步+三门烟测复绿 | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

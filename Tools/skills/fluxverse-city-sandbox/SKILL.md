@@ -1,11 +1,11 @@
 ---
 name: fluxverse-city-sandbox
-description: FluxVerse 超体宇宙城「布设沙盒轮」门族——City 场景任何新布设/迁移（楼体、席位、檐位、舱体、招牌、街具、光效挂载、新资产落位）落位前的几何可行性机械定谳与断言门施工。Use when a FluxVerse DevLoop/tick round must place, relocate, or re-census anything in the City scene, author a Tools/city/<name>-manifest.json unique geometry source, or run a 布设沙盒断言门. 十代实证 r103/r111/r123/r137/r141/r147/r154/r157/r159/r169.
+description: FluxVerse 超体宇宙城「布设沙盒轮」门族——City 场景任何新布设/迁移（楼体、席位、檐位、舱体、招牌、街具、光效挂载、新资产落位）落位前的几何可行性机械定谳与断言门施工。Use when a FluxVerse DevLoop/tick round must place, relocate, or re-census anything in the City scene, author a Tools/city/<name>-manifest.json unique geometry source, or run a 布设沙盒断言门. 十五代实证 r103/r111/r123/r137/r141/r147/r154/r157/r159/r169/r170/r176/r186/r188/r189.
 ---
 
 # FluxVerse 布设沙盒轮（City 布设可行性门族）
 
-城市场景「零迁移纪律 + 唯一几何源」的执行面：新布设先过本门族全绿，才进引擎轮。本技能 = 沙盒轮固定工序 + 门族常量 + PS5.1 陷阱律的跨会话固化（源 = TECH §九 十代沙盒轮 r103→r169 定谳）。
+城市场景「零迁移纪律 + 唯一几何源」的执行面：新布设先过本门族全绿，才进引擎轮。本技能 = 沙盒轮固定工序 + 门族常量 + PS5.1 陷阱律的跨会话固化（源 = TECH §九 十五代沙盒轮 r103→r189 定谳·建队役 r170+四役 r176/r186/r188/r189）。
 
 ## 硬律（每轮先读）
 

@@ -15,15 +15,24 @@
 // window rhythm law); gray_b = plank wall with 1px vertical slits on the
 // plank-face centers x2/6/10/14 (seams x0/4/8/12, sandbox-proven), same band.
 //
-// LIT LAW: fnv1a32(bid + "|" + date + "|" + widx) mod 10000 <
-// floor(activity * 10000 + 0.5) (round-half-up, r157 law). date = the
-// Beijing calendar date (day-stable, cross-day variety, same-input-same-
-// output per day - draw.py family). widx = window scan order: row-major
-// cells (cy outer, cx inner) then family rect order. Zone rate: QUANT->quant,
-// GAME_MAIN+ANNEX->gaming, MEDIA->media; the four north historical facades
-// = 'city' = round(mean(quant,gaming,media), 2) (the strip belongs to no
-// single company). Excluded by design: brain tower (superbody-blue CEO
-// family), office band (v1 candidate), labs (glow by design).
+// LIT LAW v2 (r181, duskgold-manifest.windowlight_rate_v2 - the r180 S6a
+// parameter source; the v1 face lit 100 pct of windows at the live activity
+// 1.0 = the art-spec "all-lit windows are fake" violation, LIVE at census):
+// lit iff fnv1a32(bid|date|widx) mod 10000 < floor(effective_rate*10000+0.5)
+// where effective_rate = BASE_RATE(0.30) * Clamp01(zone activity) *
+// floor_factor. floor_factor = linear per wall row bottom->top 1.0->0.6
+// (denser low, sparser high - the art-target window rhythm); wallRows==1 ->
+// factor 1.0. ThresholdFor / Fnv / widx enumeration law UNCHANGED (r159);
+// the adapter multiplies BASE_RATE * factor at the single LitAt call site.
+// Band check (r180 PS sweep, proof re-pins): overall lit fraction at
+// activity 1.0 lands in [0.20, 0.30] every calendar date (5-date pinned
+// 0.2305..0.2605). date = the Beijing calendar date (day-stable, cross-day
+// variety, same-input-same-output per day - draw.py family). widx = window
+// scan order: row-major cells (cy outer, cx inner) then family rect order.
+// Zone rate: QUANT->quant, GAME_MAIN+ANNEX->gaming, MEDIA->media; the four
+// north historical facades = 'city' = round(mean(quant,gaming,media), 2)
+// (the strip belongs to no single company). Excluded by design: brain tower
+// (superbody-blue CEO family), office band (v1 candidate), labs (glow).
 //
 // RENDER: order 3 with z -0.5 = the same-order z-toward-camera trick (r155
 // water / r158 light-fx family): renders ABOVE the order-3 city tilemaps at
@@ -40,8 +49,8 @@ namespace FluxVerse
 {
     public static class WindowLightRules
     {
-        public const string Protocol = "fluxverse-windowlight/0.1";
-        public const int BakedRound = 159;
+        public const string Protocol = "fluxverse-windowlight/0.2";
+        public const int BakedRound = 181;
         public const string MountPrefix = "WindowLight";
         public const int Order = 3;
         public const float Z = -0.5f;
@@ -210,6 +219,22 @@ namespace FluxVerse
         public static bool LitAt(string bid, string date, int widx, float rate)
         {
             return Fnv1a(bid + "|" + date + "|" + widx) % 10000u < ThresholdFor(rate);
+        }
+
+        // ---- rate law v2 (duskgold-manifest.windowlight_rate_v2, r180/r181) ----
+        public const float BaseRate = 0.30f;   // law constant; activity stays LIVE
+        public static float FloorFactor(Building b, Window w)
+        {
+            int wallRows = b.rows - 1;                 // top row = roof, zero windows
+            if (wallRows <= 1) return 1f;
+            float rowFromBottom = w.cy - b.yBase;      // 0 = bottom wall row
+            return 1f - 0.4f * (rowFromBottom / (wallRows - 1));
+        }
+
+        // the single law entry the adapter feeds LitAt (v2: rate is EFFECTIVE)
+        public static float EffectiveRate(Building b, Window w, float zoneRate)
+        {
+            return BaseRate * Clamp01(zoneRate) * FloorFactor(b, w);
         }
 
         // ---- zone rates (manifest zone_rate law) ----

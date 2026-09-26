@@ -99,11 +99,19 @@ namespace FluxVerse
         }
         [Serializable] class MBand { public string id; public int[] x16; public int[] y16; }
         [Serializable] class MHorSec { public MHorLaw law; public MBand[] mounts; }
+        [Serializable] class MFogM { public string id; public float[] rect; }
+        [Serializable] class MFogLaw
+        {
+            public string family; public string geometry; public int[] color_rgb;
+            public string color_source; public MTierPct tier_alpha_pct;
+            public int order; public float z; public string z_law; public string purpose;
+        }
+        [Serializable] class MFogSec { public MFogLaw law; public MFogM[] mounts; }
         [Serializable] class MRoot
         {
             public string protocol; public int baked_round;
             public MBloomSec bloom; public MConeSec lamp_cones; public MWetSec wet_roads;
-            public MStarSec stars; public MHorSec horizon_band;
+            public MStarSec stars; public MHorSec horizon_band; public MFogSec depth_fog_wash;
             public string token_gate;
         }
 
@@ -163,7 +171,8 @@ namespace FluxVerse
             MRoot m = JsonUtility.FromJson<MRoot>(json);
             if (m == null || m.bloom == null || m.bloom.mounts == null || m.lamp_cones == null
                 || m.lamp_cones.mounts == null || m.wet_roads == null || m.wet_roads.mounts == null
-                || m.horizon_band == null || m.horizon_band.law == null)
+                || m.horizon_band == null || m.horizon_band.law == null
+                || m.depth_fog_wash == null || m.depth_fog_wash.law == null)
                 throw new InvalidOperationException("lightfx manifest unparseable: " + ManifestPath);
             return m;
         }
@@ -190,7 +199,7 @@ namespace FluxVerse
         static void MirrorGate(MRoot m, string json, int[][] starPts)
         {
             Chk(m.protocol == LightFxRules.Protocol, "protocol mismatch: " + m.protocol);
-            Chk(m.protocol == "fluxverse-lightfx/0.2", "protocol must be the r158 v0.2 physics re-anchor");
+            Chk(m.protocol == "fluxverse-lightfx/0.3", "protocol must be the r181 v0.3 salience+fog round");
             Chk(m.baked_round == LightFxRules.BakedRound, "baked_round mismatch");
 
             // z physics map (r158 v0.2): camera z -10 -> smaller z = on top.
@@ -426,16 +435,50 @@ namespace FluxVerse
                 && Math.Abs(m.horizon_band.law.colors.dawn[2] - dawnC.b * 255f) < 0.6f,
                 "horizon dawn color = AmbientWheel skyBottom family");
             Chk(Eq(LightFxRules.HorizonAlphaFor(AmbientTier.Dawn), 0.35f, 1e-6f), "horizon dawn alpha");
-            Chk(Eq(LightFxRules.HorizonAlphaFor(AmbientTier.Dusk), 0.50f, 1e-6f), "horizon dusk alpha");
+            Chk(Eq(LightFxRules.HorizonAlphaFor(AmbientTier.Dusk), 0.75f, 1e-6f),
+                "horizon dusk alpha (r181 v0.3 salience promotion 50 -> 75)");
             Chk(LightFxRules.HorizonAlphaFor(AmbientTier.Day) == 0f
                 && LightFxRules.HorizonAlphaFor(AmbientTier.Night) == 0f, "horizon day/night zero");
             Chk(m.horizon_band.law.tier_alpha_pct.day == 0 && m.horizon_band.law.tier_alpha_pct.dawn == 35
-                && m.horizon_band.law.tier_alpha_pct.dusk == 50 && m.horizon_band.law.tier_alpha_pct.night == 0,
-                "horizon tier pct row");
+                && m.horizon_band.law.tier_alpha_pct.dusk == 75 && m.horizon_band.law.tier_alpha_pct.night == 0,
+                "horizon tier pct row (v0.3 dusk 75)");
             Chk(m.horizon_band.law.family.Contains("ReleaseVisuals"), "horizon family law text");
             Chk(m.horizon_band.law.blend_ride.Contains("D1 blend"), "horizon blend_ride text");
             Chk(LightFxRules.HorizonOrder == -9 && Eq(LightFxRules.HorizonZ, 1.0f, 1e-6f),
                 "horizon order/z");
+
+            // ---- r181 depth fog wash: geometry + color family + tier law + variant B order ----
+            Chk(m.depth_fog_wash.mounts.Length == 1, "fog wash mount count");
+            Chk(m.depth_fog_wash.law.color_rgb[0] == 158 && m.depth_fog_wash.law.color_rgb[1] == 148
+                && m.depth_fog_wash.law.color_rgb[2] == 199, "fog color rgb 158,148,199");
+            Color fogC = LightFxRules.FogWashColor();
+            Chk(Eq(fogC.r, 158f / 255f, 1e-4f) && Eq(fogC.g, 148f / 255f, 1e-4f)
+                && Eq(fogC.b, 199f / 255f, 1e-4f),
+                "fog color single source = SkylineRules.FogFar(Dusk) mauve family");
+            Chk(Eq(fogC.r, SkylineRules.FogFar(AmbientTier.Dusk).r, 1e-6f)
+                && Eq(fogC.g, SkylineRules.FogFar(AmbientTier.Dusk).g, 1e-6f)
+                && Eq(fogC.b, SkylineRules.FogFar(AmbientTier.Dusk).b, 1e-6f),
+                "fog color accessor parity");
+            Chk(m.depth_fog_wash.law.tier_alpha_pct.day == 0 && m.depth_fog_wash.law.tier_alpha_pct.dawn == 0
+                && m.depth_fog_wash.law.tier_alpha_pct.dusk == 15
+                && m.depth_fog_wash.law.tier_alpha_pct.night == 0, "fog tier pct row");
+            Chk(Eq(LightFxRules.FogWashAlphaFor(AmbientTier.Dusk), 0.15f, 1e-6f), "fog dusk alpha 0.15");
+            Chk(LightFxRules.FogWashAlphaFor(AmbientTier.Day) == 0f
+                && LightFxRules.FogWashAlphaFor(AmbientTier.Dawn) == 0f
+                && LightFxRules.FogWashAlphaFor(AmbientTier.Night) == 0f, "fog day/dawn/night zero");
+            Chk(LightFxRules.FogWashOrder == 4 && Eq(LightFxRules.FogWashZ, -0.1f, 1e-6f),
+                "fog variant B order 4 z -0.1 (the '4.5' slot)");
+            Chk(LightFxRules.FogWashOrder < RimLightRules.SortOrder,
+                "fog must sit BELOW the rim order (variant B: zero rim coupling)");
+            Chk(LightFxRules.FogWashOrder > 3, "fog must sit ABOVE the order-3 facade family");
+            float[] fr = m.depth_fog_wash.mounts[0].rect;
+            Chk(Eq(fr[0], LightFxRules.FogWashX0, 1e-5f) && Eq(fr[1], LightFxRules.FogWashY0, 1e-5f)
+                && Eq(fr[2], LightFxRules.FogWashX1, 1e-5f) && Eq(fr[3], LightFxRules.FogWashY1, 1e-5f),
+                "fog rect vs rules");
+            Chk(LightFxRules.FogWashY1 < 14.26f,
+                "fog top edge must clear the AmbientProof far-shore window (14.26)");
+            Chk(LightFxRules.FogWashName == "AmbientFogWash", "fog mount name");
+            Chk(m.depth_fog_wash.law.z_law.Contains("variant B"), "fog variant text");
 
             // render family map
             Chk(LightFxRules.OrderOf(LightFxRules.BloomFirst) == 6, "order map bloom");
@@ -481,6 +524,23 @@ namespace FluxVerse
                 Chk(Eq(h.transform.position.z, LightFxRules.HorizonZ, 1e-5f), "horizon z");
             }
             CacheHorizon();
+            // r181: the fog wash quad joins the same runtime family
+            GameObject fogGo = GameObject.Find(LightFxRules.FogWashName);
+            Chk(fogGo != null, "fog wash quad missing after EnsureVisuals");
+            Chk(fogGo.transform.parent == amb.transform, "fog wash not a CityAmbient child");
+            SpriteRenderer fogSr = fogGo.GetComponent<SpriteRenderer>();
+            Chk(fogSr != null, "fog wash has no renderer");
+            Chk(fogSr.sortingOrder == LightFxRules.FogWashOrder, "fog order 4 (variant B)");
+            Vector3 fp = fogGo.transform.position;
+            Chk(Eq(fp.x, (LightFxRules.FogWashX0 + LightFxRules.FogWashX1) * 0.5f, 1e-4f), "fog x center");
+            Chk(Eq(fp.y, (LightFxRules.FogWashY0 + LightFxRules.FogWashY1) * 0.5f, 1e-4f), "fog y center");
+            Chk(Eq(fp.z, LightFxRules.FogWashZ, 1e-5f), "fog z -0.1");
+            Vector3 fbs = fogSr.bounds.size;
+            Chk(Eq(fbs.x, LightFxRules.FogWashX1 - LightFxRules.FogWashX0, 1e-3f)
+                && Eq(fbs.y, LightFxRules.FogWashY1 - LightFxRules.FogWashY0, 1e-3f),
+                "fog bounds == the world band (relative-scale quad)");
+            Chk(Eq(amb.CurrentFogAlpha, 0f, 1e-6f), "day fog alpha must be zero after EnsureVisuals");
+            CacheFog();
 
             // ---- C. law battery ----
             // C1 tier alpha sweep x4 (closed family map; rgb stays white)
@@ -602,6 +662,30 @@ namespace FluxVerse
                 horLit += horPart;
             }
             Chk(horLit >= 800, "dusk horizon glow census: " + horLit);
+            // D2b r181: the depth fog veil (clean attribution - only the fog
+            // toggles; the adapter families stay constant in both frames)
+            SetFogActive(false);
+            Texture2D duskOffFog = Shot(cam, null);
+            SetFogActive(true);
+            int fogLit;
+            FogDelta(duskOn, duskOffFog, cam, out fogLit);
+            Chk(fogLit >= 150000, "dusk fog veil census low: " + fogLit);
+            UnityEngine.Object.DestroyImmediate(duskOffFog);
+            // fog day + night zero-leak (alpha 0 = identical frames, exact zero)
+            foreach (AmbientTier zt in new AmbientTier[] { AmbientTier.Day, AmbientTier.Night })
+            {
+                amb.ApplyAmbient(zt);
+                Texture2D zOn = Shot(cam, null);
+                SetFogActive(false);
+                Texture2D zOff = Shot(cam, null);
+                SetFogActive(true);
+                int zLeak;
+                FogDelta(zOn, zOff, cam, out zLeak);
+                Chk(zLeak == 0, zt + " fog zero-leak: " + zLeak);
+                UnityEngine.Object.DestroyImmediate(zOn);
+                UnityEngine.Object.DestroyImmediate(zOff);
+            }
+            amb.ApplyAmbient(AmbientTier.Dusk);   // restore the section tier
             UnityEngine.Object.DestroyImmediate(duskOn);
             UnityEngine.Object.DestroyImmediate(duskOffMounts);
             UnityEngine.Object.DestroyImmediate(duskOffHorizon);
@@ -667,11 +751,12 @@ namespace FluxVerse
             Chk(EditorSceneManager.SaveScene(scene), "SaveScene failed");
 
             return "asserts=" + asserts
-                + " mirror(v0.2 z-physics, bloom17-live-signs, cone12-posts, wet6-buildings, stars22, horizon2)"
+                + " mirror(v0.3 salience+fog, bloom17-live-signs, cone12-posts, wet6-buildings, stars22, horizon2_a75, fog1_vB)"
                 + " night_px_sum=" + SumPx(nightPx)
                 + " star_field=" + starLit
                 + " dusk_horizon=" + horLit
-                + " day_leak=0 l1_cones=" + coneSouth
+                + " dusk_fog=" + fogLit
+                + " day_leak=0 fog_day_night_leak=0 l1_cones=" + coneSouth
                 + " shots=4 saved=cityscene";
         }
 
@@ -721,11 +806,19 @@ namespace FluxVerse
                 GameObject h = GameObject.Find(LightFxRules.HorizonName(i));
                 Chk(h != null, "horizon quad not rebuilt on boot: " + LightFxRules.HorizonName(i));
                 SpriteRenderer hsr = h.GetComponent<SpriteRenderer>();
-                Chk(Eq(hsr.color.a, 0.50f, 1e-4f), "horizon dusk alpha lost after restart");
+                Chk(Eq(hsr.color.a, 0.75f, 1e-4f), "horizon dusk alpha lost after restart");
                 Color sc2 = AmbientWheel.PaletteFor(AmbientTier.Dusk).skyBottom;
                 Chk(Eq(hsr.color.r, sc2.r, 1e-3f) && Eq(hsr.color.g, sc2.g, 1e-3f)
                     && Eq(hsr.color.b, sc2.b, 1e-3f), "horizon dusk color lost after restart");
             }
+            // r181: the fog wash rebuilds with the same boot law
+            GameObject fogRe = GameObject.Find(LightFxRules.FogWashName);
+            Chk(fogRe != null, "fog wash not rebuilt on boot");
+            SpriteRenderer fogReSr = fogRe.GetComponent<SpriteRenderer>();
+            Chk(Eq(fogReSr.color.a, 0.15f, 1e-4f), "fog dusk alpha lost after restart");
+            Color fcl2 = LightFxRules.FogWashColor();
+            Chk(Eq(fogReSr.color.r, fcl2.r, 1e-3f) && Eq(fogReSr.color.g, fcl2.g, 1e-3f)
+                && Eq(fogReSr.color.b, fcl2.b, 1e-3f), "fog color lost after restart");
             adapter.ApplyState(AmbientTier.Night, 0);
             for (int i = 0; i < LightFxRules.MountCount; i++)
             {
@@ -744,7 +837,7 @@ namespace FluxVerse
             Chk(cam != null && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f,
                 "L0 camera broken after restart");
             return "reload_gate=OK mounts=57 adapter=resolved disk=day_law ambient_children=0"
-                + " horizon_rebuilt=dusk_law night_law=pass neighbors=5 cam_L0="
+                + " horizon_rebuilt=dusk_law fog_rebuilt=dusk_law night_law=pass neighbors=5 cam_L0="
                 + cam.orthographicSize.ToString("F1");
         }
 
@@ -847,43 +940,68 @@ namespace FluxVerse
         }
 
         // C4: instant law x4 tiers + the D1 blend ride (dusk -> night -> dusk)
+        // r181: the fog wash rides the identical law path (asserted alongside)
         static void HorizonBattery(CityAmbient amb)
         {
             amb.ApplyAmbient(AmbientTier.Dusk);
-            AssertHorizon(amb, AmbientTier.Dusk, 0.50f);
+            AssertHorizon(amb, AmbientTier.Dusk, 0.75f);
+            AssertFog(amb, AmbientTier.Dusk, 0.15f);
             amb.ApplyAmbient(AmbientTier.Dawn);
             AssertHorizon(amb, AmbientTier.Dawn, 0.35f);
+            AssertFog(amb, AmbientTier.Dawn, 0f);
             amb.ApplyAmbient(AmbientTier.Day);
             AssertHorizon(amb, AmbientTier.Day, 0f);
+            AssertFog(amb, AmbientTier.Day, 0f);
             amb.ApplyAmbient(AmbientTier.Night);
             AssertHorizon(amb, AmbientTier.Night, 0f);
+            AssertFog(amb, AmbientTier.Night, 0f);
 
             // blend ride: dusk -> night eases (never hard-cuts), monotonic, settles
-            amb.ApplyAmbient(AmbientTier.Dusk);   // settle at 0.50
+            amb.ApplyAmbient(AmbientTier.Dusk);   // settle at 0.75
             amb.TransitionAmbient(AmbientTier.Night);
             Chk(amb.BlendActive, "blend not active after dusk->night transition");
-            Chk(Eq(amb.CurrentHorizonAlpha, 0.50f, 1e-4f), "blend start must hold the current value");
+            Chk(Eq(amb.CurrentHorizonAlpha, 0.75f, 1e-4f), "blend start must hold the current value");
+            Chk(Eq(amb.CurrentFogAlpha, 0.15f, 1e-4f), "fog blend start must hold the current value");
             amb.StepAmbient(0.625f);   // k = 0.25
             float mid = amb.CurrentHorizonAlpha;
-            Chk(mid > 0f && mid < 0.5f, "mid-blend horizon alpha not in (0, 0.5): " + mid);
+            Chk(mid > 0f && mid < 0.75f, "mid-blend horizon alpha not in (0, 0.75): " + mid);
+            float midFog = amb.CurrentFogAlpha;
+            Chk(midFog > 0f && midFog < 0.15f, "mid-blend fog alpha not in (0, 0.15): " + midFog);
             float prev = mid;
             for (int i = 0; i < 3; i++)
             {
                 amb.StepAmbient(0.625f);
                 Chk(amb.CurrentHorizonAlpha <= prev + 1e-6f,
                     "horizon alpha not monotonic during the blend: " + amb.CurrentHorizonAlpha + " vs " + prev);
+                Chk(amb.CurrentFogAlpha <= midFog + 1e-6f,
+                    "fog alpha not monotonic during the blend");
                 prev = amb.CurrentHorizonAlpha;
+                midFog = amb.CurrentFogAlpha;
             }
             amb.StepAmbient(1.5f);   // cross the 2.5s window
             Chk(!amb.BlendActive, "blend should be settled");
             Chk(Eq(amb.CurrentHorizonAlpha, 0f, 1e-5f), "settled horizon alpha != night 0");
+            Chk(Eq(amb.CurrentFogAlpha, 0f, 1e-5f), "settled fog alpha != night 0");
             // mid-window re-flip from the CURRENT value (r156 restart law)
             amb.TransitionAmbient(AmbientTier.Dusk);
             amb.StepAmbient(0.3f);
             Chk(amb.BlendActive, "re-flip blend not active");
             amb.StepAmbient(3.0f);
-            Chk(Eq(amb.CurrentHorizonAlpha, 0.50f, 1e-5f), "settled back to dusk 0.5");
+            Chk(Eq(amb.CurrentHorizonAlpha, 0.75f, 1e-5f), "settled back to dusk 0.75");
+            Chk(Eq(amb.CurrentFogAlpha, 0.15f, 1e-5f), "fog settled back to dusk 0.15");
             amb.ApplyAmbient(AmbientTier.Dusk);   // leave a settled state
+        }
+
+        // r181: fog tier law face (constant mauve rgb + tier alpha)
+        static void AssertFog(CityAmbient amb, AmbientTier t, float lawA)
+        {
+            if (fogCache == null)
+                throw new InvalidOperationException("fog cache empty - CacheFog not called");
+            SpriteRenderer sr = fogCache.GetComponent<SpriteRenderer>();
+            Chk(Eq(sr.color.a, lawA, 1e-4f), "fog alpha != law " + lawA + " at tier " + t);
+            Color fc = LightFxRules.FogWashColor();
+            Chk(Eq(sr.color.r, fc.r, 1e-3f) && Eq(sr.color.g, fc.g, 1e-3f)
+                && Eq(sr.color.b, fc.b, 1e-3f), "fog color != mauve family at tier " + t);
         }
 
         static void AssertHorizon(CityAmbient amb, AmbientTier t, float lawA)
@@ -902,6 +1020,7 @@ namespace FluxVerse
 
         static GameObject[] mountCache = new GameObject[LightFxRules.MountCount];
         static GameObject[] horizonCache = new GameObject[LightFxRules.HorizonCount];
+        static GameObject fogCache;   // r181: the single fog wash quad
 
         static void CacheMounts()
         {
@@ -923,9 +1042,23 @@ namespace FluxVerse
             }
         }
 
+        static void CacheFog()
+        {
+            GameObject go = GameObject.Find(LightFxRules.FogWashName);
+            Chk(go != null, "fog wash not found for cache");
+            fogCache = go;
+        }
+
         // r34 law: GameObject.Find cannot see INACTIVE objects - toggle through
         // the caches, or the re-activate pass silently no-ops and every later
         // render pair collapses to zero-delta (r155 first-red law).
+        static void SetFogActive(bool on)
+        {
+            if (fogCache == null)
+                throw new InvalidOperationException("fog cache empty - CacheFog not called");
+            fogCache.SetActive(on);
+        }
+
         static void SetMountsActive(bool on)
         {
             for (int i = 0; i < mountCache.Length; i++)
@@ -988,6 +1121,33 @@ namespace FluxVerse
                     Color ca = on.GetPixel(x, y), cb = off.GetPixel(x, y);
                     float d = Math.Abs(ca.r - cb.r) + Math.Abs(ca.g - cb.g) + Math.Abs(ca.b - cb.b);
                     if (d > 0.06f) n++;
+                }
+            litPx = n;
+        }
+
+        // r181 fog veil census: DEDICATED 0.02 threshold - the 0.15-alpha
+        // veil under the 0.22 tint blends at ~0.12, so the mean veil delta
+        // (~0.04) sits UNDER the family 0.06 census line; 0.02 is the
+        // documented fog law (a law note, not a silent gate cut - the day and
+        // night zero-leak gates stay exact-zero at ANY threshold).
+        static void FogDelta(Texture2D on, Texture2D off, Camera cam, out int litPx)
+        {
+            float halfH = cam.orthographicSize;
+            float halfW = halfH * (1920f / 1080f);
+            float cx = cam.transform.position.x, cy = cam.transform.position.y;
+            int px0 = (int)(((LightFxRules.FogWashX0 - cx) / (2f * halfW) + 0.5f) * 1920f);
+            int px1 = (int)(((LightFxRules.FogWashX1 - cx) / (2f * halfW) + 0.5f) * 1920f);
+            int py0 = (int)(((LightFxRules.FogWashY0 - cy) / (2f * halfH) + 0.5f) * 1080f);
+            int py1 = (int)(((LightFxRules.FogWashY1 - cy) / (2f * halfH) + 0.5f) * 1080f);
+            px0 = Math.Max(0, px0); px1 = Math.Min(1919, px1);
+            py0 = Math.Max(0, py0); py1 = Math.Min(1079, py1);
+            int n = 0;
+            for (int y = py0; y <= py1; y++)
+                for (int x = px0; x <= px1; x++)
+                {
+                    Color ca = on.GetPixel(x, y), cb = off.GetPixel(x, y);
+                    float d = Math.Abs(ca.r - cb.r) + Math.Abs(ca.g - cb.g) + Math.Abs(ca.b - cb.b);
+                    if (d > 0.02f) n++;
                 }
             litPx = n;
         }

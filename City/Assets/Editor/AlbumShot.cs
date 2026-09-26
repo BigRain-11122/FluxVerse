@@ -1,10 +1,14 @@
 // FluxVerse r161 (P-20260925-09): AlbumShot - the four-scene acceptance
 // render pass for the CEO album (day/night x water/street, spec S3).
+// r181 (T-FV-002 S6b): +2 DUSK hero frames (dusk-water L0 / dusk-street L1)
+// +1 variant-A fog diagnostic - the golden-hour quadrant the album never
+// had (r174 finding); the S6b census gates measure the dusk-water frame.
 // COHERENT per-scene tier apply: every family lands on the SAME tier before
-// each shot (ambient palette + water fx + light fx + window lights at the
-// REAL world-state zone rates via the adapter's own Poll path) - the
-// per-family proof shots only pull their own family to tier, so the album
-// needs this integration pass to exist.
+// each shot (ambient palette + fog veil + water fx incl. the rose wash +
+// light fx incl. the a75 gold band + window lights at the REAL world-state
+// zone rates via the adapter's own Poll path) - the per-family proof shots
+// only pull their own family to tier, so the album needs this integration
+// pass to exist.
 // Read-only law: opens the scene, applies runtime state, shoots, restores
 // the camera + window-light mounts, and NEVER saves the scene - the disk
 // keeps the day-law boot state (r124/r146 disk law). ASCII. No 3D.
@@ -111,6 +115,39 @@ namespace FluxVerse
             water.ApplyTier(AmbientTier.Day);   // refl/shim alpha 0, foam stays 1.0
             Shot(cam, "m1-r161-album-night-water-norefl.png");
 
+            // r181 (T-FV-002 S6b, duskgold-manifest.albumshot_dusk): the two
+            // DUSK hero frames - the golden-hour quadrant the album never had
+            // (r174 finding: the CEO critique "no dusk light" traced to zero
+            // dusk frames in the acceptance album). Coherent apply: palette +
+            // fog veil + gold band a75 + rose water wash + window lights at
+            // the REAL world-state rates through the v2 law (~24 pct lit at
+            // the 0.55 dusk alpha = the order's "windows just lighting up").
+            ApplyScene(amb, water, light, wl, AmbientTier.Dusk, WaveTick);
+            cam.orthographicSize = origSize;
+            cam.transform.position = origPos;
+            Shot(cam, "m1-r181-dusk-water.png");
+
+            // shot 5b: variant-A fog diagnostic (order 8, above the tint) -
+            // the r180 manifest A/B decision procedure rendered ONCE for the
+            // record; the law (variant B) restores right after the shot
+            GameObject fogA = GameObject.Find(LightFxRules.FogWashName);
+            if (fogA != null)
+            {
+                SpriteRenderer fogAsr = fogA.GetComponent<SpriteRenderer>();
+                fogAsr.sortingOrder = 8;                  // full physical fog plane
+                fogA.transform.position = new Vector3(fogA.transform.position.x,
+                    fogA.transform.position.y, -0.1f);   // above the tint (z 0)
+                Shot(cam, "m1-r181-dusk-water-fogA.png");
+                fogAsr.sortingOrder = LightFxRules.FogWashOrder;   // restore law B
+                fogA.transform.position = new Vector3(fogA.transform.position.x,
+                    fogA.transform.position.y, LightFxRules.FogWashZ);
+            }
+
+            // dusk x street (L1 south, r160 D4 camera law)
+            cam.orthographicSize = RigMath.L1Size;
+            cam.transform.position = new Vector3(0.5f, -5.0f, origPos.z);
+            Shot(cam, "m1-r181-dusk-street.png");
+
             // restore in-memory state (scene is NEVER saved here)
             cam.orthographicSize = origSize;
             cam.transform.position = origPos;
@@ -120,8 +157,10 @@ namespace FluxVerse
                 && File.Exists(Path.Combine(RepoRoot, "docs", "design", "m1-r161-album-day-street.png"))
                 && File.Exists(Path.Combine(RepoRoot, "docs", "design", "m1-r161-album-night-water.png"))
                 && File.Exists(Path.Combine(RepoRoot, "docs", "design", "m1-r161-album-night-street.png"))
-                && File.Exists(Path.Combine(RepoRoot, "docs", "design", "m1-r161-album-night-water-norefl.png")))
-                return "5 album shots rendered (4 scenes + refl toggle twin), scene NOT saved";
+                && File.Exists(Path.Combine(RepoRoot, "docs", "design", "m1-r161-album-night-water-norefl.png"))
+                && File.Exists(Path.Combine(RepoRoot, "docs", "design", "m1-r181-dusk-water.png"))
+                && File.Exists(Path.Combine(RepoRoot, "docs", "design", "m1-r181-dusk-street.png")))
+                return "7 album shots rendered (4 scenes + refl twin + 2 dusk heroes + fogA diagnostic), scene NOT saved";
             throw new InvalidOperationException("album shot missing after render");
         }
 

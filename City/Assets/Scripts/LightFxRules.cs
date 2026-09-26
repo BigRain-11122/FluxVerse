@@ -24,7 +24,10 @@
 // Tier alpha (manifest tier_alpha_pct / 100): bloom day .20 / dawn .45 /
 // dusk .80 / night 1; cone 0 / .40 / .80 / 1; wet 0 / .15 / .40 / .60; stars
 // night-only 1 (twinkle multiplies). Horizon band = the CityAmbient family
-// (alpha dawn .35 / dusk .50, day/night 0; color = AmbientWheel skyBottom).
+// (alpha dawn .35 / dusk .75 (r181 v0.3 salience promotion, duskgold-manifest)
+// / day+night 0; color = AmbientWheel skyBottom). Depth fog wash = the second
+// CityAmbient family (r181 v0.3, duskgold-manifest.depth_fog_wash): one
+// dusk-only mauve veil over the north bank, variant B tile-city-only.
 // Star twinkle: steps [100,55,25,55] x 0.5s (2s cycle), per-star phase =
 // index mod 4. ASCII. No 3D.
 using System;
@@ -34,8 +37,8 @@ namespace FluxVerse
 {
     public static class LightFxRules
     {
-        public const string Protocol = "fluxverse-lightfx/0.2";
-        public const int BakedRound = 157;
+        public const string Protocol = "fluxverse-lightfx/0.3";
+        public const int BakedRound = 181;
         public const string NamePrefix = "LightFx";
 
         // ---- families ----
@@ -152,7 +155,10 @@ namespace FluxVerse
         public const float HorizonZ = 1.0f;                      // deepest of order -9
         public const float HorizonY0 = 268f / 16f;               // 16.75
         public const float HorizonY1 = 302f / 16f;               // 18.875
-        public const float HorizonAlphaDawn = 0.35f, HorizonAlphaDusk = 0.50f;
+        // r181 v0.3 (duskgold-manifest.horizon_band_salience): dusk 50 -> 75 -
+        // the golden glow read faint at dusk (r158 honest note; the sky_low
+        // census 320deg pink-mauve = "purple only no gold" critique root)
+        public const float HorizonAlphaDawn = 0.35f, HorizonAlphaDusk = 0.75f;
 
         public static float HorizonX0(int i) { return i == 0 ? -736f / 16f : 218f / 16f; }
         public static float HorizonX1(int i) { return i == 0 ? 198f / 16f : 736f / 16f; }
@@ -169,6 +175,38 @@ namespace FluxVerse
 
         public static Color HorizonColorFor(AmbientTier t)
         { return AmbientWheel.PaletteFor(t).skyBottom; }
+
+        // ---- depth fog wash (r181 v0.3, duskgold-manifest.depth_fog_wash) ----
+        // Census-gated and TRIGGERED (r180 delta 7.0 < 12.0): one runtime quad
+        // veiling the far (north) bank - atmospheric perspective, the
+        // "far/near read as one flat sheet" defect. CityAmbient family
+        // (EnsureVisuals/ReleaseVisuals + tier/blend ride, horizon-band
+        // precedent). VARIANT B (manifest decision procedure): tile-city-only
+        // fog - zero RimLight/Neon/Robot coupling (variant A order 8 would
+        // veil rim 5 / signs 6 / street 7 too = a strictly larger coupling
+        // surface). The manifest's "order 4.5" slot is realized with the int
+        // sortingOrder 4 + z -0.1: nearer than the Props tilemap (z 0, same
+        // order) = renders above it; above the order-3 facades / labs /
+        // windowlights; below rim 5 / signs 6 / street 7 / tint 8 (r158
+        // physics law: smaller z = nearer = on top). The order-4 lamp cones
+        // (z -0.5) sit above the fog - zero visual overlap (cones y 4.2,
+        // fog band y 8..14). Alpha dusk-only; color = the skyline mauve fog
+        // family single source.
+        public const string FogWashName = "AmbientFogWash";
+        public const int FogWashOrder = 4;
+        public const float FogWashZ = -0.1f;
+        public const float FogWashX0 = -36f, FogWashY0 = 8f, FogWashX1 = 36f, FogWashY1 = 14f;
+        public const float FogAlphaDusk = 0.15f;
+
+        public static float FogWashAlphaFor(AmbientTier t)
+        {
+            return t == AmbientTier.Dusk ? FogAlphaDusk : 0f;   // day/dawn/night zero
+        }
+
+        // single source = the skyline mauve fog family (SkylineRules.FogFar
+        // dusk = 0.62/0.58/0.78 = rgb 158,148,199 per the manifest)
+        public static Color FogWashColor()
+        { return SkylineRules.FogFar(AmbientTier.Dusk); }
 
         // ---- star field (1/16 art grid, r147 snap law) ----
         static readonly int[] StarX16 = new int[]

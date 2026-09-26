@@ -33,8 +33,8 @@ namespace FluxVerse
 {
     public static class WaterFxRules
     {
-        public const string Protocol = "fluxverse-waterfx/0.1";
-        public const int BakedRound = 154;
+        public const string Protocol = "fluxverse-waterfx/0.2";
+        public const int BakedRound = 181;
 
         // ---- water band (builder live anchor) ----
         public const int CellX0 = -50, CellX1 = 50, RowY0 = -3, RowY1 = 2;
@@ -84,6 +84,29 @@ namespace FluxVerse
         {
             return "Assets/ArtPacks/water-fx/foam-" + (north ? "n" : "s") + "-" + frame + ".png";
         }
+
+        // ---- S6b warm wash (r181, duskgold-manifest.water_warm_wash) ----
+        // Dusk-only rose wash over the river base (the golden-hour water the
+        // target paints rose-grey-pink; the r180 census read the dusk water
+        // base violet hue 269 vs target 342). RUNTIME family - no baked asset
+        // (r157 horizon-band precedent): the adapter owns a white quad child
+        // with the rose tint on sr.color; deepest of the order-2 water family
+        // so it tints ONLY the base water under refl/shim/foam; day/night
+        // alpha 0 = zero coupling with the r155 night asserts.
+        public const string WashName = "WaterFxWarmWash";
+        public const int WashCount = 1;          // runtime child, census 12 -> 13 live
+        public const float WashZ = 0.35f;          // deepest of the order-2 family (refl 0.3)
+        public const float WashAlphaDusk = 0.45f;
+        public const float WashX0 = -50f, WashY0 = -3f, WashX1 = 50f, WashY1 = 3f;
+        public static readonly Color WashTint = new Color(255f / 255f, 128f / 255f, 152f / 255f, 1f);
+
+        public static float WashAlphaFor(AmbientTier t)
+        {
+            return t == AmbientTier.Dusk ? WashAlphaDusk : 0f;   // day/dawn/night zero
+        }
+
+        public static float WashCenterX() { return (WashX0 + WashX1) * 0.5f; }
+        public static float WashCenterY() { return (WashY0 + WashY1) * 0.5f; }
 
         // ---- W5 wobble ----
         public const float WobbleStepU = 0.0625f;   // 1 art px @ ppu16

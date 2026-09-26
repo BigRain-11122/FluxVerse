@@ -65,12 +65,22 @@ namespace FluxVerse
         [Serializable] class MTier { public float day; public float dusk; public float night; public string scope; public float foam; }
         [Serializable] class MWobble { public int amp_art_px; public string law; public string scope; }
         [Serializable] class MRender { public int order; public string order_law; public string sibling_order; public MTier tier_alpha; public MWobble wobble; public string rain_law; public string night_must_show; }
+        [Serializable] class MWashTier { public double day; public double dawn; public double dusk; public double night; }
+        [Serializable] class MWashLaw
+        {
+            public string family; public string geometry; public int[] color_rgb;
+            public MWashTier tier_alpha; public int order; public double z;
+            public string z_law; public string wobble; public string acceptance;
+        }
+        [Serializable] class MWash { public string id; public float[] rect; }
+        [Serializable] class MWashSec { public MWashLaw law; public MWash[] mounts; }
         [Serializable] class MRoot
         {
             public string protocol; public int baked_round;
             public MBand water_band; public MFrame frame_cycle;
             public MRefl[] reflections; public MShim[] shimmer; public MShimLaw shimmer_law;
             public MFoam[] foam; public MFoamLaw foam_law; public MRender render_laws;
+            public MWashSec warm_wash;
         }
 
         [InitializeOnLoadMethod]
@@ -128,7 +138,8 @@ namespace FluxVerse
             string json = File.ReadAllText(ManifestPath);
             MRoot m = JsonUtility.FromJson<MRoot>(json);
             if (m == null || m.reflections == null || m.reflections.Length == 0
-                || m.shimmer == null || m.foam == null)
+                || m.shimmer == null || m.foam == null
+                || m.warm_wash == null || m.warm_wash.law == null || m.warm_wash.mounts == null)
                 throw new InvalidOperationException("waterfx manifest unparseable: " + ManifestPath);
             return m;
         }
@@ -268,6 +279,32 @@ namespace FluxVerse
                     "foam " + i + " rect");
                 Chk(WaterFxRules.FoamBase(fi) == (north ? 0 : 4), "foam " + i + " sprite base");
             }
+
+            // r181 warm wash (v0.2 manifest, duskgold-manifest.water_warm_wash)
+            Chk(m.warm_wash.mounts.Length == WaterFxRules.WashCount, "wash mount count");
+            Chk(m.warm_wash.law.color_rgb[0] == 255 && m.warm_wash.law.color_rgb[1] == 128
+                && m.warm_wash.law.color_rgb[2] == 152, "wash rose rgb 255,128,152");
+            Chk(Eq(WaterFxRules.WashTint.r, 1f, 1e-5f)
+                && Eq(WaterFxRules.WashTint.g, 128f / 255f, 1e-5f)
+                && Eq(WaterFxRules.WashTint.b, 152f / 255f, 1e-5f), "wash tint vs rules");
+            Chk(Math.Abs(m.warm_wash.law.tier_alpha.dusk - WaterFxRules.WashAlphaFor(AmbientTier.Dusk)) < 1e-5,
+                "wash dusk alpha 0.45");
+            Chk(Math.Abs(m.warm_wash.law.tier_alpha.day) < 1e-6
+                && Math.Abs(m.warm_wash.law.tier_alpha.dawn) < 1e-6
+                && Math.Abs(m.warm_wash.law.tier_alpha.night) < 1e-6, "wash day/dawn/night zero");
+            Chk(WaterFxRules.WashAlphaFor(AmbientTier.Day) == 0f
+                && WaterFxRules.WashAlphaFor(AmbientTier.Dawn) == 0f
+                && WaterFxRules.WashAlphaFor(AmbientTier.Night) == 0f, "wash closed set vs rules");
+            Chk(m.warm_wash.law.order == WaterFxRules.SortOrder, "wash order 2");
+            Chk(Math.Abs(m.warm_wash.law.z - WaterFxRules.WashZ) < 1e-6, "wash z 0.35");
+            Chk(WaterFxRules.WashZ > WaterFxRules.ReflZ,
+                "wash must be the DEEPEST of the order-2 family (refl 0.3 nearer = on top)");
+            Chk(m.warm_wash.law.z_law.Contains("deepest"), "wash z_law text");
+            float[] wrr = m.warm_wash.mounts[0].rect;
+            Chk(Eq(wrr[0], WaterFxRules.WashX0, 1e-5f) && Eq(wrr[1], WaterFxRules.WashY0, 1e-5f)
+                && Eq(wrr[2], WaterFxRules.WashX1, 1e-5f) && Eq(wrr[3], WaterFxRules.WashY1, 1e-5f),
+                "wash rect vs rules");
+            Chk(("WaterFx" + m.warm_wash.mounts[0].id) == WaterFxRules.WashName, "wash mount name");
         }
 
         static string Prove()
@@ -328,6 +365,23 @@ namespace FluxVerse
             TierBattery(adapter, AmbientTier.Dawn);
             TierBattery(adapter, AmbientTier.Dusk);
             TierBattery(adapter, AmbientTier.Night);
+            // r181: the runtime warm wash joined on the first tier apply
+            Chk(MountCensus() == WaterFxRules.MountCount + WaterFxRules.WashCount,
+                "live mount census 13 after the tier battery (12 persisted + 1 runtime wash)");
+            GameObject washGo = GameObject.Find(WaterFxRules.WashName);
+            Chk(washGo != null, "warm wash missing after ApplyTier");
+            Chk(washGo.transform.parent == adapter.transform, "warm wash must be an adapter child");
+            SpriteRenderer washSr = washGo.GetComponent<SpriteRenderer>();
+            Chk(washSr != null, "warm wash has no renderer");
+            Chk(washSr.sortingOrder == WaterFxRules.SortOrder, "warm wash order 2");
+            Vector3 wp = washGo.transform.position;
+            Chk(Eq(wp.x, WaterFxRules.WashCenterX(), 1e-4f), "warm wash x");
+            Chk(Eq(wp.y, WaterFxRules.WashCenterY(), 1e-4f), "warm wash y");
+            Chk(Eq(wp.z, WaterFxRules.WashZ, 1e-5f), "warm wash z 0.35 (deepest of order 2)");
+            Vector3 wbs = washSr.bounds.size;
+            Chk(Eq(wbs.x, WaterFxRules.WashX1 - WaterFxRules.WashX0, 1e-3f)
+                && Eq(wbs.y, WaterFxRules.WashY1 - WaterFxRules.WashY0, 1e-3f),
+                "warm wash bounds == the band (relative-scale quad)");
             // C3 wobble sequence (normal + rain) + restore
             for (int t = 0; t < 4; t++)
             {
@@ -385,6 +439,18 @@ namespace FluxVerse
                 WindowDelta(duskOn, duskOff, cam, i, false, out lit, out tot);
                 Chk(lit >= 150, "dusk refl census low at " + WaterFxRules.Name(i) + ": px=" + lit);
             }
+            // D2b r181: the dusk rose wash (clean attribution - only the wash
+            // toggles; mounts stay constant in both frames so they cancel)
+            GameObject washD2 = GameObject.Find(WaterFxRules.WashName);
+            Chk(washD2 != null, "warm wash missing at the dusk gate");
+            washD2.SetActive(false);
+            Texture2D duskOffWash = Shot(cam, null);
+            washD2.SetActive(true);
+            int washLit;
+            BandDelta(duskOn, duskOffWash, cam, WaterFxRules.WashX0, WaterFxRules.WashY0,
+                WaterFxRules.WashX1, WaterFxRules.WashY1, out washLit);
+            Chk(washLit >= 200000, "dusk warm wash census low: " + washLit);
+            UnityEngine.Object.DestroyImmediate(duskOffWash);
             UnityEngine.Object.DestroyImmediate(duskOn);
             UnityEngine.Object.DestroyImmediate(duskOff);
 
@@ -404,8 +470,18 @@ namespace FluxVerse
             {
                 int lit, tot;
                 WindowDelta(dayOn, dayOff, cam, i, false, out lit, out tot);
-                Chk(lit >= 1000, "day foam census low at " + WaterFxRules.Name(i) + ": " + lit);
+                Chk(lit >= 1000, "day foam census low at " + WaterFxRules.Name(i) + ": px=" + lit);
             }
+            // r181: wash day zero-leak (alpha 0 = exact-zero delta)
+            GameObject washD3 = GameObject.Find(WaterFxRules.WashName);
+            washD3.SetActive(false);
+            Texture2D dayOffWash = Shot(cam, null);
+            washD3.SetActive(true);
+            int washDayLeak;
+            BandDelta(dayOn, dayOffWash, cam, WaterFxRules.WashX0, WaterFxRules.WashY0,
+                WaterFxRules.WashX1, WaterFxRules.WashY1, out washDayLeak);
+            Chk(washDayLeak == 0, "day warm wash zero-leak: " + washDayLeak);
+            UnityEngine.Object.DestroyImmediate(dayOffWash);
             UnityEngine.Object.DestroyImmediate(dayOn);
             UnityEngine.Object.DestroyImmediate(dayOff);
 
@@ -441,15 +517,19 @@ namespace FluxVerse
             adapter.SetFoamFrame(WaterFxRules.FoamIndexOf(false), 0);
             RestoreStaticPaint(water);
             Chk(CountTiles(water) == WaterFxRules.CensusBaseline, "census after static restore");
+            adapter.ReleaseWash();   // r181: the runtime wash must NOT ride the save
+            Chk(GameObject.Find(WaterFxRules.WashName) == null,
+                "warm wash still alive after ReleaseWash");
             Chk(MountCensus() == WaterFxRules.MountCount, "mount census before save");
             EditorSceneManager.MarkSceneDirty(scene);
             Chk(EditorSceneManager.SaveScene(scene), "SaveScene failed");
 
             return "asserts=" + asserts
-                + " mirror(band=606,frames=8+4fallback,mounts=12)"
+                + " mirror(v0.2+wash, band=606, frames=8+4fallback, mounts=12+1wash)"
                 + " census_identity=10ticks"
                 + " night_px=[" + string.Join(",", Array.ConvertAll(nightPx, x => x.ToString())) + "]"
-                + " day_leak=0 l1_south_quant_north_tower_gates=pass"
+                + " dusk_wash=" + washLit
+                + " day_leak=0 wash_day_leak=0 l1_south_quant_north_tower_gates=pass"
                 + " shots=4 saved=cityscene";
         }
 
@@ -458,6 +538,8 @@ namespace FluxVerse
             Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             if (!scene.isLoaded) throw new InvalidOperationException("CityScene failed to load");
             Chk(MountCensus() == WaterFxRules.MountCount, "mount census after restart");
+            Chk(GameObject.Find(WaterFxRules.WashName) == null,
+                "runtime warm wash persisted into the disk scene (r146 red-chain)");
             GameObject adGo = GameObject.Find("CityWaterFx");
             Chk(adGo != null, "CityWaterFx GO missing after restart");
             CityWaterFx adapter = adGo.GetComponent<CityWaterFx>();
@@ -504,6 +586,18 @@ namespace FluxVerse
                     ? WaterFxRules.FoamAlpha : WaterFxRules.TierAlpha(AmbientTier.Night);
                 Chk(Eq(sr.color.a, lawA, 2e-3f), WaterFxRules.Name(i) + " night law lost after restart");
             }
+            // r181: the runtime wash rebuilt from the first tier apply (night law 0)
+            GameObject washRe = GameObject.Find(WaterFxRules.WashName);
+            Chk(washRe != null, "warm wash not rebuilt after restart");
+            SpriteRenderer washReSr = washRe.GetComponent<SpriteRenderer>();
+            Chk(Eq(washReSr.color.a, WaterFxRules.WashAlphaFor(AmbientTier.Night), 1e-4f),
+                "warm wash night alpha lost after restart");
+            Chk(Eq(washReSr.color.r, WaterFxRules.WashTint.r, 1e-5f)
+                && Eq(washReSr.color.g, WaterFxRules.WashTint.g, 1e-5f)
+                && Eq(washReSr.color.b, WaterFxRules.WashTint.b, 1e-5f),
+                "warm wash rose tint lost after restart");
+            Chk(MountCensus() == WaterFxRules.MountCount + WaterFxRules.WashCount,
+                "live census 13 after the restart rebuild");
             Chk(UnityEngine.Object.FindObjectsOfType<CityInterior>().Length >= 1, "CityInterior unresolved after restart");
             Chk(UnityEngine.Object.FindObjectsOfType<CityCameraRig>().Length >= 1, "CityCameraRig unresolved after restart");
             Chk(UnityEngine.Object.FindObjectsOfType<CityAmbientAudio>().Length >= 1, "CityAmbientAudio unresolved after restart");
@@ -512,8 +606,8 @@ namespace FluxVerse
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f,
                 "L0 camera broken after restart");
-            return "reload_gate=OK mounts=12 adapter=8+8 disk=day_law census=606 static_paint=1"
-                + " neighbors=4 cam_L0=" + cam.orthographicSize.ToString("F1");
+            return "reload_gate=OK mounts=12+1wash adapter=8+8 disk=day_law census=606 static_paint=1"
+                + " wash_rebuilt=night_law neighbors=4 cam_L0=" + cam.orthographicSize.ToString("F1");
         }
 
         // ---- helpers ----
@@ -613,6 +707,16 @@ namespace FluxVerse
                 Chk(Eq(sr.color.r, 1f, 1e-5f) && Eq(sr.color.g, 1f, 1e-5f) && Eq(sr.color.b, 1f, 1e-5f),
                     WaterFxRules.Name(i) + " rgb != white at tier " + t);
             }
+            // r181: the wash carries the rose tint + its own tier law
+            GameObject wgo = GameObject.Find(WaterFxRules.WashName);
+            Chk(wgo != null, "warm wash missing at tier " + t);
+            SpriteRenderer wsr = wgo.GetComponent<SpriteRenderer>();
+            Chk(Eq(wsr.color.a, WaterFxRules.WashAlphaFor(t), 1e-5f),
+                WaterFxRules.WashName + " alpha != law at tier " + t);
+            Chk(Eq(wsr.color.r, WaterFxRules.WashTint.r, 1e-5f)
+                && Eq(wsr.color.g, WaterFxRules.WashTint.g, 1e-5f)
+                && Eq(wsr.color.b, WaterFxRules.WashTint.b, 1e-5f),
+                WaterFxRules.WashName + " rgb != rose tint at tier " + t);
         }
 
         static void AssertWobble(float expect, string tag)
@@ -697,6 +801,31 @@ namespace FluxVerse
                 Chk(tb != null && tb.name == StaticTileName(SampleX[s], SampleY[s]),
                     "static paint law broke at x=" + SampleX[s] + " y=" + SampleY[s]);
             }
+        }
+
+        // r181: world-rect band delta census (the wash quad has no mount-table
+        // row - explicit rect, family 0.06 threshold)
+        static void BandDelta(Texture2D on, Texture2D off, Camera cam,
+            float wx0, float wy0, float wx1, float wy1, out int litPx)
+        {
+            float halfH = cam.orthographicSize;
+            float halfW = halfH * (1920f / 1080f);
+            float cx = cam.transform.position.x, cy = cam.transform.position.y;
+            int px0 = (int)(((wx0 - cx) / (2f * halfW) + 0.5f) * 1920f);
+            int px1 = (int)(((wx1 - cx) / (2f * halfW) + 0.5f) * 1920f);
+            int py0 = (int)(((wy0 - cy) / (2f * halfH) + 0.5f) * 1080f);
+            int py1 = (int)(((wy1 - cy) / (2f * halfH) + 0.5f) * 1080f);
+            px0 = Math.Max(0, px0); px1 = Math.Min(1919, px1);
+            py0 = Math.Max(0, py0); py1 = Math.Min(1079, py1);
+            int n = 0;
+            for (int y = py0; y <= py1; y++)
+                for (int x = px0; x <= px1; x++)
+                {
+                    Color ca = on.GetPixel(x, y), cb = off.GetPixel(x, y);
+                    float d = Math.Abs(ca.r - cb.r) + Math.Abs(ca.g - cb.g) + Math.Abs(ca.b - cb.b);
+                    if (d > 0.06f) n++;
+                }
+            litPx = n;
         }
 
         // per-mount window delta census. trimFoam = clamp the window out of

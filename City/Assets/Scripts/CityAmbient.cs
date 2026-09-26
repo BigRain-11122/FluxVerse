@@ -31,8 +31,12 @@
 // the SAME D1 blend - color = the interpolated palette's skyBottom family, alpha
 // eased with the same zero-end-velocity curve (never a hard cut, manifest blend_ride
 // law); ApplyAmbient settles it instantly like every other instant-family face.
+// r181 (T-FV-002 S6b, duskgold-manifest.depth_fog_wash): the depth fog wash quad
+// joins the same runtime-only family - one dusk-only mauve veil over the north
+// bank (atmospheric perspective, census-triggered), constant SkylineRules.FogFar
+// dusk tint, alpha riding the same blend window (variant B: tile-city-only).
 // Polls world/world-state.json READ-ONLY every ~10s (perceptor owns all writes).
-// Pure 2D: sky/tint/band = SpriteRenderer quads; rain/snow = recycled sprite field.
+// Pure 2D: sky/tint/band/fog = SpriteRenderer quads; rain/snow = recycled sprite field.
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -63,6 +67,8 @@ namespace FluxVerse
         SpriteRenderer[] rims;        // r148: 11 dusk roofline rim bands (runtime-only)
         SpriteRenderer[] horizon;     // r158: 2 dawn/dusk horizon glow quads (runtime-only)
         float horizonA, horizonAFrom, horizonATo;   // r158: horizon alpha blend state (rides the D1 window)
+        SpriteRenderer fogWash;       // r181: depth fog wash quad (runtime-only, duskgold-manifest)
+        float fogA, fogAFrom, fogATo;               // r181: fog alpha blend state (rides the D1 window)
         float pollTimer = 999f;      // poll on first Update
         float bandPhase, bandAlpha;
         AmbientTier tier = AmbientTier.Night;
@@ -88,6 +94,7 @@ namespace FluxVerse
         public bool BlendActive { get { return blend.Active; } }               // r156 D1 proof tap
         public Sprite CurrentSkySprite { get { return sky != null ? sky.sprite : null; } }   // r156 proof tap
         public float CurrentHorizonAlpha { get { return horizonA; } }          // r158 proof tap
+        public float CurrentFogAlpha { get { return fogA; } }                  // r181 proof tap
 
         // r156 proof tap: the cached per-tier gradient sprite (settle/no-pop parity gate)
         public static Sprite CachedSkyFor(AmbientTier t) { return SkySprite(t); }
@@ -212,6 +219,7 @@ namespace FluxVerse
             drops = null;
             rims = null;               // r148: rim bands die with the family
             horizon = null;            // r158: horizon quads die with the family
+            fogWash = null;            // r181: the fog wash dies with the family
             field = null;
         }
 
@@ -286,6 +294,7 @@ namespace FluxVerse
             if (sky == null) EnsureVisuals();
             tier = t;
             horizonAFrom = horizonATo = LightFxRules.HorizonAlphaFor(t);   // r158: instant path settles at once
+            fogAFrom = fogATo = LightFxRules.FogWashAlphaFor(t);            // r181: fog settles with the same law
             ApplyInstantFamilies(t);
             SettleAt(t);
         }
@@ -300,6 +309,8 @@ namespace FluxVerse
             tier = t;
             horizonAFrom = horizonA;                        // r158: ride from the CURRENT applied value
             horizonATo = LightFxRules.HorizonAlphaFor(t);   // eases with the D1 blend window
+            fogAFrom = fogA;                                // r181: the fog rides the same window
+            fogATo = LightFxRules.FogWashAlphaFor(t);
             AmbientPalette target = AmbientWheel.PaletteFor(t);
             ApplyInstantFamilies(t);
             if (PaletteNear(curPal, target)) { SettleAt(t); return; }   // same tier = no-op settle
@@ -345,6 +356,16 @@ namespace FluxVerse
                 Color hc = new Color(p.skyBottom.r, p.skyBottom.g, p.skyBottom.b, horizonA);
                 for (int i = 0; i < horizon.Length; i++)
                     if (horizon[i] != null) horizon[i].color = hc;
+            }
+            if (fogWash != null)
+            {
+                // r181: the depth fog rides the SAME blend window - constant
+                // mauve tint (the SkylineRules.FogFar dusk family, single
+                // source), alpha eased with the identical curve
+                float kf = blend.Active ? RigMath.EaseInOut(blend.Progress01) : 1f;
+                fogA = Mathf.Lerp(fogAFrom, fogATo, kf);
+                Color fc = LightFxRules.FogWashColor();
+                fogWash.color = new Color(fc.r, fc.g, fc.b, fogA);
             }
         }
 
@@ -503,6 +524,11 @@ namespace FluxVerse
             horizon = new SpriteRenderer[LightFxRules.HorizonCount];
             for (int i = 0; i < horizon.Length; i++) horizon[i] = MakeHorizonQuad(i);
             horizonA = horizonAFrom = horizonATo = LightFxRules.HorizonAlphaFor(tier);
+            // r181 (duskgold-manifest.depth_fog_wash): one dusk-only atmospheric
+            // veil over the north bank - the census-triggered depth fix. Same
+            // runtime-only family as the horizon quads (released together).
+            fogWash = MakeFogQuad();
+            fogA = fogAFrom = fogATo = LightFxRules.FogWashAlphaFor(tier);
             ApplyAmbient(tier);
             SyncDrops();
         }
@@ -569,6 +595,29 @@ namespace FluxVerse
             tex.Apply();
             _horizon = Sprite.Create(tex, new Rect(0, 0, W, H), new Vector2(0.5f, 0.5f), 16f);
             return _horizon;
+        }
+
+        // r181: the depth fog wash quad - a runtime-only child of CityAmbient.
+        // Flat white sprite (the shared WhiteSprite, MakeQuad law) with a
+        // RELATIVE scale to the world band; the mauve tint + tier alpha live
+        // on sr.color (set by ApplyPalette through the blend ride).
+        SpriteRenderer MakeFogQuad()
+        {
+            Sprite s = WhiteSprite();
+            GameObject go = new GameObject(LightFxRules.FogWashName);
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = s;
+            sr.sortingOrder = LightFxRules.FogWashOrder;
+            Vector3 n = s.bounds.size;   // natural world size: scale must be RELATIVE
+            go.transform.localScale = new Vector3(
+                (LightFxRules.FogWashX1 - LightFxRules.FogWashX0) / n.x,
+                (LightFxRules.FogWashY1 - LightFxRules.FogWashY0) / n.y, 1f);
+            go.transform.position = new Vector3(
+                (LightFxRules.FogWashX0 + LightFxRules.FogWashX1) * 0.5f,
+                (LightFxRules.FogWashY0 + LightFxRules.FogWashY1) * 0.5f,
+                LightFxRules.FogWashZ);
+            go.transform.SetParent(transform, false);
+            return sr;
         }
 
         void SyncDrops()

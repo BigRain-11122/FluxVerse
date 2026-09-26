@@ -1,8 +1,9 @@
 {
-  "protocol": "fluxverse-windowlight/0.1",
-  "baked_round": 159,
+  "protocol": "fluxverse-windowlight/0.2",
+  "baked_round": 181,
   "sources": {
     "spec": "cph4/research/R-20260925-water-daynight.md sec.II-2 (D2 window lights = real activity)",
+    "rate_v2": "Tools/city/duskgold-manifest.json windowlight_rate_v2 (the r180 S6a parameter source, 39-check sandbox green) - v2 semantic change per the r146 protocol-version law",
     "city_core": "docs/design/city-core-design.md sec.VI warm-yellow human windows / L29 north historical facades",
     "tiles": "City/Assets/Art/CleanCityv3/Tiles/GuttyKreum_CleanCity_{035,057,074}.png",
     "geometry": "City/Assets/Editor/CitySkeletonBuilder.cs Block() calls (single geometry writer)",
@@ -18,8 +19,17 @@
     "z": -0.5,
     "z_note": "same-order z-toward-camera trick (r155 water / r158 light-fx family): renders above the order-3 city tilemaps at z 0, below props 4 / signs 6 / street 7 / tint 8",
     "ppu": 16,
-    "hash": "fnv1a32(bid + '|' + date + '|' + widx) mod 10000 < round(activity * 10000)",
+    "hash": "fnv1a32(bid + '|' + date + '|' + widx) mod 10000 < round(effective_rate * 10000)",
     "hash_note": "date = Beijing calendar date (day-stable, cross-day variety, same-input-same-output per day); widx = window scan order (row-major cells, family rect order)",
+    "rate_law_v2": {
+      "base_rate": 0.30,
+      "effective_law": "effective_rate = base_rate * Clamp01(zone activity) * floor_factor",
+      "floor_factor": "linear per wall row bottom->top: 1.0 -> 0.6 (factor = 1.0 - 0.4 * (row_from_bottom / (wallRows - 1)); wallRows == 1 -> 1.0) - denser low, sparser high per art-target-dusk",
+      "impl": "ThresholdFor / Fnv / widx enumeration UNCHANGED; the adapter multiplies BASE_RATE * factor at the single LitAt call site (duskgold-manifest impl_note)",
+      "band_check": "overall lit fraction at activity 1.0 in [0.20, 0.30] every calendar date; pinned r181 (base 0.30 ramp, PER-BUILDING widx domain = the C#/r159 canon LitAt(bid|date|k); the r180 sweep's global-counter widx was a harness domain bug, pins independently re-derived): 2026-09-26=0.2305 / 09-27=0.2515 / 09-28=0.2485 / 09-29=0.2395 / 09-30=0.2515",
+      "rejected": "BASE 0.25 + ramp = 3/5 dates under band; BASE 0.25 flat = in band but no denser-low law",
+      "v1_note": "v1 (baked_round 159) lit 100 pct of windows at live activity 1.0 - the art-spec 'all-lit windows are fake' violation, census-caught r174/r180"
+    },
     "zone_rate": "QUANT->quant, GAME_MAIN+GAME_ANNEX->gaming, MEDIA->media; north bank -> 'city' = round(mean(gaming,quant,media), 2)",
     "activity_note": "activity is LIVE from world-state (scan floors: gaming 0.5 when any biggame machine online, media 0.4 with bs orders). Zero static baked numbers.",
     "rebuild_on": "date | tier | per-zone activity (2dp)",

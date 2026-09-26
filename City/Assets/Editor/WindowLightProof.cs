@@ -69,6 +69,12 @@ namespace FluxVerse
             public MTier tier_alpha; public int[] fill_rgb; public int[] core_rgb;
             public int order; public double z; public int ppu; public string hash;
             public string zone_rate; public string rebuild_on;
+            public MRateV2 rate_law_v2;
+        }
+        [Serializable] class MRateV2
+        {
+            public double base_rate; public string effective_law; public string floor_factor;
+            public string impl; public string band_check;
         }
         [Serializable] class MBld
         {
@@ -155,11 +161,36 @@ namespace FluxVerse
         static bool PLit(string bid, string date, int widx, float rate)
         { return PFnv(bid + "|" + date + "|" + widx) % 10000u < PThreshold(rate); }
 
+        // r181 rate law v2 mirror: effective_rate = BASE(0.30) x activity x
+        // floor factor (linear 1.0->0.6 bottom->top) - proof-local recompute
+        static float PEffRate(WindowLightRules.Building b, WindowLightRules.Window w, float zoneRate)
+        {
+            int wallRows = b.rows - 1;
+            float f = 1f;
+            if (wallRows > 1)
+            {
+                float rowFromBottom = w.cy - b.yBase;
+                f = 1f - 0.4f * (rowFromBottom / (wallRows - 1));
+            }
+            return WindowLightRules.BaseRate * WindowLightRules.Clamp01(zoneRate) * f;
+        }
+
         static bool[] LitSet(int b, float rate, string date)
         {
             WindowLightRules.Window[] w = WindowLightRules.WindowsOf(b);
             bool[] set = new bool[w.Length];
             for (int i = 0; i < w.Length; i++) set[i] = PLit(WindowLightRules.At(b).id, date, i, rate);
+            return set;
+        }
+
+        // v2 lit set at a ZONE activity (the adapter's law path)
+        static bool[] LitSetV2(int b, float zoneRate, string date)
+        {
+            WindowLightRules.Building bl = WindowLightRules.At(b);
+            WindowLightRules.Window[] w = WindowLightRules.WindowsOf(b);
+            bool[] set = new bool[w.Length];
+            for (int i = 0; i < w.Length; i++)
+                set[i] = PLit(bl.id, date, i, PEffRate(bl, w[i], zoneRate));
             return set;
         }
         static int LitCount(bool[] s) { int n = 0; for (int i = 0; i < s.Length; i++) if (s[i]) n++; return n; }
@@ -336,9 +367,39 @@ namespace FluxVerse
             Chk(Eq(WindowLightRules.ZoneRateFor("media", 0.7f, 0.1f, 0.2f), 0.2f, 1e-6f), "media direct");
             Chk(Eq(WindowLightRules.ZoneRateFor("city", 1f, 0f, 0f), 0.33f, 1e-6f), "city mean 1/3 -> 0.33");
             Chk(Eq(WindowLightRules.ZoneRateFor("city", 1f, 1f, 1f), 1f, 1e-6f), "city mean of ones");
+
+            // ---- r181 rate law v2 (windowlight-manifest v0.2 rate_law_v2 node) ----
+            Chk(m.laws.rate_law_v2 != null, "rate_law_v2 node missing (manifest v0.2)");
+            Chk(Math.Abs(m.laws.rate_law_v2.base_rate - WindowLightRules.BaseRate) < 1e-6
+                && Eq(WindowLightRules.BaseRate, 0.30f, 1e-7f), "v2 base_rate 0.30 vs rules");
+            Chk(m.laws.rate_law_v2.effective_law != null
+                && m.laws.rate_law_v2.effective_law.Contains("base_rate * Clamp01")
+                && m.laws.rate_law_v2.effective_law.Contains("floor_factor"),
+                "v2 effective_law text");
+            Chk(m.laws.rate_law_v2.floor_factor != null
+                && m.laws.rate_law_v2.floor_factor.Contains("1.0 - 0.4"),
+                "v2 floor_factor text");
+            Chk(m.laws.rate_law_v2.band_check != null
+                && m.laws.rate_law_v2.band_check.Contains("[0.20, 0.30]"),
+                "v2 band_check text");
+            // factor law spot checks (WLQuant wallRows 7: bottom 1.0, top 0.6)
+            int qf = WindowLightRules.IndexOf("WLQuant");
+            WindowLightRules.Window[] qwins = WindowLightRules.WindowsOf(qf);
+            float fBot = WindowLightRules.FloorFactor(WindowLightRules.At(qf), qwins[0]);
+            float fTop = WindowLightRules.FloorFactor(WindowLightRules.At(qf),
+                qwins[qwins.Length - 1]);
+            Chk(Eq(fBot, 1.0f, 1e-6f), "factor bottom wall row 1.0");
+            Chk(Eq(fTop, 0.6f, 1e-6f), "factor top wall row 0.6 (1.0-0.4*6/6)");
+            Chk(Eq(WindowLightRules.EffectiveRate(WindowLightRules.At(qf), qwins[0], 1f),
+                0.30f, 1e-6f), "effective rate bottom row = 0.30 at activity 1.0");
+            Chk(Eq(WindowLightRules.EffectiveRate(WindowLightRules.At(qf),
+                qwins[qwins.Length - 1], 0.5f), 0.09f, 1e-6f),
+                "effective rate top row = 0.30*0.5*0.6 at activity 0.5");
         }
 
         // ---- C helpers: texture lit census vs the proof-local recompute ----
+        // LitArtPx = the RAW v159 law at a raw rate (kept for the rate-1.0
+        // all-lit raw-law check); LitArtPxV2 = the r181 adapter law path.
         static int LitArtPx(int b, float rate, string date)
         {
             WindowLightRules.Building bl = WindowLightRules.At(b);
@@ -346,6 +407,16 @@ namespace FluxVerse
             int px = 0;
             for (int k = 0; k < wins.Length; k++)
                 if (PLit(bl.id, date, k, rate)) px += wins[k].w * wins[k].h;
+            return px;
+        }
+
+        static int LitArtPxV2(int b, float zoneRate, string date)
+        {
+            WindowLightRules.Building bl = WindowLightRules.At(b);
+            WindowLightRules.Window[] wins = WindowLightRules.WindowsOf(b);
+            int px = 0;
+            for (int k = 0; k < wins.Length; k++)
+                if (PLit(bl.id, date, k, PEffRate(bl, wins[k], zoneRate))) px += wins[k].w * wins[k].h;
             return px;
         }
 
@@ -364,7 +435,7 @@ namespace FluxVerse
                 WindowLightRules.Window w = wins[k];
                 int tx0, ty0, tw, th;
                 WindowLightRules.TexRectOf(bl, w, out tx0, out ty0, out tw, out th);
-                bool lit = PLit(bl.id, date, k, rate);
+                bool lit = PLit(bl.id, date, k, PEffRate(bl, w, rate));   // r181 v2 law path
                 for (int r = 0; r < th; r++)
                 {
                     for (int x = 0; x < tw; x++)
@@ -411,31 +482,113 @@ namespace FluxVerse
             }
             CacheMounts();
 
-            // ---- C. law battery ----
-            const string D1 = "2026-09-25";
-            const string D2 = "2026-09-26";
+            // ---- C. law battery (r181 v2: D1/D2 = the first two pinned dates) ----
+            const string D1 = "2026-09-26";
+            const string D2 = "2026-09-27";
             int baseRebuilds = adapter.RebuildCount;
             adapter.ApplyState(AmbientTier.Night, 1f, 1f, 1f, D1);
             Chk(adapter.RebuildCount == baseRebuilds + 1, "first apply must rebuild once");
             int[] artPx = new int[WindowLightRules.Count];
-            int litTotal = 0;
+            int litWinTotal = 0;
+            int[] litPerBld = new int[WindowLightRules.Count];
             for (int i = 0; i < WindowLightRules.Count; i++)
             {
                 int tc = TextureCensus(i, 1f, D1);
-                artPx[i] = LitArtPx(i, 1f, D1);
+                artPx[i] = LitArtPxV2(i, 1f, D1);
                 Chk(tc == artPx[i], WindowLightRules.At(i).id
-                    + " texture lit px " + tc + " != law " + artPx[i]);
-                int cells = (WindowLightRules.At(i).cx1 - WindowLightRules.At(i).cx0 + 1)
-                    * (WindowLightRules.At(i).rows - 1);
-                Chk(artPx[i] == cells * 32, WindowLightRules.At(i).id
-                    + " rate-1.0 art px must equal wall cells x 32: " + artPx[i]);
-                litTotal += tc;
+                    + " texture lit px " + tc + " != v2 law " + artPx[i]);
+                litPerBld[i] = LitCount(LitSetV2(i, 1f, D1));
+                litWinTotal += litPerBld[i];
             }
-            Chk(litTotal == 3616, "all-lit art px == 113 wall cells x 32: " + litTotal);
+            string bldDump = "";
+            for (int i = 0; i < WindowLightRules.Count; i++)
+                bldDump += WindowLightRules.At(i).id + "=" + litPerBld[i] + " ";
+            // c1 mechanical half: v2 shows windows NOT all-lit and NOT zero
+            Chk(litWinTotal > 0 && litWinTotal < WindowLightRules.TotalWindows,
+                "v2 lit window count must be in (0, 334): " + litWinTotal);
+            Chk(litWinTotal == 77, "2026-09-26 pinned v2 lit count 77 (r181 per-building-widx re-pin): "
+                + litWinTotal + " perBuilding: " + bldDump
+                + " (PS re-derivation: Quant25 GameMain6 Annex3 Media29 Nw5 NwMid4 NeMid2 Ne3)");
+            // raw v159 law unchanged: LitAt at raw rate 1.0 still lights ALL
+            int qiRaw = WindowLightRules.IndexOf("WLQuant");
+            int rawCells = (WindowLightRules.At(qiRaw).cx1 - WindowLightRules.At(qiRaw).cx0 + 1)
+                * (WindowLightRules.At(qiRaw).rows - 1);
+            Chk(LitArtPx(qiRaw, 1.0f, D1) == rawCells * 32,
+                "raw all-lit art px == cells x 32 (law core unchanged)");
+
+            // v2 pinned band: 5 dates, overall fraction == pinned 4dp, band
+            // [0.20, 0.30], per-floor-row histogram == pinned, denser-low law
+            string[] bandDates = new string[] {
+                "2026-09-26", "2026-09-27", "2026-09-28", "2026-09-29", "2026-09-30" };
+            // r181 re-pin: PER-BUILDING widx domain (the C#/r159 canon -
+            // LitAt(bid, date, k), k = WindowsOf(b) index). The r180 PS sweep
+            // enumerated a GLOBAL city counter (harness domain bug); its pins
+            // (79 / 0.2365.. / hist rows) were global-domain values. Band
+            // [0.20,0.30] holds for all 5 dates under the canon domain too.
+            double[] pinnedFrac = new double[] { 0.2305, 0.2515, 0.2485, 0.2395, 0.2515 };
+            int[][] pinnedHist = new int[][] {
+                new int[] { 25, 18, 11, 8, 9, 4, 2, 0, 0, 0 },
+                new int[] { 28, 19, 12, 11, 9, 2, 3, 0, 0, 0 },
+                new int[] { 29, 20, 13, 9, 6, 4, 2, 0, 0, 0 },
+                new int[] { 23, 19, 12, 13, 9, 1, 3, 0, 0, 0 },
+                new int[] { 28, 18, 12, 11, 8, 2, 5, 0, 0, 0 } };
+            int quantRow0 = 0, quantRowTop = 0;
+            for (int d = 0; d < bandDates.Length; d++)
+            {
+                int lit = 0;
+                int[] hist = new int[10];
+                for (int i = 0; i < WindowLightRules.Count; i++)
+                {
+                    WindowLightRules.Building bl = WindowLightRules.At(i);
+                    WindowLightRules.Window[] ws = WindowLightRules.WindowsOf(i);
+                    for (int k = 0; k < ws.Length; k++)
+                    {
+                        if (!PLit(bl.id, bandDates[d], k, PEffRate(bl, ws[k], 1f))) continue;
+                        lit++;
+                        int row = ws[k].cy - bl.yBase;
+                        Chk(row >= 0 && row < 10, "floor row out of the hist range");
+                        hist[row]++;
+                        if (bl.id == "WLQuant")
+                        {
+                            if (row == 0) quantRow0++;
+                            if (row == 6) quantRowTop++;
+                        }
+                    }
+                }
+                double frac = lit / (double)WindowLightRules.TotalWindows;
+                Chk(Math.Abs(frac - pinnedFrac[d]) < 5e-5, "band " + bandDates[d]
+                    + " lit " + lit + " frac " + frac.ToString("F4")
+                    + " != pinned " + pinnedFrac[d]);
+                Chk(frac >= 0.20 && frac <= 0.30,
+                    "band " + bandDates[d] + " outside [0.20, 0.30]: " + frac.ToString("F4"));
+                for (int h = 0; h < 10; h++)
+                    Chk(hist[h] == pinnedHist[d][h], "floor hist " + bandDates[d]
+                        + " row " + h + ": " + hist[h] + " != pinned " + pinnedHist[d][h]);
+                Chk(hist[0] > hist[6], "denser-low law: bottom row must out-lit row 6");
+            }
+            Chk(quantRow0 > quantRowTop, "QUANT denser-low: bottom 16-window row "
+                + quantRow0 + " must out-lit top row " + quantRowTop);
+            // v2 subset: activity 0.75 lit set subset-of 1.0 (all 334 windows)
+            {
+                bool[] a75 = new bool[WindowLightRules.TotalWindows];
+                bool[] a100 = new bool[WindowLightRules.TotalWindows];
+                int gi = 0;
+                for (int i = 0; i < WindowLightRules.Count; i++)
+                {
+                    bool[] s75 = LitSetV2(i, 0.75f, D1);
+                    bool[] s100 = LitSetV2(i, 1.0f, D1);
+                    for (int k = 0; k < s75.Length; k++)
+                    {
+                        a75[gi] = s75[k]; a100[gi] = s100[k]; gi++;
+                    }
+                }
+                Chk(gi == WindowLightRules.TotalWindows, "subset enumeration arity");
+                Chk(Subset(a75, a100), "v2 subset: activity 0.75 lit set must be a subset of 1.0");
+            }
 
             // C2 tier x4: alpha law + content invariance (zero rebuilds on tier flips)
             int rebuilds = adapter.RebuildCount;
-            int nightQ = LitCount(LitSet(0, 1f, D1));
+            int nightQ = LitCount(LitSetV2(0, 1f, D1));
             foreach (AmbientTier t in new AmbientTier[] {
                 AmbientTier.Day, AmbientTier.Dawn, AmbientTier.Dusk, AmbientTier.Night })
             {
@@ -451,7 +604,7 @@ namespace FluxVerse
             }
             Chk(adapter.RebuildCount == rebuilds,
                 "tier flips must NOT rebuild textures (content-invariant alpha channel)");
-            Chk(LitCount(LitSet(0, 1f, D1)) == nightQ, "lit set unchanged across tier battery");
+            Chk(LitCount(LitSetV2(0, 1f, D1)) == nightQ, "lit set unchanged across tier battery");
 
             // C3 rebuild-on: same key -> zero rebuilds; date flip -> rebuild + set change;
             // rate flip -> rebuild + strict superset; north 'city' mean face
@@ -463,21 +616,21 @@ namespace FluxVerse
             adapter.ApplyState(AmbientTier.Night, 0.5f, 0.5f, 0.5f, D2);
             Chk(adapter.RebuildCount == rebuilds + 2, "date flip must rebuild");
             bool dayDiffer = false;
-            bool[] a50 = LitSet(0, 0.5f, D1), b50 = LitSet(0, 0.5f, D2);
+            bool[] a50 = LitSetV2(0, 0.5f, D1), b50 = LitSetV2(0, 0.5f, D2);
             for (int i = 0; i < a50.Length; i++) if (a50[i] != b50[i]) dayDiffer = true;
-            Chk(dayDiffer, "date flip must change the WLQuant lit set at rate 0.5");
-            Chk(TextureCensus(0, 0.5f, D2) == LitArtPx(0, 0.5f, D2),
+            Chk(dayDiffer, "date flip must change the WLQuant lit set at activity 0.5");
+            Chk(TextureCensus(0, 0.5f, D2) == LitArtPxV2(0, 0.5f, D2),
                 "texture follows the date flip (rebuild actually repaints)");
             adapter.ApplyState(AmbientTier.Night, 0.5f, 1f, 0.5f, D2);
             Chk(adapter.RebuildCount == rebuilds + 3, "gaming rate flip must rebuild");
-            bool[] g50 = LitSet(1, 0.5f, D2), g100 = LitSet(1, 1f, D2);
+            bool[] g50 = LitSetV2(1, 0.5f, D2), g100 = LitSetV2(1, 1f, D2);
             Chk(Subset(g50, g100) && LitCount(g100) > LitCount(g50),
-                "GAME_MAIN rate 0.5 -> 1.0 must be a strict superset growth");
+                "GAME_MAIN activity 0.5 -> 1.0 must be a strict superset growth");
             // north 'city' mean: all-zero two zones -> 0.33 strip face
             adapter.ApplyState(AmbientTier.Night, 1f, 0f, 0f, D2);
             Chk(Eq(WindowLightRules.ZoneRateFor("city", 1f, 0f, 0f), 0.33f, 1e-6f), "city mean recompute");
             int nwCensus = TextureCensus(4, 0.33f, D2);
-            Chk(nwCensus == LitArtPx(4, 0.33f, D2), "north strip texture == city-mean law");
+            Chk(nwCensus == LitArtPxV2(4, 0.33f, D2), "north strip texture == city-mean law");
 
             // ---- D. render gates (mount family toggles alone - clean attribution) ----
             adapter.ApplyState(AmbientTier.Night, 1f, 1f, 1f, D1);
@@ -590,7 +743,8 @@ namespace FluxVerse
             Chk(EditorSceneManager.SaveScene(scene), "SaveScene failed");
 
             return "asserts=" + asserts
-                + " mirror(8bld+census334+fnv5+litlaw) night_px_sum=" + nightSum
+                + " mirror(8bld+census334+fnv5+litlaw_v2band5+hist5) v2_lit_0926="
+                + litWinTotal + "/334 night_px_sum=" + nightSum
                 + " dusk_px_sum=" + duskSum + " day_leak=" + dayLeak
                 + " l1_quant=" + l1Q
                 + " shots=4 saved=cityscene adapter=blank_children";
@@ -609,18 +763,21 @@ namespace FluxVerse
             Chk(adapter.transform.childCount == 0,
                 "runtime mounts persisted into the disk scene (r146 red-chain)");
             Chk(Census() == 0, "global WindowLight* census on disk must be 0");
-            // full rebuild from disk state + the night law re-applied
-            adapter.ApplyState(AmbientTier.Night, 1f, 1f, 1f, "2026-09-25");
+            // full rebuild from disk state + the night law re-applied (v2 pinned date)
+            adapter.ApplyState(AmbientTier.Night, 1f, 1f, 1f, "2026-09-26");
             Chk(Census() == WindowLightRules.Count, "rebuild census after restart");
+            int reloadLit = 0;
             for (int i = 0; i < WindowLightRules.Count; i++)
             {
                 AssertWiring(i);
-                int tc = TextureCensus(i, 1f, "2026-09-25");
-                Chk(tc == LitArtPx(i, 1f, "2026-09-25"),
+                int tc = TextureCensus(i, 1f, "2026-09-26");
+                Chk(tc == LitArtPxV2(i, 1f, "2026-09-26"),
                     WindowLightRules.At(i).id + " reload lit census " + tc);
+                reloadLit += LitCount(LitSetV2(i, 1f, "2026-09-26"));
                 SpriteRenderer sr = adapter.MountAt(i);
                 Chk(Eq(sr.color.a, 1f, 1e-4f), WindowLightRules.At(i).id + " night alpha after restart");
             }
+            Chk(reloadLit == 77, "reload v2 pinned lit count 77: " + reloadLit);
             Chk(UnityEngine.Object.FindObjectsOfType<CityInterior>().Length >= 1, "CityInterior unresolved");
             Chk(UnityEngine.Object.FindObjectsOfType<CityCameraRig>().Length >= 1, "CityCameraRig unresolved");
             Chk(UnityEngine.Object.FindObjectsOfType<CityAmbientAudio>().Length >= 1, "CityAmbientAudio unresolved");
@@ -631,8 +788,8 @@ namespace FluxVerse
             Camera cam = camGo != null ? camGo.GetComponent<Camera>() : null;
             Chk(cam != null && Math.Abs(cam.orthographicSize - RigMath.L0Size) < 0.01f,
                 "L0 camera broken after restart");
-            return "reload_gate=OK mounts=8 adapter=resolved disk_children=0 rebuilt=night_law"
-                + " lit_windows=334 art_px=3616 neighbors=6 cam_L0=" + cam.orthographicSize.ToString("F1");
+            return "reload_gate=OK mounts=8 adapter=resolved disk_children=0 rebuilt=v2_night_law"
+                + " v2_lit_windows=" + reloadLit + "/334 neighbors=6 cam_L0=" + cam.orthographicSize.ToString("F1");
         }
 
         // ---- helpers ----

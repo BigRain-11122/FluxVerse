@@ -141,7 +141,11 @@ namespace FluxVerse
             WindowLightRules.Window[] wins = WindowLightRules.WindowsOf(i);
             for (int k = 0; k < wins.Length; k++)
             {
-                if (!WindowLightRules.LitAt(b.id, date, k, rate)) continue;
+                // r181 rate law v2: the single call site multiplies BASE_RATE x
+                // floor factor into the zone rate before ThresholdFor
+                // (duskgold-manifest impl_note - minimal delta, r159 law intact)
+                float effRate = WindowLightRules.EffectiveRate(b, wins[k], rate);
+                if (!WindowLightRules.LitAt(b.id, date, k, effRate)) continue;
                 WindowLightRules.Window win = wins[k];
                 int tx0, ty0, tw, th;
                 WindowLightRules.TexRectOf(b, win, out tx0, out ty0, out tw, out th);

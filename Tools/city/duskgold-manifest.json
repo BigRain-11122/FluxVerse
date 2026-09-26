@@ -31,11 +31,12 @@
     "date_format": "YYYY-MM-DD (golden vectors r159)",
     "band_check": {
       "rule": "overall lit fraction at activity 1.0 must land in [0.20, 0.30] for every calendar date",
-      "pinned_r180": { "2026-09-26": 0.2365, "2026-09-27": 0.2605, "2026-09-28": 0.2425, "2026-09-29": 0.2545, "2026-09-30": 0.2305 },
+      "widx_domain": "PER-BUILDING window index = the C#/r159 canon (LitAt(bid|date|k), k = WindowsOf(b) index; golden vectors r159). The r180 PS sweep enumerated a GLOBAL city counter (harness domain bug) - r181 re-derived the pins under the canon domain; band [0.20,0.30] holds under both domains",
+      "pinned_r181": { "2026-09-26": 0.2305, "2026-09-27": 0.2515, "2026-09-28": 0.2485, "2026-09-29": 0.2395, "2026-09-30": 0.2515 },
       "monotone_subset": "lit(activity 0.75) subset-of lit(activity 1.0) verified r180 (structural: threshold scales with activity)",
       "zone_tolerance": "per-zone day jitter up to +-6pp tolerated (deterministic hash jitter; overall band is the enforced law)"
     },
-    "rejected_alternatives": "BASE 0.25 + ramp = 0.189-0.219 (3/5 dates under band); BASE 0.25 flat = in band but no denser-low law",
+    "rejected_alternatives": "BASE 0.25 + ramp = 0.189-0.219 (3/5 dates under band; r180 global-widx sweep numbers - the band-violation verdict is distributional, unaffected by the r181 domain re-pin); BASE 0.25 flat = in band but no denser-low law",
     "skin_note": "rhythm grid STAYS over the landmark/facade skins this round (option A - the lit rhythm windows are the city-wide window-light law, order 3 z -0.5 renders above the order-3 skins); per-skin micro-window re-anchor = v2 CANDIDATE gated on the S6b dusk-hero multimodal review (conflict = re-anchor follows)"
   },
   "horizon_band_salience": {

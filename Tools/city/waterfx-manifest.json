@@ -1,7 +1,8 @@
 {
-  "protocol": "fluxverse-waterfx/0.1",
-  "baked_round": 154,
+  "protocol": "fluxverse-waterfx/0.2",
+  "baked_round": 181,
   "sources": [
+    "r181 v0.2 (T-FV-002 S6b, duskgold-manifest.water_warm_wash - the round's parameter source): the warm_wash family - one dusk-only rose quad over the river base (the golden-hour water the target paints rose-grey-pink; the r180 census read the dusk water base violet hue 269 vs target 342). RUNTIME family, NO baked asset (r157 horizon-band precedent); the 12 baked v0.1 assets are untouched",
     "cph4/research/R-20260925-water-daynight.md sec1 W1-W5 + sec3 verdicts (CEO order 09-25 ~18:00, fast-lane <= 24h, close 09-26 ~18:00)",
     "TECH.md sec9 r153 verdict: W3 commit-stream = r116 CommitStream reuse (zero new build), W6 daynight dual-channel = r146 MoodVisualRules reuse; W1/W2/W3-foam/W4/W5 = true construction faces of this line",
     "City/Assets/Editor/CitySkeletonBuilder.cs L225-229: water band live anchor (cells x -50..50, rows -3..2, static hash h=((x*31+y*17)&7) over 4 registered variants)",
@@ -66,6 +67,22 @@
     "sync": "foam frame index = water tick mod 4 (W3: moves with the wave frames)",
     "solid_row": "1px foam line at the bank interface (north strip: solid row on top = y3 bank line; south strip: solid row on bottom = y-3 bank line); sparse bubbles row = the W3 embankment gradient v0"
   },
+  "warm_wash": {
+    "law": {
+      "family": "runtime quad (adapter-owned child of the CityWaterFx root, r181; released by ReleaseWash before every scene save - r146 save-purity law); NO baked asset (r157 horizon-band precedent): a white 4x4 runtime texture with a RELATIVE scale, rose tint on sr.color",
+      "geometry": "world rect x -50..50, y -3..3 (the WaterFxRules census band, zero cell drift; census 606 SetTile untouched)",
+      "color_rgb": [255, 128, 152],
+      "tier_alpha": { "day": 0.0, "dawn": 0.0, "dusk": 0.45, "night": 0.0 },
+      "order": 2,
+      "z": 0.35,
+      "z_law": "deepest of the order-2 water family: every sibling is nearer = crisper on top (refl 0.3 / shimmer 0.2 / foam 0.1 in the rules table; smaller z = on top, r158 physics law) - the wash tints ONLY the base water under them; day/night alpha 0 = the night frame stays numerically identical (zero coupling with the r155 night asserts)",
+      "wobble": "never - base-water family with the foam (bank-pinned semantics)",
+      "acceptance": "coherent S6b dusk frame: water band mean hue in [320, 20] (wrap) AND mean lum in [120, 180] (duskgold-manifest c5 gate)"
+    },
+    "mounts": [
+      { "id": "WaterFxWarmWash", "rect": [-50, -3, 50, 3] }
+    ]
+  },
   "render_laws": {
     "order": 2,
     "order_law": "above the Water tilemap (1), below street (7) / tint (8) / pulses (10) - reflections receive the dusk/night tint like all city furniture; Roads tilemap also sits at order 2 with zero spatial overlap (Office pod order-3 vs City tilemaps precedent)",
@@ -93,7 +110,7 @@
   ],
   "family": {
     "go_prefix": "WaterFx",
-    "adapter": "CityWaterFx.cs (r155): Update accumulator 0.5s, full-band SetTile sweep + mount alpha/wobble from tier; tier + weather handed by CityAmbient existing fields (zero new poll face)"
+    "adapter": "CityWaterFx.cs (r155): Update accumulator 0.5s, full-band SetTile sweep + mount alpha/wobble from tier; tier + weather handed by CityAmbient existing fields (zero new poll face); r181 warm wash = runtime child of this root (EnsureWash/ReleaseWash)"
   },
   "coupled_updates_r155": [
     "CitySkeletonBuilder: +4 MK lines (t_water_1/5/6/7 from Tiles_Extract/water_wave_01/05/06/07.png)",

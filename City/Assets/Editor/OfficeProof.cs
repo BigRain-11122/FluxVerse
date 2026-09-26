@@ -522,6 +522,14 @@ namespace FluxVerse
             }
             float dayLum = 0f, duskLum = 0f, nightLum = 0f;
             float dayWarm = 0f, duskWarm = 0f;
+            // r209 bank split (T-FV-122 S4 blue-fog re-anchor): the r208 depth
+            // fog wash is a DUSK-ONLY overlay on the north walkway band y8..14,
+            // mandated by batch-2 order 4 (far rows bluer, foggier). The 4 north
+            // offices legitimately cool at dusk, so one flat warm aggregate can
+            // no longer carry the r44 harmony law - south keeps the full warm
+            // gate, north proves the mandated fog is actually over it.
+            float dayWarmS = 0f, duskWarmS = 0f, dayWarmN = 0f, duskWarmN = 0f;
+            int dayTotS = 0, duskTotS = 0, dayTotN = 0, duskTotN = 0;
             int dayTot = 0, duskTot = 0, nightTot = 0;
             int duskMin = int.MaxValue, nightMin = int.MaxValue;
             string duskWorst = "", nightWorst = "";
@@ -535,9 +543,13 @@ namespace FluxVerse
                 int n; float lum, warm;
                 WinDelta(dayOn, dayBase, cam, i, out n, out lum, out warm);
                 dayTot += n; dayLum += lum * n; dayWarm += warm * n;
+                if (OfficeRules.IsNorth(i)) { dayTotN += n; dayWarmN += warm * n; }
+                else { dayTotS += n; dayWarmS += warm * n; }
             }
             dayLum = dayTot > 0 ? dayLum / dayTot : 0f;
             dayWarm = dayTot > 0 ? dayWarm / dayTot : 0f;
+            dayWarmS = dayTotS > 0 ? dayWarmS / dayTotS : 0f;
+            dayWarmN = dayTotN > 0 ? dayWarmN / dayTotN : 0f;
             // r138 terrace day pair (offices stay on in both frames - clean
             // attribution); the m1-r138-terrace-day frame = the dayOn bytes
             SetTerraces(terraceGos, false);
@@ -558,10 +570,14 @@ namespace FluxVerse
                 int n; float lum, warm;
                 WinDelta(duskOn, duskBase, cam, i, out n, out lum, out warm);
                 duskTot += n; duskLum += lum * n; duskWarm += warm * n;
+                if (OfficeRules.IsNorth(i)) { duskTotN += n; duskWarmN += warm * n; }
+                else { duskTotS += n; duskWarmS += warm * n; }
                 if (n < duskMin) { duskMin = n; duskWorst = OfficeRules.Name(i); }
             }
             duskLum = duskTot > 0 ? duskLum / duskTot : 0f;
             duskWarm = duskTot > 0 ? duskWarm / duskTot : 0f;
+            duskWarmS = duskTotS > 0 ? duskWarmS / duskTotS : 0f;
+            duskWarmN = duskTotN > 0 ? duskWarmN / duskTotN : 0f;
             // r138 terrace dusk pair + the m1-r138-terrace-dusk frame
             SetTerraces(terraceGos, false);
             Texture2D terraceDuskBase = Shot(cam, null);
@@ -609,8 +625,20 @@ namespace FluxVerse
             //     darkening multiply) - so day-vs-dusk LUMINANCE ordering is not a
             //     law; the law is the WARMTH shift (r-b must rise at dusk);
             //  2. night is the dark tier: offices must sit well below dusk.
-            Chk(duskWarm > dayWarm + 0.02f, "harmony law: the dusk overlay must warm the offices (r-b shift "
-                + dayWarm.ToString("F3") + " -> " + duskWarm.ToString("F3") + ")");
+            // r209 bank-scoped re-anchor (r51 drift law): batch-2 order 4 made
+            // the north walkway fog dusk-blue, so the warm gate lives on the
+            // fog-free SOUTH bank at the original +0.02 (no cut), while the
+            // NORTH bank must prove the mandated fog is over it - its dusk r-b
+            // shift sits at least 0.02 BELOW the south shift (fog cooling at
+            // least as visible as the warm gate itself). The delta-census and
+            // atmosphere gates still carry "never raw" for every office on
+            // both banks.
+            Chk(duskWarmS > dayWarmS + 0.02f, "south office harmony law: dusk must warm the fog-free bank (r-b "
+                + dayWarmS.ToString("F3") + " -> " + duskWarmS.ToString("F3") + ")");
+            Chk((duskWarmN - dayWarmN) < (duskWarmS - dayWarmS) - 0.02f,
+                "north office fog law: the blue depth fog must cool the north bank below the south shift "
+                + "(north shift " + (duskWarmN - dayWarmN).ToString("F3") + " vs south shift "
+                + (duskWarmS - dayWarmS).ToString("F3") + ")");
             Chk(nightLum < duskLum, "night offices must sit under dusk (atmosphere law): "
                 + nightLum.ToString("F3") + " vs " + duskLum.ToString("F3"));
 

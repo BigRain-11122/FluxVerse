@@ -452,10 +452,17 @@ namespace FluxVerse
             Chk(m.depth_fog_wash.law.color_rgb[0] == 128 && m.depth_fog_wash.law.color_rgb[1] == 138
                 && m.depth_fog_wash.law.color_rgb[2] == 235, "fog color rgb 128,138,235 (r208 blue haze)");
             Color fogC = LightFxRules.FogWashColor();
-            float halfQ = 0.5f / 255f;  // 255-quantization half-step: 0.50f -> 128 etc.
-            Chk(Eq(fogC.r, 128f / 255f, halfQ) && Eq(fogC.g, 138f / 255f, halfQ)
-                && Eq(fogC.b, 235f / 255f, halfQ),
-                "fog color single source = SkylineRules.FogFar(Dusk) blue-purple haze family (r208)");
+            // r209 gate-face fix (knife-edge law): 128/255 - 0.50f is EXACTLY the
+            // half step (both equal 1/510), so a halfQ tolerance comparison on the
+            // r channel sits on a 1-ulp knife edge and float rounding flips the
+            // old <=. The true face of the 255-quantization law is byte identity:
+            // round(c*255) must equal the authored byte - exact, strictly
+            // stronger than any tolerance band.
+            Chk((int)Math.Round(fogC.r * 255f) == 128 && (int)Math.Round(fogC.g * 255f) == 138
+                && (int)Math.Round(fogC.b * 255f) == 235,
+                "fog color single source = SkylineRules.FogFar(Dusk) blue-purple haze family (r208): got rgb "
+                + (int)Math.Round(fogC.r * 255f) + "," + (int)Math.Round(fogC.g * 255f) + ","
+                + (int)Math.Round(fogC.b * 255f));
             Chk(Eq(fogC.r, SkylineRules.FogFar(AmbientTier.Dusk).r, 1e-6f)
                 && Eq(fogC.g, SkylineRules.FogFar(AmbientTier.Dusk).g, 1e-6f)
                 && Eq(fogC.b, SkylineRules.FogFar(AmbientTier.Dusk).b, 1e-6f),
@@ -1003,7 +1010,7 @@ namespace FluxVerse
             Chk(Eq(sr.color.a, lawA, 1e-4f), "fog alpha != law " + lawA + " at tier " + t);
             Color fc = LightFxRules.FogWashColor();
             Chk(Eq(sr.color.r, fc.r, 1e-3f) && Eq(sr.color.g, fc.g, 1e-3f)
-                && Eq(sr.color.b, fc.b, 1e-3f), "fog color != mauve family at tier " + t);
+                && Eq(sr.color.b, fc.b, 1e-3f), "fog color != SkylineRules.FogFar dusk family at tier " + t);
         }
 
         static void AssertHorizon(CityAmbient amb, AmbientTier t, float lawA)

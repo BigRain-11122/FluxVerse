@@ -9,7 +9,7 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-126 | oss-harvest 切片 2 预置（P-2026-09-26-08 首窗 ≤09-29 21:40·OH-20260926-fluxverse 下窗指针①②）——Kenney 深分页扫（2D/pixel 分类页·伞与城市 props 面）+awesome-unity2d/awesome-pixel-art 清单面普查→候选五门评估+落点强制（实搜面全实录·parked 带理由禁悬空） | 源=cph4/oss-harvest/OH-20260926-fluxverse.md 下窗指针+切片 1 基线 logs/devloop-oss-psa-baseline-r212.json；判据=切片 2 落账同文件续写（注册表行承 r210）+实搜面零死面+结论应用表四行齐备 | open |
+| T-FV-127 | r213 新法入律册（r194 滚动范式）：网页抓取正则两坑〔HTML 单引号属性+绝对 URL→双引号相对径正则零命中假象·修=锚域名 `kenney\.nl/assets/(slug)['"]`〕+外壳 $var 剥空第三击执法形〔内联 -Command 带 $vars=禁区·一律落盘 -File·r204⑤〕——入 city-sandbox ps51-traps 解析族+双册 r180② 条目补执法形+安装副本同步 | 源=TECH §九 r213 行⑤+OH-20260926 切片 2 应用表 #4；判据=双律册新条在位（编号续排+seq 校验）+安装副本 SHA 逐位同+三门烟测 9/9 复绿 | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

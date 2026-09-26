@@ -9,7 +9,7 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-115 | 打磨池/salience 候选全量盘点勘注：§九 散行候选（r155④/r158⑤/r161③/r163④/r177③/r178③/r184⑤/r185④ 等）归拢单一清单面 | TECH §九 散行候选（CEO 复验批 F-20260926-10 在飞=备料面）；判据=清单入 §九+各带 r 号溯源+blocked/可自领分列 | open |
+| T-FV-116 | 状态档写侧执法件 `Tools/devloop/write-fastpath-state.ps1`（r194 破写=fastpath-state 失 ledger/dec 两键实锤·r95 写侧律在册复发案·r188「律在册仍复发→正确形钉进可执行件」径）：三 sha 参数+WriteAllLines 显式换行+写后读回三键断言 fail-loud | TECH §九 r195 行③；判据=脚本纯 ASCII+沙盒两路（好参三行落盘/坏参 fail-loud）+下轮收尾实装换用 | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

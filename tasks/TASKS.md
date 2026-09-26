@@ -9,7 +9,7 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-128 | 双技能 SKILL.md 实证滚动面再刷（r193 T-FV-113 同式）：bake 12→14 代（r203 水面预置第四役+r207 天际线条第五役入 roll）·sandbox 15 代复核（r193 后无新布设沙盒役）——frontmatter description+正文溯源行双面刷新+安装副本同步 | 源=TECH §九 r203/r207 行+r193 T-FV-113 先例；判据=宁准勿估（§九 实况行权威枚举照录）+双面刷新+安装副本 SHA==源+三门烟测 9/9 复绿 | open |
+| T-FV-129 | oss-harvest 切片 3（OH 下窗指针③·baba-s 深潜未扫节 Animation/Camera/Texture/Editor 等 800+ 节——窗内可选低优先；零采用则诚实收口 OH 切片 3 节+判负留痕） | 源=cph4/oss-harvest/OH-20260926-fluxverse.md 切片 2 下窗指针③+r213 ⑤ 判读先例（引擎轴=Tuanjie fork 兼容风险+P1 署名律+零预算三闸）；窗 ≤2026-09-29 21:40（过期即弃单） | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 
@@ -24,6 +24,7 @@
 | T-FV-107 | P-27⑥ BGM 四档试听校准 | 人耳物理听感 | blocked-on:人耳 |
 | T-FV-108 | P-45 直播推流线 | M2 判据过→P2 冻结解除 | blocked-on:M2 |
 | T-FV-111 | pod/birth 接缝辉 4px 收紧 re-bake（r187⑤·r190 GATED 保留现态） | CEO 复验批 F-20260926-10 翻面点名 | blocked-on:CEO 复验 |
+| T-FV-130 | P-20260926-06 机队基地统一令迁移后本仓验收（DevLoop/Tick 任务注册+桌面 .lnk 指向逐线复验·r208⑤ 注记面） | 他窗迁移执行（窗 ≤2026-09-29 12:00·本仓 CWD 迁移风险面） | blocked-on:他窗迁移 |
 
 ## 三、翻面律
 

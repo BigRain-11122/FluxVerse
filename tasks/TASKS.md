@@ -9,7 +9,8 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-118 | 轮首七查机械化只读脚本（fastpath-check.ps1）——会话每轮手查五命令=token 成本+显示面假象不确定族（r163 tick 首查塌并假象/r195 状态档失键勘定/r197 tick 尾捕获吞行·r163「红扫读法以 ReadAllText 归一化直读为准」律已在册）：单件只读脚本七行判读输出（①tick 红扫归一化直读②树豁免③④⑥⑦四 SHA 对表⑤BigStream html 快查）+沙盒断言+轮首实装对照（脚本判读 vs 会话七查一致） | TECH §九 r197 行⑥；判据=沙盒绿+下轮轮首脚本/会话双跑判读一致 | open |
+| T-FV-118 | 轮首七查机械化只读脚本（fastpath-check.ps1）——会话每轮手查五命令=token 成本+显示面假象不确定族（r163 tick 首查塌并假象/r195 状态档失键勘定/r197 tick 尾捕获吞行·r163「红扫读法以 ReadAllText 归一化直读为准」律已在册）：单件只读脚本七行判读输出（①tick 红扫归一化直读②树豁免③④⑥⑦四 SHA 对表⑤BigStream html 快查）+沙盒断言+轮首实装对照（脚本判读 vs 会话七查一致） | TECH §九 r198 行；判据=沙盒绿（r198 毕 79/79）+下轮轮首脚本/会话双跑判读一致 | open |
+| T-FV-119 | r198 新法入双技能 references 律册滚动更新：-match 捕获组=$Matches[1] 裸串（.Value 属性不存在→静默 $null 进 TryParse=恒 false 假静·check-fastpath 心跳连串首版双红实锤）——ps51-traps（sandbox）+ps51-gdi-traps（bake）各一条+安装副本同步+三门烟测复跑 | TECH §九 r198 行⑤；判据=律册行入+安装副本 SHA 同步+烟测复绿（r194 范式） | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

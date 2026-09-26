@@ -3,6 +3,7 @@
   "baked_round": 152,
   "sources": [
     "TECH.md sec9 r150 asset verdict + r151 bake handover + r152 science-judgment amendment",
+    "Tools/city/landmarks-manifest.json r176 (T-FV-002 S3/S4, CEO order 09-26 00:10): rows 0/3 asset-path swap to the r175 landmark silhouettes (quant-twist/media-pearl) - swap law = name/rect/px/accent identical, zero migration",
     "Tools/city/southbank-manifest.json (r103 one geometry source, rect-equality law)",
     "cph4/research/R-20260924-hd-pixel-aesthetics.md (P-38 gap 2: hi-bit landmark facades)"
   ],
@@ -19,10 +20,10 @@
     "ppu": 24
   },
   "mounts": [
-    { "id": "FacadeQUANT", "asset": "Assets/ArtPacks/office-towers/facade-quant.png", "px": [120, 192], "accent": "gold",    "sha12": "17DD5EB3AF73", "rect": [-2.0, -16.0, 3.0, -8.0],    "source": "r151 bake (micro-window skin, muted five-color gold)" },
+    { "id": "FacadeQUANT", "asset": "Assets/ArtPacks/office-towers/quant-twist.png", "px": [120, 192], "accent": "gold",    "sha12": "D713172B83C3", "rect": [-2.0, -16.0, 3.0, -8.0],    "source": "r175 landmark bake (quant-twist Shanghai-Center silhouette: gold helix seam pair, 2x3 micro-grid; r177 swap per landmarks-manifest, facade-quant retires-retained on disk)" },
     { "id": "FacadeGAME",  "asset": "Assets/ArtPacks/office-towers/facade-game.png",  "px": [120, 120], "accent": "cyan",    "sha12": "B5307D95A363", "rect": [-23.0, -16.0, -18.0, -11.0], "source": "r151 bake (muted five-color cyan)" },
     { "id": "FacadeANNEX", "asset": "Assets/ArtPacks/office-towers/facade-annex.png", "px": [48, 72],   "accent": "cyan",    "sha12": "D22B8E620D43", "rect": [-26.0, -16.0, -24.0, -13.0], "source": "r151 bake (muted five-color cyan)" },
-    { "id": "FacadeMEDIA", "asset": "Assets/ArtPacks/office-towers/facade-media.png", "px": [144, 144], "accent": "magenta", "sha12": "A72D1CC7566D", "rect": [19.0, -14.0, 25.0, -8.0],   "source": "r152 bake (muted five-color flow magenta; science-judgment amendment of k37 direct-use, see verdict_change)" }
+    { "id": "FacadeMEDIA", "asset": "Assets/ArtPacks/office-towers/media-pearl.png", "px": [144, 144], "accent": "magenta", "sha12": "325E701ABFD6", "rect": [19.0, -14.0, 25.0, -8.0],   "source": "r175 landmark bake (media-pearl Oriental-Pearl double-sphere silhouette: magenta equator rings 94 px; r177 swap per landmarks-manifest, facade-media retires-retained on disk)" }
   ],
   "verdict_change": {
     "topic": "MEDIA facade k37 direct-use (r150 verdict B candidate) withdrawn at r152",

@@ -20,6 +20,12 @@
 // red-chain-3 law). Unlit-window law: skins carry ZERO static lit windows
 // (bake gate: avg brightness > 80 only on the accent crown row); the lit
 // rate is reserved to the P-38(3) activity heat line (decor ban law).
+// r177 landmark swap law (T-FV-002 S4, CEO order 09-26 00:10; source law =
+// Tools/city/landmarks-manifest.json swaps - the r176 sandbox, 95 assertions
+// green): rows 0/3 host the r175 Shanghai-skyline silhouettes (quant-twist /
+// media-pearl) - ASSET PATH SWAP ONLY, name/rect/px/accent identical, zero
+// migration by construction; the retired facade-quant/facade-media skins
+// stay on disk (P-21(4) discard-trace duty, landmarks-manifest honest_notes).
 // Interplay laws (z-map, r155/r158): WindowLight mounts ride the SAME
 // order 3 at z -0.5 (toward camera) so human window lights stay ABOVE the
 // facades; signs ride order 6 above; rim rides order 5 above the crown.
@@ -55,9 +61,11 @@ namespace FluxVerse
 
         static readonly Fcd[] Table = new Fcd[]
         {
-            // QUANT twist tower: 120x192 px = 5x8u - the r151 micro-window
-            // skin with the muted gold crown accent (south-bank commanding).
-            new Fcd { name = "FacadeQUANT", path = "Assets/ArtPacks/office-towers/facade-quant.png",
+            // QUANT twist tower: 120x192 px = 5x8u - the r175 Shanghai-Center
+            // twist silhouette (base-wide top-narrow taper, 2.2rad-offset gold
+            // helix seam pair, 2x3 micro-window grid, dark plinth; unlit law
+            // = gold seams only, 359 px). r177 landmark swap: path only.
+            new Fcd { name = "FacadeQUANT", path = "Assets/ArtPacks/office-towers/quant-twist.png",
                       pxW = 120, pxH = 192, x0 = -2f, y0 = -16f, x1 = 3f, y1 = -8f,
                       accent = AccentGold },
             // GAME_MAIN square tower: 120x120 px = 5x5u, muted cyan accent.
@@ -69,10 +77,13 @@ namespace FluxVerse
             new Fcd { name = "FacadeANNEX", path = "Assets/ArtPacks/office-towers/facade-annex.png",
                       pxW = 48, pxH = 72, x0 = -26f, y0 = -16f, x1 = -24f, y1 = -13f,
                       accent = AccentCyan },
-            // MEDIA pearl block: 144x144 px = 6x6u, flow magenta accent (the
-            // r152 science-judgment swap: k37 glass direct-use withdrawn for
-            // the dusk-anchor luminance violation, see manifest verdict_change).
-            new Fcd { name = "FacadeMEDIA", path = "Assets/ArtPacks/office-towers/facade-media.png",
+            // MEDIA pearl block: 144x144 px = 6x6u, flow magenta accent - the
+            // r175 Oriental-Pearl double-sphere silhouette (lower big + upper
+            // small sphere, antenna rod, tripod splayed legs, magenta equator
+            // deck rings 94 px; unlit law = magenta-only). r177 landmark swap:
+            // path only (rect/px/name identical, r152 verdict_change history
+            // stays in facades-manifest).
+            new Fcd { name = "FacadeMEDIA", path = "Assets/ArtPacks/office-towers/media-pearl.png",
                       pxW = 144, pxH = 144, x0 = 19f, y0 = -14f, x1 = 25f, y1 = -8f,
                       accent = AccentMagenta },
         };

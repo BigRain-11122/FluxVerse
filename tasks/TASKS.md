@@ -10,7 +10,6 @@
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
 | T-FV-125 | PSScriptAnalyzer 顾问位接线（P-2026-09-26-08 开源采用落地·OH-20260926-fluxverse 切片 1 后续）——高值规则子集（PSAvoidAssignmentToAutomaticVariable/PSPossibleIncorrectComparisonWithNull/PSUseBOMForUnicodeEncodedFile）入沙盒轮 A0 静态段+city-sandbox/bake-pipeline 双技能 harness 模板候选+风格噪音规则（位置参数 246/Probe- 命名族 89 等）grandfather 排除表声明 | 源=OH-20260926-fluxverse.md 采用→落点③+基线账 logs/devloop-oss-psa-baseline.json（416 findings 分层·空 catch 27/null 序 4/死变量 9 观察清单随轮消化）；判据=接线后任一沙盒轮 PSA 高值子集跑绿+双技能安装副本同步+验收回写 OH 台账 | open |
-| T-FV-124 | DESIGN.md 次元城市定位修订承接（P-2026-09-26-09 次元城市定位变更令·T0 级方向变更——规划件 R-20260926-dimension-city 已交付他窗·转 @元宙会话=本仓承接面） | 源=orders.md 09-26 ~21:40 行+ledger P-2026-09-26-09 行；修订面=DESIGN.md 定位行（「另外一个次元的世界·未来的世界」数字生命栖居世界本体·数字传承者层+活人化身生活层·意识上传禁语/数字投影诚实边界律不变）+分层准入四层注记（T4 公有域/T3 授权/T2 家庭授权/T1 原创致敬）+消费面（CODEX 传承层=BigLife 承接面勿代领）；T0 方向面随 CEO 复验批一并呈 | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

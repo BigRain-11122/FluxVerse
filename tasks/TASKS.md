@@ -26,6 +26,7 @@
 | T-FV-111 | pod/birth 接缝辉 4px 收紧 re-bake（r187⑤·r190 GATED 保留现态） | CEO 复验批 F-20260926-10 翻面点名 | blocked-on:CEO 复验 |
 | T-FV-132 | P-20260926-05 时间层令余面=真互动三证复扫（时间证 world-state 面毕 r217·天气证待真实雨天〔雨涟漪/檐下/湿反光现役〕·节律证待 BigLife citizen-now）+四季色板微调切片（autumn 已机读透出 state.season·色轮基线重锚 churn 面） | BigLife citizen-now 导出面（09-29 同窗）+真实雨天窗+CEO 复验批（F-10/F-17·D-20260926-03 复验裁定前零动作）——数据腿毕正典=TECH §九 r217 行 | blocked-on:外部窗 |
 | T-FV-130 | P-20260926-06 机队基地统一令迁移后本仓验收（DevLoop/Tick 任务注册+桌面 .lnk 指向逐线复验·r208⑤ 注记面） | 他窗迁移执行（窗 ≤2026-09-29 12:00·本仓 CWD 迁移风险面） | blocked-on:他窗迁移 |
+| T-FV-136 | auto-saves >7d 周清首窗执行（止血令② 前授权·r222 自审：654 件 870.5MB 全 <7d·日率 ~200MB·稳态预估 ~1.4GB·删 >7d 件=gitignored 会话快照 R4 族零 git 影响） | 时窗（09-23 建仓最早件 2026-09-30 满 7 天·正典=TECH §九 r222 行③） | blocked-on:时窗 09-30 |
 
 ## 三、翻面律
 

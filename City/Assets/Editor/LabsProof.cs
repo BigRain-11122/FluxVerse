@@ -1,11 +1,12 @@
-// FluxVerse P-39 slice (r142): batch proof for the CPH4 Labs block v0.1
-// (lab-glass consumption, law = Tools/city/labs-manifest.json, the r141
-// 2291-assertion sandbox; provenance = TECH sec.9 P-39 r139..r141 rows).
+// FluxVerse P-39 slice (r142+r187): batch proof for the CPH4 Labs block v0.2
+// (lab-glass consumption, law = Tools/city/labs-manifest.json v0.2 - the r141
+// 2291-assertion sandbox + the r186 1u-drop sandbox 99; provenance = TECH
+// sec.9 P-39 r139..r186 rows).
 // Sentinel pattern (r35..r110 style):
 //   pass 1: logs/labs.run         -> FluxVerse.LabsProof.BatchRun   -> logs/labs.done
 //   pass 2: logs/labs-reload.run -> FluxVerse.LabsProof.ReloadGate -> logs/labs-reload.done
-// Sections (C# proof-mirror law r103: every gate mirrors the r141 sandbox):
-//  A pure-core gates: 12-entry table == the manifest (world/px/asset/ppu
+// Sections (C# proof-mirror law r103: every gate mirrors the r141/r186 sandboxes):
+//  A pure-core gates: 14-entry table == the manifest v0.2 (world/px/asset/ppu
 //    mirror-read straight from labs-manifest.json - single geometry source),
 //    family laws (pod order 3 / pipe order 6), px pins, world==px/PPU24,
 //    pod integer cells + low-rise cap 12 < offices 13 < brain 19, frame,
@@ -32,15 +33,17 @@
 //    regressions (neon/robots/residents/tags/vehicles/offices/terraces,
 //    skyline, bed, interior, rig, adapters, L0 camera, runtime-only laws).
 //  D render gates: day/dusk/night L0 pairs (labs-hidden baselines, clean
-//    attribution) with pod/run/stub window deltas + the atmosphere law
-//    (night sits under dusk); the L1 labs street view (cam 19,5 - street
-//    family |camX|<=30, r138 law). Screenshots: docs/design/
-//    m1-r142-labs-{day,dusk,night,l1-north}.png (the dusk shot is the r44
+//    attribution) with pod/run/stub/birth/sandbox window deltas + the
+//    atmosphere law (night sits under dusk, every glass piece); the L1 labs
+//    street view (cam 19,5 - street family |camX|<=30, r138 law) + the
+//    unsaved sandbox west L1 delta pair (cam -5.5,5 - the S4 piece sits
+//    outside the east street frame). Screenshots: docs/design/
+//    m1-r187-labs1u-{day,dusk,night,l1-north}.png (the dusk shot is the r44
 //    harmony evidence; NOTE the r44 mechanical warm-shift face was derived
 //    for the AA-016 daytime-flat family - the CPH4-blue glass family
 //    carries its own anchor palette, so harmony rides the multimodal frame
 //    while the atmosphere law stays gated).
-//  E pass 2: everything survives an editor restart (12 persisted, importer
+//  E pass 2: everything survives an editor restart (14 persisted, importer
 //    settings, neighbors intact).
 // Fail-loud: any broken assumption throws into the .done report. ASCII only. No 3D.
 using System;
@@ -184,10 +187,11 @@ namespace FluxVerse
             Chk(manifest.Length > 1000, "labs-manifest.json unreadable");
             int podIdx = LabsRules.PodIndex(), stubIdx = LabsRules.StubIndex();
             Chk(podIdx == 0, "pod must sit at table index 0");
-            Chk(stubIdx == LabsRules.Count - 1, "stub must sit at the table tail");
-            Chk(LabsRules.Count == 12, "manifest must hold 12 placements");
-            Chk(LabsRules.PodCount == 1 && LabsRules.RunCount == 10 && LabsRules.StubCount == 1,
-                "family arity law broken (1 pod + 10 run + 1 stub)");
+            Chk(stubIdx == 11, "stub must sit at index 11 (the r186 1u drops append at the tail)");
+            Chk(LabsRules.Count == 14, "manifest v0.2 must hold 14 placements");
+            Chk(LabsRules.PodCount == 1 && LabsRules.RunCount == 10 && LabsRules.StubCount == 1
+                && LabsRules.BirthCount == 1 && LabsRules.SandboxCount == 1,
+                "family arity law broken (1 pod + 10 run + 1 stub + 1 birth + 1 sandbox)");
             Chk(LabsRules.PodOrder == 3, "pod must ride the building layer order 3");
             Chk(LabsRules.PipeOrder == 6, "conduit must ride the structure tier order 6 (signs 6 < street 7)");
             Chk(LabsRules.PPU == 24f, "PPU24 divisor law (r140 lab-glass importer row)");
@@ -220,8 +224,14 @@ namespace FluxVerse
                     Chk(LabsRules.PxW(i) == 48 && LabsRules.PxH(i) == 72, "pod frame drift: " + id);
                 else if (LabsRules.Family(i) == 1)
                     Chk(LabsRules.PxW(i) == 48 && LabsRules.PxH(i) == 16, "pipe-h frame drift: " + id);
-                else
+                else if (LabsRules.Family(i) == 2)
                     Chk(LabsRules.PxW(i) == 16 && LabsRules.PxH(i) == 48, "pipe-v frame drift: " + id);
+                else if (LabsRules.Family(i) == LabsRules.FamBirth)
+                    Chk(LabsRules.PxW(i) == 24 && LabsRules.PxH(i) == 72,
+                        "birth-1u frame drift (24x72 native redraw, r185): " + id);
+                else
+                    Chk(LabsRules.PxW(i) == 24 && LabsRules.PxH(i) == 48,
+                        "sandbox-1u frame drift (24x48 native redraw, r185): " + id);
                 // world size == px / PPU24 (5e-4: the 16px pipe body is 2/3u)
                 Chk(Mathf.Abs(LabsRules.WorldW(i) - LabsRules.PxW(i) / LabsRules.PPU) < 5e-4f
                     && Mathf.Abs(LabsRules.WorldH(i) - LabsRules.PxH(i) / LabsRules.PPU) < 5e-4f,
@@ -231,20 +241,23 @@ namespace FluxVerse
                 Chk(LabsRules.InTintBand(i), "placement escapes the tint band (r22 edge-band kin): " + id);
                 Chk(!Overlap(LabsRules.X0(i), LabsRules.Y0(i), LabsRules.X1(i), LabsRules.Y1(i), -50f, -3f, 50f, 3f),
                     "river rows encroached: " + id);
-                if (LabsRules.IsPod(i))
+                if (LabsRules.IsBuilding(i))
                 {
                     float x0 = LabsRules.X0(i), y0 = LabsRules.Y0(i), x1 = LabsRules.X1(i), y1 = LabsRules.Y1(i);
                     // integer cell boundaries (cells -> world law)
                     Chk(Mathf.Abs(x0 - Mathf.Round(x0)) < 1e-5f && Mathf.Abs(y0 - Mathf.Round(y0)) < 1e-5f
                         && Mathf.Abs(x1 - Mathf.Round(x1)) < 1e-5f && Mathf.Abs(y1 - Mathf.Round(y1)) < 1e-5f,
-                        "non-integer pod cell boundary: " + id);
-                    // labs low-rise law: pod top <= 12 < offices 13 < brain 19
-                    Chk(y1 <= LabsRules.PodTopMax + 1e-5f, "pod breaches the labs low-rise cap 12: " + id);
-                    Chk(y1 < OfficeRules.NorthCapTop, "pod towers over the office cap 13: " + id);
-                    Chk(y1 < OfficeRules.BrainTop, "pod challenges the brain tower (sole commanding): " + id);
-                    Chk(y0 >= 9f - 1e-5f, "pod below the north walkway floor: " + id);
+                        "non-integer labs building cell boundary: " + id);
+                    // labs low-rise law: building top <= 12 < offices 13 < brain 19
+                    Chk(y1 <= LabsRules.PodTopMax + 1e-5f, "labs building breaches the low-rise cap 12: " + id);
+                    if (LabsRules.Family(i) == LabsRules.FamSandbox)
+                        Chk(y1 <= LabsRules.SandboxTopMax + 1e-5f,
+                            "sandbox breaches its 11.0 slot pin (r186 S4): " + id);
+                    Chk(y1 < OfficeRules.NorthCapTop, "labs building towers over the office cap 13: " + id);
+                    Chk(y1 < OfficeRules.BrainTop, "labs building challenges the brain tower (sole commanding): " + id);
+                    Chk(y0 >= 9f - 1e-5f, "labs building below the north walkway floor: " + id);
                     // buildings never touch road cells (avenue cols 17/18)
-                    Chk(!LabsRules.CrossesRoad(i), "pod sits on the east avenue road cells: " + id);
+                    Chk(!LabsRules.CrossesRoad(i), "labs building sits on the east avenue road cells: " + id);
                 }
                 else if (LabsRules.Family(i) == 1)
                 {
@@ -363,6 +376,28 @@ namespace FluxVerse
                 "the halo vise detector must fire at (22,11) - ResN02 2.2 halo");
             Chk(Mathf.Abs(22.3f - ev.x) < 2.75f,
                 "the plate-plate detector must fire at x=22.3 - EAVE-N01 tag-tag 2.75 law");
+            // r186 1u drops: flush-pinned slot faces (the r169 certified slots)
+            int birthIdx = -1, sbxIdx = -1;
+            for (int i = 0; i < LabsRules.Count; i++)
+            {
+                if (LabsRules.Name(i) == "LabBirth01") birthIdx = i;
+                else if (LabsRules.Name(i) == "LabSandbox01") sbxIdx = i;
+            }
+            Chk(birthIdx >= 0 && sbxIdx >= 0, "the r186 1u drops are missing from the table");
+            Chk(LabsRules.Family(birthIdx) == LabsRules.FamBirth
+                && LabsRules.Family(sbxIdx) == LabsRules.FamSandbox,
+                "1u drop family law broken (birth/sandbox)");
+            Chk(Mathf.Abs(LabsRules.X0(birthIdx) - LabsRules.X1(podIdx)) < 1e-5f,
+                "birth west face must sit flush at the pod east face (S5: pod-face-to-eave 1.000u)");
+            float eaveBodyWest = StreetBehaviorRules.EavePos(eaveN01).x - ResidentRules.WorldW(0) / 2f;
+            Chk(Mathf.Abs(LabsRules.X1(birthIdx) - eaveBodyWest) < 1e-4f,
+                "birth east face must sit flush at the EAVE-N01 body west edge x=24.0");
+            bool b1Dock = false;
+            for (int b = 0; b < 8; b++)
+                if (Mathf.Abs(NeonRules.BuildingAt(b).x1 - LabsRules.X0(sbxIdx)) < 1e-4f) b1Dock = true;
+            Chk(b1Dock, "sandbox west face must sit flush at the B1 east face x=-6 (S4 face-flush pin)");
+            Chk(File.Exists(Path.Combine(ProjectRoot, LabsRules.BirthPath)), "birth-1u sprite missing on disk");
+            Chk(File.Exists(Path.Combine(ProjectRoot, LabsRules.SandboxPath)), "sandbox-1u sprite missing on disk");
             // A7: far-shore strip re-derivation (r51 disease site)
             int farHits = 0;
             for (int i = 0; i < LabsRules.Count; i++)
@@ -374,9 +409,10 @@ namespace FluxVerse
             Chk(File.Exists(Path.Combine(ProjectRoot, LabsRules.PipeHPath)), "pipe-h sprite missing on disk");
             Chk(File.Exists(Path.Combine(ProjectRoot, LabsRules.PipeVPath)), "pipe-v sprite missing on disk");
 
-            // ---- B. asset gate: importer laws on all 3 lab files (idempotent) ----
-            string[] labFiles = { LabsRules.PodPath, LabsRules.PipeHPath, LabsRules.PipeVPath };
-            int[] pinW = { 48, 48, 16 }, pinH = { 72, 16, 48 };
+            // ---- B. asset gate: importer laws on all 5 lab files (idempotent) ----
+            string[] labFiles = { LabsRules.PodPath, LabsRules.PipeHPath, LabsRules.PipeVPath,
+                                   LabsRules.BirthPath, LabsRules.SandboxPath };
+            int[] pinW = { 48, 48, 16, 24, 24 }, pinH = { 72, 16, 48, 72, 48 };
             for (int f = 0; f < labFiles.Length; f++)
             {
                 Sprite sp = ForceSprite(labFiles[f]);
@@ -436,12 +472,10 @@ namespace FluxVerse
             Chk(ground != null && roads != null && water != null, "base tilemaps missing");
             for (int cx = 21; cx <= 22; cx++)
                 for (int cy = 9; cy <= 11; cy++)
-                {
-                    Vector3Int uc = new Vector3Int(cx, cy, 0);
-                    Chk(ground.GetTile(uc) != null, "pod cell off the pavement at " + uc);
-                    Chk(roads.GetTile(uc) == null, "pod sits on a road cell at " + uc);
-                    Chk(water.GetTile(uc) == null, "pod sits on a water cell at " + uc);
-                }
+                    CheckPavement(ground, roads, water, cx, cy, "pod");
+            // r186 1u drops: birth column [23] rows 9..11, sandbox column [-6] rows 9..10
+            for (int cy = 9; cy <= 11; cy++) CheckPavement(ground, roads, water, 23, cy, "birth-1u");
+            for (int cy = 9; cy <= 10; cy++) CheckPavement(ground, roads, water, -6, cy, "sandbox-1u");
             // the elevated crossing rides above REAL avenue road cells; the
             // y=10 stand family's underfoot row 8 is the north street road
             Chk(roads.GetTile(new Vector3Int(17, 13, 0)) != null && roads.GetTile(new Vector3Int(18, 13, 0)) != null,
@@ -541,9 +575,12 @@ namespace FluxVerse
                 Chk(labGos[i] != null, "labs GO missing for render gate: " + LabsRules.Name(i));
             }
             int podD = 0, podK = 0, podN = 0, runD = 0, runK = 0, runN = 0, stubD = 0, stubK = 0, stubN = 0;
+            int birD = 0, birK = 0, birN = 0, sbxD = 0, sbxK = 0, sbxN = 0;
             float podDuskLum = 0f, podNightLum = 0f, podDayLum = 0f;
             float podDayWarm = 0f, podDuskWarm = 0f;
-            // pod window = pod rect; run window = whole conduit x 3..23; stub window = the pod leg
+            float birDuskLum = 0f, birNightLum = 0f, sbxDuskLum = 0f, sbxNightLum = 0f;
+            // pod window = pod rect; run window = whole conduit x 3..23; stub window = the pod leg;
+            // birth/sandbox windows = their own rects (the r186 1u drops, r187 additions)
             float runCx = 13f, runCy = (LabsRules.BandY0 + LabsRules.BandY1) / 2f;
             float runHw = 10f + 0.4f, runHh = (LabsRules.BandY1 - LabsRules.BandY0) / 2f + 0.4f;
             float stubCx = 22.5f, stubCy = 12.6667f;
@@ -552,46 +589,74 @@ namespace FluxVerse
             SetLabs(labGos, false);
             Texture2D dayBase = Shot(cam, null);
             SetLabs(labGos, true);
-            Texture2D dayOn = Shot(cam, "m1-r142-labs-day.png");
+            Texture2D dayOn = Shot(cam, "m1-r187-labs1u-day.png");
             RectWinDelta(dayOn, dayBase, cam, out podD, out podDayLum, out podDayWarm,
                 LabsRules.Pos(podIdx).x, LabsRules.Pos(podIdx).y,
                 LabsRules.WorldW(podIdx) / 2f + 0.4f, LabsRules.WorldH(podIdx) / 2f + 0.4f);
             float lum; float warm;
             RectWinDelta(dayOn, dayBase, cam, out runD, out lum, out warm, runCx, runCy, runHw, runHh);
             RectWinDelta(dayOn, dayBase, cam, out stubD, out lum, out warm, stubCx, stubCy, stubHw, stubHh);
+            RectWinDelta(dayOn, dayBase, cam, out birD, out lum, out warm,
+                LabsRules.Pos(birthIdx).x, LabsRules.Pos(birthIdx).y,
+                LabsRules.WorldW(birthIdx) / 2f + 0.4f, LabsRules.WorldH(birthIdx) / 2f + 0.4f);
+            RectWinDelta(dayOn, dayBase, cam, out sbxD, out lum, out warm,
+                LabsRules.Pos(sbxIdx).x, LabsRules.Pos(sbxIdx).y,
+                LabsRules.WorldW(sbxIdx) / 2f + 0.4f, LabsRules.WorldH(sbxIdx) / 2f + 0.4f);
             amb.ApplyAmbient(AmbientTier.Dusk);
             SetLabs(labGos, false);
             Texture2D duskBase = Shot(cam, null);
             SetLabs(labGos, true);
-            Texture2D duskOn = Shot(cam, "m1-r142-labs-dusk.png");
+            Texture2D duskOn = Shot(cam, "m1-r187-labs1u-dusk.png");
             RectWinDelta(duskOn, duskBase, cam, out podK, out podDuskLum, out podDuskWarm,
                 LabsRules.Pos(podIdx).x, LabsRules.Pos(podIdx).y,
                 LabsRules.WorldW(podIdx) / 2f + 0.4f, LabsRules.WorldH(podIdx) / 2f + 0.4f);
             RectWinDelta(duskOn, duskBase, cam, out runK, out lum, out warm, runCx, runCy, runHw, runHh);
             RectWinDelta(duskOn, duskBase, cam, out stubK, out lum, out warm, stubCx, stubCy, stubHw, stubHh);
+            RectWinDelta(duskOn, duskBase, cam, out birK, out birDuskLum, out warm,
+                LabsRules.Pos(birthIdx).x, LabsRules.Pos(birthIdx).y,
+                LabsRules.WorldW(birthIdx) / 2f + 0.4f, LabsRules.WorldH(birthIdx) / 2f + 0.4f);
+            RectWinDelta(duskOn, duskBase, cam, out sbxK, out sbxDuskLum, out warm,
+                LabsRules.Pos(sbxIdx).x, LabsRules.Pos(sbxIdx).y,
+                LabsRules.WorldW(sbxIdx) / 2f + 0.4f, LabsRules.WorldH(sbxIdx) / 2f + 0.4f);
             amb.ApplyAmbient(AmbientTier.Night);
             SetLabs(labGos, false);
             Texture2D nightBase = Shot(cam, null);
             SetLabs(labGos, true);
-            Texture2D nightOn = Shot(cam, "m1-r142-labs-night.png");
+            Texture2D nightOn = Shot(cam, "m1-r187-labs1u-night.png");
             RectWinDelta(nightOn, nightBase, cam, out podN, out podNightLum, out lum,
                 LabsRules.Pos(podIdx).x, LabsRules.Pos(podIdx).y,
                 LabsRules.WorldW(podIdx) / 2f + 0.4f, LabsRules.WorldH(podIdx) / 2f + 0.4f);
             RectWinDelta(nightOn, nightBase, cam, out runN, out lum, out warm, runCx, runCy, runHw, runHh);
             RectWinDelta(nightOn, nightBase, cam, out stubN, out lum, out warm, stubCx, stubCy, stubHw, stubHh);
+            RectWinDelta(nightOn, nightBase, cam, out birN, out birNightLum, out warm,
+                LabsRules.Pos(birthIdx).x, LabsRules.Pos(birthIdx).y,
+                LabsRules.WorldW(birthIdx) / 2f + 0.4f, LabsRules.WorldH(birthIdx) / 2f + 0.4f);
+            RectWinDelta(nightOn, nightBase, cam, out sbxN, out sbxNightLum, out warm,
+                LabsRules.Pos(sbxIdx).x, LabsRules.Pos(sbxIdx).y,
+                LabsRules.WorldW(sbxIdx) / 2f + 0.4f, LabsRules.WorldH(sbxIdx) / 2f + 0.4f);
             // visibility gates (provisional thresholds; actuals reported for calibration)
             Chk(podD >= 200, "pod invisible in the day L0 frame: " + podD + "px");
             Chk(runD >= 400, "conduit invisible in the day L0 frame: " + runD + "px");
             Chk(stubD >= 30, "stub invisible in the day L0 frame: " + stubD + "px");
+            Chk(birD >= 60, "birth-1u invisible in the day L0 frame: " + birD + "px");
+            Chk(sbxD >= 40, "sandbox-1u invisible in the day L0 frame: " + sbxD + "px");
             Chk(podK >= 150, "pod invisible at dusk: " + podK + "px");
             Chk(runK >= 300, "conduit invisible at dusk: " + runK + "px");
             Chk(stubK >= 20, "stub invisible at dusk: " + stubK + "px");
+            Chk(birK >= 40, "birth-1u invisible at dusk: " + birK + "px");
+            Chk(sbxK >= 25, "sandbox-1u invisible at dusk: " + sbxK + "px");
             Chk(podN >= 40, "pod invisible at night: " + podN + "px");
             Chk(runN >= 60, "conduit invisible at night: " + runN + "px");
             Chk(stubN >= 6, "stub invisible at night: " + stubN + "px");
+            Chk(birN >= 10, "birth-1u invisible at night: " + birN + "px");
+            Chk(sbxN >= 6, "sandbox-1u invisible at night: " + sbxN + "px");
             // atmosphere law: the night tier must sit the glass family under dusk
             Chk(podNightLum < podDuskLum, "pod night must sit under dusk (atmosphere law): "
                 + podNightLum.ToString("F3") + " vs " + podDuskLum.ToString("F3"));
+            Chk(birNightLum < birDuskLum, "birth-1u night must sit under dusk (atmosphere law): "
+                + birNightLum.ToString("F3") + " vs " + birDuskLum.ToString("F3"));
+            Chk(sbxNightLum < sbxDuskLum, "sandbox-1u night must sit under dusk (atmosphere law): "
+                + sbxNightLum.ToString("F3") + " vs " + sbxDuskLum.ToString("F3"));
             // L1 labs street view (dusk tier = the r44 harmony evidence frame;
             // cam 19,5 - the street family rides |camX| <= 30, r138 law)
             amb.ApplyAmbient(AmbientTier.Dusk);
@@ -602,16 +667,33 @@ namespace FluxVerse
             SetLabs(labGos, false);
             Texture2D l1Base = Shot(cam, null);
             SetLabs(labGos, true);
-            Texture2D l1On = Shot(cam, "m1-r142-labs-l1-north.png");
-            int l1Pod, l1Run, l1Stub;
+            Texture2D l1On = Shot(cam, "m1-r187-labs1u-l1-north.png");
+            int l1Pod, l1Run, l1Stub, l1Bir;
             RectWinDelta(l1On, l1Base, cam, out l1Pod, out lum, out warm,
                 LabsRules.Pos(podIdx).x, LabsRules.Pos(podIdx).y,
                 LabsRules.WorldW(podIdx) / 2f + 0.4f, LabsRules.WorldH(podIdx) / 2f + 0.4f);
             RectWinDelta(l1On, l1Base, cam, out l1Run, out lum, out warm, runCx, runCy, runHw, runHh);
             RectWinDelta(l1On, l1Base, cam, out l1Stub, out lum, out warm, stubCx, stubCy, stubHw, stubHh);
+            RectWinDelta(l1On, l1Base, cam, out l1Bir, out lum, out warm,
+                LabsRules.Pos(birthIdx).x, LabsRules.Pos(birthIdx).y,
+                LabsRules.WorldW(birthIdx) / 2f + 0.4f, LabsRules.WorldH(birthIdx) / 2f + 0.4f);
             Chk(l1Pod >= 400, "pod invisible in the L1 labs street view: " + l1Pod + "px");
             Chk(l1Run >= 400, "conduit invisible in the L1 labs street view: " + l1Run + "px");
             Chk(l1Stub >= 60, "stub invisible in the L1 labs street view: " + l1Stub + "px");
+            Chk(l1Bir >= 150, "birth-1u invisible in the L1 labs street view: " + l1Bir + "px");
+            // sandbox west L1 delta pair (unsaved evidence frame; the S4 piece
+            // sits outside the east street frame - cam -5.5,5, same |camX| law)
+            cam.transform.position = new Vector3(-5.5f, 5f, origPos.z);
+            SetLabs(labGos, false);
+            Texture2D wBase = Shot(cam, null);
+            SetLabs(labGos, true);
+            Texture2D wOn = Shot(cam, null);
+            int l1Sbx; float wLum, wWarm;
+            RectWinDelta(wOn, wBase, cam, out l1Sbx, out wLum, out wWarm,
+                LabsRules.Pos(sbxIdx).x, LabsRules.Pos(sbxIdx).y,
+                LabsRules.WorldW(sbxIdx) / 2f + 0.4f, LabsRules.WorldH(sbxIdx) / 2f + 0.4f);
+            Chk(l1Sbx >= 100, "sandbox-1u invisible in the west L1 street view: " + l1Sbx + "px");
+            UnityEngine.Object.DestroyImmediate(wBase); UnityEngine.Object.DestroyImmediate(wOn);
             // restore the camera (scene was saved in section C; no save after renders)
             cam.orthographicSize = origSize;
             cam.transform.position = origPos;
@@ -623,19 +705,20 @@ namespace FluxVerse
 
             return "asserts=" + asserts
                 + " table=" + LabsRules.Count + "(pod" + LabsRules.PodCount + "+run" + LabsRules.RunCount
-                + "+stub" + LabsRules.StubCount + ")"
+                + "+stub" + LabsRules.StubCount + "+birth" + LabsRules.BirthCount
+                + "+sandbox" + LabsRules.SandboxCount + ")"
                 + " census(props=" + propCells + ",south_tiles=" + q0 + "/" + g0 + "/" + m0 + ",anchors=4/4)"
                 + " scene(saved=" + saved + "," + LabsRules.Count + " persisted,neon" + neonKept
                 + "_robot" + robotKept + "_res" + resKept + "_tag" + tagKept + "_veh" + vehKept
                 + "_off" + offKept + "_ter" + terKept + ")"
-                + " render(day=" + podD + "/" + runD + "/" + stubD
-                + " dusk=" + podK + "/" + runK + "/" + stubK
-                + " night=" + podN + "/" + runN + "/" + stubN
+                + " render(day=" + podD + "/" + runD + "/" + stubD + "/" + birD + "/" + sbxD
+                + " dusk=" + podK + "/" + runK + "/" + stubK + "/" + birK + "/" + sbxK
+                + " night=" + podN + "/" + runN + "/" + stubN + "/" + birN + "/" + sbxN
                 + " lum day=" + podDayLum.ToString("F3") + " dusk=" + podDuskLum.ToString("F3")
                 + " night=" + podNightLum.ToString("F3")
                 + " warm day=" + podDayWarm.ToString("F3") + " dusk=" + podDuskWarm.ToString("F3")
-                + " l1=" + l1Pod + "/" + l1Run + "/" + l1Stub + ")"
-                + " shots=4";
+                + " l1=" + l1Pod + "/" + l1Run + "/" + l1Stub + "/" + l1Bir + "/" + l1Sbx + ")"
+                + " shots=4(+1 unsaved west pair)";
         }
 
         static string ReloadProve()
@@ -657,7 +740,8 @@ namespace FluxVerse
             }
             int q = TileCount("CityQUANT"), g = TileCount("CityGAME"), m = TileCount("CityMEDIA");
             Chk(q == 40 && g == 49 && m == 54, "south city tile counts off canon after restart: " + q + "/" + g + "/" + m);
-            string[] spot = { LabsRules.PodPath, LabsRules.PipeHPath, LabsRules.PipeVPath };
+            string[] spot = { LabsRules.PodPath, LabsRules.PipeHPath, LabsRules.PipeVPath,
+                              LabsRules.BirthPath, LabsRules.SandboxPath };
             foreach (string p in spot)
             {
                 TextureImporter imp = (TextureImporter)TextureImporter.GetAtPath(p);
@@ -699,13 +783,20 @@ namespace FluxVerse
                 + " cam_L0=" + (cam != null ? cam.orthographicSize.ToString("F1") : "?");
         }
 
-        // sweep every root-level Lab* GO (pod + pipe families), then build the
-        // 12 from the table (fresh LoadAssetAtPath at every use = r10 law)
+        static void CheckPavement(Tilemap ground, Tilemap roads, Tilemap water, int cx, int cy, string what)
+        {
+            Vector3Int uc = new Vector3Int(cx, cy, 0);
+            Chk(ground.GetTile(uc) != null, what + " cell off the pavement at " + uc);
+            Chk(roads.GetTile(uc) == null, what + " sits on a road cell at " + uc);
+            Chk(water.GetTile(uc) == null, what + " sits on a water cell at " + uc);
+        }
+
+        // sweep every root-level Lab* GO (all four name families), then build
+        // the 14 from the table (fresh LoadAssetAtPath at every use = r10 law)
         static void BuildLabs()
         {
             foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
-                if (t.parent == null && (t.name.StartsWith(LabsRules.PipeNamePrefix)
-                    || t.name.StartsWith(LabsRules.PodNamePrefix)))
+                if (t.parent == null && LabsRules.IsLabsName(t.name))
                     UnityEngine.Object.DestroyImmediate(t.gameObject);
             for (int i = 0; i < LabsRules.Count; i++)
             {
@@ -724,7 +815,7 @@ namespace FluxVerse
         {
             int c = 0;
             foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>())
-                if (sr.name.StartsWith(LabsRules.PodNamePrefix) || sr.name.StartsWith(LabsRules.PipeNamePrefix)) c++;
+                if (LabsRules.IsLabsName(sr.name)) c++;
             return c;
         }
 

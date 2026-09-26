@@ -350,7 +350,7 @@ namespace FluxVerse
                 if (sr.name.StartsWith("NameTag")) tagKept++;
                 if (sr.name.StartsWith(OfficeRules.NamePrefix)) offKept++;
                 if (sr.name.StartsWith(OfficeRules.GroundPrefix)) terKept++;
-                if (sr.name.StartsWith(LabsRules.PipeNamePrefix) || sr.name.StartsWith(LabsRules.PodNamePrefix)) labKept++;
+                if (LabsRules.IsLabsName(sr.name)) labKept++;
             }
             foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
                 if (t.parent == null && t.name.StartsWith(ResidentRules.NamePrefix)

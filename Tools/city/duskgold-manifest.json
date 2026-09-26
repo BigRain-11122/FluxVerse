@@ -1,0 +1,99 @@
+{
+  "protocol": "fluxverse-duskgold/0.1",
+  "baked_round": 180,
+  "purpose": "00:10 art-rectification order T-FV-002 build step S6 (golden-hour reinforcement): the parameter single-source for the S6b editor round. Census + full fnv sweep evidence = logs/devloop-r180-duskgold-census.json (r180). This manifest DEFINES; S6b implements.",
+  "sources": [
+    "orders.md 2026-09-26 00:10 art rectification row (external review; item 3 golden dusk + item 2 water + item 5 side-by-side album)",
+    "TECH.md sec.9 r174 row: S6 = AlbumShot dusk hero frames + horizon gold-band salience promotion + window-light rate coefficient + dusk hue / atmospheric depth / water warm-base census re-scan (r163 slice-A folded in)",
+    "TECH.md sec.9 r158 honest note: bloom/wet/band authored alphas read faint at dusk = salience promotion candidates (re-viewed with the album)",
+    "TECH.md sec.9 r177 weak-read trio: helix seam reads as vertical highlight band / crown sepal slit dims at dusk / pearl top edge adjacent sign band -> S6 salience pre-registration",
+    "art-style-spec sec.4/5 + art-target-dusk.png attribute extraction (r174): sky honey-orange #F8B478 -> cream-gold #FFE0A0 horizon glow; building base cool purple-blue #3E4468; window warm-gold #FFDC8C 20-30 pct denser-low sparser-high; water base rose-grey-pink #C99AA8",
+    "City/Assets/Scripts/WindowLightRules.cs (lit law + widx enumeration + ThresholdFor round-half-up) + logs/devloop-r159-fnv-vectors.txt (golden pin)",
+    "City/Assets/Scripts/AmbientWeather.cs dusk palette (skyTop 0.36/0.22/0.48 purple zenith OK; skyBottom 0.98/0.58/0.32; tint 1/0.62/0.42 alpha 0.22) + skyline mauve fog family 0.62/0.58/0.78",
+    "Tools/city/lightfx-manifest.json v0.2 horizon_band (dusk color = skyBottom family, tier_alpha_pct dusk 50 / dawn 35; y16 268..302; order -9 z +1.0 behind stars+far skyline)",
+    "Tools/city/waterfx-manifest.json + WaterFxRules.cs (water band cells -50..50 rows -3..2 census 606; order-2 family z stack foam 0.3 / shim 0.2 / refl 0.1; smaller z = nearer = on top, r158 law)"
+  ],
+  "census_baseline_r180": {
+    "frame": "docs/design/m1-r177-landmarks-dusk.png (proof-scope dusk record frame: base city + facades/landmarks + rim/skyline/tint IN; windowlight / water-fx / light-fx families NOT applied)",
+    "sky_top": { "lum": 92.7, "rgb": [96.5, 59.3, 122.3], "verdict": "purple zenith per target - KEEP" },
+    "sky_low": { "lum": 116.7, "rgb": [140.4, 87.4, 122.5], "hue_deg": 320, "verdict": "reads pink-mauve not gold: skyBottom orange owns only the bottom sliver + gold band family absent from frame = the 'purple only, no gold' critique has a mechanical basis" },
+    "city_dark_hue": { "south_dark100": 3563, "south_hue_family": "warm rose/orange (rose330_15=2334, orng15_60=1229, blue200_250=0, purp250_270=0)", "verdict": "dusk darks read warm-rose; target cool purple-blue #3E4468 (hue 235) NOT met - folded into the F-17 CEO decision surface, zero action until ruled (D-20260926-03)" },
+    "atmospheric_depth": { "north_lum": 144.7, "south_lum": 137.7, "delta": 7.0, "trigger_threshold": 12.0, "verdict": "TRIGGERED - far/near bands read flat ('one sheet of blue-purple')" },
+    "water_warm_base": { "lum": 149.0, "rgb": [148.6, 128.8, 169.7], "hue_deg": 269, "target_hue_deg": 342, "verdict": "dusk water base reads violet; target rose-grey-pink NOT met - warm wash slice in scope" },
+    "warm_px_south_band": { "count": 471, "note": "rim tops (r148) + warm-family neon px; windowlight family absent from frame as expected" },
+    "live_activity_at_census": { "quant": 1.0, "gaming": 1.0, "media": 1.0, "note": "current law lights 100 pct of 334 windows at these rates = the 'all-lit is fake' violation is LIVE right now" }
+  },
+  "windowlight_rate_v2": {
+    "law": "lit iff fnv1a32(bid|date|widx) % 10000 < floor(effective_rate * 10000 + 0.5); effective_rate = BASE_RATE * Clamp01(activity) * floor_factor",
+    "base_rate": 0.30,
+    "floor_factor": "linear per wall row (bottom -> top): 1.0 -> 0.6; factor = 1.0 - 0.4 * (row_from_bottom / (wallRows - 1)); wallRows == 1 -> factor 1.0; enforces the target 'denser low, sparser high'",
+    "impl_note": "minimal C# delta: ThresholdFor / ZoneRateFor / Fnv / widx law UNCHANGED; the adapter multiplies BASE_RATE * factor into the rate before ThresholdFor (single call-site change + proof law update)",
+    "date_format": "YYYY-MM-DD (golden vectors r159)",
+    "band_check": {
+      "rule": "overall lit fraction at activity 1.0 must land in [0.20, 0.30] for every calendar date",
+      "pinned_r180": { "2026-09-26": 0.2365, "2026-09-27": 0.2605, "2026-09-28": 0.2425, "2026-09-29": 0.2545, "2026-09-30": 0.2305 },
+      "monotone_subset": "lit(activity 0.75) subset-of lit(activity 1.0) verified r180 (structural: threshold scales with activity)",
+      "zone_tolerance": "per-zone day jitter up to +-6pp tolerated (deterministic hash jitter; overall band is the enforced law)"
+    },
+    "rejected_alternatives": "BASE 0.25 + ramp = 0.189-0.219 (3/5 dates under band); BASE 0.25 flat = in band but no denser-low law",
+    "skin_note": "rhythm grid STAYS over the landmark/facade skins this round (option A - the lit rhythm windows are the city-wide window-light law, order 3 z -0.5 renders above the order-3 skins); per-skin micro-window re-anchor = v2 CANDIDATE gated on the S6b dusk-hero multimodal review (conflict = re-anchor follows)"
+  },
+  "horizon_band_salience": {
+    "change": "lightfx-manifest horizon_band tier_alpha_pct: dusk 50 -> 75 (dawn 35 unchanged, day/night 0 unchanged)",
+    "unchanged": "color stays the AmbientWheel skyBottom dusk/dawn family (single-source law); geometry y16 268..302 / order -9 / z +1.0 / blend ride all unchanged",
+    "rationale": "sky_low census reads 320deg pink-mauve; the honey-orange -> cream-gold glow band is the target's horizon signature and its authored dusk alpha read faint (r158 honest note)",
+    "acceptance": "coherent S6b dusk frame: band census rows 30..88 (world y 16.74..18.89), cols 297..920 + 1000..1623 (brain-crown/antenna column excluded), mean lum delta vs r180 baseline >= +4.0"
+  },
+  "water_warm_wash": {
+    "slice": "dusk-only rose wash quad over the river base (the golden-hour water base the target paints rose-grey-pink)",
+    "geometry": "world rect x -50..50, y -3..3 (the WaterFxRules census band, zero cell drift)",
+    "color_rgb": [255, 128, 152],
+    "tier_alpha": { "day": 0.0, "dawn": 0.0, "dusk": 0.45, "night": 0.0 },
+    "order": 2,
+    "z": 0.35,
+    "z_law": "deepest of the order-2 water family (foam 0.3 / shim 0.2 / refl 0.1 all nearer = crisper on top; wash tints ONLY the base water under them; r158 smaller-z-nearer law)",
+    "mount_owner": "CityWaterFx family (adapter-owned quad, tier-swept by ApplyState; NO baked asset - r157 horizon-band precedent)",
+    "coupling": "WaterFxProof mounts census 12 -> 13 + dusk render diff shifts UP only (alpha 0 at night = night asserts zero-coupled); census 606 SetTile untouched",
+    "acceptance": "coherent S6b dusk frame: water band mean hue in [320, 20] (wraps) AND mean lum in [120, 180]; night frame water numerically identical to r179 (wash alpha 0)"
+  },
+  "depth_fog_wash": {
+    "trigger": "census-gated and TRIGGERED (delta 7.0 < 12.0)",
+    "geometry": "world rect x -36..36, y 8.0..14.0 (top edge 14.0 < the AmbientProof far-shore window 14.26..14.74 - zero-touch constraint; brain tower plinth/shaft in band = physically correct, crown 18..19 clear)",
+    "color_rgb": [158, 148, 199],
+    "color_source": "skyline mauve fog family (AmbientWeather FogFor dusk 0.62/0.58/0.78) - ambient scenery channel, no five-color function light touched",
+    "tier_alpha": { "day": 0.0, "dawn": 0.0, "dusk": 0.15, "night": 0.0 },
+    "variant_decision_procedure": "S6b renders BOTH orders once and picks by the named couplings: variant A order 8 z 0 (full physical fog over rim/signs/street-beings - requires RimLightProof dusk north-segment + NeonProof dusk + RobotProof re-anchor) vs variant B order 4.5 z -0.1 (tile-city-only fog - zero rim/neon/robot coupling; sits over order-3 facades/labs/windowlights/office in band: WindowLightProof dusk-presence margin + LabsProof + OfficeProof dusk re-anchor). Pick the smaller coupling surface with delta met.",
+    "acceptance": "post-wash dusk frame delta (north band 189..297 mean lum - south band 756..972 mean lum) >= 12.0; day/night numerically unchanged (alpha 0)"
+  },
+  "dusk_palette_review": {
+    "action": "ZERO palette change this round (F-17 hue-shift surface: night/dusk dark-part purple-band = CEO decision, D-20260926-03 hold; dusk skyTop purple zenith + warm skyBottom + tint 0.22 all KEPT)",
+    "package_for_ceo": "census numbers land in the S7 side-by-side album with the art-target: dusk darks warm-rose vs target cool purple-blue #3E4468; night darks 200-250 blue vs 250-270 purple band (r163) - one hue-shift ruling covers both tiers"
+  },
+  "albumshot_dusk": {
+    "add_frames": ["dusk-water L0 (hero)", "dusk-street L1 south (0.5, -5.0) r160 D4 law"],
+    "naming": "m1-r<build>-dusk-{water,street}.png",
+    "apply": "ApplyScene(AmbientTier.Dusk) - existing coherent-apply path, wl.Poll at REAL world-state rates shows ~23-26 pct lit at 0.55 alpha = the order's 'windows just lighting up'",
+    "read_only_law": "scene NOT saved; restore day law after shots (r124/r146 disk law)"
+  },
+  "census_criteria_s6b": {
+    "c1_windows": "multi-modal: dusk hero shows lit windows visible, NOT all-lit, NOT zero (mechanical law compliance = WindowLightProof law battery re-run green)",
+    "c2_multilayer": "RimLightProof (dusk) + NeonProof dusk + WindowLightProof dusk re-run green",
+    "c3_dark_hue": "census repeat + REPORT ONLY (F-17 CEO surface, no gate)",
+    "c4_depth": "depth wash acceptance delta >= 12.0 (gate)",
+    "c5_water": "water wash acceptance hue [320,20] + lum [120,180] (gate)",
+    "c6_silhouettes": "existing landmark/crown proofs re-run green (zero geometry change this round)",
+    "band_salience": "rows 30..88 lum delta >= +4.0 (gate)"
+  },
+  "deferred_candidates": {
+    "skin_window_reanchor_v2": "per-skin lit micro-window grids for the four landmark/facade-skinned buildings - gated on S6b dusk-hero multimodal conflict review",
+    "crown_widen_v1": "r176 sepal-slit note - re-bake candidate, needs CEO review surface",
+    "seam_contrast_v1": "r177 helix-seam contrast re-bake candidate (quant-twist re-derives refl-quant, r176 mode)",
+    "bloom_wet_morning_salience": "r158 authored-alpha morning trio - album re-view surface"
+  },
+  "honest_notes": [
+    "The r180 census frame is proof-scope: windowlight/water-fx/light-fx families were absent, so every 'before' number here is a base-city baseline; the S6b gates all measure the COHERENT dusk frame (AlbumShot law)",
+    "Rate v2 keeps 100 pct determinism: same-input-same-output per day preserved (date seed unchanged), cross-day variety preserved, only the threshold mapping changes",
+    "No static baked numbers anywhere: BASE_RATE is a law constant, activity stays live, floor_factor is geometry-derived",
+    "warm_px 471 in the south band = rim + warm-family neon, NOT windowlight - the family absence claim is about the window family only"
+  ]
+}

@@ -31,11 +31,11 @@ namespace FluxVerse
     // pure logic: hour -> tier -> palette (headless-testable)
     public static class AmbientWheel
     {
-        public static AmbientTier TierForHour(int h)   // bounds = probes/clock.ps1
+        public static AmbientTier TierForHour(int h)   // bounds = probes/clock.ps1 (r217: dawn 5-7, day 8-16, dusk 17-19)
         {
-            if (h >= 5 && h <= 8) return AmbientTier.Dawn;
-            if (h >= 9 && h <= 16) return AmbientTier.Day;
-            if (h >= 17 && h <= 19) return AmbientTier.Dusk;
+            if (h >= 5 && h < 8) return AmbientTier.Dawn;
+            if (h >= 8 && h < 17) return AmbientTier.Day;
+            if (h >= 17 && h < 20) return AmbientTier.Dusk;
             return AmbientTier.Night;
         }
 

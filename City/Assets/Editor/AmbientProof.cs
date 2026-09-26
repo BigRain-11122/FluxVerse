@@ -68,14 +68,15 @@ namespace FluxVerse
         {
             // ---- A1. tier bounds (mirror probes/clock.ps1 exactly) ----
             Chk(AmbientWheel.TierForHour(5) == AmbientTier.Dawn, "hour 5 must be dawn");
-            Chk(AmbientWheel.TierForHour(8) == AmbientTier.Dawn, "hour 8 must be dawn");
-            Chk(AmbientWheel.TierForHour(9) == AmbientTier.Day, "hour 9 must be day");
+            Chk(AmbientWheel.TierForHour(7) == AmbientTier.Dawn, "hour 7 must be dawn");
+            Chk(AmbientWheel.TierForHour(8) == AmbientTier.Day, "hour 8 must be day");
             Chk(AmbientWheel.TierForHour(16) == AmbientTier.Day, "hour 16 must be day");
             Chk(AmbientWheel.TierForHour(17) == AmbientTier.Dusk, "hour 17 must be dusk");
             Chk(AmbientWheel.TierForHour(19) == AmbientTier.Dusk, "hour 19 must be dusk");
             Chk(AmbientWheel.TierForHour(20) == AmbientTier.Night, "hour 20 must be night");
             Chk(AmbientWheel.TierForHour(23) == AmbientTier.Night, "hour 23 must be night");
             Chk(AmbientWheel.TierForHour(2) == AmbientTier.Night, "hour 2 must be night");
+            Chk(AmbientWheel.TierForHour(4) == AmbientTier.Night, "hour 4 must be night");
             Chk(AmbientWheel.TierFromName("dusk") == AmbientTier.Dusk, "name dusk must map");
             Chk(AmbientWheel.TierFromName("night") == AmbientTier.Night, "name night must map");
 

@@ -9,7 +9,6 @@
 
 | ID | 任务 | 指针/判据 | 状态 |
 |---|---|---|---|
-| T-FV-135 | AmbientWeather.TierForHour bootstrap 边界对齐（r217 新发现债：clock.ps1 相位边界已修 -lt 8/17/20（正典 §二 后写者新·r217）·引擎 bootstrap 兜底仍持旧界 -le 8/16/19——state 在位=零消费休眠路径·非现行病但正典一致性债） | 指针=TECH §九 r217 行债注+《硅基城市时间与节律正典》§二/§七.4 三处一致性律；施工=一行对齐+AmbientProof 纯核边界断言随改+单 pass 证明跑绿（编辑器预算轮） | open |
 | T-FV-134 | 调研部周轮前沿扫描（research-dept-charter §3 节律律·常设节律锚）：每周日演化日窗内领一轮——web_fetch 定向直查 ≥1 主题（扫描面=城市孪生/2D 引擎/程序化生成/数字孪生可视化业务前沿）·产出=R- 件或 global-benchmarks 刷新行·hot=F- 行 24h 速报·零发现=台账观察位注记行 | 源=..\..\docs\research-dept-charter.md §一-3/§四（patrol 判据=调研部台账 >7 天无新增且无观察位注记=黄牌）；执行留痕=TECH §九 对应行；**首扫毕 2026-09-27 r219（Omniverse+Siemens 双源·基准面 v1.1 刷新·两 M 债核销）·下窗=2026-10-04 周日** | open |
 
 ## 二、blocked 面单列（禁充当在岗）

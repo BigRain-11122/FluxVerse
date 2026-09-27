@@ -1,0 +1,6 @@
+# FluxVerse TECH.md §九 历史代际归档 · __MONTH__ 代
+
+> 协议 `fluxverse-sec9-archive/0.1` · 月度代际归档制（D-20260928-04·机制首档施工 2026-09-28 r230）：TECH.md §九 活跃代=近 30 天 r 号行留存，本档收历史代际行——内容零删·追加式保序·git 全量=R1 合规。
+> 跨档寻址径：TECH.md §九 头部指针 → docs/archive/tech-section9/<YYYYMM>.md（HQ-FEEDBACK F- 行 r 号寻址经此可达）。
+> 本档收行域：§九 r 号行日期 ∈ __RANGE__（行首括号内首个日期为准；无日期行永不自动外迁·保守留 §九）。
+

@@ -6,11 +6,19 @@
 # state-file lost-key misjudged from a `type` display, r197 tail-capture
 # swallowing lines). LAW: judge by byte reads, never by tool display.
 # Single read-only judge = 7 fixed check lines + state line + VERDICT line.
+# v1.2 (r229 / T-FV-137): c1 midnight pre-first-tick window fallback - live
+# first observed 2026-09-28 00:05 round (FULL-ROUND fired on a healthy
+# fleet because the daily log does not exist before the first tick round).
 #
 # Checks (mandate fastpath paragraph stays the authority; this is the
 # mechanical executor of it):
 #   c1-red     tick log tail 40: gate/probe FAIL words or quarantined>0;
-#              missing/empty tick log = trigger. Heartbeat tail: trailing
+#              missing/empty tick log = trigger - EXCEPT the midnight
+#              pre-first-tick window (T-FV-137/r229): between 00:00:00 and
+#              the first FluxVerseTick round (~00:06) the daily log
+#              legitimately does not exist, so the previous day's log is
+#              scanned instead (fallback missing/red still triggers =
+#              fail-closed kept). Heartbeat tail: trailing
 #              streak (>=2) of timeouts / non-zero exits = trigger; a single
 #              bad entry is NOT a streak (r162/r181 single-kill precedent).
 #   c2-tree    git status --porcelain -- . ':(exclude)world-public' non-empty
@@ -34,7 +42,10 @@
 #
 # Read-only: this script writes nothing anywhere (git status is read-only).
 # Params all optional; defaults self-locate the <repo>\Tools\devloop\ layout
-# (sandbox injects fixtures per param). ASCII-only body (PS5.1 GBK law).
+# (sandbox injects fixtures per param). SimNowHHmm (HHmm, e.g. '0005') is a
+# sandbox-only clock override for the c1 midnight-window branch; empty =
+# real clock (production always leaves it empty).
+# ASCII-only body (PS5.1 GBK law).
 # No auto-variable locals ($pid family, r164 law).
 # ---------------------------------------------------------------------------
 
@@ -48,7 +59,8 @@ param(
     [string]$DecPath = '',
     [string]$OrdersPath = '',
     [string]$P16Dir = '',
-    [string]$RepoRoot = ''
+    [string]$RepoRoot = '',
+    [string]$SimNowHHmm = ''
 )
 
 $ErrorActionPreference = 'Continue'
@@ -113,13 +125,44 @@ $c1Trig = $false
 $c1d = ''
 $fails = 0
 $qmax = -1
-if (-not (Test-Path -LiteralPath $TickPath)) {
+$scanPath = $TickPath
+$scanNote = ''
+if (-not (Test-Path -LiteralPath $scanPath)) {
+    # Midnight pre-first-tick window (T-FV-137/r229): between 00:00:00 and
+    # the first FluxVerseTick round (~00:06) the daily log legitimately does
+    # not exist yet. Fall back to the previous day's log so the red scan
+    # stays enforced on it (fail-closed: fallback missing/unreadable/red
+    # still triggers). The fallback date derives from the tick path's own
+    # yyyymmdd so sandbox fixtures stay deterministic; -SimNowHHmm is the
+    # sandbox-only clock for this branch.
+    $mTick = [regex]::Match($scanPath, 'tick-(\d{8})\.log$')
+    $inWindow = $false
+    if ([string]::IsNullOrEmpty($SimNowHHmm)) {
+        $nowD = Get-Date
+        if ($nowD.Hour -eq 0 -and $nowD.Minute -le 6) { $inWindow = $true }
+    } else {
+        $simH = -1
+        $simM = -1
+        if ($SimNowHHmm.Length -eq 4 -and [int]::TryParse($SimNowHHmm.Substring(0,2), [ref]$simH) -and [int]::TryParse($SimNowHHmm.Substring(2,2), [ref]$simM)) {
+            if ($simH -eq 0 -and $simM -le 6) { $inWindow = $true }
+        }
+    }
+    if ($inWindow -and $mTick.Success) {
+        $prevDate = ([datetime]::ParseExact($mTick.Groups[1].Value, 'yyyyMMdd', $null)).AddDays(-1).ToString('yyyyMMdd')
+        $prevPath = Join-Path (Split-Path -Parent $scanPath) ('tick-' + $prevDate + '.log')
+        if (Test-Path -LiteralPath $prevPath) {
+            $scanPath = $prevPath
+            $scanNote = ' pre-tick-window scanned=' + $prevDate
+        }
+    }
+}
+if (-not (Test-Path -LiteralPath $scanPath)) {
     $c1Trig = $true
     $c1d = ' ticklog-missing'
 } else {
     $tLines = @()
     $tOk = $true
-    try { $tLines = [IO.File]::ReadAllLines($TickPath) } catch { $tOk = $false }
+    try { $tLines = [IO.File]::ReadAllLines($scanPath) } catch { $tOk = $false }
     if (-not $tOk) {
         $c1Trig = $true
         $c1d = ' ticklog-read-fail'
@@ -185,8 +228,8 @@ if (-not (Test-Path -LiteralPath $HeartbeatPath)) {
     }
 }
 if ($c1Trig) { $script:trig.Add('c1-red') }
-if ($c1Trig) { Write-Output ('c1-red: TRIGGER' + $c1d) }
-else { Write-Output ('c1-red: QUIET fails=' + $fails + ' qmax=' + $qmax + ' hb_streak=' + $hbStreak) }
+if ($c1Trig) { Write-Output ('c1-red: TRIGGER' + $c1d + $scanNote) }
+else { Write-Output ('c1-red: QUIET fails=' + $fails + ' qmax=' + $qmax + ' hb_streak=' + $hbStreak + $scanNote) }
 
 # --- c2: tree with r69 rotating-artifact exemption ---
 $c2Trig = $false

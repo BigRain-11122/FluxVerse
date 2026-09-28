@@ -27,3 +27,6 @@ world/*
 
 # CityWatch generated snapshots (CEO viewer output - never pollute the tree)
 watch/out/
+
+# CEO safe-cleanup quarantine 2026-09-28 (correction order: move-first, 7d observation, then delete)
+docs/_trash/

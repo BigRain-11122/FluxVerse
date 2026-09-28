@@ -12,6 +12,10 @@
 | T-FV-139 | TECH §九 月度代际归档轮（D-20260928-04 常设节律锚·**机制已立 r230**=工具 `Tools/devloop/archive-section9.ps1`〔判据四条 fail-loud〕+首档 `docs/archive/tech-section9/202609.md`+§九 头部指针+沙盒 37 断言/生产零行窗双绿）：月界首轮或演化日窗领——跑归档工具迁移 30 天窗外行入 <YYYYMM>.md·零行窗=诚实空转报 0；**下窗=2026-11-01 月界（首个非零窗：2026-09-23..10-01 行龄 >30 批量外迁·首行达窗 2026-10-24）** | 源=..\..\docs\decisions.md D-20260928-04 行+TECH §九 r230 行（机制正典）+首档回执 F-20260928-02；排期=司内自裁（演化日窗亦可提前领·零行窗诚实报 0） | open |
 | T-FV-134 | 调研部周轮前沿扫描（research-dept-charter §3 节律律·常设节律锚）：每周日演化日窗内领一轮——web_fetch 定向直查 ≥1 主题（扫描面=城市孪生/2D 引擎/程序化生成/数字孪生可视化业务前沿）·产出=R- 件或 global-benchmarks 刷新行·hot=F- 行 24h 速报·零发现=台账观察位注记行 | 源=..\..\docs\research-dept-charter.md §一-3/§四（patrol 判据=调研部台账 >7 天无新增且无观察位注记=黄牌）；执行留痕=TECH §九 对应行；**首扫毕 2026-09-27 r219（Omniverse+Siemens 双源·基准面 v1.1 刷新·两 M 债核销）·下窗=2026-10-04 周日** | open |
 | T-FV-141 | 自驱提案轨常设锚（P-2026-09-28-02① 创新提案轨·每窗周轮演化日窗 ≥1 自驱提案·三句式判据先立 ≤3 问·判负留痕合法·无需 CEO 令）：**首件 P3-001 已交 r232（本窗满额）**·下窗=2026-10-04 周日演化日窗出下一条·连续两周零提案=值守轮点名催供·首回访 2026-10-05 周轮 | 源=ledger P-2026-09-28-02 行+mandate v2.7 优先级6（Tools/devloop/iteration_prompt.txt）·留痕=TECH §九 自驱提案行 | open |
+| T-FV-142 | 俯视角转向批（CEO 决策令 09-28 ~10:xx P0「横版侧视→2D 俯视角大世界〔星露谷〕」五件套：正交俯视角相机/200x200 tile 可滚动灰盒〔道路/建筑块/江〕/低饱和莫兰迪色板/20 个有名有职小人自动上班回家〔复用 residents-street.json 名册〕/砍文字招牌·判据=俯视角截图+可探索街区+居民在动+不崩）：施工序 S1 灰盒地图轮〔下轮首位·编辑器预算·新场景勿动 M1〕→S2 NPC 行走轮→S3 色板+砍招牌轮→S4 QA 验收轮 | 源=orders 09-28 [CEO决策·FluxVerse] 行+TECH §九 r234 行（M1 美术线冻结定谳随令·CEO 复验 F-10 翻案正体） | open |
+| T-FV-143 | QA 自验接线（qa-smoke-test-charter v1.0：每轮 commit 自验+截图证据 qa/smoke-<r>.png+log·本仓清单 7 条+三截图=俯视全景/黄昏/居民走动）：qa/ 目录随 T-FV-142 S1 首产落位·治理轮自验=scan/verify 双绿+tasks-board-check 门在案 | 源=..\..\docs\qa-smoke-test-charter.md+orders 09-28 QA 行+TECH §九 r234 行 | open |
+| T-FV-145 | Executive Protocol v1.0 本周适配（state/runbook.md <2KB 压缩+规则文件移 docs/_archive/+规则文件 ≤5 盘点〔瘦身令④〕；科学判断=check-fastpath SHA-only 快道保留〔⑦查漏领防线·成本≈0〕·落 mandate v2.9 定稿） | 源=..\..\docs\executive-protocol.md+orders 09-28 行·窗=本周 | open |
+| T-FV-146 | Self-Drive v2.0 三队列落地（state/queue/ 下 main.md ≥5+tech.md ≥10+explore.md ≥10·素材=§九 open 行+打磨池+T-FV 候选族·三线 commit 分布照常） | 源=..\..\docs\self-drive.md §1+orders 09-28 行·窗=本周 | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

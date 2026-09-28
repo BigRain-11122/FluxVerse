@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "name": "city-layout-data",
+    "version": "v0.1（Phase 0 白盒版式·CEO 令 09-28 全面开工）",
+    "provenance": "A2 调研员中途死亡，本件=主会话自其 termination summary 回收实测数据代产（诚实律）",
+    "source_of_truth": "gaming/FluxVerse/Tools/city/td-organic-data.txt（2D 1 格坐标系·单一事实来源——摆放脚本运行时直读，禁复制格点到本件·引用不复制律）"
+  },
+  "scale": {
+    "grid_to_meters": 8,
+    "status": "工作假设（Phase 0 以 AD-022 路面件实测宽定标后翻面·备选 16）",
+    "grid_extent_2d": "64x64 格 x 8m = 512x512m，与初始城判据 1:1 吻合（本日 A2 实测发现）",
+    "anchor_transform": "world_x=(gx-anchor_x)*s, world_z=(gy-anchor_y)*s",
+    "anchor": [24, 45],
+    "anchor_note": "2D 中央广场区中心(约 24,45·SHOT_PLAZA 24.5,45.5 实测) 映射为世界原点(0,0,0)=脑塔位——即 2D 中央广场=3D 脑环广场（🟡 初锚方案·Phase 0 判据帧确认）"
+  },
+  "structure_anchors": {
+    "brain_tower": { "pos": [0, 0, 0], "note": "原点·自产权 Hero 件·主径=库内模块堆叠（CEO 令 09-28 库内优先律）" },
+    "brain_ring": { "radius_m": 40, "source": "2D PLAZA 81 格（区域 x19-29,y40-50·A2 实测）", "note": "脑环广场" },
+    "three_cities": {
+      "radius_m": 180, "fan_deg": 120, "district_size_m": 100,
+      "angle_convention": "角度自 +X 起向 +Z（俯视顺时针）·center=[r*cos(a),0,r*sin(a)]",
+      "cities": [
+        { "name": "QUANT", "angle_deg": 0, "center": [180, 0, 0], "pack_family": "AD-035 办公族" },
+        { "name": "MEDIA", "angle_deg": 120, "center": [-90, 0, 155.88], "pack_family": "AD-008 夜店族" },
+        { "name": "GAME", "angle_deg": 240, "center": [-90, 0, -155.88], "pack_family": "AD-021 城镇族" }
+      ],
+      "note": "三城方位与 DESIGN 对齐=🟡 待核（角度分配 Phase 0 判据帧时与 DESIGN.md 对齐后锁定）"
+    },
+    "outer_ring": { "radius_m": 240, "note": "外环感知网边线" },
+    "chunks": { "grid": "16x16", "chunk_m": 32 }
+  },
+  "source_semantics_2d": {
+    "note": "语义摘要自 A2 实测读取（完整格点列表在源件·运行时直读；本节仅供摆放脚本理解源件结构）",
+    "road_count": 1031,
+    "road_shape": "有机对角路带（多条 2-4 格宽带·方向为主对角族）",
+    "water_count": 565,
+    "water_shape": "对角大水带 NW→SE（0,23 起→38,31 以远·A2 部分读取）",
+    "sand_count": 104,
+    "bridges_count": 96,
+    "plaza_count": 81,
+    "plaza_region": "x19-29, y40-50（=脑环位）",
+    "park_regions": ["x10-18, y51-58", "x35-41, y6-12"],
+    "trees_count": 53,
+    "starts_count": 8,
+    "shot_points": { "SHOT_PLAZA": [24.5, 45.5], "SHOT_STREET": [16.5, 31.5], "SHOT_BRIDGE": [23.5, 30.5], "note": "2D 取景点直译=3D 相机判据帧候选机位" }
+  },
+  "build_rules": {
+    "road_geometry": "8m 网格正交为骨（Synty 路件=固定宽 90° 正交模块）；有机对角带=短直段折线逼近（每 8m 段转角 <=15°）——路件铺装时以 AD-022 实测宽复核格距",
+    "water": "平面水带（InteractiveStylizedWater·参数单 §三.7）+岸线=sand 带件",
+    "bridges": "96 跨桥点位→AD-022 桥件族（Phase 0 白盒=桥板占位）",
+    "placement_script_contract": "摆放脚本运行时读 td-organic-data.txt 全量格点→按 anchor_transform 转世界坐标→按 build_rules 定序铺装（禁凭手感·禁硬编码格点）"
+  },
+  "whitebox_params": {
+    "ground_plane": "512x512m 单平面（16x16 chunk 分区材质·Phase 0 白盒=单色）",
+    "camera_tiers": {
+      "L0": { "pitch_deg": 50, "height_m": 320, "fov": 45 },
+      "L1": { "pitch_deg": 55, "height_m": 110, "fov": 45 },
+      "L2": { "pitch_deg": 60, "height_m": 24, "fov": 45 }
+    },
+    "breathing_light": "白盒脑塔 emission 呼吸脉冲·轮询 gaming/FluxVerse/world/world-events.jsonl OS_TICK 拍点（脉冲时刻=事件流拍点对账帧·参数单 §七.3）",
+    "shot_points_3d": "L0 全城帧+L1 脑环帧+L2 街景帧+SHOT_BRIDGE 桥位帧（2D 取景点直译）"
+  }
+}

@@ -65,6 +65,8 @@
 | L2 跟拍 24m | 聚光灯居民完整人形跟拍（45min 门控·台词气泡+声纹产线已备） | 年轮/台词池/声纹池 |
 
 - **万人≠全显**（P-71 万人级上限结论直承）：业界 40 年无「万人级×运行时富模拟」先例——分层摊薄是唯一解：L0/L1=密度采样投影（真实总数缩放），L2=个体聚光灯。呈现形态待 CEO 裁（§六 A/B/C）。
+- **VAT 层工程准入（波④·`R-20260928-alive3d-04`·防线二过）**：开源工具=isroooky VAT-Mass-Instancing（MIT ✓·零 Animator/SMR 运行时·成本随动画数非角色数）+UnityVATBaker（非标免费许可·Unity6+ 官方明示）——**三件皆无 2022.3/URP14 官方兼容声明⬜→闸3 实测定谳**（2022.3 锚下施工准入=引擎内实测过再上量；VATMachine 闭源 $29.99 判负）；正法五步=离线烘焙 position/normal→行式贴图（Rows Per Frame=ceil(顶点/宽)）→vertex shader 采样→per-instance 时间偏移去同步；坑=材质参数手配/frame step 丢质/IK-retarget-ragdoll 不适配/成本随动画数（同 clip 批量合 mesh）。
+- **角色/动画库内优先（CEO 令「一定要好好利用我的lowpoly资产」+波④）**：角色主源=AD-042 人物包（库内·自带 rig/动画）；动画主源=**Kaykit Character Animations 161 条 CC0**（walk/run/idle/emote/工作族全覆盖·FBX+GLTF·可入交付链·风格同 Synty 渐变图集范式🟡）——generate_motion（Mixamo rig）直挂判负（Kaykit 自有 Rig_Medium/Large·须 retarget 调优），降为真缺口补充件（缺口判定前置律）。
 - **技法定谳（波①·`R-20260928-alive3d-01`·防线二过）**：L1 行人承重=**无骨骼假动画**（位移/弹跳/朝向·A 级原语·首选）+**VAT 顶点动画**跃升档（数千级·B🟡·烘焙管线工程量·闸3 实测定谳）；**禁 Animator+SMR 群体路**（SMR 不可 instancing·A）；AnimationInstancing 判负不采（WebGL 无官方定谳）；L0 光点 <256 顶点不宜 instancing（A）→单 buffer 合批/CPU 粒子；instancing 单批 1023 上限+整组 AABB 剔除（区景档须分区批）；30fps 硬数字官方无公开=闸3 实测定谳。
 - 落 Phase：L0 密度=Phase 2；L1 行人流=Phase 2；L2 聚光灯跟拍=Phase 3（栖居面）。
 

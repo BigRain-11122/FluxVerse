@@ -62,4 +62,11 @@
 
 1. `tuanjie-cli projects create` 建 City3D（URP）——注意会自动开 GUI 编辑器实例（预热导入交该实例·收工判据=ImportWorker 归零×2+Editor.log 停摆 2 分钟）。
 2. robocopy 首批 6 包（AD-048/022/015/042/010/039·梳理 SOP·meta 随行 GUID 稳定）+ URP 材质过桥（抽件对比判据）。
-3. Phase 0 验证跑：512m 白盒骨架（脑环+单街区）+L0/L1/L2 三档相机实拍+帧率读数（WebGL 30fps 底线）+双轨截图组 → 过 CEO 复验 → Phase 1 全面开工。
+3. Phase 0 验证跑：512m 白盒骨架（脑环+单街区）+L0/L1/L2 三档相机实拍+帧率读数（WebGL 30fps 底线）+双轨截图组+**活性管道贯通件**（白盒脑塔 OS_TICK 呼吸灯·脉冲时刻=事件流拍点对账帧·§八）→ 过 CEO 复验 → Phase 1 全面开工。
+
+## 八 城市活性（CEO 令「重点研究怎么让硅基城市真正的活起来」·正典=`lowpoly3d-aliveness-plan.md`）
+
+1. **总律=真数据投影非模拟**：引擎零行为逻辑，只读消费三流（world-state.json 91KB/10s 轮询·world-events.jsonl 10s 游标增量·citizen-behavior.jsonl 1.3MB/10min 一次载入）；一切演出对应一次真实行为（禁装饰性动画律·P-41 3D 重锚表见正典 §2.2）。
+2. **群体律施工红线（波① `R-20260928-alive3d-01`·防线二过）**：禁 Animator+SkinnedMeshRenderer 群体路（SMR 不可 instancing·A）；L1 行人=无骨骼假动画首选（A 级原语）+VAT 顶点动画跃升档（数千级·闸3 实测）；L0 光点 <256 顶点不宜 instancing→单 buffer 合批/CPU 粒子；instancing 单批 1023 上限；AnimationInstancing 判负不采；skinning 坑律措辞修正=双优化失效（多线程+SIMD）非整体失效。
+3. **演出载体红线（波②③）**：**VFX Graph 禁入 WebGL 演出面**（硬要求 compute+SSBO·WebGL2 无 compute——System-Requirements 页直证+装机验证 SystemInfo.supportsComputeShaders 兜底）；**运行时 emission/着色脉冲禁用 MaterialPropertyBlock**（URP 下 MPB 掉 SRP Batcher 合批·官方 API 页直证）——正法=少量材质实例（renderer.material）+同 shader variant；一次性脉冲=脚本驱动+ParticleSystem Stop Action 自动回收+**ObjectPool 池化**（高频复用·官方池示例即粒子池）；循环待机件开 Prewarm；移动拖尾（光点过江）=Simulation Space World；粒子预算显式设 Max Particles+Ring Buffer 护栏（粒子 shader 本不走 SRP Batcher）；**街带光流=移动发光条**（Unlit+Additive+GPU Instancing·一 TRANSFER 一实例）；**路径=waypoint 队列插值**（NavMesh 判负·既定路线数据投影⇏寻路）；Splines 包（com.unity.splines·另装·2.5.2 中国档）=艺术曲线备用·装机首验；Timeline=WebGL 无平台限制记载🟡·留多轨复杂编排备用（主径维持脚本驱动）。
+4. **待 CEO 裁**：居民 3D 呈现形态 A 低模人形/B 发光生命体/C 混合双态（推荐 C·Phase 2 居民层开工前定谳）——选项详情见正典 §六。

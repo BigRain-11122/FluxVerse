@@ -26,6 +26,7 @@
 4. **数据桥**：`Tools/city/td-organic-data.txt`（2D 1 格）→ 3D 版式映射 **1 格=8–16m**（以 AD-022 路面件实测宽对齐定标·Phase 0 锁定）。
 5. **窗灯改造件（实测短板确认）**：Synty 窗=几何色块无自发光——夜景点灯（DESIGN 核心视觉）须做 emission 改造材质变体（五色律驱动）；**屋顶补强件**（俯视主视觉短板）=自制/AI 生成径。
 6. **灯光基线精化（R-04 落稿·防线二 Bloom 默认值直验✓）**：日夜循环三件套=主光锁 Sun Source 槽旋转+色温曲线（须开 useColorTemperature）+环境光 Source=Color 直写；**只烘 AO+动态物接 Light Probes（烘焙 GI 与动态太阳冲突·禁全城烘焙 GI）**；bloom=Threshold 0.9/Intensity 显式开/Scatter 0.7·性能序=关 HQ Filtering→Downscale Quarter→降 Max Iterations（默认 6）·tonemapping=Neutral；灯预算=每物体 9 灯帽（1 主+8 Additional）·WebGL 按 GLES3 16 保守·窗灯靠 emission 零实光。
+7. **地编基线精化（R-03 落稿）**：禁 Terrain 定谳确认（设计律+C 级双源负面+Synty 平面实查）+**高程触发器=±2m 连续起伏才启高程路径**；水系=**InteractiveStylizedWater**（MIT·43★·须开 Depth+Opaque Texture·装前过核验闸；官方 urp-water-system 停 preview 禁装）；地面细节定序=材质分区→路面件自带标线→decal（Screen Space·禁 DBuffer）；大世界=首期全场景进首包+additive 最稳·5000m 走 Addressables 三坑检查表（Content-Encoding/IndexedDB DataCaching/bundle 少而大）+卡顿三律（allowSceneActivation 门控+激活分帧+shader 预热）·WASM 堆上限 2048MB 流送必选。
 
 ## 四 程序化接入判定（定谳）
 

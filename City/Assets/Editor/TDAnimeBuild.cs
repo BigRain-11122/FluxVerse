@@ -6,10 +6,11 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// CEO direct order 2026-09-28 (style pivot): anime repaint build.
-// Base map = img2img repainted 64x64 city map (one big sprite, layout locked
-// from the v5 pixel map); walkers/player = cut from a 4-character anime sheet.
-// Road grid is DATA ONLY (TDWalkLib.RoadCells) - no tilemaps.
+// CEO direct order 2026-09-28 (organic city plan + zoomable camera): anime repaint v2.
+// Base map = img2img 64x64 organic street layout (snake river, spiral boulevard,
+// curved spokes - NO straight H/V grid); walkers/player = 4-character anime sheet
+// cutouts with soft foot shadows (view discipline v1). Road grid is DATA ONLY
+// (TDWalkLib.RoadCells) - no tilemaps.
 
 public static class TDAnimeBuild
 {
@@ -17,6 +18,7 @@ public static class TDAnimeBuild
     const string ArtDir = "Assets/Art/TDArt";
     const string MapPng = "Assets/Art/TDArt/anime-map.png";
     const string CharPng = "Assets/Art/TDArt/anime-chars.png";
+    const string ShadowPng = "Assets/Art/TDArt/char-shadow.png";
     const string ScenePath = "Assets/Scenes/TopDownDemo.unity";
     const float CamSize = 11.25f;
 
@@ -74,6 +76,19 @@ public static class TDAnimeBuild
         return sp;
     }
 
+    // soft ellipse at the feet, offset southwest (light NE) - view discipline v1
+    static void AttachShadow(GameObject host, Sprite sp, float charScale)
+    {
+        var go = new GameObject("Shadow");
+        go.transform.SetParent(host.transform, false);
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = sp;
+        sr.sortingOrder = 5;
+        sr.color = new Color(0f, 0f, 0f, 0.30f);
+        go.transform.localScale = new Vector3(1.0f / (sp.bounds.size.x * charScale), 0.5f / (sp.bounds.size.y * charScale), 1f);
+        go.transform.localPosition = new Vector3(-0.18f / charScale, -0.82f / charScale, 0f);
+    }
+
     static void Shot(Camera cam, int w, int h, string file)
     {
         var rt = new RenderTexture(w, h, 24);
@@ -92,7 +107,7 @@ public static class TDAnimeBuild
 
     public static void Build()
     {
-        var donePath = RepoAbs("logs", "td-anime-r1.done");
+        var donePath = RepoAbs("logs", "td-anime-r2.done");
         var result = new Dictionary<string, string> { { "result", "PASS" } };
         try
         {
@@ -120,13 +135,16 @@ public static class TDAnimeBuild
             // 2. characters
             var chars = new Sprite[4];
             for (int i = 0; i < 4; i++) chars[i] = CutChar(i);
+            ImportSprite(ShadowPng, 32, FilterMode.Bilinear);
+            var shadowSp = AssetDatabase.LoadAssetAtPath<Sprite>(ShadowPng);
+            if (shadowSp == null) throw new Exception("shadow sprite null");
 
             // 3. walkers (8, two per character variant) + player
             var walkable = TDWalkLib.RoadCells();
             var starts = new[]
             {
-                new Vector3Int(3, 14, 0), new Vector3Int(20, 46, 0), new Vector3Int(13, 30, 0), new Vector3Int(54, 20, 0),
-                new Vector3Int(30, 14, 0), new Vector3Int(48, 47, 0), new Vector3Int(13, 58, 0), new Vector3Int(60, 46, 0),
+                new Vector3Int(8, 30, 0), new Vector3Int(15, 10, 0), new Vector3Int(22, 28, 0), new Vector3Int(27, 52, 0),
+                new Vector3Int(34, 30, 0), new Vector3Int(42, 11, 0), new Vector3Int(50, 1, 0), new Vector3Int(56, 36, 0),
             };
             var rng = new System.Random(20260928);
             var wObjs = new List<GameObject>();
@@ -140,6 +158,7 @@ public static class TDAnimeBuild
                 sr.sortingOrder = 6;
                 var ch = chars[i % 4].bounds.size.y; // full-body illustration: fit to 1.8u
                 if (ch > 0.001f) go.transform.localScale = new Vector3(1.8f / ch, 1.8f / ch, 1f);
+                AttachShadow(go, shadowSp, 1.8f / ch);
                 var w = go.AddComponent<TDWalker>();
                 w.startCell = starts[i];
                 w.seed = i * 7 + 3;
@@ -154,8 +173,9 @@ public static class TDAnimeBuild
             psr.sortingOrder = 7;
             var ph = chars[3].bounds.size.y;
             if (ph > 0.001f) pgo.transform.localScale = new Vector3(1.8f / ph, 1.8f / ph, 1f);
+            AttachShadow(pgo, shadowSp, 1.8f / ph);
             pgo.AddComponent<TDPlayer>();
-            pgo.transform.position = TDWalkLib.CellCenter(new Vector3Int(30, 44, 0));
+            pgo.transform.position = TDWalkLib.CellCenter(new Vector3Int(19, 52, 0));
 
             // 4. camera
             var camGo = GameObject.Find("Main Camera");
@@ -185,24 +205,43 @@ public static class TDAnimeBuild
             var dir = RepoAbs("docs", "design");
             if (!Directory.Exists(dir)) throw new Exception("docs/design missing");
 
-            string s1 = Path.Combine(dir, "td-a1-1-street.png");
+            // batch mode cam.aspect is unreliable - clamp against the actual
+            // render resolution (1920x1080) so no shot ever shows map void.
+            Func<float, float, float, Vector3> shotPos = (x, y, size) => new Vector3(
+                Mathf.Clamp(x, size * (1920f / 1080f), TDWalkLib.MapSize - size * (1920f / 1080f)),
+                Mathf.Clamp(y, size, TDWalkLib.MapSize - size), -10f);
+
+            string s1 = Path.Combine(dir, "td-a2-1-street.png");
             cam.orthographicSize = CamSize;
-            cam.transform.position = new Vector3(32f, 36.5f, -10f);
+            cam.transform.position = shotPos(16.5f, 31.5f, CamSize);
             Shot(cam, 1920, 1080, s1);
 
-            string s2 = Path.Combine(dir, "td-a1-2-plaza-t6.png");
+            string s2 = Path.Combine(dir, "td-a2-2-plaza.png");
             for (int i = 0; i < wObjs.Count; i++) wObjs[i].transform.position = TDWalkLib.PosAt(wPaths[i], t0[i] + 6f);
+            cam.transform.position = shotPos(24.5f, 45.5f, CamSize);
             Shot(cam, 1920, 1080, s2);
 
-            string s3 = Path.Combine(dir, "td-a1-3-bridge.png");
+            string s3 = Path.Combine(dir, "td-a2-3-bridge.png");
             for (int i = 0; i < wObjs.Count; i++) wObjs[i].transform.position = TDWalkLib.PosAt(wPaths[i], t0[i]);
-            cam.transform.position = new Vector3(42.5f, 20f, -10f);
+            cam.transform.position = shotPos(23.5f, 30.5f, CamSize);
             Shot(cam, 1920, 1080, s3);
 
-            string s4 = Path.Combine(dir, "td-a1-4-overview.png");
+            string s4 = Path.Combine(dir, "td-a2-4-overview.png");
             cam.orthographicSize = 32f;
             cam.transform.position = new Vector3(32f, 32f, -10f);
             Shot(cam, 3072, 3072, s4);
+
+            string s5 = Path.Combine(dir, "td-a2-5-zoom-near.png");
+            var ppos = pgo.transform.position;
+            cam.orthographicSize = 4.5f;
+            cam.transform.position = shotPos(ppos.x, ppos.y, 4.5f);
+            Shot(cam, 1920, 1080, s5);
+
+            string s6 = Path.Combine(dir, "td-a2-6-zoom-far.png");
+            cam.orthographicSize = 18f;
+            cam.transform.position = shotPos(ppos.x, ppos.y, 18f);
+            Shot(cam, 1920, 1080, s6);
+            cam.orthographicSize = CamSize;
 
             for (int i = 0; i < wObjs.Count; i++) wObjs[i].transform.position = TDWalkLib.CellCenter(starts[i]);
 
@@ -210,14 +249,14 @@ public static class TDAnimeBuild
             result["mapBounds"] = mapSp.bounds.size.ToString();
             result["walkableCells"] = walkable.Count.ToString();
             result["walkers"] = wObjs.Count.ToString();
-            foreach (var s in new[] { s1, s2, s3, s4 })
+            foreach (var s in new[] { s1, s2, s3, s4, s5, s6 })
             {
                 var fi = new FileInfo(s);
                 if (!fi.Exists || fi.Length < 20000) throw new Exception("shot too small/missing: " + s);
                 result["shot_" + Path.GetFileName(s)] = fi.Length.ToString();
             }
             File.WriteAllText(donePath, Json(result));
-            Debug.Log("TDANIME R1 PASS map=" + mapSp.bounds.size + " walkers=8");
+            Debug.Log("TDANIME R2 PASS map=" + mapSp.bounds.size + " walkers=8 organic");
         }
         catch (Exception e)
         {
@@ -225,7 +264,7 @@ public static class TDAnimeBuild
             result["result"] = "FAIL";
             result["error"] = msg;
             File.WriteAllText(donePath, Json(result));
-            Debug.LogError("TDANIME R1 FAIL: " + msg);
+            Debug.LogError("TDANIME R2 FAIL: " + msg);
             throw;
         }
     }

@@ -30,3 +30,6 @@ watch/out/
 
 # CEO safe-cleanup quarantine 2026-09-28 (correction order: move-first, 7d observation, then delete)
 docs/_trash/
+
+# City3D 48 包资产库（2026-09-28 库内优先律施工源）——不入 FluxVerse 仓：P3D_Spike=资产中台正典位（robocopy SOP=City3D-staging/layout-report.md §三）
+City3D/Assets/lowpoly/

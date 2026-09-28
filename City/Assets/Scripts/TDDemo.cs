@@ -25,6 +25,27 @@ public static class TDWalkLib
         return set;
     }
 
+    // tileless mode (anime repaint build): the standard 64x64 road grid as data
+    public static HashSet<Vector3Int> RoadCells()
+    {
+        var set = new HashSet<Vector3Int>();
+        for (int x = 0; x < 64; x++)
+        {
+            set.Add(new Vector3Int(x, 14, 0));
+            set.Add(new Vector3Int(x, 15, 0));
+            set.Add(new Vector3Int(x, 46, 0));
+            set.Add(new Vector3Int(x, 47, 0));
+        }
+        for (int y = 0; y < 64; y++)
+        {
+            set.Add(new Vector3Int(12, y, 0));
+            set.Add(new Vector3Int(13, y, 0));
+            set.Add(new Vector3Int(54, y, 0));
+            set.Add(new Vector3Int(55, y, 0));
+        }
+        return set;
+    }
+
     public static List<Vector3Int> Path(HashSet<Vector3Int> walkable, Vector3Int from, Vector3Int to)
     {
         var result = new List<Vector3Int>();
@@ -85,7 +106,7 @@ public class TDBootstrap : MonoBehaviour
     {
         var roadsGo = GameObject.Find("TD_Roads");
         Tilemap roads = roadsGo != null ? roadsGo.GetComponent<Tilemap>() : null;
-        var walkable = TDWalkLib.CollectWalkable(roads);
+        var walkable = roads != null ? TDWalkLib.CollectWalkable(roads) : TDWalkLib.RoadCells();
         foreach (var w in Object.FindObjectsOfType<TDWalker>()) w.Init(walkable);
     }
 }

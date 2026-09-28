@@ -113,11 +113,16 @@ public class TDWalker : MonoBehaviour
     List<Vector3Int> _path;
     float _t;
     System.Random _rng;
+    SpriteRenderer _sr;
+    SpriteRenderer _shadowSr;
 
     public void Init(HashSet<Vector3Int> walkable)
     {
         _walkable = walkable;
         _rng = new System.Random(seed);
+        _sr = GetComponent<SpriteRenderer>();
+        var sh = transform.Find("Shadow");
+        if (sh != null) _shadowSr = sh.GetComponent<SpriteRenderer>();
         transform.position = TDWalkLib.CellCenter(startCell);
         NewPath();
     }
@@ -146,6 +151,10 @@ public class TDWalker : MonoBehaviour
         _t += Time.deltaTime * speed;
         transform.position = TDWalkLib.PosAt(_path, _t);
         if (_t >= _path.Count - 1) NewPath();
+        // Y-sort against buildings/trees (view discipline v1: pseudo depth)
+        int ord = 512 - Mathf.FloorToInt(transform.position.y);
+        if (_sr != null) _sr.sortingOrder = ord;
+        if (_shadowSr != null) _shadowSr.sortingOrder = ord - 1;
     }
 }
 
@@ -154,6 +163,15 @@ public class TDPlayer : MonoBehaviour
     public float speed = 4.0f;
     public float minZoom = 4.5f;
     float _zoomTarget = 11.25f;
+    SpriteRenderer _sr;
+    SpriteRenderer _shadowSr;
+
+    void Awake()
+    {
+        _sr = GetComponent<SpriteRenderer>();
+        var sh = transform.Find("Shadow");
+        if (sh != null) _shadowSr = sh.GetComponent<SpriteRenderer>();
+    }
 
     void Update()
     {
@@ -183,5 +201,9 @@ public class TDPlayer : MonoBehaviour
             float cy = Mathf.Clamp(p.y, cs, TDWalkLib.MapSize - cs);
             cam.transform.position = new Vector3(cx, cy, -10f);
         }
+        // Y-sort against buildings/trees (view discipline v1: pseudo depth)
+        int ord = 512 - Mathf.FloorToInt(p.y);
+        if (_sr != null) _sr.sortingOrder = ord;
+        if (_shadowSr != null) _shadowSr.sortingOrder = ord - 1;
     }
 }

@@ -30,6 +30,7 @@ public static class URPMaterialBridge
         if (urp != null)
         {
             urp.shadowDistance = 600f;
+            urp.supportsHDR = true; // v3 bloom 前置（HDR 依赖）
             var so = new SerializedObject(urp);
             var sp = so.FindProperty("m_MainLightShadowsSupported");
             if (sp != null) sp.boolValue = true;
@@ -109,6 +110,22 @@ public static class URPMaterialBridge
         Shot(cam, Path.Combine(shots, "B_X_bridge.png"), 50f, 30f, new Vector3(0f, 0f, -95f)); // 桥跨全貌（跨外南望·防机位入跨判例）
         Shot(cam, Path.Combine(shots, "B_X_shore.png"), 58f, 16f, new Vector3(160f, 0f, -65f));       // 长桥段水岸 WaterEdge
         Shot(cam, Path.Combine(shots, "B_X_plaza.png"), 50f, 16f, Vector3.zero);                      // 广场铺装+脑塔堆叠
+        // v3 夜档呈审帧（五色律窗灯+bloom 可见判据·俯角+38 下倾）
+        var light = UnityEngine.Object.FindObjectOfType<Light>();
+        if (light != null)
+        {
+            var dayRot = light.transform.rotation; var dayInt = light.intensity; var dayCol = light.color;
+            var dayBg = cam.backgroundColor;
+            light.transform.rotation = Quaternion.Euler(38f, 150f, 0f);
+            light.intensity = 0.3f;
+            light.color = new Color(0.45f, 0.55f, 0.9f);
+            cam.backgroundColor = new Color32(0x12, 0x1A, 0x30, 255);
+            Shot(cam, Path.Combine(shots, "B_X_night_district.png"), 55f, 60f, new Vector3(180f, 0, 0)); // QUANT 夜景金窗
+            Shot(cam, Path.Combine(shots, "B_X_night_plaza.png"), 55f, 40f, new Vector3(0, 10f, 0));
+            light.transform.rotation = dayRot; light.intensity = dayInt; light.color = dayCol;
+            cam.backgroundColor = dayBg;
+        }
+        Shot(cam, Path.Combine(shots, "B_X_props.png"), 62f, 10f, new Vector3(20f, 0f, -15f)); // 街景道具近景
         UnityEngine.Debug.Log("BRIDGE: shots3 captured");
     }
 

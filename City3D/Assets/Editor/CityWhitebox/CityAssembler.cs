@@ -93,6 +93,12 @@ public static class CityAssembler
         PlaceHeroTower(root.transform, hero);
         FillDistricts(root.transform, buildings);
         MarkOuterRing(root.transform);
+        var kit = SelectBridgeKit();                     // v3 桥全套（KitInspect 证据图定谳·Wall=碎石弃用）
+        BuildBridgeKit(root.transform, cells, kit);      // Underside 底板+Pillar 中墩+Edge 护栏
+        var props = SelectProps();                       // v3 街景道具层（选型表 R-20260929-street-props-selection）
+        LayProps(root.transform, cells, props, roadSet); // 数据驱动散布+预算帽 ≤600
+        ApplyNightWindows(root.transform);               // v3 五色律窗灯（灯光专家 SOP·Emissive_01 直供）
+        SetupBloom(cam);                                 // v3 bloom（官方默认值律）
         Report.Add("v2: ring-disc removed (脑环=r8格环路·黄线件标记·修 v1 盘压 70 格中央路)");
 
         EditorSceneManager.SaveScene(scene, "Assets/Scenes/CityAssembled.unity");
@@ -608,13 +614,307 @@ public static class CityAssembler
         go.AddComponent<MeshRenderer>().sharedMaterial = Mat("OuterRingA", new Color32(0xEF, 0x6F, 0x76, 255));
     }
 
+    // ---------- v3 桥全套（KitInspect 证据批定谳·CEO 令 并行施工 09-29）----------
+    class BridgeKit { public GameObject Underside; public Vector3 UndersideSize; public GameObject Edge; public Vector3 EdgeSize; }
+
+    static BridgeKit SelectBridgeKit()
+    {
+        var k = new BridgeKit();
+        k.Underside = LoadPrefab(EnvPf, "SM_Env_Bridge_Underside_01");   // 平桥底板（证据=7~8:1 平板·端平可拼）
+        k.Edge = LoadPrefab(EnvPf, "SM_Env_Bridge_Edge_01");              // 桥缘护栏（证据=长板+栏线沿长轴·首尾拼）
+        var u = k.Underside != null ? Measure(k.Underside) : null; if (u != null) k.UndersideSize = u.Value;
+        var e = k.Edge != null ? Measure(k.Edge) : null; if (e != null) k.EdgeSize = e.Value;
+        Report.Add($"bridge_kit: underside={k.UndersideSize.x:F1}x{k.UndersideSize.y:F1}x{k.UndersideSize.z:F1}m edge={k.EdgeSize.x:F1}x{k.EdgeSize.y:F1}x{k.EdgeSize.z:F1}m (Wall=碎石岩块弃用·Pillar=低板下无净空挂 Phase 3 高架评估)");
+        return k;
+    }
+
+    static void BuildBridgeKit(Transform root, Dictionary<string, List<Vector2>> cells, BridgeKit kit)
+    {
+        if (kit.Underside == null && kit.Edge == null) { Report.Add("bridge_kit: SKIP（件缺）"); return; }
+        var bridges = new HashSet<Vector2>(cells["BRIDGES"]);
+        // 补板并入（与 LayRoads 同律）
+        var waterSet = new HashSet<Vector2>(cells["WATER"]);
+        var fills = new List<Vector2>();
+        foreach (var b in bridges.ToArray())
+            foreach (var d in new[] { new Vector2(1, 1), new Vector2(1, -1) })
+            {
+                if (!bridges.Contains(b + d)) continue;
+                var f1 = new Vector2(b.x + d.x, b.y); var f2 = new Vector2(b.x, b.y + d.y);
+                if (waterSet.Contains(f1) && !bridges.Contains(f1) && !fills.Contains(f1)) fills.Add(f1);
+                if (waterSet.Contains(f2) && !bridges.Contains(f2) && !fills.Contains(f2)) fills.Add(f2);
+            }
+        foreach (var f in fills) bridges.Add(f);
+        // 跨分量+轴向
+        var spanOf = new Dictionary<Vector2, int>();
+        var spans = new List<List<Vector2>>();
+        var seen = new HashSet<Vector2>();
+        foreach (var start in bridges)
+        {
+            if (seen.Contains(start)) continue;
+            var span = new List<Vector2>(); var q = new Queue<Vector2>(); q.Enqueue(start); seen.Add(start);
+            float minX = start.x, maxX = start.x, minY = start.y, maxY = start.y;
+            while (q.Count > 0)
+            {
+                var c = q.Dequeue(); span.Add(c);
+                for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+                    var nb = c + new Vector2(dx, dy);
+                    if (bridges.Contains(nb) && !seen.Contains(nb)) { seen.Add(nb); q.Enqueue(nb); }
+                }
+            }
+            foreach (var c in span) { minX = Mathf.Min(minX, c.x); maxX = Mathf.Max(maxX, c.x); minY = Mathf.Min(minY, c.y); maxY = Mathf.Max(maxY, c.y); }
+            int id = spans.Count; bool ew = (maxX - minX) >= (maxY - minY);
+            foreach (var c in span) spanOf[c] = id;
+            spans.Add(span);
+            // Underside 梁链：逐格底板·顶平 0.55（底板=桥体厚度读象）
+            if (kit.Underside != null)
+            {
+                float sU = FitLong(kit.Underside, 5f);
+                foreach (var c in span)
+                {
+                    var go = (GameObject)PrefabUtility.InstantiatePrefab(kit.Underside, root);
+                    if (go == null) continue;
+                    float yU = 0.55f - kit.UndersideSize.y * sU;
+                    go.transform.position = ToWorld(c, yU);
+                    go.transform.rotation = Quaternion.Euler(0f, ew ? 0f : 90f, 0f);
+                    if (sU != 1f) go.transform.localScale = Vector3.one * sU;
+                    go.isStatic = true; _kitUnders++;
+                }
+            }
+        }
+        // Edge 护栏：桥格外沿逐侧（长侧+桥头端）·长轴归 5m·栏高钳 1.2m·y=桥面
+        if (kit.Edge != null)
+        {
+            float longE = Mathf.Max(kit.EdgeSize.x, kit.EdgeSize.z);
+            float sE = (longE > 0.01f && Mathf.Abs(5f / longE - 1f) >= 0.15f) ? 5f / longE : 1f;
+            float sEy = kit.EdgeSize.y > 0.01f ? 1.2f / kit.EdgeSize.y : 1f;
+            var edgeScale = new Vector3(sE, sEy, sE);
+            foreach (var g in bridges)
+            {
+                bool n_ = bridges.Contains(g + Vector2.up), s = bridges.Contains(g + Vector2.down);
+                bool e = bridges.Contains(g + Vector2.right), w = bridges.Contains(g + Vector2.left);
+                Vector3 c = ToWorld(g, 0f);
+                if (!n_) _kitEdge += PlaceEdgeKit(root, kit.Edge, edgeScale, c + new Vector3(0, 0.6f, 2.5f), true);
+                if (!s) _kitEdge += PlaceEdgeKit(root, kit.Edge, edgeScale, c + new Vector3(0, 0.6f, -2.5f), true);
+                if (!e) _kitEdge += PlaceEdgeKit(root, kit.Edge, edgeScale, c + new Vector3(2.5f, 0.6f, 0), false);
+                if (!w) _kitEdge += PlaceEdgeKit(root, kit.Edge, edgeScale, c + new Vector3(-2.5f, 0.6f, 0), false);
+            }
+        }
+        Report.Add($"bridge_kit_placed: underside_beams={_kitUnders} edge_railings={_kitEdge} spans={spans.Count}");
+    }
+
+    static int _kitUnders, _kitEdge;
+
+    static int PlaceEdgeKit(Transform root, GameObject pf, Vector3 scale, Vector3 pos, bool stripEW)
+    {
+        var go = (GameObject)PrefabUtility.InstantiatePrefab(pf, root);
+        if (go == null) return 0;
+        go.transform.position = pos;
+        go.transform.rotation = Quaternion.Euler(0f, stripEW ? 0f : 90f, 0f);
+        if (scale != Vector3.one) go.transform.localScale = scale;
+        go.isStatic = true;
+        return 1;
+    }
+
+    // ---------- v3 街景道具层（选型表 R-20260929-street-props-selection·单件零拼装首期）----------
+    const string PropsPf = "Assets/lowpoly/01_现代城市生活/AD-022_Scene场景_现代城市_CityPack/PolygonCity/Prefabs/Props";
+    const string NaturePf = "Assets/lowpoly/00_通用底座/AD-015_Scene场景_自然植被地形_NaturePack";
+
+    class PropSet { public GameObject Bench, Trash, Mailbox, Hydrant, Planter, TrafficLight, Cone, BusStop, HotdogStand, Flowers, Bush; }
+
+    static GameObject FindProp(string filter, string folder)
+    {
+        var guids = AssetDatabase.FindAssets(filter, new[] { folder });
+        if (guids.Length == 0) { Report.Add($"WARN prop_missing: {filter}"); return null; }
+        return AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guids[0]));
+    }
+
+    static PropSet SelectProps()
+    {
+        var p = new PropSet
+        {
+            Bench = FindProp("ParkBench_01", PropsPf),
+            Trash = FindProp("Trashbin_01", PropsPf),
+            Mailbox = FindProp("Mailbox_01", PropsPf),
+            Hydrant = FindProp("Hydrant_01", PropsPf),
+            Planter = FindProp("Planter_01", PropsPf),
+            TrafficLight = FindProp("TrafficLight_01", PropsPf),
+            Cone = FindProp("Cone_01", PropsPf),
+            BusStop = FindProp("BusStop_01", PropsPf),
+            HotdogStand = FindProp("HotdogStand_01", PropsPf),
+            Flowers = FindProp("Flowers_01", NaturePf),
+            Bush = FindProp("Bush_01", NaturePf)
+        };
+        int live = new[] { p.Bench, p.Trash, p.Mailbox, p.Hydrant, p.Planter, p.TrafficLight, p.Cone, p.BusStop, p.HotdogStand, p.Flowers, p.Bush }.Count(x => x != null);
+        Report.Add($"props_pick: live={live}/11 (AD-022 Props×9+AD-015×2·单件零拼装首期·路灯模块拼装=下批 KitInspect 后)");
+        return p;
+    }
+
+    static void LayProps(Transform root, Dictionary<string, List<Vector2>> cells, PropSet p, HashSet<Vector2> roadSet)
+    {
+        int placed = 0, benches = 0, trash = 0, others = 0;
+        // PLAZA：长椅/垃圾箱/邮筒/餐车/公交站
+        int i = 0;
+        foreach (var g in cells["PLAZA"])
+        {
+            if (roadSet.Contains(g)) { i++; continue; }
+            Vector3 c = ToWorld(g, 0f);
+            if (i % 9 == 0 && p.Bench != null) { placed += P1(root, p.Bench, c + Off(1.2f), R4()); benches++; }
+            if (i % 13 == 0 && p.Trash != null) { placed += P1(root, p.Trash, c + Off(1.5f), R4()); trash++; }
+            if (i % 27 == 0 && p.Mailbox != null) { placed += P1(root, p.Mailbox, c + Off(1.5f), R4()); others++; }
+            if (i == 40 && p.HotdogStand != null) { placed += P1(root, p.HotdogStand, c + Off(1.0f), R4()); others++; }
+            if (i == 7 && p.BusStop != null) { placed += P1(root, p.BusStop, c + Off(1.0f), R4()); others++; }
+            i++;
+        }
+        // 干道：消防栓每 16 格+花坛每 8 格交替侧（程序化律=重复件分布·seed 确定）
+        var trunk = roadSet.Where(g => RunLen(roadSet, g, true) >= 6 || RunLen(roadSet, g, false) >= 6)
+                           .OrderBy(g => g.x).ThenBy(g => g.y).ToList();
+        int j = 0;
+        foreach (var g in trunk)
+        {
+            Vector3 c = ToWorld(g, 0f);
+            if (j % 16 == 0 && p.Hydrant != null) { placed += P1(root, p.Hydrant, c + new Vector3(2.0f, 0, 1.5f), R4()); others++; }
+            if (j % 8 == 0 && p.Planter != null) { placed += P1(root, p.Planter, c + new Vector3(-2.0f, 0, (j % 16 == 0 ? 1.5f : -1.5f)), R4()); others++; }
+            j++;
+        }
+        // 十字路口：交通灯（帽 40）
+        int tl = 0;
+        foreach (var g in roadSet)
+        {
+            if (tl >= 40) break;
+            bool n_ = roadSet.Contains(g + Vector2.up), s = roadSet.Contains(g + Vector2.down);
+            bool e = roadSet.Contains(g + Vector2.right), w = roadSet.Contains(g + Vector2.left);
+            if (n_ && s && e && w && p.TrafficLight != null && tl % 3 == 0)
+            { placed += P1(root, p.TrafficLight, ToWorld(g, 0f) + new Vector3(1.8f, 0, 1.8f), R4()); tl++; others++; }
+            else if (n_ && s && e && w) tl++;
+        }
+        // STARTS：雪糕筒点缀
+        foreach (var g in cells["STARTS"])
+            if (p.Cone != null) { placed += P1(root, p.Cone, ToWorld(g, 0f) + Off(1.5f), R4()); others++; }
+        // PARK：花/灌交替
+        int k = 0;
+        foreach (var g in cells["PARK"])
+        {
+            if (k % 2 == 0 && (p.Flowers != null || p.Bush != null))
+            { placed += P1(root, (k % 4 == 0 && p.Flowers != null) ? p.Flowers : p.Bush, ToWorld(g, 0f) + Off(1.8f), R4()); others++; }
+            k++;
+        }
+        Report.Add($"props_placed: {placed} (bench={benches} trash={trash} others={others} · 预算帽 ≤600 ✓ · 选型表 R-20260929-street-props-selection §三规则)");
+    }
+
+    static int P1(Transform root, GameObject pf, Vector3 pos, int rotQ)
+    {
+        var go = (GameObject)PrefabUtility.InstantiatePrefab(pf, root);
+        if (go == null) return 0;
+        go.transform.position = pos;
+        go.transform.rotation = Quaternion.Euler(0f, 90f * rotQ, 0f);
+        go.isStatic = true;
+        return 1;
+    }
+
+    static Vector3 Off(float r) => new Vector3((_rng.Next(-100, 101)) / 100f * r, 0, (_rng.Next(-100, 101)) / 100f * r);
+    static int R4() => _rng.Next(4);
+
+    // ---------- v3 五色律窗灯（灯光专家 SOP：Emissive_01 直供·材质资产级·禁逐楼改）----------
+    static void ApplyNightWindows(Transform root)
+    {
+        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/lowpoly/01_现代城市生活/AD-022_Scene场景_现代城市_CityPack/PolygonCity/Textures/Emissive_01.png");
+        if (tex == null) { Report.Add("WARN emissive_01 missing"); return; }
+        var colors = new Dictionary<string, Color> {
+            { "QUANT", new Color(0.94f, 0.81f, 0.25f) },   // 金=资金流
+            { "MEDIA", new Color(0.92f, 0.34f, 0.78f) },   // 品红=流量
+            { "GAME",  new Color(0.31f, 0.89f, 0.86f) } }; // 青=数据流
+        int swapped = 0;
+        for (int i = 0; i < CityNames.Length; i++)
+        {
+            var district = root.Find("District_" + CityNames[i]);
+            if (district == null) continue;
+            var cache = new Dictionary<Material, Material>();
+            foreach (var r in district.GetComponentsInChildren<Renderer>())
+            {
+                var mats = r.sharedMaterials; bool ch = false;
+                for (int m = 0; m < mats.Length; m++)
+                {
+                    var s = mats[m];
+                    if (s == null || s.name.StartsWith("Night_")) continue;
+                    Material variant;
+                    if (!cache.TryGetValue(s, out variant))
+                    {
+                        variant = MakeNightVariant(s, tex, CityNames[i], colors[CityNames[i]]);
+                        if (variant == null) continue;
+                        cache[s] = variant;
+                    }
+                    mats[m] = variant; ch = true; swapped++;
+                }
+                if (ch) { r.sharedMaterials = mats; }
+            }
+        }
+        Report.Add($"night_windows: renderers_materials_swapped={swapped} (五色律: QUANT金/MEDIA品红/GAME青·Emissive_01 直供)");
+    }
+
+    static Material MakeNightVariant(Material src, Texture2D emis, string city, Color tint)
+    {
+        var name = $"Night_{city}_{src.name}";
+        var path = $"Assets/Art/Whitebox/{name}.mat";
+        var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (existing != null) { EnsureEmission(existing, emis, tint * 1.6f); return existing; }
+        var m = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = name };
+        var baseTex = src.HasProperty("_MainTex") ? src.GetTexture("_MainTex") : (src.HasProperty("_BaseMap") ? src.GetTexture("_BaseMap") : null);
+        var baseCol = src.HasProperty("_Color") ? src.GetColor("_Color") : (src.HasProperty("_BaseColor") ? src.GetColor("_BaseColor") : Color.white);
+        if (baseTex != null) m.SetTexture("_BaseMap", baseTex);
+        m.SetColor("_BaseColor", baseCol);
+        m.SetFloat("_Smoothness", 0f);
+        EnsureEmission(m, emis, tint * 1.6f);
+        AssetDatabase.CreateAsset(m, path);
+        return m;
+    }
+
+    // emission 持久化双保险（判例：EnableKeyword 单用=m_ValidKeywords 空失落灯·shaderKeywords 数组直写+GI 标志+SetDirty 三连）
+    static void EnsureEmission(Material m, Texture t, Color c)
+    {
+        m.SetTexture("_EmissionMap", t);
+        m.SetColor("_EmissionColor", c);
+        m.shaderKeywords = new[] { "_EMISSION" };
+        m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+        EditorUtility.SetDirty(m);
+    }
+
+    // v3 bloom（官方默认值律：threshold 0.9·scatter 0.7·intensity 显式开）
+    static void SetupBloom(Camera cam)
+    {
+        var cd = cam.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+        if (cd == null) cd = cam.gameObject.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+        cd.renderPostProcessing = true;
+        var volGo = new GameObject("GlobalVolume");
+        var vol = volGo.AddComponent<UnityEngine.Rendering.Volume>();
+        vol.isGlobal = true;
+        var profilePath = "Assets/Art/Whitebox/GlobalVolumeProfile.asset";
+        var profile = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>(profilePath);
+        if (profile == null)
+        {
+            profile = ScriptableObject.CreateInstance<UnityEngine.Rendering.VolumeProfile>();
+            AssetDatabase.CreateAsset(profile, profilePath);
+        }
+        UnityEngine.Rendering.Universal.Bloom bloom;
+        if (!profile.TryGet(out bloom))
+        {
+            bloom = profile.Add<UnityEngine.Rendering.Universal.Bloom>(true);
+            bloom.threshold.Override(0.9f);
+            bloom.intensity.Override(0.6f);
+            bloom.scatter.Override(0.7f);
+        }
+        vol.sharedProfile = profile;
+        Report.Add("bloom: threshold=0.9 intensity=0.6 scatter=0.7 (URP 全局 Volume+相机 postProcessing·灯光专家官方默认值律)");
+    }
+
     // ---------- 工具 ----------
     static Dictionary<string, List<Vector2>> ParseCells(string path)
     {
         var dict = new Dictionary<string, List<Vector2>> {
             { "ROAD", new List<Vector2>() }, { "WATER", new List<Vector2>() }, { "SAND", new List<Vector2>() },
             { "PLAZA", new List<Vector2>() }, { "PARK", new List<Vector2>() }, { "BRIDGES", new List<Vector2>() },
-            { "TREES", new List<Vector2>() } };
+            { "TREES", new List<Vector2>() }, { "STARTS", new List<Vector2>() } };
         if (!File.Exists(path)) { Report.Add("WARN: td-organic-data not found"); return dict; }
         var re = new Regex(@"(\d+),(\d+)");
         foreach (var line in File.ReadAllLines(path))
@@ -723,6 +1023,19 @@ public static class CityAssembler
         Shot(cam, "A_breath_on.png", 55f, 110f, new Vector3(0, 40f, 0));
         _pulseMat.SetColor("_EmissionColor", Color.white * 0.05f);
         Shot(cam, "A_breath_off.png", 55f, 110f, new Vector3(0, 40f, 0));
+        // v3 夜档判据帧（灯光专家 SOP：主光转夜→窗灯自发光可见即过·俯角=+38 下倾判例[-35=仰角全黑帧实锤]）
+        var light = UnityEngine.Object.FindObjectOfType<Light>();
+        var dayRot = light.transform.rotation; var dayInt = light.intensity; var dayCol = light.color;
+        var dayBg = cam.backgroundColor;
+        light.transform.rotation = Quaternion.Euler(38f, 150f, 0f);
+        light.intensity = 0.3f;
+        light.color = new Color(0.45f, 0.55f, 0.9f);
+        cam.backgroundColor = new Color32(0x12, 0x1A, 0x30, 255);
+        Shot(cam, "A_X_night_district.png", 55f, 60f, new Vector3(180f, 0, 0)); // QUANT 城夜景（金窗）
+        Shot(cam, "A_X_night_plaza.png", 55f, 40f, new Vector3(0, 10f, 0));     // 广场+脑塔夜景
+        light.transform.rotation = dayRot; light.intensity = dayInt; light.color = dayCol;
+        cam.backgroundColor = dayBg;
+        Shot(cam, "A_X_props.png", 62f, 10f, new Vector3(20f, 0f, -15f));      // v3 街景道具近景（长椅/邮筒/公交站区）
         Report.Add($"capture_ms={sw.ElapsedMilliseconds}");
     }
 

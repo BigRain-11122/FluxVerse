@@ -21,9 +21,15 @@ tower_main: SM_Bld_Background_Lrg_03 h=42m at_y=0
 tower_antenna: SM_Prop_Antenna_01 native_h=4.7m scale=2.98 -> 14m (AD-020)
 tower_beacon: y=59.5 (BreathingPulse 600s)
 districts: 3x16 slots placed=48
+bridge_kit: underside=5.0x0.7x5.0m edge=5.2x3.5x5.0m (Wall=碎石岩块弃用·Pillar=低板下无净空挂 Phase 3 高架评估)
+bridge_kit_placed: underside_beams=128 edge_railings=162 spans=7
+props_pick: live=11/11 (AD-022 Props×9+AD-015×2·单件零拼装首期·路灯模块拼装=下批 KitInspect 后)
+props_placed: 220 (bench=9 trash=7 others=204 · 预算帽 ≤600 ✓ · 选型表 R-20260929-street-props-selection §三规则)
+night_windows: renderers_materials_swapped=48 (五色律: QUANT金/MEDIA品红/GAME青·Emissive_01 直供)
+bloom: threshold=0.9 intensity=0.6 scatter=0.7 (URP 全局 Volume+相机 postProcessing·灯光专家官方默认值律)
 v2: ring-disc removed (脑环=r8格环路·黄线件标记·修 v1 盘压 70 格中央路)
 scene saved: Assets/Scenes/CityAssembled.unity
-assemble_ms=702
+assemble_ms=900
 calibration: 1grid=5m locked (CEO 09-28 选件搭建令·AD-022 路件 5x5m 1:1)
-capture_ms=489
+capture_ms=768
 selection_law: 全部件库内挑选（CEO 令 09-28 选件搭建令）·AI/自制生产径停

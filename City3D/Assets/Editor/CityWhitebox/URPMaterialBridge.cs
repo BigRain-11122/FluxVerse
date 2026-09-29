@@ -25,6 +25,11 @@ public static class URPMaterialBridge
         var sw = Stopwatch.StartNew();
         Directory.CreateDirectory(Path.Combine(Application.dataPath, "Art/Bridge"));
 
+        // v8 判据帧确定性律（根因修）：DayNightCycle 编辑态 tick 会在分钟级材质转换期把光 rig 覆写成北京钟实况
+        // ——v3.1 起 B_ 系日帧全是午后循环态非官方基准档。开场即禁，桥毕再开（GUI 实检=实时城光）。
+        var cyc0 = UnityEngine.Object.FindObjectOfType<DayNightCycle>();
+        if (cyc0 != null) cyc0.enabled = false;
+
         // 1) shadowDistance 调大（当前 URP 资产）
         var urp = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
         if (urp != null)
@@ -103,6 +108,9 @@ public static class URPMaterialBridge
     {
         var shots = Path.Combine(Directory.GetParent(Directory.GetParent(Application.dataPath).FullName).FullName, "City3D-staging", "shots3");
         Directory.CreateDirectory(shots);
+        var cyc = UnityEngine.Object.FindObjectOfType<DayNightCycle>();
+        if (cyc != null) cyc.enabled = false;   // v6 判据帧确定性律（桥捕获期同禁北京钟）
+        var rootGo = GameObject.Find("AssembledCity");
         Shot(cam, Path.Combine(shots, "B_L0_overview.png"), 50f, 320f, Vector3.zero);
         Shot(cam, Path.Combine(shots, "B_L1_brainring.png"), 55f, 110f, new Vector3(0, 20f, 0));
         Shot(cam, Path.Combine(shots, "B_L2_street.png"), 60f, 24f, new Vector3(180, 6, -34)); // QUANT 城街景
@@ -115,16 +123,34 @@ public static class URPMaterialBridge
         if (light != null)
         {
             var dayRot = light.transform.rotation; var dayInt = light.intensity; var dayCol = light.color;
-            var dayBg = cam.backgroundColor;
+            var dayBg = cam.backgroundColor; var dayClear = cam.clearFlags; var dayFog = RenderSettings.fog;
+            var dayFogD = RenderSettings.fogDensity; var dayFogCol = RenderSettings.fogColor;
+            var dayShad = light.shadowStrength;
+            var fillObj = GameObject.Find("SkyFill_Light");
+            var fl2 = fillObj != null ? fillObj.GetComponent<Light>() : null;
+            var fillDayInt = fl2 != null ? fl2.intensity : 0f;
+            var fillDayCol = fl2 != null ? fl2.color : Color.white;
+            if (fl2 != null) { fl2.intensity = 0.06f; fl2.color = new Color32(0x2A, 0x35, 0x50, 255); }  // v7 夜帧补光压暗转冷
+            var nfx = rootGo != null ? rootGo.transform.Find("NightFX") : null;
+            if (nfx != null) nfx.gameObject.SetActive(true);                    // v7 路灯光池层激活
             light.transform.rotation = Quaternion.Euler(38f, 150f, 0f);
-            light.intensity = 0.3f;
-            light.color = new Color(0.45f, 0.55f, 0.9f);
+            light.intensity = 0.18f;                                             // v7 月光档
+            light.color = new Color32(0xA9, 0xC2, 0xE8, 255);                     // v7 冷月光
+            light.shadowStrength = 0.95f;                                              // v6 夜帧阴影提亮保剪影
+            cam.clearFlags = CameraClearFlags.SolidColor;                              // v6 夜帧实底天（程序化天空盒白昼读法判负）
             cam.backgroundColor = new Color32(0x12, 0x1A, 0x30, 255);
+            RenderSettings.fog = true;                                                // v7 夜帧极淡冷雾
+            RenderSettings.fogColor = new Color32(0x0E, 0x16, 0x26, 255);
+            RenderSettings.fogDensity = 0.0008f;
+            if (rootGo != null) CityAssembler.ApplyNightWindows(rootGo.transform);    // v6 五色律窗灯（桥夜帧自换装·可逆）
             Shot(cam, Path.Combine(shots, "B_X_night_district.png"), 55f, 60f, new Vector3(180f, 0, 0)); // QUANT 夜景金窗
             Shot(cam, Path.Combine(shots, "B_X_night_plaza.png"), 55f, 40f, new Vector3(0, 10f, 0));
             Shot(cam, Path.Combine(shots, "B_X_night_street.png"), 60f, 26f, new Vector3(90f, 0, 0));    // QUANT 引道街灯近景
-            light.transform.rotation = dayRot; light.intensity = dayInt; light.color = dayCol;
-            cam.backgroundColor = dayBg;
+            if (rootGo != null) CityAssembler.RestoreDayWindows(rootGo.transform);    // v6 回归日材质
+            if (nfx != null) nfx.gameObject.SetActive(false);                   // v7 光池层归关
+            if (fl2 != null) { fl2.intensity = fillDayInt; fl2.color = fillDayCol; }
+            light.transform.rotation = dayRot; light.intensity = dayInt; light.color = dayCol; light.shadowStrength = dayShad;
+            cam.backgroundColor = dayBg; cam.clearFlags = dayClear; RenderSettings.fog = dayFog; RenderSettings.fogDensity = dayFogD; RenderSettings.fogColor = dayFogCol;
         }
         Shot(cam, Path.Combine(shots, "B_X_props.png"), 62f, 10f, new Vector3(20f, 0f, -15f)); // 街景道具近景
         // v4 行人位移证明（活性判据律：两帧同机位·2.5s 推进·位移可辨=居民在动）
@@ -132,6 +158,7 @@ public static class URPMaterialBridge
         Shot(cam, Path.Combine(shots, "B_X_walkers_t0.png"), 55f, 60f, new Vector3(0f, 0f, 0f));
         foreach (var wk in walkers) wk.Advance(2.5f);
         Shot(cam, Path.Combine(shots, "B_X_walkers_t2.png"), 55f, 60f, new Vector3(0f, 0f, 0f));
+        if (cyc != null) cyc.enabled = true;   // v6 捕获毕重开（GUI 实检=北京钟实时城光）
         UnityEngine.Debug.Log("BRIDGE: shots3 captured");
     }
 

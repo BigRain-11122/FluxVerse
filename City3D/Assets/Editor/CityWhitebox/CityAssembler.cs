@@ -27,10 +27,11 @@ public static class CityAssembler
     const string EnvPf = "Assets/lowpoly/01_现代城市生活/AD-022_Scene场景_现代城市_CityPack/PolygonCity/Prefabs/Environments";
     const string ScifiBldPf = "Assets/lowpoly/03_科幻/AD-018_Scene场景_赛博科幻城_SciFiCity/PolygonSciFiCity/Prefabs/Buildings";
     const string SpacePropPf = "Assets/lowpoly/03_科幻/AD-020_Scene场景_太空飞船_SciFiSpace/PolygonSciFiSpace/Prefabs/Props";
+    const string VehPf = "Assets/lowpoly/01_现代城市生活/AD-022_Scene场景_现代城市_CityPack/PolygonCity/Prefabs/Vehicles";
 
     static string FVRoot => Directory.GetParent(Directory.GetParent(Application.dataPath).FullName).FullName;
     static string Staging => Path.Combine(FVRoot, "City3D-staging");
-    static string Shots => Path.Combine(Staging, "shots2");
+    static string Shots => Path.Combine(Staging, "shots4");
 
     static readonly List<string> Report = new List<string>();
     static Material _pulseMat;
@@ -52,25 +53,42 @@ public static class CityAssembler
         var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
         var root = new GameObject("AssembledCity");
 
+        // P2 官方基准档（Top1 施工案·AD-022 demo 提取=official-baseline.md·禁猜参）：
+        // 默认程序化天空盒+Skybox 环境光+暖白主光 1.2#FFF4D6@仰50/方212+软影强度0.8（官方城 demo 无 Volume 后处理=轻栈实证）
         var light = UnityEngine.Object.FindObjectOfType<Light>();
         if (light != null)
         {
             light.type = LightType.Directional;
-            light.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-            light.intensity = 1.15f;
+            light.transform.rotation = Quaternion.Euler(50f, 212.23f, 0f);
+            light.intensity = 1.2f;
+            light.color = new Color32(0xFF, 0xF4, 0xD6, 255);
             light.shadows = LightShadows.Soft;
+            light.shadowStrength = 0.8f;
         }
+        // v6 官方补光档（暗部保有量律：阴影面亮度 0.35-0.45 目标·判据帧 0=crush 判负；AD-048 fill 0.27/AD-015 fill 0.24 家族实证）
+        var fillGo = new GameObject("SkyFill_Light"); fillGo.transform.SetParent(root.transform);
+        var fill = fillGo.AddComponent<Light>();
+        fill.type = LightType.Directional;
+        fill.transform.rotation = Quaternion.Euler(38f, 32f, 0f);   // 主光 212° 反向位
+        fill.intensity = 0.12f;   // v8 0.25→0.12（官方城 demo 补光=0 基线·0.25 无影灯手术室判例·留 0.12 低语档保暗部）
+        fill.color = new Color32(0x99, 0xB0, 0xE7, 255);
+        fill.shadows = LightShadows.None;
         var cam = Camera.main;
-        cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color32(0x8F, 0xCD, 0xE8, 255);
+        cam.clearFlags = CameraClearFlags.Skybox;
+        var defSky = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Skybox.mat");
+        if (defSky != null) RenderSettings.skybox = defSky;
+        RenderSettings.fog = true;                                    // L0 320m 大气透视 PoC（官方城 demo 无雾·赛博城 fog 先例=家族内合法·判据帧双验后定）
+        RenderSettings.fogMode = FogMode.ExponentialSquared;
+        RenderSettings.fogColor = new Color32(0xA9, 0xC2, 0xD6, 255);
+        RenderSettings.fogDensity = 0.0015f;  // v7 定谳（v6 0.004@320m=漂白灾难判例·v5 0.0012 近界·0.0015=远处 ~30% 雾量）
         cam.fieldOfView = 45f;
 
-        // 地面（512m 城域画布·版本核心=320m 居中）
+        // 地面（v7 800m 画布·城核 320m 居中——L0 判据帧世界边缘露底判负修）
         var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
         ground.name = "Ground"; ground.transform.SetParent(root.transform);
-        ground.transform.localScale = new Vector3(512f, 0.2f, 512f);
+        ground.transform.localScale = new Vector3(800f, 0.2f, 800f);
         ground.transform.position = Vector3.down * 0.1f;
-        ground.GetComponent<Renderer>().sharedMaterial = Mat("Ground", new Color32(0xC2, 0xBD, 0xB3, 255), "Universal Render Pipeline/Lit"); // 浅混凝土色+Lit 收影（防与路件沥青灰同色互吃）
+        ground.GetComponent<Renderer>().sharedMaterial = Mat("Ground", new Color32(0xB4, 0xAE, 0xA3, 255), "Universal Render Pipeline/Lit"); // v6 降明度 8（判据帧过曝白判负·浅混凝土+Lit 收影）
 
         var cells = ParseCells(Path.Combine(FVRoot, "Tools/city/td-organic-data.txt"));
         Report.Add($"cells: ROAD={cells["ROAD"].Count} WATER={cells["WATER"].Count} TREES={cells["TREES"].Count} PLAZA={cells["PLAZA"].Count}");
@@ -92,18 +110,22 @@ public static class CityAssembler
         LayTrees(root.transform, cells, trees);
         PlaceHeroTower(root.transform, hero);
         FillDistricts(root.transform, buildings);
-        MarkOuterRing(root.transform);
+        Report.Add("p0: L_OuterRing 移除（Top1 净空批·调试红圈判负·外环感知网改 Phase 2 风格化件再议）");
         var kit = SelectBridgeKit();                     // v3 桥全套（KitInspect 证据图定谳·Wall=碎石弃用）
         BuildBridgeKit(root.transform, cells, kit);      // Underside 底板+Pillar 中墩+Edge 护栏
         var props = SelectProps();                       // v3 街景道具层（选型表 R-20260929-street-props-selection）
         LayProps(root.transform, cells, props, roadSet); // 数据驱动散布+预算帽 ≤600
         LayStreetLamps(root.transform, roadSet);         // v3.1 路灯三件拼装（灯证据批定谳）
+        LaySidewalks(root.transform, cells, roadSet);    // v6 人行道路缘+地面语言层（AD-022 Sidewalk/Grass 族）
+        LayParkedCars(root.transform, roadSet);          // v6 停车层（AD-022 Vehicles×8·街面生命感）
+        DressRoofs(root.transform);                      // v6 屋顶 dress 层（Roof_Aircon/SatDish/Vents/Billboard·Top1 D2 细节律）
+        BuildNightGlow(root.transform);                 // v7 夜帧光池层（路灯地面暖光斑·默认关·夜帧激活）
         LayResidents(root.transform, cells, roadSet);    // v4 L1 行人层（活性 Phase 1·真数据分区活动映射）
         foreach (var wk in Walkers) wk.Advance(wk.GetInstanceID() % 7 * 6f); // 建时确定性散布（免全聚起点·同帧位移证明留 Advance 余量）
-        ApplyNightWindows(root.transform);               // v3 五色律窗灯（灯光专家 SOP·Emissive_01 直供）
-        SetupBloom(cam);                                 // v3 bloom（官方默认值律·v3.1 intensity 0.9）
+        SetupBloom(cam);                                 // v3 bloom（官方默认值律·v3.1 intensity 0.9·五色律窗灯改由 CaptureAll 夜帧换装·v6）
         var cycle = light.gameObject.AddComponent<DayNightCycle>(); // v3.1 日夜色轮三件套（ExecuteAlways·北京时间）
         cycle.sun = light;
+        cycle.enabled = false; // P2 判据帧确定性律：捕获期禁北京钟驱动（否则 ExecuteAlways 编辑态 tick 覆写基准档光 rig）——CaptureAll 尾重开=GUI 实检呈实时城光
         Report.Add("daynight_cycle: attached（ExecuteAlways·北京钟驱动仰角/强度/色温+环境光 Flat+天色随动）");
         Report.Add("v2: ring-disc removed (脑环=r8格环路·黄线件标记·修 v1 盘压 70 格中央路)");
 
@@ -394,7 +416,9 @@ public static class CityAssembler
         var mesh = QuadMesh(cells["WATER"], new Color32(0x4F, 0xA0, 0xC8, 255), 2.5f);
         var go = new GameObject("L_Water"); go.transform.SetParent(root.transform);
         go.AddComponent<MeshFilter>().sharedMesh = mesh;
-        var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = Mat("WaterA", new Color32(0x4F, 0xA0, 0xC8, 255));
+        var wmat = Mat("WaterA", new Color32(0x3E, 0x7F, 0xA8, 255), "Universal Render Pipeline/Lit"); // P2：Unlit→Lit（受光受雾受环境光）·v8 深青蓝（街景「蓝色身份危机」=饱和蓝读作铺装判负）
+        if (wmat.HasProperty("_Smoothness")) wmat.SetFloat("_Smoothness", 0.55f);   // v8 0.35→0.55（日光 glint=水可读性）
+        var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = wmat;
         Report.Add($"water_quads: {cells["WATER"].Count}");
     }
 
@@ -406,7 +430,9 @@ public static class CityAssembler
         var sandMesh = QuadMesh(sand, new Color32(0xD8, 0xC9, 0x9E, 255), 2.5f);
         var sg = new GameObject("L_Sand"); sg.transform.SetParent(root.transform);
         sg.AddComponent<MeshFilter>().sharedMesh = sandMesh;
-        sg.AddComponent<MeshRenderer>().sharedMaterial = Mat("SandA", new Color32(0xD8, 0xC9, 0x9E, 255));
+        var smat = Mat("SandA", new Color32(0xD8, 0xC9, 0x9E, 255), "Universal Render Pipeline/Lit"); // P2：Unlit→Lit 同律
+        if (smat.HasProperty("_Smoothness")) smat.SetFloat("_Smoothness", 0f);
+        sg.AddComponent<MeshRenderer>().sharedMaterial = smat;
 
         var live = fam.Straights.Where(s => s != null).ToArray();
         float scale = live.Length > 0 ? FitLong(live[0], 5f) : 1f;
@@ -511,6 +537,8 @@ public static class CityAssembler
             var go = (GameObject)PrefabUtility.InstantiatePrefab(pool[_rng.Next(pool.Count)], root);
             if (go == null) continue;
             go.transform.position = ToWorld(g, 0f);
+            go.transform.rotation = Quaternion.Euler(0f, _rng.Next(4) * 90f, 0f);                      // P3 树体律：变尺度+变朝向（反程序味·Top1 D2）
+            go.transform.localScale = Vector3.one * (0.8f + 0.45f * (float)_rng.NextDouble());
             go.isStatic = true; n++;
         }
         Report.Add($"trees_placed: {n}/{cells["TREES"].Count}");
@@ -759,32 +787,43 @@ public static class CityAssembler
 
     static void LayProps(Transform root, Dictionary<string, List<Vector2>> cells, PropSet p, HashSet<Vector2> roadSet)
     {
+        // v6 密度升档局部件（选型表 ★ 件直供·P3 D1 密度配比律）
+        var picnic = LoadPrefab(PropsPf, "SM_Prop_PicnicTable_01");
+        var table = LoadPrefab(PropsPf, "SM_Prop_Table_02");
+        var umb = LoadPrefab(PropsPf, "SM_Prop_Umbrella_01");
+        var meter = LoadPrefab(PropsPf, "SM_Prop_ParkingMeter_01");
+        var manhole = LoadPrefab(PropsPf, "SM_Prop_Manhole_01");
+        var signStop = LoadPrefab(PropsPf, "SM_Prop_Sign_Stop_01");
         int placed = 0, benches = 0, trash = 0, others = 0;
-        // PLAZA：长椅/垃圾箱/邮筒/餐车/公交站
+        // PLAZA：长椅/垃圾箱/邮筒/餐车/公交站/野餐桌/咖啡座（v6 密度×3）
         int i = 0;
         foreach (var g in cells["PLAZA"])
         {
             if (roadSet.Contains(g)) { i++; continue; }
             Vector3 c = ToWorld(g, 0f);
-            if (i % 9 == 0 && p.Bench != null) { placed += P1(root, p.Bench, c + Off(1.2f), R4()); benches++; }
-            if (i % 13 == 0 && p.Trash != null) { placed += P1(root, p.Trash, c + Off(1.5f), R4()); trash++; }
-            if (i % 27 == 0 && p.Mailbox != null) { placed += P1(root, p.Mailbox, c + Off(1.5f), R4()); others++; }
+            if (i % 3 == 0 && p.Bench != null) { placed += P1(root, p.Bench, c + Off(1.2f), R4()); benches++; }
+            if (i % 6 == 0 && p.Trash != null) { placed += P1(root, p.Trash, c + Off(1.5f), R4()); trash++; }
+            if (i % 12 == 0 && p.Mailbox != null) { placed += P1(root, p.Mailbox, c + Off(1.5f), R4()); others++; }
+            if (i % 14 == 0 && i > 0 && picnic != null) { placed += P1(root, picnic, c + Off(1.5f), R4()); others++; }
+            if (i % 20 == 0 && i > 0 && table != null && umb != null) { placed += P1(root, table, c + Off(2.0f), R4()); placed += P1(root, umb, c + Off(2.0f) + new Vector3(0.8f, 0, 0.8f), R4()); others += 2; }
             if (i == 40 && p.HotdogStand != null) { placed += P1(root, p.HotdogStand, c + Off(1.0f), R4()); others++; }
             if (i == 7 && p.BusStop != null) { placed += P1(root, p.BusStop, c + Off(1.0f), R4()); others++; }
             i++;
         }
-        // 干道：消防栓每 16 格+花坛每 8 格交替侧（程序化律=重复件分布·seed 确定）
+        // 干道：消防栓/花坛/停车计时器/井盖（v6 密度升档）
         var trunk = roadSet.Where(g => RunLen(roadSet, g, true) >= 6 || RunLen(roadSet, g, false) >= 6)
                            .OrderBy(g => g.x).ThenBy(g => g.y).ToList();
         int j = 0;
         foreach (var g in trunk)
         {
             Vector3 c = ToWorld(g, 0f);
-            if (j % 16 == 0 && p.Hydrant != null) { placed += P1(root, p.Hydrant, c + new Vector3(2.0f, 0, 1.5f), R4()); others++; }
-            if (j % 8 == 0 && p.Planter != null) { placed += P1(root, p.Planter, c + new Vector3(-2.0f, 0, (j % 16 == 0 ? 1.5f : -1.5f)), R4()); others++; }
+            if (j % 12 == 0 && p.Hydrant != null) { placed += P1(root, p.Hydrant, c + new Vector3(2.0f, 0, 1.5f), R4()); others++; }
+            if (j % 5 == 0 && p.Planter != null) { placed += P1(root, p.Planter, c + new Vector3(-2.0f, 0, (j % 12 == 0 ? 1.5f : -1.5f)), R4()); others++; }
+            if (j % 15 == 0 && j > 0 && meter != null) { placed += P1(root, meter, c + new Vector3(1.6f, 0, -1.8f), R4()); others++; }
+            if (j % 24 == 0 && manhole != null) { placed += P1(root, manhole, c + Off(1.2f), R4()); others++; }
             j++;
         }
-        // 十字路口：交通灯（帽 40）
+        // 十字路口：交通灯（帽 40）+ 停车牌点缀
         int tl = 0;
         foreach (var g in roadSet)
         {
@@ -793,20 +832,22 @@ public static class CityAssembler
             bool e = roadSet.Contains(g + Vector2.right), w = roadSet.Contains(g + Vector2.left);
             if (n_ && s && e && w && p.TrafficLight != null && tl % 3 == 0)
             { placed += P1(root, p.TrafficLight, ToWorld(g, 0f) + new Vector3(1.8f, 0, 1.8f), R4()); tl++; others++; }
-            else if (n_ && s && e && w) tl++;
+            else if (n_ && s && e && w)
+            { tl++; if (tl % 7 == 0 && signStop != null) { placed += P1(root, signStop, ToWorld(g, 0f) + new Vector3(-1.8f, 0, -1.8f), R4()); others++; } }
         }
         // STARTS：雪糕筒点缀
         foreach (var g in cells["STARTS"])
             if (p.Cone != null) { placed += P1(root, p.Cone, ToWorld(g, 0f) + Off(1.5f), R4()); others++; }
-        // PARK：花/灌交替
+        // PARK：花/灌逐格+野餐桌（v6 密度升档）
         int k = 0;
         foreach (var g in cells["PARK"])
         {
-            if (k % 2 == 0 && (p.Flowers != null || p.Bush != null))
-            { placed += P1(root, (k % 4 == 0 && p.Flowers != null) ? p.Flowers : p.Bush, ToWorld(g, 0f) + Off(1.8f), R4()); others++; }
+            if (p.Flowers != null || p.Bush != null)
+            { placed += P1(root, (k % 3 == 0 && p.Flowers != null) ? p.Flowers : p.Bush, ToWorld(g, 0f) + Off(1.8f), R4()); others++; }
+            if (k % 13 == 0 && k > 0 && picnic != null) { placed += P1(root, picnic, ToWorld(g, 0f) + Off(2.2f), R4()); others++; }
             k++;
         }
-        Report.Add($"props_placed: {placed} (bench={benches} trash={trash} others={others} · 预算帽 ≤600 ✓ · 选型表 R-20260929-street-props-selection §三规则)");
+        Report.Add($"props_placed: {placed} (bench={benches} trash={trash} others={others} · v6 密度×3 升档 · 选型表 R-20260929-street-props-selection §三规则)");
     }
 
     static int P1(Transform root, GameObject pf, Vector3 pos, int rotQ)
@@ -999,8 +1040,12 @@ public static class CityAssembler
     }
 
     // ---------- v3 五色律窗灯（灯光专家 SOP：Emissive_01 直供·材质资产级·禁逐楼改）----------
-    static void ApplyNightWindows(Transform root)
+    static readonly Dictionary<Renderer, Material[]> _dayMats = new Dictionary<Renderer, Material[]>();  // v6 日帧材质还原账（夜帧换装可逆律）
+
+    // v6 公开静态（桥捕获夜帧共用）+可逆换装：夜帧专用五色律窗灯·RestoreDayWindows 回归日材质（存盘态=零发光窗）
+    public static void ApplyNightWindows(Transform root)
     {
+        _dayMats.Clear();
         var tex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/lowpoly/01_现代城市生活/AD-022_Scene场景_现代城市_CityPack/PolygonCity/Textures/Emissive_01.png");
         if (tex == null) { Report.Add("WARN emissive_01 missing"); return; }
         var colors = new Dictionary<string, Color> {
@@ -1015,6 +1060,7 @@ public static class CityAssembler
             var cache = new Dictionary<Material, Material>();
             foreach (var r in district.GetComponentsInChildren<Renderer>())
             {
+                if (!_dayMats.ContainsKey(r)) _dayMats[r] = r.sharedMaterials;   // v6 还原账（换装前原值）
                 var mats = r.sharedMaterials; bool ch = false;
                 for (int m = 0; m < mats.Length; m++)
                 {
@@ -1035,19 +1081,28 @@ public static class CityAssembler
         Report.Add($"night_windows: renderers_materials_swapped={swapped} (五色律: QUANT金/MEDIA品红/GAME青·Emissive_01 直供)");
     }
 
+    // v6 夜帧换装可逆律·日材质回归（CaptureAll/桥 夜帧后必调·存盘零发光窗）
+    public static void RestoreDayWindows(Transform root)
+    {
+        int restored = 0;
+        foreach (var kv in _dayMats) { if (kv.Key != null) { kv.Key.sharedMaterials = kv.Value; restored++; } }
+        _dayMats.Clear();
+        Report.Add($"day_windows_restored: renderers={restored}（日帧回归原生材质）");
+    }
+
     static Material MakeNightVariant(Material src, Texture2D emis, string city, Color tint)
     {
         var name = $"Night_{city}_{src.name}";
         var path = $"Assets/Art/Whitebox/{name}.mat";
         var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
-        if (existing != null) { EnsureEmission(existing, emis, tint * 2.2f); return existing; }
+        if (existing != null) { EnsureEmission(existing, emis, tint * 2.8f); return existing; }   // v7 2.2→2.8（bloom headroom）
         var m = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = name };
         var baseTex = src.HasProperty("_MainTex") ? src.GetTexture("_MainTex") : (src.HasProperty("_BaseMap") ? src.GetTexture("_BaseMap") : null);
         var baseCol = src.HasProperty("_Color") ? src.GetColor("_Color") : (src.HasProperty("_BaseColor") ? src.GetColor("_BaseColor") : Color.white);
         if (baseTex != null) m.SetTexture("_BaseMap", baseTex);
         m.SetColor("_BaseColor", baseCol);
         m.SetFloat("_Smoothness", 0f);
-        EnsureEmission(m, emis, tint * 2.2f);
+        EnsureEmission(m, emis, tint * 2.8f);
         AssetDatabase.CreateAsset(m, path);
         return m;
     }
@@ -1082,10 +1137,221 @@ public static class CityAssembler
         if (!profile.TryGet(out bloom)) bloom = profile.Add<UnityEngine.Rendering.Universal.Bloom>(true);
         // 强制覆写（判例：profile=持久资产·TryGet 命中旧件后只在创建时设值=旧值永不更新）
         bloom.threshold.Override(0.9f);
-        bloom.intensity.Override(0.9f);   // v3.1 调优（判例：0.6 光晕弱·夜帧窗灯边缘过硬）
+        bloom.intensity.Override(1.2f);   // v7 0.9→1.2（夜帧光晕升档·bloom 链批捕获疑断悬案并测）
         bloom.scatter.Override(0.7f);
         vol.sharedProfile = profile;
-        Report.Add("bloom: threshold=0.9 intensity=0.9 scatter=0.7 (URP 全局 Volume+相机 postProcessing·v3.1 调优)");
+        Report.Add("bloom: threshold=0.9 intensity=1.2 scatter=0.7 (URP 全局 Volume+相机 postProcessing·v7 夜帧升档)");
+    }
+
+    // ---------- v6 P3 层（Top1 施工案·地面语言/车流/屋顶 dress·09-29 CEO 头部Top1令）----------
+
+    // 人行道路缘+地面语言层：路格开敞边铺 Sidewalk 件（实测宽窄分带）+PARK 格 Grass 满铺（L0 读作公园非空地）
+    static void LaySidewalks(Transform root, Dictionary<string, List<Vector2>> cells, HashSet<Vector2> roadSet)
+    {
+        var straight = LoadPrefab(EnvPf, "SM_Env_Sidewalk_Straight_01");
+        var grass = LoadPrefab(EnvPf, "SM_Env_Grass_01");
+        if (straight == null && grass == null) { Report.Add("sidewalks: SKIP（件缺）"); return; }
+        var b = straight != null ? Measure(straight) : null;
+        float w = b != null ? Mathf.Min(b.Value.x, b.Value.z) : 5f;
+        bool strip = w < 3f;                                  // 窄件=贴边条 / 宽件=满格铺邻格
+        float baseRot = (b != null && b.Value.z > b.Value.x) ? 90f : 0f;   // 件原生长轴归正
+        var occupied = new HashSet<Vector2>();
+        foreach (var k in cells.Keys) foreach (var c in cells[k]) occupied.Add(c);
+        int placed = 0, skipped = 0, grassed = 0;
+        if (straight != null)
+        {
+            // v7 建筑足迹避让账（District 子件世界 bounds+2m·人行道禁压楼）
+            var blds = new List<UnityEngine.Rect>();
+            foreach (var city in CityNames)
+            {
+                var dis = root.Find("District_" + city);
+                if (dis == null) continue;
+                foreach (Transform bld in dis.transform)
+                {
+                    var rs = bld.GetComponentsInChildren<Renderer>();
+                    if (rs.Length == 0) continue;
+                    var bb = rs[0].bounds;
+                    foreach (var r in rs) bb.Encapsulate(r.bounds);
+                    blds.Add(UnityEngine.Rect.MinMaxRect(bb.min.x - 2f, bb.min.z - 2f, bb.max.x + 2f, bb.max.z + 2f));
+                }
+            }
+            bool InBld(Vector3 w) { foreach (var rc in blds) if (rc.Contains(new Vector2(w.x, w.z))) return true; return false; }
+            foreach (var g in roadSet)
+            {
+                if (placed >= 400) break;                    // v7 帽 600→400（v6 判据帧蓝铺装淹没路网判负）
+                foreach (var d in new[] { Vector2.up, Vector2.down, Vector2.left, Vector2.right })
+                {
+                    var nb = g + d;
+                    if (occupied.Contains(nb) || roadSet.Contains(nb)) { skipped++; continue; }
+                    if (placed >= 400) break;
+                    Vector3 c3 = ToWorld(g, 0f);
+                    Vector3 dir3 = new Vector3(d.x, 0, d.y);
+                    Vector3 wp = strip ? c3 + dir3 * 2.5f : c3 + dir3 * 5f;
+                    if (InBld(wp)) { skipped++; continue; }   // v7 建筑足迹避让
+                    var go = (GameObject)PrefabUtility.InstantiatePrefab(straight, root);
+                    if (go == null) continue;
+                    go.transform.position = wp;
+                    go.transform.rotation = Quaternion.Euler(0f, baseRot + (d.x != 0 ? 90f : 0f), 0f);
+                    go.isStatic = true; placed++;
+                }
+            }
+        }
+        if (grass != null)
+        {
+            foreach (var g in cells["PARK"])
+            {
+                if (roadSet.Contains(g)) continue;
+                var go = (GameObject)PrefabUtility.InstantiatePrefab(grass, root);
+                if (go == null) continue;
+                go.transform.position = ToWorld(g, 0f);
+                go.transform.rotation = Quaternion.Euler(0f, 90f * _rng.Next(4), 0f);
+                go.isStatic = true; grassed++;
+            }
+        }
+        Report.Add($"sidewalks: placed={placed} skipped_edges={skipped} mode={(strip ? "edge-strip" : "full-tile")} piece_w={w:F2}m | park_grass={grassed}");
+    }
+
+    // 停车层：干道缘侧停泊（AD-022 Vehicles×8·确定性选车·空间哈希序防偏聚）
+    static void LayParkedCars(Transform root, HashSet<Vector2> roadSet)
+    {
+        string[] names = { "SM_Veh_Car_Sedan_01", "SM_Veh_Car_Small_01", "SM_Veh_Car_Medium_01", "SM_Veh_Car_Taxi_01", "SM_Veh_Car_Van_01", "SM_Veh_Car_Muscle_01", "SM_Veh_Car_Police_01", "SM_Veh_Car_Ambo_01" };
+        var pool = names.Select(n => LoadPrefab(VehPf, n)).Where(x => x != null).ToArray();
+        if (pool.Length == 0) { Report.Add("parked_cars: SKIP（件缺）"); return; }
+        var trunk = roadSet.Where(g => RunLen(roadSet, g, true) >= 6 || RunLen(roadSet, g, false) >= 6)
+                           .OrderBy(g => (g.x * 73856093f) % 997f + (g.y * 19349663f) % 997f).ToList();
+        int placed = 0, k = 0;
+        foreach (var g in trunk)
+        {
+            if (placed >= 120) break;                      // v7 80→120（判据帧街面车流密度升档）
+            if (k % 4 != 0) { k++; continue; }
+            k++;
+            bool ew = RunLen(roadSet, g, true) >= RunLen(roadSet, g, false);
+            Vector3 c = ToWorld(g, 0f);
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(pool[_rng.Next(pool.Length)], root);
+            if (go == null) continue;
+            float side = (placed % 2 == 0) ? 1f : -1f;
+            go.transform.position = c + (ew ? new Vector3(0, 0, side * 1.6f) : new Vector3(side * 1.6f, 0, 0));
+            go.transform.rotation = Quaternion.Euler(0f, ew ? (side > 0 ? 0f : 180f) : (side > 0 ? 90f : 270f), 0f);
+            go.isStatic = true; placed++;
+        }
+        Report.Add($"parked_cars: {placed}/120 (Vehicles×{pool.Length}·缘侧 1.6m·v7 密度升档)");
+    }
+
+    // 屋顶 dress 层（Top1 D2 细节律：屋顶 clutter=「有人住」vs「沙盘」分水岭·AD-022 屋顶件直供）
+    static void DressRoofs(Transform root)
+    {
+        var ac1 = LoadPrefab(PropsPf, "SM_Prop_Roof_Aircon_01");
+        var ac2 = LoadPrefab(PropsPf, "SM_Prop_Roof_Aircon_02");
+        var dish = LoadPrefab(PropsPf, "SM_Prop_SatDish_01");
+        var vent = LoadPrefab(PropsPf, "SM_Prop_Vents_Straight_01");
+        var bbRoof = LoadPrefab(PropsPf, "SM_Prop_Billboard_Roof_01");
+        var bbSigns = new[] { "SM_Prop_Billboard_Sign_01", "SM_Prop_Billboard_Sign_02", "SM_Prop_Billboard_Sign_03", "SM_Prop_Billboard_Sign_04", "SM_Prop_Billboard_Sign_05", "SM_Prop_Billboard_Sign_06", "SM_Prop_Billboard_Sign_07" }
+                      .Select(n => LoadPrefab(PropsPf, n)).Where(x => x != null).ToArray();
+        var bbH = bbRoof != null ? Measure(bbRoof) : null;
+        float bbTop = bbH != null ? bbH.Value.y : 3.2f;
+        int dressed = 0, boards = 0, blds = 0;
+        foreach (var city in CityNames)
+        {
+            var district = root.Find("District_" + city);
+            if (district == null) continue;
+            foreach (Transform bld in district.transform)
+            {
+                blds++;
+                var rs = bld.GetComponentsInChildren<Renderer>();
+                if (rs.Length == 0) continue;
+                var bounds = rs[0].bounds;
+                foreach (var r in rs) bounds.Encapsulate(r.bounds);
+                float top = bounds.max.y, fx = bounds.size.x, fz = bounds.size.z;
+                if (fx < 3f || fz < 3f) continue;              // v7 顶面 ≥3m 判据（4→3·覆盖升档）
+                int n = 0;
+                foreach (var cand in new[] { ac1, ac2, dish, vent })
+                {
+                    if (cand == null || n >= 3) continue;          // v7 帽 2→3（判据帧屋顶覆盖不足判负）
+                    if (_rng.Next(2) == 0)                          // v7 概率 1/3→1/2
+                    {
+                        var go = (GameObject)PrefabUtility.InstantiatePrefab(cand, district);
+                        if (go == null) continue;
+                        go.transform.position = new Vector3(bounds.center.x + (float)((_rng.NextDouble() - 0.5) * 0.5) * fx, top, bounds.center.z + (float)((_rng.NextDouble() - 0.5) * 0.5) * fz);
+                        go.transform.rotation = Quaternion.Euler(0f, 90f * _rng.Next(4), 0f);
+                        go.isStatic = true; n++; dressed++;
+                    }
+                }
+                if (bbRoof != null && bbSigns.Length > 0 && blds % 6 == 0)
+                {
+                    var rot = Quaternion.Euler(0f, 90f * _rng.Next(4), 0f);
+                    var bgo = (GameObject)PrefabUtility.InstantiatePrefab(bbRoof, district);
+                    var sgo = (GameObject)PrefabUtility.InstantiatePrefab(bbSigns[_rng.Next(bbSigns.Length)], district);
+                    if (bgo != null && sgo != null)
+                    {
+                        bgo.transform.position = new Vector3(bounds.center.x, top, bounds.center.z);
+                        sgo.transform.position = bgo.transform.position + new Vector3(0f, bbTop, 0f);
+                        bgo.transform.rotation = rot; sgo.transform.rotation = rot;
+                        bgo.isStatic = true; sgo.isStatic = true; boards++;
+                    }
+                }
+            }
+        }
+        Report.Add($"roof_dress: buildings={blds} pieces={dressed} billboards={boards} (Roof_Aircon/SatDish/Vents/Billboard_Roof+Sign×7)");
+    }
+
+    // ---------- v7 夜帧光池层（Top1 施工案·夜景光源层次第2层：路灯光池·径向贴图程序生成）----------
+    static GameObject BuildNightGlow(Transform root)
+    {
+        var existing = root.Find("NightFX");
+        if (existing != null) { existing.gameObject.SetActive(false); return existing.gameObject; }
+        // 径向渐变贴图（64×64·alpha=(1-r)^2·程序生成零外部依赖）
+        var texPath = "Assets/Art/Whitebox/LampGlow.png";
+        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+        if (tex == null)
+        {
+            var t = new Texture2D(64, 64, TextureFormat.RGBA32, false);
+            for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++)
+            {
+                float dx = (x - 31.5f) / 31.5f, dy = (y - 31.5f) / 31.5f;
+                float a = Mathf.Clamp01(1f - Mathf.Sqrt(dx * dx + dy * dy)); a *= a; a *= 0.32f;   // v8 0.9→0.32（夜帧「暖米色白天感」根因=光池过强把地面刷亮判例）
+                t.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+            }
+            t.Apply();
+            File.WriteAllBytes(Path.Combine(Application.dataPath, "Art/Whitebox/LampGlow.png"), t.EncodeToPNG());
+            AssetDatabase.ImportAsset(texPath);
+            tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+        }
+        var matPath = "Assets/Art/Whitebox/LampGlow.mat";
+        var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+        if (mat == null)
+        {
+            mat = new Material(Shader.Find("Universal Render Pipeline/Unlit")) { name = "LampGlow" };
+            AssetDatabase.CreateAsset(mat, matPath);
+        }
+        mat.SetTexture("_BaseMap", tex);
+        mat.SetColor("_BaseColor", new Color(1f, 0.72f, 0.4f, 1f));
+        mat.SetFloat("_Surface", 1f);                                   // Transparent
+        mat.SetFloat("_Blend", 0f);
+        mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        mat.SetOverrideTag("RenderType", "Transparent");
+        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        mat.SetInt("_ZWrite", 0);
+        mat.renderQueue = 3000;
+        EditorUtility.SetDirty(mat);
+        // 逐灯铺光斑（Lamp_* 件位投影）
+        var parent = new GameObject("NightFX"); parent.transform.SetParent(root);
+        int n = 0;
+        foreach (Transform ch in root)
+        {
+            if (!ch.name.StartsWith("Lamp_")) continue;
+            var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            q.name = "Glow_" + ch.name;
+            q.transform.SetParent(parent.transform);
+            q.transform.position = new Vector3(ch.position.x, 0.13f, ch.position.z);
+            q.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            q.transform.localScale = Vector3.one * 5f;   // v8 7→5m（可数光斑律）
+            q.GetComponent<Renderer>().sharedMaterial = mat;
+            q.isStatic = true; n++;
+        }
+        parent.SetActive(false);
+        Report.Add($"night_glow: lamp_pools={n} (径向贴图程序生成·Unlit 透明·默认关·夜帧激活)");
+        return parent;
     }
 
     // ---------- 工具 ----------
@@ -1130,7 +1396,7 @@ public static class CityAssembler
             int i0 = verts.Count;
             verts.Add(p + new Vector3(-half, 0, -half)); verts.Add(p + new Vector3(half, 0, -half));
             verts.Add(p + new Vector3(half, 0, half)); verts.Add(p + new Vector3(-half, 0, half));
-            tris.AddRange(new[] { i0, i0 + 1, i0 + 2, i0, i0 + 2, i0 + 3, i0, i0 + 2, i0 + 1, i0, i0 + 3, i0 + 2 });
+            tris.AddRange(new[] { i0, i0 + 2, i0 + 1, i0, i0 + 3, i0 + 2 }); // v6 修：单面朝上（原双面绕序半数朝下=RecalculateNormals 法线对翻→水面/沙面暗斑判例·俯视永不见底面）
         }
         mesh.SetVertices(verts); mesh.SetTriangles(tris, 0); mesh.RecalculateNormals(); mesh.RecalculateBounds();
         return mesh;
@@ -1148,7 +1414,7 @@ public static class CityAssembler
             verts.Add(new Vector3(Mathf.Cos(a0) * (radius + width), 0.3f, Mathf.Sin(a0) * (radius + width)));
             verts.Add(new Vector3(Mathf.Cos(a1) * (radius + width), 0.3f, Mathf.Sin(a1) * (radius + width)));
             verts.Add(new Vector3(Mathf.Cos(a1) * radius, 0.3f, Mathf.Sin(a1) * radius));
-            tris.AddRange(new[] { i0, i0 + 1, i0 + 2, i0, i0 + 2, i0 + 3, i0, i0 + 2, i0 + 1, i0, i0 + 3, i0 + 2 });
+            tris.AddRange(new[] { i0, i0 + 2, i0 + 1, i0, i0 + 3, i0 + 2 }); // v6 修：单面朝上（原双面绕序半数朝下=RecalculateNormals 法线对翻→水面/沙面暗斑判例·俯视永不见底面）
         }
         mesh.SetVertices(verts); mesh.SetTriangles(tris, 0); mesh.RecalculateNormals(); mesh.RecalculateBounds();
         return mesh;
@@ -1206,20 +1472,39 @@ public static class CityAssembler
         // v3 夜档判据帧（灯光专家 SOP：主光转夜→窗灯自发光可见即过·俯角=+38 下倾判例[-35=仰角全黑帧实锤]）
         var light = UnityEngine.Object.FindObjectOfType<Light>();
         var dayRot = light.transform.rotation; var dayInt = light.intensity; var dayCol = light.color;
-        var dayBg = cam.backgroundColor;
+        var dayBg = cam.backgroundColor; var dayClear = cam.clearFlags; var dayFog = RenderSettings.fog;
+        var dayFogD = RenderSettings.fogDensity; var dayFogCol = RenderSettings.fogColor;
         var dayAmb = RenderSettings.ambientLight; var dayAmbMode = RenderSettings.ambientMode;
+        var rootGo = GameObject.Find("AssembledCity");
+        if (rootGo != null) ApplyNightWindows(rootGo.transform);           // v6 夜帧换装（可逆·存盘回归日材质）
+        var fillObj = GameObject.Find("SkyFill_Light");
+        var fl2 = fillObj != null ? fillObj.GetComponent<Light>() : null;
+        var fillDayInt = fl2 != null ? fl2.intensity : 0f;
+        var fillDayCol = fl2 != null ? fl2.color : Color.white;
+        if (fl2 != null) { fl2.intensity = 0.06f; fl2.color = new Color32(0x2A, 0x35, 0x50, 255); }  // v7 夜帧补光压暗转冷（「白天感」根因修）
+        var nfx = rootGo != null ? rootGo.transform.Find("NightFX") : null;
+        if (nfx != null) nfx.gameObject.SetActive(true);                    // v7 路灯光池层激活
         RenderSettings.ambientMode = AmbientMode.Flat;
         RenderSettings.ambientLight = new Color(0.05f, 0.06f, 0.11f);
         light.transform.rotation = Quaternion.Euler(38f, 150f, 0f);
-        light.intensity = 0.3f;
-        light.color = new Color(0.45f, 0.55f, 0.9f);
+        light.intensity = 0.18f;                                            // v7 0.3→0.18（月光档·夜帧地面过亮判负修）
+        light.color = new Color32(0xA9, 0xC2, 0xE8, 255);                   // v7 冷月光（暖蓝=昼感判负）
+        cam.clearFlags = CameraClearFlags.SolidColor;               // P2：夜帧走实底天（程序化天空盒白昼读法判负）
         cam.backgroundColor = new Color32(0x12, 0x1A, 0x30, 255);
+        RenderSettings.fog = true;                                          // v7 夜帧极淡冷雾拉纵深（v6 全关=远近糊成片判负）
+        RenderSettings.fogColor = new Color32(0x0E, 0x16, 0x26, 255);
+        RenderSettings.fogDensity = 0.0008f;
         Shot(cam, "A_X_night_district.png", 55f, 60f, new Vector3(180f, 0, 0)); // QUANT 城夜景（金窗）
         Shot(cam, "A_X_night_plaza.png", 55f, 40f, new Vector3(0, 10f, 0));     // 广场+脑塔夜景
         light.transform.rotation = dayRot; light.intensity = dayInt; light.color = dayCol;
-        cam.backgroundColor = dayBg;
+        cam.backgroundColor = dayBg; cam.clearFlags = dayClear; RenderSettings.fog = dayFog; RenderSettings.fogDensity = dayFogD; RenderSettings.fogColor = dayFogCol;
         RenderSettings.ambientLight = dayAmb; RenderSettings.ambientMode = dayAmbMode;
+        if (fl2 != null) { fl2.intensity = fillDayInt; fl2.color = fillDayCol; }
+        if (nfx != null) nfx.gameObject.SetActive(false);                  // v7 光池层归关
+        if (rootGo != null) RestoreDayWindows(rootGo.transform);          // v6 回归日材质（后续帧+存盘=零发光窗）
         Shot(cam, "A_X_props.png", 62f, 10f, new Vector3(20f, 0f, -15f));      // v3 街景道具近景（长椅/邮筒/公交站区）
+        var cyc = light != null ? light.GetComponent<DayNightCycle>() : null;
+        if (cyc != null) { cyc.enabled = true; Report.Add("daynight_cycle: re-enabled after capture（判据帧确定性律·GUI 实检=北京钟实时城光）"); }
         Report.Add($"capture_ms={sw.ElapsedMilliseconds}");
     }
 

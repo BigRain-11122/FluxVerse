@@ -105,6 +105,10 @@ public static class URPMaterialBridge
         Shot(cam, Path.Combine(shots, "B_L0_overview.png"), 50f, 320f, Vector3.zero);
         Shot(cam, Path.Combine(shots, "B_L1_brainring.png"), 55f, 110f, new Vector3(0, 20f, 0));
         Shot(cam, Path.Combine(shots, "B_L2_street.png"), 60f, 24f, new Vector3(180, 6, -34)); // QUANT 城街景
+        // v2 三特写（与 Assemble A_X_* 同机位·锚(24,45)·1格=5m 换算）
+        Shot(cam, Path.Combine(shots, "B_X_bridge.png"), 50f, 30f, new Vector3(0f, 0f, -95f)); // 桥跨全貌（跨外南望·防机位入跨判例）
+        Shot(cam, Path.Combine(shots, "B_X_shore.png"), 58f, 16f, new Vector3(160f, 0f, -65f));       // 长桥段水岸 WaterEdge
+        Shot(cam, Path.Combine(shots, "B_X_plaza.png"), 50f, 16f, Vector3.zero);                      // 广场铺装+脑塔堆叠
         UnityEngine.Debug.Log("BRIDGE: shots3 captured");
     }
 

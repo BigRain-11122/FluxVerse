@@ -1,0 +1,16 @@
+0 QUANT 办 100x100m cells=319 wf=True
+1 GAME 住 25x45m cells=30 wf=True
+2 GAME 住 65x55m cells=118 wf=True
+3 GAME 商 90x100m cells=325 wf=False
+5 CORE 公 40x75m cells=78 wf=True
+7 CORE 公 75x95m cells=228 wf=True
+8 QUANT 办 65x40m cells=104 wf=False
+9 GAME 住 65x40m cells=104 wf=False
+11 QUANT 办 65x45m cells=117 wf=False
+12 CORE 公 50x70m cells=110 wf=True
+13 CORE 公 70x70m cells=181 wf=True
+14 MEDIA 夜 65x45m cells=117 wf=False
+15 QUANT 办 100x90m cells=325 wf=False
+16 MEDIA 夜 90x90m cells=299 wf=False
+17 MEDIA 商 25x65m cells=44 wf=True
+18 MEDIA 商 45x65m cells=81 wf=True

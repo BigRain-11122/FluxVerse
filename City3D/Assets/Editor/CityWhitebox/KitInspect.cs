@@ -27,6 +27,28 @@ public static class KitInspect
             "SM_Env_WaterEdge_Corner_01", "SM_Env_WaterEdge_Corner_02",
             "SM_Env_Path_Corner_01", "SM_Env_Path_T_01"
         };
+        Shoot(targets);
+    }
+
+    // v3.1 路灯模块证据批（LightPole 模块拼装前置·Props 目录）
+    public static void LampEntry()
+    {
+        try
+        {
+            Directory.CreateDirectory(Staging);
+            var lamp = new[] {
+                "SM_Prop_LightPole_Base_01", "SM_Prop_LightPole_Base_02", "SM_Prop_LightPole_Arm_01",
+                "SM_Prop_LightPole_Lights_01", "SM_Prop_LightPole_Lights_02", "SM_Prop_LightPole_Box_01",
+                "SM_Prop_TrafficLight_01", "SM_Prop_CrossLights_01", "SM_Prop_SidewalkPoles_01"
+            };
+            Shoot(lamp, "Assets/lowpoly/01_现代城市生活/AD-022_Scene场景_现代城市_CityPack/PolygonCity/Prefabs/Props", "lamp_");
+        }
+        catch (Exception e) { UnityEngine.Debug.LogError("KITINSPECT_LAMP_FAIL: " + e); EditorApplication.Exit(1); }
+    }
+
+    static void Shoot(string[] targets, string folder = null, string prefix = "")
+    {
+        if (folder == null) folder = EnvPf;
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         var light = new GameObject("L"); var lr = light.AddComponent<Light>();
         lr.type = LightType.Directional; lr.transform.rotation = Quaternion.Euler(50f, -30f, 0f); lr.intensity = 1.15f;
@@ -41,7 +63,7 @@ public static class KitInspect
         int shot = 0;
         foreach (var name in targets)
         {
-            var pf = AssetDatabase.LoadAssetAtPath<GameObject>($"{EnvPf}/{name}.prefab");
+            var pf = AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/{name}.prefab");
             if (pf == null) { UnityEngine.Debug.Log($"KITINSPECT_MISSING: {name}"); continue; }
             var inst = (GameObject)PrefabUtility.InstantiatePrefab(pf);
             if (inst == null) continue;
@@ -72,9 +94,9 @@ public static class KitInspect
             float dist = radius * 1.6f + 1f;
             Vector3 center = b.center;
             // 三视角：俯 60° 全身 / 平视 10° / 侧平视（绕 90°）
-            Shot(cam, $"{shot:D2}_{name}_top.png", center + new Vector3(0, dist * 0.87f, -dist * 0.5f), center);
-            Shot(cam, $"{shot:D2}_{name}_front.png", center + new Vector3(0, radius * 0.15f, -dist), center);
-            Shot(cam, $"{shot:D2}_{name}_side.png", center + new Vector3(dist, radius * 0.15f, 0), center);
+            Shot(cam, $"{prefix}{shot:D2}_{name}_top.png", center + new Vector3(0, dist * 0.87f, -dist * 0.5f), center);
+            Shot(cam, $"{prefix}{shot:D2}_{name}_front.png", center + new Vector3(0, radius * 0.15f, -dist), center);
+            Shot(cam, $"{prefix}{shot:D2}_{name}_side.png", center + new Vector3(dist, radius * 0.15f, 0), center);
             shot++;
             UnityEngine.Object.DestroyImmediate(inst);
         }

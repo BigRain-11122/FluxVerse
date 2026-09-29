@@ -97,8 +97,12 @@ public static class CityAssembler
         BuildBridgeKit(root.transform, cells, kit);      // Underside 底板+Pillar 中墩+Edge 护栏
         var props = SelectProps();                       // v3 街景道具层（选型表 R-20260929-street-props-selection）
         LayProps(root.transform, cells, props, roadSet); // 数据驱动散布+预算帽 ≤600
+        LayStreetLamps(root.transform, roadSet);         // v3.1 路灯三件拼装（灯证据批定谳）
         ApplyNightWindows(root.transform);               // v3 五色律窗灯（灯光专家 SOP·Emissive_01 直供）
-        SetupBloom(cam);                                 // v3 bloom（官方默认值律）
+        SetupBloom(cam);                                 // v3 bloom（官方默认值律·v3.1 intensity 0.9）
+        var cycle = light.gameObject.AddComponent<DayNightCycle>(); // v3.1 日夜色轮三件套（ExecuteAlways·北京时间）
+        cycle.sun = light;
+        Report.Add("daynight_cycle: attached（ExecuteAlways·北京钟驱动仰角/强度/色温+环境光 Flat+天色随动）");
         Report.Add("v2: ring-disc removed (脑环=r8格环路·黄线件标记·修 v1 盘压 70 格中央路)");
 
         EditorSceneManager.SaveScene(scene, "Assets/Scenes/CityAssembled.unity");
@@ -816,6 +820,85 @@ public static class CityAssembler
     static Vector3 Off(float r) => new Vector3((_rng.Next(-100, 101)) / 100f * r, 0, (_rng.Next(-100, 101)) / 100f * r);
     static int R4() => _rng.Next(4);
 
+    // ---------- v3.1 路灯模块拼装（灯证据批定谳：Base=杆/Arm=L 臂/Lights=灯头·bounds 对齐组装）----------
+    static int LayStreetLamps(Transform root, HashSet<Vector2> roadSet)
+    {
+        var pole = LoadPrefab(PropsPf, "SM_Prop_LightPole_Base_01");
+        var arm = LoadPrefab(PropsPf, "SM_Prop_LightPole_Arm_01");
+        var head = LoadPrefab(PropsPf, "SM_Prop_LightPole_Lights_01");
+        if (pole == null || arm == null || head == null) { Report.Add("streetlamps: SKIP（模块缺）"); return 0; }
+        var trunk = roadSet.Where(g => RunLen(roadSet, g, true) >= 6 || RunLen(roadSet, g, false) >= 6)
+                           .OrderBy(g => (g.x * 73856093f) % 997f + (g.y * 19349663f) % 997f)  // 空间哈希序=全城均匀取灯（判例：x 序取每 4=低 x 偏聚）
+                           .ToList();
+        int placed = 0, k = 0;
+        foreach (var g in trunk)
+        {
+            if (placed >= 120) break;                     // 预算帽（选型表 §四）
+            if (k % 4 != 0) { k++; continue; }
+            k++;
+            Vector3 c = ToWorld(g, 0f);
+            var lampGo = new GameObject("Lamp_" + placed); lampGo.transform.SetParent(root);
+            lampGo.transform.position = c + new Vector3(2.2f, 0, 0);   // 路缘侧位
+            lampGo.transform.rotation = Quaternion.Euler(0f, (placed % 2 == 0) ? 180f : 0f, 0f); // 交替朝向路心
+            var p = (GameObject)PrefabUtility.InstantiatePrefab(pole, lampGo.transform);
+            var a = (GameObject)PrefabUtility.InstantiatePrefab(arm, lampGo.transform);
+            var h = (GameObject)PrefabUtility.InstantiatePrefab(head, lampGo.transform);
+            if (p == null || a == null || h == null) { UnityEngine.Object.DestroyImmediate(lampGo); continue; }
+            // bounds 对齐：杆底贴地→臂底=杆顶→灯头挂臂端
+            Bounds pb = CalcBounds(p), ab = CalcBounds(a), hb = CalcBounds(h);
+            p.transform.localPosition = new Vector3(0, -pb.min.y, 0);
+            float poleH = pb.max.y - pb.min.y;
+            a.transform.localPosition = new Vector3(0, poleH - ab.min.y, 0);
+            h.transform.localPosition = new Vector3(ab.max.x - hb.center.x, ab.center.y - hb.center.y, 0);
+            // 灯头 emission 换装（暖白×2.2·自身贴图作 emission map=亮面发光）
+            var lampMat = MakeLampHeadMat(h);
+            if (lampMat != null)
+                foreach (var r in h.GetComponentsInChildren<Renderer>())
+                {
+                    var mats = r.sharedMaterials;
+                    for (int mI = 0; mI < mats.Length; mI++) mats[mI] = lampMat;
+                    r.sharedMaterials = mats;
+                }
+            foreach (var t in lampGo.GetComponentsInChildren<Transform>()) t.gameObject.isStatic = true;
+            placed++;
+        }
+        Report.Add($"streetlamps: {placed}/120 (Base+Arm+Lights 三件拼装·臂端挂灯头·暖白 emission·干道每 4 格交替侧)");
+        return placed;
+    }
+
+    static Bounds CalcBounds(GameObject go)
+    {
+        var rs = go.GetComponentsInChildren<Renderer>();
+        if (rs.Length == 0) return new Bounds(go.transform.position, Vector3.zero);
+        Bounds b = rs[0].bounds; foreach (var r in rs) b.Encapsulate(r.bounds);
+        return b;
+    }
+
+    static Material _lampHeadMat;
+    static Material MakeLampHeadMat(GameObject headPf)
+    {
+        if (_lampHeadMat != null) return _lampHeadMat;
+        Material src = null;
+        foreach (var r in headPf.GetComponentsInChildren<Renderer>())
+        {
+            if (r.sharedMaterial != null) { src = r.sharedMaterial; break; }
+        }
+        if (src == null) return null;
+        var tex = src.HasProperty("_MainTex") ? src.GetTexture("_MainTex") : (src.HasProperty("_BaseMap") ? src.GetTexture("_BaseMap") : null);
+        var col = src.HasProperty("_Color") ? src.GetColor("_Color") : (src.HasProperty("_BaseColor") ? src.GetColor("_BaseColor") : Color.white);
+        var path = "Assets/Art/Whitebox/LampHead_Night.mat";
+        _lampHeadMat = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (_lampHeadMat != null) return _lampHeadMat;
+        var m = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = "LampHead_Night" };
+        if (tex != null) m.SetTexture("_BaseMap", tex);
+        m.SetColor("_BaseColor", col);
+        m.SetFloat("_Smoothness", 0f);
+        EnsureEmission(m, tex, new Color(1f, 0.88f, 0.6f) * 2.2f);
+        AssetDatabase.CreateAsset(m, path);
+        _lampHeadMat = m;
+        return m;
+    }
+
     // ---------- v3 五色律窗灯（灯光专家 SOP：Emissive_01 直供·材质资产级·禁逐楼改）----------
     static void ApplyNightWindows(Transform root)
     {
@@ -858,14 +941,14 @@ public static class CityAssembler
         var name = $"Night_{city}_{src.name}";
         var path = $"Assets/Art/Whitebox/{name}.mat";
         var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
-        if (existing != null) { EnsureEmission(existing, emis, tint * 1.6f); return existing; }
+        if (existing != null) { EnsureEmission(existing, emis, tint * 2.2f); return existing; }
         var m = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = name };
         var baseTex = src.HasProperty("_MainTex") ? src.GetTexture("_MainTex") : (src.HasProperty("_BaseMap") ? src.GetTexture("_BaseMap") : null);
         var baseCol = src.HasProperty("_Color") ? src.GetColor("_Color") : (src.HasProperty("_BaseColor") ? src.GetColor("_BaseColor") : Color.white);
         if (baseTex != null) m.SetTexture("_BaseMap", baseTex);
         m.SetColor("_BaseColor", baseCol);
         m.SetFloat("_Smoothness", 0f);
-        EnsureEmission(m, emis, tint * 1.6f);
+        EnsureEmission(m, emis, tint * 2.2f);
         AssetDatabase.CreateAsset(m, path);
         return m;
     }
@@ -897,15 +980,13 @@ public static class CityAssembler
             AssetDatabase.CreateAsset(profile, profilePath);
         }
         UnityEngine.Rendering.Universal.Bloom bloom;
-        if (!profile.TryGet(out bloom))
-        {
-            bloom = profile.Add<UnityEngine.Rendering.Universal.Bloom>(true);
-            bloom.threshold.Override(0.9f);
-            bloom.intensity.Override(0.6f);
-            bloom.scatter.Override(0.7f);
-        }
+        if (!profile.TryGet(out bloom)) bloom = profile.Add<UnityEngine.Rendering.Universal.Bloom>(true);
+        // 强制覆写（判例：profile=持久资产·TryGet 命中旧件后只在创建时设值=旧值永不更新）
+        bloom.threshold.Override(0.9f);
+        bloom.intensity.Override(0.9f);   // v3.1 调优（判例：0.6 光晕弱·夜帧窗灯边缘过硬）
+        bloom.scatter.Override(0.7f);
         vol.sharedProfile = profile;
-        Report.Add("bloom: threshold=0.9 intensity=0.6 scatter=0.7 (URP 全局 Volume+相机 postProcessing·灯光专家官方默认值律)");
+        Report.Add("bloom: threshold=0.9 intensity=0.9 scatter=0.7 (URP 全局 Volume+相机 postProcessing·v3.1 调优)");
     }
 
     // ---------- 工具 ----------
@@ -1027,6 +1108,9 @@ public static class CityAssembler
         var light = UnityEngine.Object.FindObjectOfType<Light>();
         var dayRot = light.transform.rotation; var dayInt = light.intensity; var dayCol = light.color;
         var dayBg = cam.backgroundColor;
+        var dayAmb = RenderSettings.ambientLight; var dayAmbMode = RenderSettings.ambientMode;
+        RenderSettings.ambientMode = AmbientMode.Flat;
+        RenderSettings.ambientLight = new Color(0.05f, 0.06f, 0.11f);
         light.transform.rotation = Quaternion.Euler(38f, 150f, 0f);
         light.intensity = 0.3f;
         light.color = new Color(0.45f, 0.55f, 0.9f);
@@ -1035,6 +1119,7 @@ public static class CityAssembler
         Shot(cam, "A_X_night_plaza.png", 55f, 40f, new Vector3(0, 10f, 0));     // 广场+脑塔夜景
         light.transform.rotation = dayRot; light.intensity = dayInt; light.color = dayCol;
         cam.backgroundColor = dayBg;
+        RenderSettings.ambientLight = dayAmb; RenderSettings.ambientMode = dayAmbMode;
         Shot(cam, "A_X_props.png", 62f, 10f, new Vector3(20f, 0f, -15f));      // v3 街景道具近景（长椅/邮筒/公交站区）
         Report.Add($"capture_ms={sw.ElapsedMilliseconds}");
     }

@@ -122,6 +122,7 @@ public static class URPMaterialBridge
             cam.backgroundColor = new Color32(0x12, 0x1A, 0x30, 255);
             Shot(cam, Path.Combine(shots, "B_X_night_district.png"), 55f, 60f, new Vector3(180f, 0, 0)); // QUANT 夜景金窗
             Shot(cam, Path.Combine(shots, "B_X_night_plaza.png"), 55f, 40f, new Vector3(0, 10f, 0));
+            Shot(cam, Path.Combine(shots, "B_X_night_street.png"), 60f, 26f, new Vector3(90f, 0, 0));    // QUANT 引道街灯近景
             light.transform.rotation = dayRot; light.intensity = dayInt; light.color = dayCol;
             cam.backgroundColor = dayBg;
         }

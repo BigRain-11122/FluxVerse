@@ -98,6 +98,8 @@ public static class CityAssembler
         var props = SelectProps();                       // v3 街景道具层（选型表 R-20260929-street-props-selection）
         LayProps(root.transform, cells, props, roadSet); // 数据驱动散布+预算帽 ≤600
         LayStreetLamps(root.transform, roadSet);         // v3.1 路灯三件拼装（灯证据批定谳）
+        LayResidents(root.transform, cells, roadSet);    // v4 L1 行人层（活性 Phase 1·真数据分区活动映射）
+        foreach (var wk in Walkers) wk.Advance(wk.GetInstanceID() % 7 * 6f); // 建时确定性散布（免全聚起点·同帧位移证明留 Advance 余量）
         ApplyNightWindows(root.transform);               // v3 五色律窗灯（灯光专家 SOP·Emissive_01 直供）
         SetupBloom(cam);                                 // v3 bloom（官方默认值律·v3.1 intensity 0.9）
         var cycle = light.gameObject.AddComponent<DayNightCycle>(); // v3.1 日夜色轮三件套（ExecuteAlways·北京时间）
@@ -897,6 +899,103 @@ public static class CityAssembler
         AssetDatabase.CreateAsset(m, path);
         _lampHeadMat = m;
         return m;
+    }
+
+    // ---------- v4 L1 行人层（活性 Phase 1·真数据投影=world-state 分区活动值→各区行人密度）----------
+    const string CharPf = "Assets/lowpoly/01_现代城市生活/AD-042_Char角色_都市人物_CityCharactersPack/POLYGONCityCharacters/Prefabs";
+    static readonly List<ResidentWalker> Walkers = new List<ResidentWalker>();
+
+    static Dictionary<string, int> ParseZoneActivity(string path)
+    {
+        var d = new Dictionary<string, int>();
+        if (!File.Exists(path)) { Report.Add("WARN world-state missing: " + path); return d; }
+        var txt = File.ReadAllText(path);
+        foreach (Match m in Regex.Matches(txt, "\"id\":\\s*\"(\\w+)\"[\\s\\S]{0,260}?\"activity\":\\s*(\\d+)"))
+            d[m.Groups[1].Value] = int.Parse(m.Groups[2].Value);
+        return d;
+    }
+
+    // 路网 BFS：起→终世界坐标 waypoint 队列
+    static List<Vector3> RoadPath(HashSet<Vector2> road, Vector2 from, Vector2 to)
+    {
+        var prev = new Dictionary<Vector2, Vector2>();
+        var seen = new HashSet<Vector2> { from };
+        var q = new Queue<Vector2>(); q.Enqueue(from);
+        while (q.Count > 0)
+        {
+            var c = q.Dequeue();
+            if (c == to) break;
+            foreach (var d in new[] { Vector2.up, Vector2.down, Vector2.left, Vector2.right })
+            {
+                var nb = c + d;
+                if (road.Contains(nb) && !seen.Contains(nb)) { seen.Add(nb); prev[nb] = c; q.Enqueue(nb); }
+            }
+        }
+        if (!seen.Contains(to)) return null;
+        var cells = new List<Vector2>();
+        var cur = to;
+        while (cur != from) { cells.Add(cur); cur = prev[cur]; }
+        cells.Add(from);
+        cells.Reverse();
+        var pts = new List<Vector3>();
+        foreach (var c in cells) pts.Add(ToWorld(c, 0f));
+        return pts;
+    }
+
+    static void LayResidents(Transform root, Dictionary<string, List<Vector2>> cells, HashSet<Vector2> roadSet)
+    {
+        Walkers.Clear();
+        var guids = AssetDatabase.FindAssets("t:Prefab", new[] { CharPf });
+        if (guids.Length == 0) { Report.Add("residents: SKIP（AD-042 未寻得）"); return; }
+        var figs = new List<GameObject>();
+        foreach (var g in guids)
+        {
+            var go = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(g));
+            if (go != null) figs.Add(go);
+        }
+        var zones = ParseZoneActivity(Path.Combine(FVRoot, "world/world-state.json"));
+        // 分区活动→各区行人密度（真数据投影：quant→QUANT/media→MEDIA/gaming→GAME）
+        var map = new Dictionary<string, string> { { "quant", "QUANT" }, { "media", "MEDIA" }, { "gaming", "GAME" } };
+        int placed = 0;
+        for (int i = 0; i < CityNames.Length; i++)
+        {
+            string zoneKey = map.FirstOrDefault(kv => kv.Value == CityNames[i]).Key;
+            int activity = zones.ContainsKey(zoneKey) ? zones[zoneKey] : 1;
+            int count = 3 + activity;  // 3-6 人/区·活动值真数据映射
+            var districtCenter = new Vector2(AnchorX + CitiesR / GridM * Mathf.Cos(CityAngles[i] * Mathf.Deg2Rad), AnchorY + CitiesR / GridM * Mathf.Sin(CityAngles[i] * Mathf.Deg2Rad));
+            for (int w = 0; w < count; w++)
+            {
+                // 起点=广场环外随机干道格·终点=区中心邻路格（通勤读：中心→各区上班路）
+                Vector2 from = NearestRoad(roadSet, new Vector2(AnchorX + 10f * Mathf.Cos(w * 2.4f), AnchorY + 10f * Mathf.Sin(w * 2.4f)));
+                Vector2 to = NearestRoad(roadSet, districtCenter + new Vector2(_rng.Next(-4, 5), _rng.Next(-4, 5)));
+                var path = RoadPath(roadSet, from, to);
+                if (path == null || path.Count < 2) continue;
+                var loop = new List<Vector3>(path);
+                for (int pI = path.Count - 2; pI >= 0; pI--) loop.Add(path[pI]); // 去程+回程=环形通勤
+                var fig = figs[(_rng.Next(figs.Count) + placed) % figs.Count];
+                var go = (GameObject)PrefabUtility.InstantiatePrefab(fig, root);
+                if (go == null) continue;
+                go.name = "Resident_" + CityNames[i] + "_" + w;
+                var walker = go.AddComponent<ResidentWalker>();
+                walker.traceId = zoneKey + ":activity=" + activity + "/walker" + w;
+                walker.BuildRoute(loop);
+                Walkers.Add(walker);
+                placed++;
+            }
+            Report.Add($"residents_{CityNames[i]}: {count} (zone={zoneKey} activity={activity} 真数据映射)");
+        }
+        Report.Add($"residents_total: {placed}（AD-042 {figs.Count} 件确定性选人·waypoint 环形通勤·步速 1.2m/s·编辑态 Advance 可证位移）");
+    }
+
+    static Vector2 NearestRoad(HashSet<Vector2> road, Vector2 approx)
+    {
+        Vector2 best = approx; float bestD = float.MaxValue;
+        foreach (var c in road)
+        {
+            float d = (c - approx).sqrMagnitude;
+            if (d < bestD) { bestD = d; best = c; }
+        }
+        return best;
     }
 
     // ---------- v3 五色律窗灯（灯光专家 SOP：Emissive_01 直供·材质资产级·禁逐楼改）----------

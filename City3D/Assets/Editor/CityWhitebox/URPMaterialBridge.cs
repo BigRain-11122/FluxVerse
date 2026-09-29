@@ -127,6 +127,11 @@ public static class URPMaterialBridge
             cam.backgroundColor = dayBg;
         }
         Shot(cam, Path.Combine(shots, "B_X_props.png"), 62f, 10f, new Vector3(20f, 0f, -15f)); // 街景道具近景
+        // v4 行人位移证明（活性判据律：两帧同机位·2.5s 推进·位移可辨=居民在动）
+        var walkers = UnityEngine.Object.FindObjectsOfType<ResidentWalker>();
+        Shot(cam, Path.Combine(shots, "B_X_walkers_t0.png"), 55f, 60f, new Vector3(0f, 0f, 0f));
+        foreach (var wk in walkers) wk.Advance(2.5f);
+        Shot(cam, Path.Combine(shots, "B_X_walkers_t2.png"), 55f, 60f, new Vector3(0f, 0f, 0f));
         UnityEngine.Debug.Log("BRIDGE: shots3 captured");
     }
 

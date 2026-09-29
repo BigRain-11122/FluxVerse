@@ -26,12 +26,16 @@ bridge_kit_placed: underside_beams=128 edge_railings=162 spans=7
 props_pick: live=11/11 (AD-022 Props×9+AD-015×2·单件零拼装首期·路灯模块拼装=下批 KitInspect 后)
 props_placed: 220 (bench=9 trash=7 others=204 · 预算帽 ≤600 ✓ · 选型表 R-20260929-street-props-selection §三规则)
 streetlamps: 120/120 (Base+Arm+Lights 三件拼装·臂端挂灯头·暖白 emission·干道每 4 格交替侧)
+residents_QUANT: 4 (zone=quant activity=1 真数据映射)
+residents_MEDIA: 4 (zone=media activity=1 真数据映射)
+residents_GAME: 4 (zone=gaming activity=1 真数据映射)
+residents_total: 12（AD-042 19 件确定性选人·waypoint 环形通勤·步速 1.2m/s·编辑态 Advance 可证位移）
 night_windows: renderers_materials_swapped=48 (五色律: QUANT金/MEDIA品红/GAME青·Emissive_01 直供)
 bloom: threshold=0.9 intensity=0.9 scatter=0.7 (URP 全局 Volume+相机 postProcessing·v3.1 调优)
 daynight_cycle: attached（ExecuteAlways·北京钟驱动仰角/强度/色温+环境光 Flat+天色随动）
 v2: ring-disc removed (脑环=r8格环路·黄线件标记·修 v1 盘压 70 格中央路)
 scene saved: Assets/Scenes/CityAssembled.unity
-assemble_ms=1237
+assemble_ms=1281
 calibration: 1grid=5m locked (CEO 09-28 选件搭建令·AD-022 路件 5x5m 1:1)
-capture_ms=793
+capture_ms=1134
 selection_law: 全部件库内挑选（CEO 令 09-28 选件搭建令）·AI/自制生产径停

@@ -40,7 +40,16 @@
 | 居民 ×24 | 池 39=AD-018 赛博 20+AD-042 都市 19 双池 | ResidentWalker 环形通勤 |
 | 水面 | quads 程序生成（单面朝上律·QuadMesh 绕序判例） | 非库件 |
 
-## 三 在役包利用率表（可用=件名账实查 · 在用=本账 §一§二 distinct）
+## 二.5 CitySim 试点街坊 CitySim_PilotBlock.unity 在用件（v0.2 首件·2026-09-30·CEO 令 CS 程度+并行开工）
+| 用途 | 件 | 实测/备注 |
+|---|---|---|
+| 地板/顶板 | SM_Bld_Base_Floor_01 / Ceiling_01（AD-002） | floor 原生 2.5×2.5m·逐轴铺满（每 lot 7×13 网格） |
+| 地面墙环 | SM_Bld_Base_Wall_01 / Wall_Window_01（AD-002） | wall 原生 2.5×3.01×0.23m·10 件/25m 边·scale≈1.0 |
+| 门 | SM_Bld_Base_Wall_Door_01（AD-002） | 原生 2.5×3.01×0.29m·MeshCollider 门洞物理真实（A2 三高穿门 0 命中） |
+| mixed 上层 | SM_Bld_House_ExteriorWall_UpperFloor_01 / UpperFloor_Window_01（AD-021） | upWall 2.5×3.00×0.20m·后排 4 lot 上住下商（CS2 mixed 律） |
+| 布局 | 8 lot 背靠背双排（25×32.5m·3152 实例） | CS 路侧 32m 进深律+死核双排律·贴线零退线 A3 0/8 偏线·seed=20260930 |
+
+## 三 在役包利用率表（可用=件名账实查 · 在用=本账 §一§二§二.5 distinct）
 | 包 | 可用 | 在用 | 利用率 | 状态判语 |
 |---|---|---|---|---|
 | AD-022 城市包 | 335 | 49 | **14.6%** | 建筑 5/76=资产岛根因·Apartment 模块套件 23 件零调用 |
@@ -52,6 +61,8 @@
 | AD-025 白盒原型 | 488 | 0 | 0% | 在城零调用·或退回中台省 13MB 工程体积 |
 | AD-010 粒子 | 180 | 0 | 0% | 待活性演出线进场（演出 3D 重锚） |
 | AD-039 图标 | 520 | 0 | 0% | 待 UI 烘焙/拾取物线进场 |
+| AD-002 商场 | 1965 | 5（Floor/Wall/Wall_Door/Wall_Window/Ceiling） | <1% | R2 试点首开（二.5）·店面 16 件+招牌族待商业街批 |
+| AD-021 城镇 | 695 | 2（UpperFloor×2 变体） | <1% | mixed 上层首用（二.5）·ExteriorWall_GroundFloor 全族待 R2 全铺 |
 
 ## 四 未用高价值面（下批扩容查账即得·禁再浏览发现）
 1. **AD-022 Apartment 模块化套件 23 件**（Apartment_01~03 基座+Door×5+Roof×8+Stack×3+Stairs×5+Corner 变体）——官方拼装正法（R-05 A 证「Modular sections easy to piece together」）：Stack 拼高/Corner 收转角/Stairs 加贴线细节，模块组合=建筑多样性主径，直接根治主城资产岛
@@ -65,6 +76,7 @@
 - 1 grid=5m 锁定（AD-022 路件实测·CEO 09-28 令）｜Building wall 原生 5.0×4.0×1.3m｜Antenna_01 原生 4.7m（scale 2.98→14m）
 - 主城建筑池 measured=40（尺寸档 6-45m 高/6-32m 占地·选 5）｜树 pool=153 量毕｜赛博水 quads 单面朝上律
 - kitinspect/lampinspect 日志=测量原始层（staging 留档）·本账只录结论值
+- **CitySim 试点测量（2026-09-30·含 pivot 偏移）**：AD-002 wall 2.5×3.01×0.23（ct=(-1.25,+1.50,0.00)）·door 2.5×3.01×0.29·floor 2.5×2.5·AD-021 upWall 2.5×3.00×0.20——**Synty 件 pivot=底面+X 端点律（角点 pivot）**：放置一律偏移感知（pivot=worldCenter−R∘(scale·ct)）·按中心盲摆=墙外飘 1.25m+悬浮 1.5m 双病根判例（B_L1 帧取证→v3 修正三断言全绿）
 
 ## 六 组合配方复用（demo=老师·矿在库）
 - AD-022/018/021 三包 demo 深读结论=索引 §八（纪律五律/夜景配方/痕迹叙事）·帧账=`MiniGame/projects/P3D_Spike/P3D_Spike-staging/demo-study/`（156 帧·79 场景）·余 6 在役包 demo=按需开采（律 §二深挖法：用到再挖·挖毕落账）

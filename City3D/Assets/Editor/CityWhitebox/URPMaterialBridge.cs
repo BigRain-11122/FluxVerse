@@ -72,7 +72,7 @@ public static class URPMaterialBridge
         AssetDatabase.SaveAssets();
     }
 
-    static Material Convert(Material src)
+    public static Material Convert(Material src) // v0.2 试点批升 public：CitySimShellBuilder 复用（免重造轮律）
     {
         if (Cache.TryGetValue(src, out var cached)) return cached;
         var name = string.IsNullOrEmpty(src.name) ? "mat" + Guid.NewGuid().ToString("N").Substring(0, 6) : src.name;

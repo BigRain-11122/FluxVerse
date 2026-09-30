@@ -49,20 +49,32 @@
 | mixed 上层 | SM_Bld_House_ExteriorWall_UpperFloor_01 / UpperFloor_Window_01（AD-021） | upWall 2.5×3.00×0.20m·后排 4 lot 上住下商（CS2 mixed 律） |
 | 布局 | 8 lot 背靠背双排（25×32.5m·3152 实例） | CS 路侧 32m 进深律+死核双排律·贴线零退线 A3 0/8 偏线·seed=20260930 |
 
-## 三 在役包利用率表（可用=件名账实查 · 在用=本账 §一§二§二.5 distinct）
+## 二.6 CitySim 全城 V1 CitySim_CityV1.unity 在用件（v1 首城·2026-09-30·CEO 令 硅基城市全面开工）
+| 用途 | 件 | 实测/备注 |
+|---|---|---|
+| 地板/顶板 | SM_Bld_Base_Floor_01 / Ceiling_01（AD-002） | 全 68 lot 逐轴铺满+PUB 广场铺装（2× 缩放铺 5m 格） |
+| RES 宅环 | SM_Bld_House_ExteriorWall_GroundFloor_01 / _Window_01 / _Door_01（AD-021） | 宅族全系首次入城（17 门·si∈[0.86,1.17] 拉伸）·门件零碰撞器+墙窗 Box（凹 Mesh×非均匀缩放判例） |
+| OFF/SHOP 墙环 | SM_Bld_Base_Wall_01 / Wall_Window_01 / Wall_Door_01（AD-002） | 商配 11.16%·门面邻路 A4 0/68 |
+| mixed 上层 | SM_Bld_House_ExteriorWall_UpperFloor_01 / _Window_01（AD-021） | OFF/RES-high/mixed 双层壳（CS2 mixed 律） |
+| 路网 | SM_Env_Road_01 / Road_Crossing_01 / Road_Lines_01 / Road_YellowLines_01（AD-022） | 575 件全铺 A5·桥=Lines@y0.6 88 格·脑环=YellowLines r14.5-17.5·长直≥6=Lines·余 Road_01 |
+| 地标 | SM_Prop_Antenna_01（AD-020） | 4 区地标天线 14m（QUANT/GAME/CORE/LIFE·blockLandmark 消费） |
+| 水面 | CityWater_V1.mat（程序生成·URP/Lit 单面朝上） | 340×340 水底面 y=-0.35·缝隙读作运河水系 |
+| 布局 | 16 块壳·24123 实例·68 lot·68 门 | r0-v3 层消费·贴线 A3 0/68·seed=20260930 双建全等（A1 2411263 chars） |
+
+## 三 在役包利用率表（可用=件名账实查 · 在用=本账 §一§二§二.5§二.6 distinct）
 | 包 | 可用 | 在用 | 利用率 | 状态判语 |
 |---|---|---|---|---|
-| AD-022 城市包 | 335 | 49 | **14.6%** | 建筑 5/76=资产岛根因·Apartment 模块套件 23 件零调用 |
+| AD-022 城市包 | 335 | 49+路件四型复用 | **~15%** | 建筑 5/76=资产岛根因·Apartment 模块套件 23 件零调用·CitySim 路网四型全铺（二.6 A5 575 件） |
 | AD-018 科幻城 | 648 | 61+20 角色 | ~12.5% | 两城中深挖最佳·仍余 500+ 件 |
 | AD-015 自然 | 225 | ~10（2 道具+树/岩 pool） | ~4% | Tree pool 量过可复用 |
-| AD-020 太空 | 662 | 1（天线） | **0.2%** | Ship×64+Bld×125 全未动=脑塔冠/实验区备用矿 |
+| AD-020 太空 | 662 | 1（天线·城批 4 地标复用） | **0.2%** | Ship×64+Bld×125 全未动=脑塔冠/实验区备用矿 |
 | AD-042 都市人物 | 19 | 19 池全启 | 100% | 满用（唯一满用包） |
 | AD-048 起始白盒 | 58 | ~10（白盒底座） | ~17% | 使命即白盒·正常 |
 | AD-025 白盒原型 | 488 | 0 | 0% | 在城零调用·或退回中台省 13MB 工程体积 |
 | AD-010 粒子 | 180 | 0 | 0% | 待活性演出线进场（演出 3D 重锚） |
 | AD-039 图标 | 520 | 0 | 0% | 待 UI 烘焙/拾取物线进场 |
-| AD-002 商场 | 1965 | 5（Floor/Wall/Wall_Door/Wall_Window/Ceiling） | <1% | R2 试点首开（二.5）·店面 16 件+招牌族待商业街批 |
-| AD-021 城镇 | 695 | 2（UpperFloor×2 变体） | <1% | mixed 上层首用（二.5）·ExteriorWall_GroundFloor 全族待 R2 全铺 |
+| AD-002 商场 | 1965 | 5（Floor/Wall/Wall_Door/Wall_Window/Ceiling） | <1% | 试点+全城 V1 双面（二.5/二.6）·店面 16 件+招牌族待商业街批 |
+| AD-021 城镇 | 695 | 5（UpperFloor×2+GroundFloor 墙/窗/门） | <1% | 宅环全系入城（二.6·17 门零碰撞器正法）·围栏/社区族待 R2 |
 
 ## 四 未用高价值面（下批扩容查账即得·禁再浏览发现）
 1. **AD-022 Apartment 模块化套件 23 件**（Apartment_01~03 基座+Door×5+Roof×8+Stack×3+Stairs×5+Corner 变体）——官方拼装正法（R-05 A 证「Modular sections easy to piece together」）：Stack 拼高/Corner 收转角/Stairs 加贴线细节，模块组合=建筑多样性主径，直接根治主城资产岛
@@ -77,6 +89,7 @@
 - 主城建筑池 measured=40（尺寸档 6-45m 高/6-32m 占地·选 5）｜树 pool=153 量毕｜赛博水 quads 单面朝上律
 - kitinspect/lampinspect 日志=测量原始层（staging 留档）·本账只录结论值
 - **CitySim 试点测量（2026-09-30·含 pivot 偏移）**：AD-002 wall 2.5×3.01×0.23（ct=(-1.25,+1.50,0.00)）·door 2.5×3.01×0.29·floor 2.5×2.5·AD-021 upWall 2.5×3.00×0.20——**Synty 件 pivot=底面+X 端点律（角点 pivot）**：放置一律偏移感知（pivot=worldCenter−R∘(scale·ct)）·按中心盲摆=墙外飘 1.25m+悬浮 1.5m 双病根判例（B_L1 帧取证→v3 修正三断言全绿）
+- **CitySim 全城测量（2026-09-30）**：AD-021 宅族全系 2.5×3.94×0.20（ct=(-1.25,+0.93,+0.10)）·AD-022 路件四型原生 5×5m·门件截面三探=citysim-doorprobe.md（门洞±0.5m 居中·0.3-1.2m 通透·1.6m 门楣）——凹 MeshCollider×非均匀缩放=存盘重载门洞假封闭判例的定谳档案
 
 ## 六 组合配方复用（demo=老师·矿在库）
 - AD-022/018/021 三包 demo 深读结论=索引 §八（纪律五律/夜景配方/痕迹叙事）·帧账=`MiniGame/projects/P3D_Spike/P3D_Spike-staging/demo-study/`（156 帧·79 场景）·余 6 在役包 demo=按需开采（律 §二深挖法：用到再挖·挖毕落账）

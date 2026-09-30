@@ -1,0 +1,263 @@
+{
+ "meta": {
+  "layer": "r0-v3",
+  "generator": "r0-v3-upgrade.py",
+  "source": "td-organic-r0.json + td-organic-r0-cells.json (read-only, v0.1 untouched)",
+  "mode": "synthesize-v2",
+  "laws": "cph4/research/R-20260930-cs-01-mechanics.md (CS15: 2/3/5/6/10/13/14)",
+  "assumptions": [
+   "residents = workers x 2; workers = RES cells x 2 (CitySimCore capacity contract)"
+  ],
+  "semantics": {
+   "band": "可建带 cell := 距最近路格(格心直线) <= 6.4格(32m, 律3)；coreCells(>32m)=死核 -> 公园/白盒(律3 escape)，非可建；R0 core 共 110 格",
+   "coverage": "blockCoveredBy = PUB->RES 沿路 Dijkstra <= 120m；source=PUB质心最近路格(并列取最小序)；target=RES块前缘路格集(每可建格之全部并列最近路格)；入格cost=cellM(5m)xtier系数(TRUNK1.0/SEC1.35/ALLEY1.7)；4向邻接；整数厘米；取代 CitySimCore COVERAGE_RADIUS_M=120 直线版(律10)，C# 后续批消费",
+   "pollutionBuffer": "R0 零 IND 块 -> C7 空真；PUB 中央广场邻 RES=设计态，非污染源(律8 只针对 IND)",
+   "mixed": "SHOP 块 mixed=true -> 律13 混合地块(AD-002 首层商 + AD-021 上部住)",
+   "landmark": "区地标 = 该区 w_m x h_m 最大块(律14)",
+   "shellMap": "RES->AD-021 / OFF->AD-035 / SHOP->AD-002 / CLUB->AD-008 / PUB->AD-048；RES cells>=100 -> 高密(律5)"
+  },
+  "costPerCellCm": {
+   "TRUNK": 500,
+   "SEC": 675,
+   "ALLEY": 850
+  },
+  "coverageLimitM": 120.0,
+  "consumedBy": "C# 后续批：blockShellHint/blockLandmark/blockCoveredBy/shopStats 为 JsonUtility 可映射数组节；meta 为文档节"
+ },
+ "blockShellHint": [
+  {
+   "blockId": 0,
+   "district": "QUANT",
+   "blockFunc": "OFF",
+   "shell": "AD-035",
+   "density": "",
+   "mixed": false,
+   "cells": 319,
+   "bandCells": 294,
+   "coreCells": 25
+  },
+  {
+   "blockId": 1,
+   "district": "GAME",
+   "blockFunc": "RES",
+   "shell": "AD-021",
+   "density": "low",
+   "mixed": false,
+   "cells": 30,
+   "bandCells": 30,
+   "coreCells": 0
+  },
+  {
+   "blockId": 2,
+   "district": "GAME",
+   "blockFunc": "RES",
+   "shell": "AD-021",
+   "density": "high",
+   "mixed": false,
+   "cells": 118,
+   "bandCells": 118,
+   "coreCells": 0
+  },
+  {
+   "blockId": 3,
+   "district": "GAME",
+   "blockFunc": "SHOP",
+   "shell": "AD-002",
+   "density": "",
+   "mixed": true,
+   "cells": 325,
+   "bandCells": 302,
+   "coreCells": 23
+  },
+  {
+   "blockId": 5,
+   "district": "CORE",
+   "blockFunc": "PUB",
+   "shell": "AD-048",
+   "density": "",
+   "mixed": false,
+   "cells": 78,
+   "bandCells": 75,
+   "coreCells": 3
+  },
+  {
+   "blockId": 7,
+   "district": "CORE",
+   "blockFunc": "PUB",
+   "shell": "AD-048",
+   "density": "",
+   "mixed": false,
+   "cells": 228,
+   "bandCells": 222,
+   "coreCells": 6
+  },
+  {
+   "blockId": 8,
+   "district": "QUANT",
+   "blockFunc": "OFF",
+   "shell": "AD-035",
+   "density": "",
+   "mixed": false,
+   "cells": 104,
+   "bandCells": 104,
+   "coreCells": 0
+  },
+  {
+   "blockId": 9,
+   "district": "GAME",
+   "blockFunc": "RES",
+   "shell": "AD-021",
+   "density": "high",
+   "mixed": false,
+   "cells": 104,
+   "bandCells": 104,
+   "coreCells": 0
+  },
+  {
+   "blockId": 11,
+   "district": "QUANT",
+   "blockFunc": "OFF",
+   "shell": "AD-035",
+   "density": "",
+   "mixed": false,
+   "cells": 117,
+   "bandCells": 117,
+   "coreCells": 0
+  },
+  {
+   "blockId": 12,
+   "district": "CORE",
+   "blockFunc": "PUB",
+   "shell": "AD-048",
+   "density": "",
+   "mixed": false,
+   "cells": 110,
+   "bandCells": 105,
+   "coreCells": 5
+  },
+  {
+   "blockId": 13,
+   "district": "CORE",
+   "blockFunc": "PUB",
+   "shell": "AD-048",
+   "density": "",
+   "mixed": false,
+   "cells": 181,
+   "bandCells": 177,
+   "coreCells": 4
+  },
+  {
+   "blockId": 14,
+   "district": "MEDIA",
+   "blockFunc": "CLUB",
+   "shell": "AD-008",
+   "density": "",
+   "mixed": false,
+   "cells": 117,
+   "bandCells": 117,
+   "coreCells": 0
+  },
+  {
+   "blockId": 15,
+   "district": "QUANT",
+   "blockFunc": "OFF",
+   "shell": "AD-035",
+   "density": "",
+   "mixed": false,
+   "cells": 325,
+   "bandCells": 302,
+   "coreCells": 23
+  },
+  {
+   "blockId": 16,
+   "district": "MEDIA",
+   "blockFunc": "CLUB",
+   "shell": "AD-008",
+   "density": "",
+   "mixed": false,
+   "cells": 299,
+   "bandCells": 278,
+   "coreCells": 21
+  },
+  {
+   "blockId": 17,
+   "district": "MEDIA",
+   "blockFunc": "SHOP",
+   "shell": "AD-002",
+   "density": "",
+   "mixed": true,
+   "cells": 44,
+   "bandCells": 44,
+   "coreCells": 0
+  },
+  {
+   "blockId": 18,
+   "district": "MEDIA",
+   "blockFunc": "SHOP",
+   "shell": "AD-002",
+   "density": "",
+   "mixed": true,
+   "cells": 81,
+   "bandCells": 81,
+   "coreCells": 0
+  }
+ ],
+ "blockLandmark": [
+  {
+   "district": "CORE",
+   "blockId": 7,
+   "areaM2": 7125
+  },
+  {
+   "district": "GAME",
+   "blockId": 3,
+   "areaM2": 9000
+  },
+  {
+   "district": "MEDIA",
+   "blockId": 16,
+   "areaM2": 8100
+  },
+  {
+   "district": "QUANT",
+   "blockId": 0,
+   "areaM2": 10000
+  }
+ ],
+ "blockCoveredBy": [
+  {
+   "blockId": 1,
+   "coveredBy": [
+    7
+   ],
+   "minRoadM": 65.0
+  },
+  {
+   "blockId": 2,
+   "coveredBy": [
+    5,
+    7
+   ],
+   "minRoadM": 45.0
+  },
+  {
+   "blockId": 9,
+   "coveredBy": [
+    7,
+    13
+   ],
+   "minRoadM": 40.0
+  }
+ ],
+ "shopStats": {
+  "shopCells": 450,
+  "shopJobs": 112.5,
+  "resCells": 252,
+  "resWorkers": 504.0,
+  "residents": 1008.0,
+  "jobsPerResident": 0.1116,
+  "anchor": 0.125,
+  "bandLow": 0.1,
+  "bandHigh": 0.15
+ }
+}

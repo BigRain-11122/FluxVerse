@@ -9,10 +9,7 @@ static class McpSpikeAutostart
     [InitializeOnLoadMethod]
     static void Init()
     {
-        if (SessionState.GetBool("McpSpikeAutostart.Done", false)) return;
-        SessionState.SetBool("McpSpikeAutostart.Done", true);
-
-        // Durability: enable the package's own auto-start pref (HTTP mode, future loads).
+        // Idempotent across domain reloads: re-check on every reload, start only if down.
         EditorPrefs.SetBool("MCPForUnity.AutoStartOnLoad", true);
 
         EditorApplication.delayCall += () =>

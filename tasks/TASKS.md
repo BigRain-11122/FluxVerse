@@ -16,6 +16,7 @@
 | T-FV-143 | QA 自验接线（qa-smoke-test-charter v1.0：每轮 commit 自验+截图证据 qa/smoke-<r>.png+log·本仓清单 7 条+三截图=俯视全景/黄昏/居民走动）：qa/ 目录随 T-FV-142 S1 首产落位·治理轮自验=scan/verify 双绿+tasks-board-check 门在案 | 源=..\..\docs\qa-smoke-test-charter.md+orders 09-28 QA 行+TECH §九 r234 行 | open |
 | T-FV-145 | Executive Protocol v1.0 本周适配（state/runbook.md <2KB 压缩+规则文件移 docs/_archive/+规则文件 ≤5 盘点〔瘦身令④〕；科学判断=check-fastpath SHA-only 快道保留〔⑦查漏领防线·成本≈0〕·落 mandate v2.9 定稿） | 源=..\..\docs\executive-protocol.md+orders 09-28 行·窗=本周 | open |
 | T-FV-146 | Self-Drive v2.0 三队列落地（state/queue/ 下 main.md ≥5+tech.md ≥10+explore.md ≥10·素材=§九 open 行+打磨池+T-FV 候选族·三线 commit 分布照常） | 源=..\..\docs\self-drive.md §1+orders 09-28 行·窗=本周 | open |
+| T-FV-147 | City3D 居民名册接入（硅基灵魂第一棒·指挥令 09-29 凌晨）：先轻量通链路——City3D/Assets 下加一个 cs，Start 时读 `City/Assets/Data/residents-street.json`（38KB 已在盘），把 20 个居民的 id+职业打到控制台/debug 一行；不生成模型、不抢 r4 视觉 GPU、不动渲染。通后再逐步 A\* 下场行走。判据=Play 时可见 20 名有名有职居民被读出（JSON 可达）+不崩+commit 一条 | 源=CEO 居民令（30 天内苏州吴中真实小区 ≥10 居民有生活轨迹·行为基于真实片区数据）+T-FV-142 五件套居民条·数据面=residents-street.json；与 r4 视觉线并行零冲突 | open |
 
 ## 二、blocked 面单列（禁充当在岗）
 

@@ -11,10 +11,10 @@ namespace CitySim
 {
     /// <summary>
     /// 库内居民启用批 R1（CEO 令 2026-10-02「居民你先自己用资产库的，尽量用好，动作也是能用资产库的就配好」）
-    /// 职权边界：本件=City3D 工程装配面（census 名册 20 席 → AD-042 库内 19 形体确定性映射 + 骨骼动画接线）；
+    /// 职权边界：本件=City3D 工程装配面（census 名册 32 席（六 zone 街面正典·b69eb42 烘焙）→ AD-042 库内 19 形体确定性映射 + 骨骼动画接线）；
     ///          六 hex 材质映射/换装契约 = BigLife 总责（O-2026-0929-020）——本件只留消费位不越权立映射法。
     /// 库内事实：AD-042 19/19 空 Animator 零动画（R-20260929-animation-gap 实测）→ 人形动画=已判定真缺口走既判解B
-    ///          （generate_motion → Hunyuan FBX·本批 walk/idle 两枚·Humanoid 重定向挂 Synty 骨架）。
+    ///          （generate_motion → Hunyuan FBX·本批 walk/idle 两枚·Human 重定向挂 Synty 骨架——团结 t15 改名判例 Humanoid→Human·双机反射实锤）。
     /// 断言：R1 名册可达（T-FV-147 正体）R2 库内形体齐 R3 动画导入 R4 重定向姿势差 R5 生成装配 R6 行走位移 R7 映射确定性 R8 判据帧。
     /// 批模式：-executeMethod CitySim.CitySimResidentsBatch.RunResidentsAll（fail-loud .done 哨兵·B_R1 系判据帧）。
     /// </summary>
@@ -72,18 +72,18 @@ namespace CitySim
                 var sb = new StringBuilder();
                 sb.AppendLine("# CitySim 库内居民启用批 R1 自检（闸3 机检·" + DateTime.Now.ToString("yyyy-MM-dd HH:mm") + "）");
                 sb.AppendLine("> 溯源=CEO 令 10-02「居民先自己用资产库的·动作也是能用资产库的就配好」·seed=" + SEED
-                    + "·census 名册 20 席→AD-042 19 形体确定性映射·Hunyuan walk/idle Humanoid 重定向");
+                    + "·census 名册 32 席→AD-042 19 形体确定性映射·Hunyuan walk/idle Human 重定向（团结 t15 改名）");
                 sb.AppendLine("> 库内事实=R-20260929-animation-gap（AD-042 空 Animator 零动画）→ 人形动画走既判解B=generate_motion（Mixamo 系 FBX）");
                 sb.AppendLine("> 职权注记：六 hex 材质映射/换装契约=BigLife 总责（O-2026-0929-020）——本批只做工程装配与动画接线·映射消费位已留（RSlot 六 hex 字段）");
 
-                // R1 名册可达（T-FV-147 正体：20 名有名有职居民被读出）
+                // R1 名册可达（T-FV-147 正体：32 名有名有职居民被读出——bm-c 裁决 10-02：启用街面正典 32 席全量·弃 2D 残单 20 旧规格）
                 LoadRoster();
-                bool r1 = _slots.Count == 20;
+                bool r1 = _slots.Count == 32;
                 var idSet = new HashSet<string>();
                 int named = 0, prof = 0;
                 foreach (var s in _slots) { if (!string.IsNullOrEmpty(s.id)) idSet.Add(s.id); if (!string.IsNullOrEmpty(s.name)) named++; if (!string.IsNullOrEmpty(s.profession)) prof++; }
-                r1 = r1 && idSet.Count == 20 && named == 20 && prof == 20;
-                sb.AppendLine("| R1 名册可达 | slots=" + _slots.Count + "/20·唯一 id=" + idSet.Count + "·有名=" + named + "·有职=" + prof + "（" + RosterPath + "） | " + (r1 ? "PASS" : "FAIL") + " |");
+                r1 = r1 && idSet.Count == 32 && named == 32 && prof == 32;
+                sb.AppendLine("| R1 名册可达 | slots=" + _slots.Count + "/32·唯一 id=" + idSet.Count + "·有名=" + named + "·有职=" + prof + "（" + RosterPath + "） | " + (r1 ? "PASS" : "FAIL") + " |");
                 if (!r1) fail++;
 
                 // R2 库内形体齐（AD-042 19/19 实锚）
@@ -108,7 +108,7 @@ namespace CitySim
                 SetupCharacterRig();
                 if (_charAvatar == null) { sb.AppendLine("| R0 形体 Avatar | AD-042 Character.fbx Humanoid 化后 Avatar 未取得 | FAIL |"); fail++; }
 
-                // 建装配场景（20 席全生成+控制器+双态接线+材质过桥）
+                // 建装配场景（32 席全生成+控制器+双态接线+材质过桥）
                 BuildScene();
 
                 // R5 生成装配
@@ -119,8 +119,8 @@ namespace CitySim
                     if (a != null && a.runtimeAnimatorController != null && a.avatar != null) bound++;
                     if (go.GetComponent<ResidentMode>() != null) modeBound++;
                 }
-                bool r5 = _spawned.Count == 20 && bound == 20 && modeBound == 20;
-                sb.AppendLine("| R5 生成装配 | 生成=" + _spawned.Count + "/20·Animator 全绑（ctrl+avatar）=" + bound + "/20·ResidentMode=" + modeBound + "/20·walkers=" + _walkers.Count + " | " + (r5 ? "PASS" : "FAIL") + " |");
+                bool r5 = _spawned.Count == 32 && bound == 32 && modeBound == 32;
+                sb.AppendLine("| R5 生成装配 | 生成=" + _spawned.Count + "/32·Animator 全绑（ctrl+avatar）=" + bound + "/32·ResidentMode=" + modeBound + "/32·walkers=" + _walkers.Count + " | " + (r5 ? "PASS" : "FAIL") + " |");
                 if (!r5) fail++;
 
                 // R4 重定向姿势差（walk clip 半程采样·Synty 骨架真动=重定向活体实证）
@@ -161,12 +161,12 @@ namespace CitySim
                     if (src == null || src != _pfMap[ArchetypeOf(_slots[i].id)]) mismatch++;
                 }
                 bool r7 = mismatch == 0;
-                sb.AppendLine("| R7 映射确定性 | 20 席双算对账不一致=" + mismatch + "（hash(id) mod 19·确定性 seed） | " + (r7 ? "PASS" : "FAIL") + " |");
+                sb.AppendLine("| R7 映射确定性 | 32 席双算对账不一致=" + mismatch + "（hash(id) mod 19·确定性 seed） | " + (r7 ? "PASS" : "FAIL") + " |");
                 if (!r7) fail++;
 
                 // 名册→形体映射表（CEO 审阅面）
                 sb.AppendLine();
-                sb.AppendLine("## 名册→形体映射（20 席）");
+                sb.AppendLine("## 名册→形体映射（32 席）");
                 sb.AppendLine("| slot | census id | 名 | 职业 | 种 | 形体 | 态 |");
                 sb.AppendLine("|---|---|---|---|---|---|---|");
                 for (int i = 0; i < _slots.Count && i < _spawned.Count; i++)
@@ -217,7 +217,7 @@ namespace CitySim
             var r = JsonUtility.FromJson<Roster>(ta.text);
             _slots.Clear();
             if (r != null && r.slots != null) _slots.AddRange(r.slots);
-            if (_slots.Count != 20) throw new Exception("[Residents] roster slots=" + _slots.Count + " != 20 (fail-loud)");
+            if (_slots.Count != 32) throw new Exception("[Residents] roster slots=" + _slots.Count + " != 32 (fail-loud)");
         }
 
         static int Hash(string s)
@@ -259,7 +259,17 @@ namespace CitySim
                 if (settings == null || settings.Length == 0) settings = mi.defaultClipAnimations;
                 if (settings != null && settings.Length > 0)
                 {
-                    for (int i = 0; i < settings.Length; i++) settings[i].loopTime = true;
+                    for (int i = 0; i < settings.Length; i++)
+                    {
+                        // Unity 正法五件套（docs.unity3d.com/ModelImporterClipAnimation）：循环+首尾姿势对接+根位移/朝向烘入姿势
+                        // 烘入律=原地动画（水平位移归 ResidentWalker 驱动·高度防蹦跳·朝向归控制器）——脚滑根治面
+                        // Tuanjie t15 烘入四件实证全通（C 机独立探针 2026-10-02 全绿·tuanjie-humanoid-probe-report.md）
+                        settings[i].loopTime = true;
+                        settings[i].loopPose = true;
+                        settings[i].keepOriginalPositionXZ = true;
+                        settings[i].keepOriginalPositionY = true;
+                        settings[i].keepOriginalOrientation = true;
+                    }
                     mi.clipAnimations = settings;
                     loopSet = true;
                 }
@@ -366,7 +376,7 @@ namespace CitySim
                 go.transform.SetParent(root.transform, false);
                 BridgeMaterials(go);
 
-                bool isWalker = (i % 2 == 0); // 10 行走 / 10 待机
+                bool isWalker = (i % 2 == 0); // 16 行走 / 16 待机
                 var a = go.GetComponent<Animator>();
                 if (a == null) a = go.AddComponent<Animator>();
                 a.runtimeAnimatorController = ctrl;

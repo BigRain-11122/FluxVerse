@@ -251,7 +251,7 @@ namespace CitySim
             if (!File.Exists(Path.Combine(CityRoot, fbxPath)))
                 throw new Exception("[Residents] motion FBX missing: " + fbxPath + "（按 O 令从 TOS 直链下载到 Assets/Motions/）");
             var mi = (ModelImporter)AssetImporter.GetAtPath(fbxPath);
-            mi.animationType = ModelImporterAnimationType.Humanoid;
+            mi.animationType = ModelImporterAnimationType.Human;
             bool loopSet = false;
             try
             {
@@ -285,9 +285,9 @@ namespace CitySim
                 string p = AssetDatabase.GUIDToAssetPath(guid);
                 if (!p.Contains("AD-042_") || !p.EndsWith("/Character.fbx")) continue;
                 var mi = (ModelImporter)AssetImporter.GetAtPath(p);
-                if (mi.animationType != ModelImporterAnimationType.Humanoid)
+                if (mi.animationType != ModelImporterAnimationType.Human)
                 {
-                    mi.animationType = ModelImporterAnimationType.Humanoid;
+                    mi.animationType = ModelImporterAnimationType.Human;
                     mi.SaveAndReimport();
                 }
                 foreach (var o in AssetDatabase.LoadAllAssetsAtPath(p))

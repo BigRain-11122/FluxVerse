@@ -1,0 +1,189 @@
+﻿# R0 直载 dump（绕 FindAssets 搜索面·bm-a r623·2026-10-03 13:12）
+> 溯源=三跑证伪搜索面（12:40 冷库/12:43 温库/12:47 Refresh 强刷均 found=0）→按磁盘实存路径直载取证；路径=PS 扫描实证（Character.fbx 单数·AD-042 包·meta guid 4a5a8c8f/animationType=3）。
+- 磁盘面：文件在位 Assets/lowpoly/01_现代城市生活/AD-042_Char角色_都市人物_CityCharactersPack/POLYGONCityCharacters/Models/Character.fbx
+- ModelImporter=OK
+  animationType=Human (int=3)
+  clipAnimations=0  materialImportMode=None
+  子资产清单（LoadAllAssetsAtPath）：
+    - GameObject : Character
+    - GameObject : Ankle_L
+    - GameObject : Ankle_R
+    - GameObject : Ball_L
+    - GameObject : Ball_R
+    - GameObject : Character_Biker
+    - GameObject : Character_FastFoodGuy
+    - GameObject : Character_FireFighter
+    - GameObject : Character_GamerGirl
+    - GameObject : Character_Gangster
+    - GameObject : Character_Grandma
+    - GameObject : Character_Grandpa
+    - GameObject : Character_HipsterGirl
+    - GameObject : Character_HipsterGuy
+    - GameObject : Character_Hobo
+    - GameObject : Character_Hotdog
+    - GameObject : Character_Jock
+    - GameObject : Character_Paramedic
+    - GameObject : Character_PunkGirl
+    - GameObject : Character_PunkGuy
+    - GameObject : Character_Roadworker
+    - GameObject : Character_ShopKeeper
+    - GameObject : Character_SummerGirl
+    - GameObject : Character_Tourist
+    - GameObject : Clavicle_L
+    - GameObject : Clavicle_R
+    - GameObject : Elbow_L
+    - GameObject : Elbow_R
+    - GameObject : Eyebrows
+    - GameObject : Eyes
+    - GameObject : Finger_01
+    - GameObject : Finger_01 1
+    - GameObject : Finger_02
+    - GameObject : Finger_02 1
+    - GameObject : Finger_03
+    - GameObject : Finger_03 1
+    - GameObject : Finger_04
+    - GameObject : Finger_04 1
+    - GameObject : Hand_L
+    - GameObject : Hand_R
+    - GameObject : Head
+    - GameObject : Hips
+    - GameObject : IndexFinger_01
+    - GameObject : IndexFinger_01 1
+    - GameObject : IndexFinger_02
+    - GameObject : IndexFinger_02 1
+    - GameObject : IndexFinger_03
+    - GameObject : IndexFinger_03 1
+    - GameObject : IndexFinger_04
+    - GameObject : IndexFinger_04 1
+    - GameObject : LowerLeg_L
+    - GameObject : LowerLeg_R
+    - GameObject : Neck
+    - GameObject : Root
+    - GameObject : Shoulder_L
+    - GameObject : Shoulder_R
+    - GameObject : Spine_01
+    - GameObject : Spine_02
+    - GameObject : Spine_03
+    - GameObject : Thumb_01
+    - GameObject : Thumb_01 1
+    - GameObject : Thumb_02
+    - GameObject : Thumb_02 1
+    - GameObject : Thumb_03
+    - GameObject : Thumb_03 1
+    - GameObject : Toes_L
+    - GameObject : Toes_R
+    - GameObject : UpperLeg_L
+    - GameObject : UpperLeg_R
+    - Transform : Ankle_L
+    - Transform : Ankle_R
+    - Transform : Ball_L
+    - Transform : Ball_R
+    - Transform : Character
+    - Transform : Character_Biker
+    - Transform : Character_FastFoodGuy
+    - Transform : Character_FireFighter
+    - Transform : Character_GamerGirl
+    - Transform : Character_Gangster
+    - Transform : Character_Grandma
+    - Transform : Character_Grandpa
+    - Transform : Character_HipsterGirl
+    - Transform : Character_HipsterGuy
+    - Transform : Character_Hobo
+    - Transform : Character_Hotdog
+    - Transform : Character_Jock
+    - Transform : Character_Paramedic
+    - Transform : Character_PunkGirl
+    - Transform : Character_PunkGuy
+    - Transform : Character_Roadworker
+    - Transform : Character_ShopKeeper
+    - Transform : Character_SummerGirl
+    - Transform : Character_Tourist
+    - Transform : Clavicle_L
+    - Transform : Clavicle_R
+    - Transform : Elbow_L
+    - Transform : Elbow_R
+    - Transform : Eyebrows
+    - Transform : Eyes
+    - Transform : Finger_01
+    - Transform : Finger_01 1
+    - Transform : Finger_02
+    - Transform : Finger_02 1
+    - Transform : Finger_03
+    - Transform : Finger_03 1
+    - Transform : Finger_04
+    - Transform : Finger_04 1
+    - Transform : Hand_L
+    - Transform : Hand_R
+    - Transform : Head
+    - Transform : Hips
+    - Transform : IndexFinger_01
+    - Transform : IndexFinger_01 1
+    - Transform : IndexFinger_02
+    - Transform : IndexFinger_02 1
+    - Transform : IndexFinger_03
+    - Transform : IndexFinger_03 1
+    - Transform : IndexFinger_04
+    - Transform : IndexFinger_04 1
+    - Transform : LowerLeg_L
+    - Transform : LowerLeg_R
+    - Transform : Neck
+    - Transform : Root
+    - Transform : Shoulder_L
+    - Transform : Shoulder_R
+    - Transform : Spine_01
+    - Transform : Spine_02
+    - Transform : Spine_03
+    - Transform : Thumb_01
+    - Transform : Thumb_01 1
+    - Transform : Thumb_02
+    - Transform : Thumb_02 1
+    - Transform : Thumb_03
+    - Transform : Thumb_03 1
+    - Transform : Toes_L
+    - Transform : Toes_R
+    - Transform : UpperLeg_L
+    - Transform : UpperLeg_R
+    - Mesh : Character_Hotdog
+    - Mesh : Character_PunkGirl
+    - Mesh : Character_Paramedic
+    - Mesh : Character_HipsterGirl
+    - Mesh : Character_GamerGirl
+    - Mesh : Character_Grandma
+    - Mesh : Character_ShopKeeper
+    - Mesh : Character_Jock
+    - Mesh : Character_SummerGirl
+    - Mesh : Character_Hobo
+    - Mesh : Character_Gangster
+    - Mesh : Character_Biker
+    - Mesh : Character_FireFighter
+    - Mesh : Character_PunkGuy
+    - Mesh : Character_Grandpa
+    - Mesh : Character_Tourist
+    - Mesh : Character_FastFoodGuy
+    - Mesh : Character_HipsterGuy
+    - Mesh : Character_Roadworker
+    - Avatar : CharacterAvatar  [AVATAR valid=True isHuman=True mappedBones=41]
+    - Animator : Character
+    - SkinnedMeshRenderer : Character_Biker
+    - SkinnedMeshRenderer : Character_FastFoodGuy
+    - SkinnedMeshRenderer : Character_FireFighter
+    - SkinnedMeshRenderer : Character_GamerGirl
+    - SkinnedMeshRenderer : Character_Gangster
+    - SkinnedMeshRenderer : Character_Grandma
+    - SkinnedMeshRenderer : Character_Grandpa
+    - SkinnedMeshRenderer : Character_HipsterGirl
+    - SkinnedMeshRenderer : Character_HipsterGuy
+    - SkinnedMeshRenderer : Character_Hobo
+    - SkinnedMeshRenderer : Character_Hotdog
+    - SkinnedMeshRenderer : Character_Jock
+    - SkinnedMeshRenderer : Character_Paramedic
+    - SkinnedMeshRenderer : Character_PunkGirl
+    - SkinnedMeshRenderer : Character_PunkGuy
+    - SkinnedMeshRenderer : Character_Roadworker
+    - SkinnedMeshRenderer : Character_ShopKeeper
+    - SkinnedMeshRenderer : Character_SummerGirl
+    - SkinnedMeshRenderer : Character_Tourist
+  avatar 子资产数=1
+  GameObject=OK bone-count=69
+  bones=Character,Character_Biker,Character_FastFoodGuy,Character_FireFighter,Character_GamerGirl,Character_Gangster,Character_Grandma,Character_Grandpa,Character_HipsterGirl,Character_HipsterGuy,Character_Hobo,Character_Hotdog,Character_Jock,Character_Paramedic,Character_PunkGirl,Character_PunkGuy,Character_Roadworker,Character_ShopKeeper,Character_SummerGirl,Character_Tourist,Root,Hips,Spine_01,Spine_02,Spine_03,Clavicle_L,Shoulder_L,Elbow_L,Hand_L,Finger_01,Finger_02,Finger_03,Finger_04,IndexFinger_01,IndexFinger_02,IndexFinger_03,IndexFinger_04,Thumb_01,Thumb_02,Thumb_03,Clavicle_R,Shoulder_R,Elbow_R,Hand_R,Finger_01 1,Finger_02 1,Finger_03 1,Finger_04 1,IndexFinger_01 1,IndexFinger_02 1,IndexFinger_03 1,IndexFinger_04 1,Thumb_01 1,Thumb_02 1,Thumb_03 1,Neck,Head,Eyebrows,Eyes,UpperLeg_L,LowerLeg_L,Ankle_L,Ball_L,Toes_L,UpperLeg_R,LowerLeg_R,Ankle_R,Ball_R,Toes_R
+  组件 Animator=avatar=CharacterAvatar

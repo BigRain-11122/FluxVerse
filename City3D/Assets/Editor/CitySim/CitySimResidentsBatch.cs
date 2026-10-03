@@ -256,6 +256,74 @@ namespace CitySim
             }
         }
 
+        // R0 诊断 v2（O-20261003-1210 令3·v1 三跑 FindAssets=空的搜索面补证据）：
+        // 直载已知路径绕搜索面 + 全 ModelImporter 普查 + AD-042 目录磁盘扫描——仍纯证据面零断言线触碰。
+        public static void RunR0Diag2()
+        {
+            try
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine("# R0 诊断 v2（AD-042 Character.fbx Avatar 面·" + DateTime.Now.ToString("yyyy-MM-dd HH:mm") + "）");
+                sb.AppendLine("> 溯源=O-20261003-1210 令3；v1 三跑 FindAssets(\"Character t:ModelImporter\")=空→本跑=直载路径+普查双证据面。");
+                // 1) 全 ModelImporter 普查（搜索面证据）
+                var allMi = AssetDatabase.FindAssets("t:ModelImporter");
+                sb.AppendLine("- ModelImporter census total=" + allMi.Length);
+                int ad042Hits = 0; string sampleAd = null;
+                foreach (var g in allMi)
+                {
+                    var p = AssetDatabase.GUIDToAssetPath(g);
+                    if (p.Contains("AD-042")) { ad042Hits++; if (sampleAd == null) sampleAd = p; }
+                }
+                sb.AppendLine("  AD-042 hits=" + ad042Hits + " sample=" + (sampleAd ?? "NONE"));
+                // 2) 直载已知路径（绕搜索面）
+                string target = "Assets/lowpoly/01_现代城市生活/AD-042_Char角色_都市人物_CityCharactersPack/POLYGONCityCharacters/Models/Character.fbx";
+                string disk = Path.Combine(Application.dataPath, target.Substring("Assets/".Length));
+                if (!File.Exists(disk))
+                {
+                    sb.AppendLine("- direct-path FILE MISSING on disk: " + disk);
+                    var root = Path.Combine(Application.dataPath, "lowpoly");
+                    if (Directory.Exists(root))
+                        foreach (var d in Directory.GetDirectories(root))
+                            sb.AppendLine("  lowpoly subdir: " + d);
+                }
+                else
+                {
+                    sb.AppendLine();
+                    sb.AppendLine("- fbx=" + target + " (disk-verified)");
+                    var mi2 = AssetImporter.GetAtPath(target) as ModelImporter;
+                    sb.AppendLine("  importer=" + (mi2 == null ? "NULL(ModelImporter cast failed)" : "ok"));
+                    if (mi2 != null)
+                        sb.AppendLine("  animationType=" + mi2.animationType + " (int=" + (int)mi2.animationType + ")");
+                    sb.AppendLine("  sub-assets:");
+                    foreach (var o in AssetDatabase.LoadAllAssetsAtPath(target))
+                    {
+                        if (o == null) { sb.AppendLine("    - <null sub-asset>"); continue; }
+                        var av = o as Avatar;
+                        sb.AppendLine("    - " + o.GetType().Name + " : " + o.name
+                            + (av != null ? "  [AVATAR valid=" + av.isValid + " isHuman=" + av.isHuman + " mappedBones=" + av.humanDescription.human.Length + "]" : ""));
+                    }
+                    var go = AssetDatabase.LoadAssetAtPath<GameObject>(target);
+                    if (go != null)
+                    {
+                        var bones = new List<string>();
+                        foreach (var t in go.transform.GetComponentsInChildren<Transform>(true)) bones.Add(t.name);
+                        sb.AppendLine("  bone-count=" + bones.Count);
+                        sb.AppendLine("  bones=" + string.Join(",", bones.ToArray()));
+                    }
+                    else sb.AppendLine("  main-asset GameObject=null");
+                }
+                File.WriteAllText(Path.Combine(Staging, "r0diag2-report.md"), sb.ToString(), Encoding.UTF8);
+                File.WriteAllText(Path.Combine(Staging, "r0diag2.done"), "R0Diag2|" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "|DONE", Encoding.UTF8);
+                Debug.Log("[Residents] R0Diag2 done -> " + Staging);
+            }
+            catch (Exception e)
+            {
+                try { File.WriteAllText(Path.Combine(Staging, "r0diag2.done"), "R0Diag2|" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "|FAIL|" + e.Message.Replace('\n', ' '), Encoding.UTF8); } catch { }
+                Debug.LogError("[Residents] R0Diag2 FAIL: " + e.Message);
+                throw;
+            }
+        }
+
         // ================= 名册 =================
 
         static readonly Dictionary<string, string> _mapCache = new Dictionary<string, string>();

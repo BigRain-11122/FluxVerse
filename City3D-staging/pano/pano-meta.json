@@ -1,0 +1,9 @@
+﻿{
+  "engine": "CitySim CitySimLab.unity",
+  "eye": [0.69, 80, 0.69],
+  "sim_min": 720,
+  "seed": 20260930,
+  "face": 1024,
+  "agents": 504,
+  "ts": "2026-10-02 23:04:50"
+}

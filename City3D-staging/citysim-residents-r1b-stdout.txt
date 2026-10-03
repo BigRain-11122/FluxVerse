@@ -1,0 +1,4 @@
+
+Aborting batchmode due to failure:
+executeMethod method CitySim.CitySimResidentsBatch.RunResidentsAll threw exception.
+

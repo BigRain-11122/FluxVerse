@@ -206,6 +206,56 @@ namespace CitySim
             }
         }
 
+        // ================= R0 诊断跑（O-2124 bm-c 诊断指针·2026-10-03）=================
+        // 昨夜 A 腿 7/9 实质 PASS 唯 R0 FAIL（Character.fbx Human 化后 Avatar 子资产未取得）——
+        // 本方法=纯证据面 dump（零断言线触碰）：animationType 实值/子资产类型清单/骨架骨名表 → staging 报告。
+        public static void RunR0Diag()
+        {
+            try
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine("# R0 诊断（AD-042 Character.fbx Avatar 面·" + DateTime.Now.ToString("yyyy-MM-dd HH:mm") + "）");
+                sb.AppendLine("> 溯源=O-20261002-2124 A 腿重跑 R0 FAIL·bm-a 回执留 bm-c 诊断指针——证据先行：枚举实值/子资产/骨名，修法随数据裁决。");
+                int found = 0;
+                foreach (string guid in AssetDatabase.FindAssets("Character t:ModelImporter"))
+                {
+                    string p = AssetDatabase.GUIDToAssetPath(guid);
+                    if (!p.Contains("AD-042_") || !p.EndsWith("/Character.fbx")) continue;
+                    found++;
+                    var mi = (ModelImporter)AssetImporter.GetAtPath(p);
+                    sb.AppendLine();
+                    sb.AppendLine("- fbx=" + p);
+                    sb.AppendLine("  animationType=" + mi.animationType + " (int=" + ((int)mi.animationType) + ")");
+                    sb.AppendLine("  sub-assets:");
+                    foreach (var o in AssetDatabase.LoadAllAssetsAtPath(p))
+                    {
+                        var av = o as Avatar;
+                        sb.AppendLine("    - " + o.GetType().Name + " : " + o.name
+                            + (av != null ? "  [AVATAR valid=" + av.isValid + " isHuman=" + av.isHuman + " mappedBones=" + av.humanDescription.human.Length + "]" : ""));
+                    }
+                    var go = AssetDatabase.LoadAssetAtPath<GameObject>(p);
+                    if (go != null)
+                    {
+                        var bones = new List<string>();
+                        foreach (var t in go.transform.GetComponentsInChildren<Transform>(true)) bones.Add(t.name);
+                        sb.AppendLine("  bone-count=" + bones.Count);
+                        sb.AppendLine("  bones=" + string.Join(",", bones.ToArray()));
+                    }
+                    else sb.AppendLine("  main-asset GameObject=null");
+                }
+                if (found == 0) sb.AppendLine("- NO Character.fbx matched（FindAssets=\"Character t:ModelImporter\" 空）——搜索面问题非导入面");
+                File.WriteAllText(Path.Combine(Staging, "r0diag-report.md"), sb.ToString(), Encoding.UTF8);
+                File.WriteAllText(Path.Combine(Staging, "r0diag.done"), "R0Diag|" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "|DONE found=" + found, Encoding.UTF8);
+                Debug.Log("[Residents] R0Diag done -> " + Staging);
+            }
+            catch (Exception e)
+            {
+                try { File.WriteAllText(Path.Combine(Staging, "r0diag.done"), "R0Diag|" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "|FAIL|" + e.Message.Replace('\n', ' '), Encoding.UTF8); } catch { }
+                Debug.LogError("[Residents] R0Diag FAIL: " + e.Message);
+                throw;
+            }
+        }
+
         // ================= 名册 =================
 
         static readonly Dictionary<string, string> _mapCache = new Dictionary<string, string>();

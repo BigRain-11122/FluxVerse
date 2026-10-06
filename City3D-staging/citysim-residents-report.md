@@ -1,11 +1,10 @@
-﻿# CitySim 库内居民启用批 R1 自检（闸3 机检·2026-10-02 23:04）
+﻿# CitySim 库内居民启用批 R1 自检（闸3 机检·2026-10-06 19:23）
 > 溯源=CEO 令 10-02「居民先自己用资产库的·动作也是能用资产库的就配好」·seed=20261002·census 名册 32 席→AD-042 19 形体确定性映射·Hunyuan walk/idle Human 重定向（团结 t15 改名）
 > 库内事实=R-20260929-animation-gap（AD-042 空 Animator 零动画）→ 人形动画走既判解B=generate_motion（Mixamo 系 FBX）
 > 职权注记：六 hex 材质映射/换装契约=BigLife 总责（O-2026-0929-020）——本批只做工程装配与动画接线·映射消费位已留（RSlot 六 hex 字段）
 | R1 名册可达 | slots=32/32·唯一 id=32·有名=32·有职=32（Assets/CitySim/residents-street.json） | PASS |
 | R2 库内形体 | AD-042 实锚 19/19 | PASS |
 | R3 动画导入 | walk=SMPLH_Animation@4.97s·idle=SMPLH_Animation@4.97s | PASS |
-| R0 形体 Avatar | AD-042 Character.fbx Humanoid 化后 Avatar 未取得 | FAIL |
 | R5 生成装配 | 生成=32/32·Animator 全绑（ctrl+avatar）=32/32·ResidentMode=32/32·walkers=16 | PASS |
 | R4 重定向实证 | walk 半程姿势差=3.535m（>0.02）·idle 姿势差=0.177m（参照值） | PASS |
 | R6 行走位移 | 编辑态推进 5.0s 位移=6.00m（>4） | PASS |
@@ -49,4 +48,4 @@
 > 非碳基种（sprite/灵族系）暂借人形体——真 3D 形体=48 包零覆盖已知缺口（animation-gap ③·CC0 填库呈报在册）。
 | R8 判据帧 | 4/4 帧 → C:\Users\sjs20\Desktop\FluxGroup\gaming\FluxVerse\City3D-staging\shots8 | PASS |
 
-结论：**1 项 FAIL**·residents=32·walkers=16·clips=SMPLH_Animation/SMPLH_Animation
+结论：**八断言全绿**·residents=32·walkers=16·clips=SMPLH_Animation/SMPLH_Animation

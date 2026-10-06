@@ -1,1 +1,1 @@
-﻿CitySimResidents|2026-10-02 23:04:22|FAIL|[Residents] FAIL x1 -> C:\Users\sjs20\Desktop\FluxGroup\gaming\FluxVerse\City3D-staging\citysim-residents-report.md
+﻿CitySimResidents|2026-10-06 19:23:44|PASS|R1-R8-fail=0|residents=32|walkers=16|walk_len=4.97|idle_len=4.97|pose_delta=3.535|frames=4

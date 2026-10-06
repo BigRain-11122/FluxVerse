@@ -1,0 +1,3 @@
+GUI_ALREADY_CLOSED
+r3_EXIT=0
+DONE: CitySimResidents|2026-10-06 19:23:44|PASS|R1-R8-fail=0|residents=32|walkers=16|walk_len=4.97|idle_len=4.97|pose_delta=3.535|frames=4

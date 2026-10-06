@@ -408,11 +408,24 @@ namespace CitySim
         static void SetupCharacterRig()
         {
             // AD-042 共享 Character.fbx（animation-gap 实测 19 prefab 同源骨架）→ Humanoid 化取 Avatar
+            // 修法（O-20261003-1210 R0 诊断·bm-a 证据定谳+bm-c 裁决 10-06）：FindAssets("Character t:ModelImporter") 索引面
+            // 空返回（三跑 found=0·同窗直载全通=搜索面问题非导入面）→ 改 GUID 直载为主+FindAssets 兜底双保险。
+            // 实证锚：CharacterAvatar valid=True isHuman=True mappedBones=41（r0diag-direct-report.md·FluxVerse 44b603c）
+            const string CharacterFbxGuid = "4a5a8c8ff5d6d2e48ab8d2b27100cf57";
+            string direct = AssetDatabase.GUIDToAssetPath(CharacterFbxGuid);
+            var candidates = new List<string>();
+            if (!string.IsNullOrEmpty(direct)) candidates.Add(direct);
             foreach (string guid in AssetDatabase.FindAssets("Character t:ModelImporter"))
             {
-                string p = AssetDatabase.GUIDToAssetPath(guid);
-                if (!p.Contains("AD-042_") || !p.EndsWith("/Character.fbx")) continue;
+                string p2 = AssetDatabase.GUIDToAssetPath(guid);
+                if (!string.IsNullOrEmpty(p2) && p2.Contains("AD-042_") && p2.EndsWith("/Character.fbx") && !candidates.Contains(p2))
+                    candidates.Add(p2);
+            }
+            foreach (string p in candidates)
+            {
+                if (string.IsNullOrEmpty(p) || !p.Contains("AD-042_")) continue;
                 var mi = (ModelImporter)AssetImporter.GetAtPath(p);
+                if (mi == null) continue;
                 if (mi.animationType != ModelImporterAnimationType.Human)
                 {
                     mi.animationType = ModelImporterAnimationType.Human;
@@ -424,7 +437,7 @@ namespace CitySim
                     if (av != null && av.isValid) { _charAvatar = av; Debug.Log("[Residents] char avatar: " + p + " -> " + av.name); return; }
                 }
             }
-            Debug.LogWarning("[Residents] AD-042 Character.fbx avatar not found by name-scan；回退：prefab Animator 自带 avatar");
+            Debug.LogWarning("[Residents] AD-042 Character.fbx avatar not found（GUID 直载+FindAssets 兜底双路均未取得）；回退：prefab Animator 自带 avatar");
         }
 
         static float PoseDelta(GameObject probe, AnimationClip clip)

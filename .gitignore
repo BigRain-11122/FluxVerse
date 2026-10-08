@@ -34,3 +34,6 @@ docs/_trash/
 # City3D 48 包资产库（2026-09-28 库内优先律施工源·实测 1.2GB/48,992 件）——不入 FluxVerse 仓（git 不承载单机大资产）
 # 〔2026-09-30 勘正·资产防丢〕在役副本=City3D/Assets/lowpoly；中台正典位=MiniGame/projects/P3D_Spike——两位均 R1 永不清（O-20260929-033 坚决清理令防护·resource-chain §三登记）；备份径=bm-b 大资产宿主副本+外置硬盘（CEO 物理件）；robocopy SOP=City3D-staging/layout-report.md §三
 City3D/Assets/lowpoly/
+
+# City3D AD-049 Megacity 资产库（2026-10-08 CEO 1008 增量包进城副本·194MB/1794 件）——同 lowpoly 律：git 不承载单机大资产；库正典位=MiniGame Art Assets/lowpoly/01_现代城市生活/AD-049_*；中台备份同律
+City3D/Assets/ithappy/

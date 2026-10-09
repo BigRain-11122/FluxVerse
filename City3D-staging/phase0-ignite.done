@@ -1,0 +1,11 @@
+﻿{
+    "ts":  "2026-10-10T00:41:10+08:00",
+    "order":  "O-20261010-0010-bm-c s4 (City3D Phase 0 validation-run ignition, bm-a receipt leg)",
+    "exit_code":  0,
+    "wall_s":  25,
+    "log_done_marker":  true,
+    "shots_present":  6,
+    "shots_expected":  6,
+    "log":  "C:\\Users\\sjs20\\Desktop\\FluxGroup\\gaming\\FluxVerse\\City3D-staging\\phase0-ignite.log",
+    "report":  "C:\\Users\\sjs20\\Desktop\\FluxGroup\\gaming\\FluxVerse\\City3D-staging\\phase0-report.md"
+}

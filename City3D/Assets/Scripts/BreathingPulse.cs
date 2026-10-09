@@ -23,13 +23,17 @@ public class BreathingPulse : MonoBehaviour
     void Update()
     {
         if (Time.unscaledTime - _lastFileCheck > 2f) { _lastFileCheck = Time.unscaledTime; ReadLastTick(); }
-        if (_lastTickUnix < 0) { _inst.SetColor("_EmissionColor", Color.white * pulseFloor); return; }
+        // r932: pulse via _BaseColor on Unlit beacon (Tuanjie GDRP Lit emission channel renders zero delta in batchmode;
+        // Unlit base-color swap = provably visible channel, mirrors WhiteboxBuilder breath proof frames)
+        if (_lastTickUnix < 0) { _inst.SetColor("_BaseColor", PulseFloorColor); return; }
         float since = Time.realtimeSinceStartup - _lastFileCheck; // 近似：以最后文件读取时刻为拍点
         float e = since < pulseWidthSeconds
             ? Mathf.Lerp(pulsePeak, pulseFloor, since / pulseWidthSeconds)
             : pulseFloor;
-        _inst.SetColor("_EmissionColor", Color.white * e);
+        _inst.SetColor("_BaseColor", Color.Lerp(PulseFloorColor, Color.white * pulsePeak, Mathf.Clamp01(e / pulsePeak)));
     }
+
+    static readonly Color PulseFloorColor = new Color(0.08f, 0.09f, 0.12f);
 
     void ReadLastTick()
     {

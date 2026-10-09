@@ -241,12 +241,17 @@ public static class WhiteboxBuilder
         var m = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (m == null)
         {
-            m = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = "PulseBeacon" };
-            if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", new Color(0.9f, 0.95f, 1f));
-            m.EnableKeyword("_EMISSION");
-            m.SetColor("_EmissionColor", Color.white * 0.15f);
+            m = new Material(Shader.Find("Universal Render Pipeline/Unlit")) { name = "PulseBeacon" };
             AssetDatabase.CreateAsset(m, path);
         }
+        // r932 verdict: Tuanjie GDRP Lit emission channel renders ZERO delta in batchmode (keyword on + HDR emission set
+        // + 3 empirical runs -> byte-identical frames). Unlit base-color swap = provably visible channel (whole whitebox
+        // renders via Unlit); breathing proof + runtime pulse both switch to _BaseColor.
+        if (m.shader == null || m.shader.name != "Universal Render Pipeline/Unlit")
+            m.shader = Shader.Find("Universal Render Pipeline/Unlit");
+        m.SetColor("_BaseColor", new Color(0.08f, 0.09f, 0.12f));
+        m.SetColor("_Color", new Color(0.08f, 0.09f, 0.12f));
+        Report.Add("beacon_shader=" + (m.shader != null ? m.shader.name : "NULL") + " (Unlit base-color breathing channel, GDRP Lit emission dead in batchmode)");
         return m;
     }
 
@@ -260,11 +265,18 @@ public static class WhiteboxBuilder
         cam.transform.position = ToWorld(new Vector2(23.5f, 30.5f), 6f);
         cam.transform.rotation = Quaternion.LookRotation(new Vector3(0, 30f, 0) - cam.transform.position);
         Shot(cam, "X_bridge.png", 0, 0, Vector3.zero, "bridge");
-        // 呼吸灯对账双帧（emission 通道贯通证明 v0：真运行时对账=Phase 2 接线）
-        _pulseMat.SetColor("_EmissionColor", Color.white * 3.5f);
-        Shot(cam, "breath_on.png", 55f, 110f, new Vector3(0, 40f, 0), "breath_on");
-        _pulseMat.SetColor("_EmissionColor", Color.white * 0.05f);
-        Shot(cam, "breath_off.png", 55f, 110f, new Vector3(0, 40f, 0), "breath_off");
+        // 呼吸灯对账双帧（事件→引擎→渲染通道贯通证明 v0：真运行时对账=Phase 2 接线）
+        // r932: close-up framing on the beacon + Unlit base-color swap (GDRP Lit emission dead in batchmode, see MakePulseMat)
+        cam.transform.position = new Vector3(0f, 106f, -40f);
+        cam.transform.rotation = Quaternion.LookRotation(new Vector3(0f, 102f, 0f) - cam.transform.position);
+        _pulseMat.SetColor("_BaseColor", new Color(3.5f, 3.5f, 3.5f));
+        _pulseMat.SetColor("_Color", new Color(3.5f, 3.5f, 3.5f));
+        Shot(cam, "breath_on.png", 0, 0, Vector3.zero, "breath_on");
+        _pulseMat.SetColor("_BaseColor", new Color(0.08f, 0.09f, 0.12f));
+        _pulseMat.SetColor("_Color", new Color(0.08f, 0.09f, 0.12f));
+        Shot(cam, "breath_off.png", 0, 0, Vector3.zero, "breath_off");
+        _pulseMat.SetColor("_BaseColor", new Color(0.08f, 0.09f, 0.12f));
+        _pulseMat.SetColor("_Color", new Color(0.08f, 0.09f, 0.12f));
         Report.Add($"capture_ms={sw.ElapsedMilliseconds}（batchmode 渲染代理读数·真 fps=WebGL 构建后浏览器读数）");
     }
 

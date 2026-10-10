@@ -6,7 +6,7 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r244 毕：tech 队列#2 check-fastpath 沙盒合并回归（r198 79+r235 15 合流 94/94 全绿+双跑字节同·证据 logs/devloop-r244-{r198,r235}-{a,b}.txt；伴生=PS5.1 `*>` 重定向+EAP=Stop stderr 终错陷阱自中·已回填 tech#11 律册滚动新条）——现无在飞件，下轮从「下一步」取活（tech 队列 11 条：_archive 演练/律册滚动第三轮等）。
+r246 毕：归档期板门 fixture 演练 34/34 全绿（10-24 首实窗板门行为前置闭口：迁移后 R2 跨档寻址解+R1 从档内移除提及发火·证据 logs/devloop-r246-archgate-drill.ps1）+`*>` 普查零暴露判负（tick.ps1 双位 EAP=Continue+try/catch）+R1 措辞缺口新债（regex 漏捕 4 键·现况零活病）入 tech 队列#10——现无在飞件，下轮从「下一步」取活（tech 队列 11 条：R1 修法/_archive 演练等）。
 
 ## 下一步（队列头）
 1. 轮首先跑 Tools\devloop\check-fastpath.ps1：FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。

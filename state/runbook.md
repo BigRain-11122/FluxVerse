@@ -6,7 +6,7 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r241 毕：statusface 新鲜度门生产取证闭口（tick v1.7 fresh 行 01:46 无/01:56 有两态对照实证+P3-002 编年史 18/18 连续审计）——现无在飞件，下轮从「下一步」取活。
+r242 毕：技能律册滚动第二轮（ps51-traps 册 30→32：vendored 树误命中+取件通道两病入册·验证件 14/14·三门烟测复绿）——现无在飞件，下轮从「下一步」取活（tech 队列有活：§九 基线复测/_archive 演练等）。
 
 ## 下一步（队列头）
 1. 轮首先跑 Tools\devloop\check-fastpath.ps1：FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。

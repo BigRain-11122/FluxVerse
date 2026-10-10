@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-10T23:29:16Z",
-    "current_activity":  "r267 收口：tech#11 r212-psa-test 复跑判读 49/50 判负留痕——唯一红=A2 empty-catch 观察钉 27→28（check-fastpath fail-soft 扩员·合法增长）·席不入族；队列复活件回填；下轮候选=#11 r212 席复活判据跑 / #12 family-runner 参数化",
-    "artifact":  "logs/devloop-r267-psa-rerun-072550.out（50 断言复跑判读面 49/50·2026-10-11 07:25）",
-    "artifact_utc":  "2026-10-10T23:29:16Z",
-    "milestone":  "r212 席复活：A2 观察钉新化（重钉 28 或成员制）后复跑 50/50 全绿=收编第 13 族席（FAM-TOTAL 482）",
+    "updated_utc":  "2026-10-10T23:40:49Z",
+    "current_activity":  "r268 收口：tech#11 r212 席复活件收编——A2 观察钉新化（28+r267 日期基线标签）→复跑 50/50 全绿→git add -f 第 13 收编席（族账 FAM-TOTAL 482）；队列回填；下轮候选=#12 family-runner -SeatsFile 参数化 / #11 入族跑复证",
+    "artifact":  "logs/devloop-r268-psa-rerun-073756.out（50 断言复跑全绿 50/50·2026-10-11 07:37·err 0B）",
+    "artifact_utc":  "2026-10-10T23:40:49Z",
+    "milestone":  "family-runner -SeatsFile 参数化+r212 席入族跑 14 席全绿（FAM-TOTAL 482 复证·404+28+50）",
     "milestone_eta_utc":  "2026-10-13T00:00:00Z"
 }

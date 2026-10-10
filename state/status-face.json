@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-10T21:59:46Z",
-    "current_activity":  "DevLoop r260：harness 第八席收编闭合（r198-fastcheck-test 复跑 79/79 全绿+双跑字节同 9611A3C067D0×2+eol/ASCII/BOM 健证全过·沙盒族七席 275 断言）；main#6 三判判假续候一行注记；P3-002 行检 PASS（第二十三轮连续）",
-    "artifact":  "logs/devloop-r198-fastcheck-test.ps1 git add -f 入库（第八席收编·20840B）·TECH §九 r260 收口行·state/queue/tech.md #12 领走删+第九席候选 r230-archive-test 回填·state/runbook.md r260 态刷新",
-    "artifact_utc":  "2026-10-10T21:59:46Z",
-    "milestone":  "R2 判据帧链首跑（main#5·交互窗 City3D 在飞件收干后照 docs/qa-r2-frame-map.md 执行）；tech 队列常备（A3 负控根治预研/第九席候选 r230-archive-test）；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 P3-003）",
-    "milestone_eta_utc":  "2026-10-13T04:00:00Z"
+    "updated_utc":  "2026-10-10T22:11:32Z",
+    "current_activity":  "DevLoop r261：harness 第九席收编闭合（r230-archive-test 复跑 37/37 全绿+双跑字节同 9CB6304F8C8C×2+eol 表 i/lf w/lf·沙盒族八席 312 断言）；main#6 三判判假续候一行注记；P3-002 行检 PASS（第二十四轮连续）",
+    "artifact":  "logs/devloop-r230-archive-test.ps1 git add -f 入库（第九席收编·10764B·纯 ASCII 体+UTF-8 BOM 头如实注记）·TECH §九 r261 收口行·state/queue/tech.md #12 领走删+第十席候选 r243-crlf-archive-test 回填·state/runbook.md r261 态刷新",
+    "artifact_utc":  "2026-10-10T22:11:32Z",
+    "milestone":  "R2 判据帧链首跑（main#5·交互窗 City3D 在飞件收干后照 docs/qa-r2-frame-map.md 执行）；tech 队列常备（A3 负控根治预研/第十席候选 r243-crlf-archive-test 复跑）；时窗 10-18 周日演化日窗（T-FV-134 深扫+T-FV-141 提案 P3-003）",
+    "milestone_eta_utc":  "2026-10-12T22:00:00Z"
 }

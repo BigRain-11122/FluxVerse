@@ -6,12 +6,12 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r265 毕：harness 全族复跑健康轮闭口（12 席 A/B 双跑字节同 12/12+404 断言族总检全绿 404/404+r233 留盘席口径恰合 35/37 两红零新增+跨日 SHA 双证 r229=5B045486A625/r246=9F60F10DCE85=跨机可复跑面闭口件成立）。现无在飞件，下轮 FULL-ROUND〔c2 交互窗 City3D R2 在飞〕/FASTPATH 双径=队列取活（tech 队列 12 行·候选=#12 A3 负控根治 v2 沙盒件施工）。
+r266 毕：A3 负控自指腐根治 v2 落地（ghost id 运行时域扫动态选·零字面 id·28 断言一次过全绿·git add -f 第 12 收编席）+族跑扩位 13 席全绿（FAM-TOTAL 432/432·判读器三格式超集内联+err A/B 同字节律·r233 留盘席 35/37 维持·跨日 SHA 第三证 r229/r246）。现无在飞件，下轮 FULL-ROUND〔c2 交互窗 City3D R2 在飞〕/FASTPATH 双径=队列取活（tech 队列 12 行·候选=#11 r212-psa-test 复跑判读/#12 family-runner 席位清单参数化）。
 
 ## 下一步（队列头）
 1. 轮首先跑 Tools\devloop\check-fastpath.ps1：FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。
 2. 时窗件：T-FV-134 调研深扫+T-FV-141 提案 P3-003（判②滞留面候选在册）=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24 首窗/11-01 月界。
-3. main/tech 近件：main#6 R2 探测一行注记（判③已成立·实操阻塞位=①②·判真即领 main#5 首跑照 docs/qa-r2-frame-map.md 执行）/tech 队列常备可领（#12 A3 v2 沙盒施工/#1 反向引用演练/#2 烘焙幂等抽检/#4 registry 对账 等）/P3-002 防御行检（常设）。
+3. main/tech 近件：main#6 R2 探测一行注记（判③已成立·实操阻塞位=①②·判真即领 main#5 首跑照 docs/qa-r2-frame-map.md 执行）/tech 队列常备可领（#11 r212-psa-test 复跑判读/#12 family-runner 参数化/#1 反向引用演练/#2 烘焙幂等抽检/#4 registry 对账 等）/P3-002 防御行检（常设）。
 4. **常设收尾步（r247 起改道执法件）**：commit 前刷面=写 logs/devloop-face-content.json（六键·updated_utc/artifact_utc 留空机器盖戳）→ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\write-status-face.ps1 → FACE OK 才 commit；禁手写 state/status-face.json（r246 future-ts 红根因）。
 
 ## 验收标准（怎么算完成）

@@ -16,5 +16,5 @@
 | 8 | TECH.md EOL 检出态哨兵：git ls-files --eol（i/lf w/crlf=autocrlf 正常态）10-24 归档窗前复核+归档实跑后双档 w/eol 态一行回填 | TECH §九 r243 基线行+Tools/devloop/archive-section9.ps1 | 态翻转（检出重建/手动转码）即基线再新化 |
 | 9 | tick.ps1 2>&1 双位 EAP=Stop 前置硬化（29 号律预防位：L124/L135 子进程捕获现零暴露〔EAP=Continue+try/catch〕——若 tick 未来改 EAP=Stop 即活化→双 redirect 换装+tick harness 复跑） | Tools/tick/tick.ps1+TECH §九 r246 行②+ps51-gdi-traps 29 号 | 重评条件=tick 改 EAP=Stop |
 | 10 | r233 沙盒复跑判读口径（常设·零施工）：fx2 两断言（fx2-exit2/fx2-r2-caught）=预存自指腐豁免非回归——ghost 键 T-FV-999 全库唯一提及=r233 收口行自身→R2 token 在场永豁免（r248 定谳·mentions=1 实证）；R2 ghost 能力现证=r246 演练 a5 隔离负控单证在役（r248 A3 真账面负控已自指腐豁免=r259 判负·999 同型·根治位=#11） | TECH §九 r248 行③④+logs/devloop-r248-r1fix-test.ps1 A3 | 复跑 35/37 两红=按本行判读勿再归因·沙盒保全律历史件零改 |
-| 11 | harness A3 负控自指腐根治预研：ghost id 动态推导沙盒 v2 设计（运行时扫 §九+档域选未用 T-FV-NNN·999→899 两例同型结构性=负控 id 一入收口行即自毁） | TECH §九 r259 行②⑤（归因+新债）+r248-r1fix-test 头注 | r248-r1fix-test 判负结案（§九 r259 行）勿再作候选重提；根治走 v2 新件（沙盒保全律·历史件零改） |
-| 12 | harness A3 负控根治 v2 沙盒件施工：运行时扫 §九+档域动态选未用 T-FV-NNN ghost id（999→899 同型根治=A3 负控 id 一入收口行即自毁的结构病）·新沙盒件+双跑字节同+add -f 入库 | TECH §九 r259 行②⑤（tech#11 预研结论）+r265 判读器范式 | tech#11 预研落地承件·收编后并跑 r265-family-run 族账扩位 |
+| 11 | harness 第九席候选复跑判读：r212-psa-test（PSA 顾问位 50 断言·在盘未收编）复跑——过门=收编 add -f+族账扩位·腐=判负留痕 | logs/devloop-r212-psa-test.ps1+TECH §九 r212 行 | r259/r260 范式；预判=Tools 树计数面自 r212 已长（新工具五件+）·计数断言腐概率高·判负合法 |
+| 12 | family-runner 席位清单参数化：-SeatsFile 外置席位清单件（跑=全席/子集）——r267+ 收编新席只加清单行零改 runner 本体 | logs/devloop-r265-family-run.ps1+r266 版（runner-per-round 复制增长面） | P2 做工具线·判据=新席收编单=清单一行+runner 双跑字节同维持 |

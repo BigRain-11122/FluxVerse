@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-10T21:49:12Z",
-    "current_activity":  "DevLoop r259：harness 第七席候选判负留痕（r248-r1fix-test 复跑 17/20·A3 三红=自指腐第二例〔ghost 899 被 r258 收口行点名→负控自毁〕·gate 本体 17 断言健康·判负不收编留盘·沙盒族账维持六席 196）；main#6 三判判假续候一行注记；P3-002 行检 PASS（第二十二轮连续）",
-    "artifact":  "TECH §九 r259 行（判负留痕+新债）·state/queue/tech.md #11 判负删行+#10 尾注诚实修正+双新条回填（#11 A3 根治预研/#12 第八席候选 r198-fastcheck-test）·state/runbook.md r259 态刷新",
-    "artifact_utc":  "2026-10-10T21:49:12Z",
-    "milestone":  "R2 判据帧链首跑（main#5·交互窗 City3D 在飞件收干后照 docs/qa-r2-frame-map.md 执行）；tech 队列常备（A3 负控根治预研/第八席候选）；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 P3-003）",
+    "updated_utc":  "2026-10-10T21:58:37Z",
+    "current_activity":  "DevLoop r260：harness 第八席收编闭合（r198-fastcheck-test 复跑 79/79 全绿+双跑字节同 9611A3C067D0×2+eol/ASCII/BOM 健证全过·沙盒族七席 275 断言）；main#6 三判判假续候一行注记；P3-002 行检 PASS（第二十三轮连续）",
+    "artifact":  "logs/devloop-r198-fastcheck-test.ps1 git add -f 入库（第八席收编·20840B）·TECH §九 r260 收口行·state/queue/tech.md #12 领走删+第九席候选 r230-archive-test 回填",
+    "artifact_utc":  "2026-10-10T21:58:37Z",
+    "milestone":  "R2 判据帧链首跑（main#5·交互窗 City3D 在飞件收干后照 docs/qa-r2-frame-map.md 执行）；tech 队列常备（A3 负控根治预研/第九席候选 r230-archive-test）；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 P3-003）",
     "milestone_eta_utc":  "2026-10-13T04:00:00Z"
 }

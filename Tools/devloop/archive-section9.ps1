@@ -16,7 +16,8 @@
 #
 # Laws honored: ASCII-only body (all CJK lives in archive-section9-header.txt
 #   data file, read with explicit UTF8 per r53); byte-exact EOL/BOM preservation
-#   (LF no-BOM expected; gate-protected); atomic .new + Move (r98); deterministic
+#   (EOL-adaptive: preserves detected LF or CRLF regime, git-side LF under autocrlf;
+#   BOM gate-protected); atomic .new + Move (r98); deterministic
 #   report output (no wall clock when -Today given; double-run byte-identical);
 #   undated rows are NEVER auto-migrated (conservative keep);
 #   row migrates only when age EXCEEDS MinAgeDays (a row exactly 30 days old stays).

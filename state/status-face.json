@@ -1,8 +1,8 @@
 {
-  "updated_utc": "2026-10-10T18:20:00Z",
-  "current_activity": "DevLoop r242：技能律册滚动第二轮（ps51-traps 册 30→32：vendored 树误命中+取件通道两病入册·安装副本同步·三门烟测复绿）",
-  "artifact": "Tools/skills/fluxverse-city-sandbox/references/ps51-traps.md（30→32 条）+logs/devloop-r242-rolls-test.ps1（14/14 双跑字节同）",
-  "artifact_utc": "2026-10-10T18:20:00Z",
-  "milestone": "R2 里程碑机械探测续跑（本轮判假·交互窗未 commit）+10-18 时窗件（T-FV-134 深扫/T-FV-141 提案）",
+  "updated_utc": "2026-10-10T18:31:22Z",
+  "current_activity": "DevLoop r243：§九 基线复测+EOL 漂移定谳+归档工具 CRLF 写径沙盒（tech 队列#1·10-24 迁移窗前基线新鲜化）",
+  "artifact": "logs/devloop-r243-crlf-archive-test.ps1（29/29 全绿·真实工具隔离夹具）+TECH §九 r243 基线行（672,830B/504 行·223 行项）",
+  "artifact_utc": "2026-10-10T18:31:22Z",
+  "milestone": "R2 里程碑机械探测续跑（本轮判假·交互窗未 commit）+10-18 时窗件（T-FV-134 深扫/T-FV-141 提案）+10-24 归档首窗（写径风险已闭）",
   "milestone_eta_utc": "2026-10-12T18:00:00Z"
 }

@@ -1,6 +1,9 @@
-# export-public-snapshot.ps1 - city public snapshot exporter v0.1
+# export-public-snapshot.ps1 - city public snapshot exporter v0.2
 # P-2026-09-24-52 slice 3a (2026-09-24 r69): whitelist-sanitized subset of
 # world-state.json plus an events tail digest -> world-public/city-snapshot.json
+# v0.2 (2026-10-11 r239): additive status_face section (Executive Protocol
+# v1.1 no.3 three-line law) sourced from state/status-face.json - see the
+# status face block below for the single-writer / fail-soft contract.
 # (cap 1MB). Consumed by the visitor read API over the git read-only channel
 # (server cron pull every 10min; spec = cph4/research/R-20260924-server-city
 # sections 1/2/7). This script is the single writer of world-public/; world/
@@ -32,6 +35,7 @@
 param(
   [string]$WorldDir = '',
   [string]$OutDir = '',
+  [string]$StatusFile = '',
   [switch]$NoGit
 )
 
@@ -48,7 +52,11 @@ $WL_FLOWS = @('id','zone')
 $WL_CITY  = @('fleet_online','games_total','games_active','renders_total','last_render_utc','commits_total')
 $WL_REAL  = @('city_day_phase','weather_kind','weather_temp_c','weekday','beijing_hhmm','season')
 $WL_EVENT = @('ts_utc','type','zone')
-$WL_TOP   = @('protocol','ts_utc','zones','flows','city','reality_public','events_tail')
+# v0.2 additive section: three-line status face (Executive Protocol v1.1 no.3).
+# Keys = devloop-authored lines + machine-verifiable timestamps. Optional:
+# file absent / malformed / content-screen hit -> section skipped, not exported.
+$WL_STATUS = @('updated_utc','current_activity','artifact','artifact_utc','milestone','milestone_eta_utc')
+$WL_TOP   = @('protocol','ts_utc','zones','flows','city','reality_public','events_tail','status_face')
 $MAX_BYTES = 1048576
 $TAIL_N = 50
 
@@ -168,6 +176,57 @@ try {
     season         = [string](Get-Val $state 'season')
   }
 
+  # ---------- status face (v0.2, Executive Protocol v1.1 no.3) ----------
+  # Single-writer law: state/status-face.json is authored by the devloop round
+  # (devloop owns state/); this script stays the single writer of world-public/.
+  # Content-screened BEFORE inclusion (G1/G3/G5 faces over the six values):
+  # any hit -> SKIP (fail-soft) so a bad status line never blocks the public
+  # snapshot (blast-radius law). Freshness is NOT hard-gated - updated_utc is
+  # the honest freshness face for the watchdog. Structure contract: all six
+  # keys present as non-empty strings; the three ts fields (updated_utc /
+  # artifact_utc / milestone_eta_utc, checked BY NAME not by $WL_STATUS slot
+  # index) must be ISO-ish (YYYY-MM-DDThh:mm). artifact paths must stay
+  # repo-relative (G5 enforces).
+  $statusFace = $null
+  $statusNote = 'absent'
+  if (-not $StatusFile) { $StatusFile = Join-Path $repoRoot 'state\status-face.json' }
+  if (Test-Path $StatusFile) {
+    $statusNote = 'skip'
+    try {
+      $sf = ConvertFrom-Json ([System.IO.File]::ReadAllText($StatusFile, [System.Text.Encoding]::UTF8))
+      $ok = $true
+      $sfVals = @()
+      foreach ($k in $WL_STATUS) {
+        $v = Get-Val $sf $k
+        if ($null -eq $v -or -not ($v -is [string]) -or $v.Length -eq 0) { $ok = $false; break }
+        $sfVals += $v
+      }
+      if ($ok) {
+        foreach ($tk in @('updated_utc', 'artifact_utc', 'milestone_eta_utc')) {
+          $tv = [string](Get-Val $sf $tk)
+          if ($tv -notmatch '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}') { $ok = $false; break }
+        }
+      }
+      if ($ok) {
+        $bad = ''
+        foreach ($v in $sfVals) {
+          if ($bad) { break }
+          foreach ($pat in $SECRET_PATTERNS) { if ($v -match $pat) { $bad = 'G1'; break } }
+          if ($bad) { break }
+          foreach ($w in $FW_ASCII) { if ($v -match [regex]::Escape($w)) { $bad = 'G3'; break } }
+          if ($bad) { break }
+          foreach ($w in $FW_CJK) { if ($v.Contains($w)) { $bad = 'G3cjk'; break } }
+          if ($bad) { break }
+          foreach ($w in $META_PATTERNS) { if ($v -match [regex]::Escape($w)) { $bad = 'G5'; break } }
+        }
+        if ($bad) { $statusNote = 'skip-' + $bad } else {
+          $statusFace = Copy-Keys $sf $WL_STATUS
+          $statusNote = 'included'
+        }
+      }
+    } catch { $statusNote = 'skip-malformed' }
+  }
+
   # events tail: cheap type pre-filter, then parse, then exact type check
   $kept = New-Object System.Collections.ArrayList
   $scanned = 0
@@ -192,7 +251,7 @@ try {
   if ($kept.Count -gt $TAIL_N) { $tail = @($kept.GetRange($kept.Count - $TAIL_N, $TAIL_N)) }
   else { $tail = @($kept) }
 
-  $out = [PSCustomObject][ordered]@{
+  $outH = [ordered]@{
     protocol       = 'fluxverse-public/0.1'
     ts_utc         = [string](Get-Val $state 'ts_utc')
     zones          = $zonesPub
@@ -201,6 +260,8 @@ try {
     reality_public = $realPub
     events_tail    = $tail
   }
+  if ($null -ne $statusFace) { $outH['status_face'] = $statusFace }
+  $out = [PSCustomObject]$outH
   $json = ConvertTo-Json $out -Depth 6 -Compress
 
   # ---------- write candidate (unique per PID: concurrent manual runs safe) ----------
@@ -226,6 +287,8 @@ try {
   Assert-Obj (Get-Val $snap 'city') $WL_CITY 'city'
   Assert-Obj (Get-Val $snap 'reality_public') $WL_REAL 'reality_public'
   Assert-List (Get-Val $snap 'events_tail') $WL_EVENT 'events_tail'
+  $sfSnap = Get-Val $snap 'status_face'
+  if ($null -ne $sfSnap) { Assert-Obj $sfSnap $WL_STATUS 'status_face' }
 
   # collect every string value (pre-serialization text: CJK is \u-escaped in
   # the serialized form, so the values text is the only honest CJK scan face)
@@ -277,7 +340,7 @@ try {
   # ---------- two-phase promote ----------
   Move-Item -Force $newPath $finalPath
 
-  [void]$outLines.Add(('export: city-snapshot.json bytes=' + $bytes + ' zones=' + @($zonesPub).Count + ' flows=' + @($flowsPub).Count + ' events_tail=' + @($tail).Count + '/' + $scanned))
+  [void]$outLines.Add(('export: city-snapshot.json bytes=' + $bytes + ' zones=' + @($zonesPub).Count + ' flows=' + @($flowsPub).Count + ' events_tail=' + @($tail).Count + '/' + $scanned + ' status_face=' + $statusNote))
   [void]$outLines.Add('pubgate: G1 secrets 0 / G2 whitelist OK / G3 words 0 / G4 size OK / G5 meta OK')
   if (-not $NoGit) {
     # r32 law: native stderr under EAP=Stop throws on the first stderr line

@@ -7,6 +7,7 @@
 - **默认读 GBK 吞行界**：Get-Content / Select-String 无 `-Encoding UTF8` 读 LF-only UTF-8 CJK 件 → 行数静默塌并（r53/r64）。修：一切读取显式 UTF8。
 - **脚本体禁 CJK**：无 BOM UTF-8 脚本被 PS5.1 按 GBK 解析中文面量（P-14 律）。修：ASCII-only 体 + `[char]0x…` 码位构造 + 中文外置 UTF-8 数据件。
 - **gitignored 零命中**：glob/grep 对 logs/·world/ 默认跳过 →「不存在」假象（r159b）。修：PS 直读。
+- **vendored 树误命中**：递归计数/glob 把三方库载荷（data\assets、node_modules、点目录）计入目标域 →「解锁/在场」假信号（r235 c5·P-16 面板探测 1534 件 pgAdmin/pgsql 库文档=复线后每轮永久假 FULL-轮实锤）。修：候选面过滤=排除 vendored 三树 + resolve fail-closed 守卫；计数前先勘目标语义（产件面≠随包文档）。
 - **原生捕获 CP936**：`& git` 等外部程序 stdout 按 [Console]::OutputEncoding 解码 → 乱码（r32）。修：save/swap/restore UTF8Encoding($false) + finally 恢复。
 - **`>` 重定向转码二进制**：PS 重定向改字节 → 伪哈希（r119）。修：cmd /c 原字节或 .NET ReadAllBytes。
 
@@ -22,6 +23,7 @@
 - **2MB ConvertFrom-Json 上限**：大件零全量 parse（r95 transfers 2.35MB 头 40 行正则先例）。
 - **$LASTEXITCODE 未设**：纯 cmdlet 链 `if ($LASTEXITCODE -ne 0)` 对 $null 恒真 = 链式门误杀后段（r97）。修：显式置 0 或脚本自身 exit 传播。
 - **网页抓取正则 0 命中假象**：外站 HTML 属性常单引号 + href 绝对 URL（kenney.nl 实证·`?q=` 搜索参服务端不接=四查恒返默认首页同族）——按「双引号+相对径」预写的 `href="(/assets/…)"` 恒 0 命中（r213·17 URL 逐页扫描实锤）。修：锚域名 `kenney\.nl/assets/([a-z0-9\-]+)['"]` 兼容单双引号收尾。
+- **取件通道两病**：web_fetch 后端错路由（Wikipedia 请求被路由至 arXiv 综述页——内容相关但域与标题错）+ GitHub 页面首取仅回 LICENSE 视图（非 README 正文）→ 取件「空/错」双假象（r236·WFC 全量+PCG 综述两源实锚）。修：直址复取核对域与标题；GitHub 正文一律走 raw.githubusercontent.com 正通道（r220 勘定）——页首视图不可当全量。
 
 ## 变量与类型族
 

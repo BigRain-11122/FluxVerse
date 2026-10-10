@@ -12,8 +12,8 @@
 | 4 | tasks-board-check 归档期 fixture 演练：模拟 30 天窗行迁移场景（R1 移除集跨档寻址 docs/archive/tech-section9/*.md 实证） | Tools/devloop/tasks-board-check.ps1 | 10-24 首个非零窗前完成 |
 | 5 | 双执法件 ASCII 全字节审计：write-fastpath-state.ps1+check-fastpath.ps1 非 ASCII 字节 grep（抽样升全量） | r163 归一化律族 | 零红=过门 |
 | 6 | 烘焙器族 SHA 幂等抽检：Tools/city/bake-*.ps1 抽 3 件双跑比对（确定性旁证续证） | r97/r140 GDI+ 范式 | 抽检不重建 |
-| 7 | 技能 references 律册滚动更新：r235 c5 vendored 过滤语义+r236 取件通道两病（web_fetch 后端错路由/LICENSE-only 视图→raw.githubusercontent 正道）入 ps51-traps 册 | T-FV-114 承接族·Tools/skills/*/references/ | 安装副本 SHA 同步随做 |
-| 8 | tick 日志 retention 盘点：logs/ gitignored R3/R4 族分布一行表（56.7MB 面量龄分布） | retention-scan 周测在役 | 纯读盘点零删除 |
-| 9 | events-registry 五型 reserved 域对账：LAB 三型/TRANSFER/PROPOSAL 双型 desc 态漂移检查（emitting/reserved 与发射端一致） | schema/events-registry.json | T2 否决窗族后置检查 |
-| 10 | City3D 48 包利用率图刷新：R2 模块壳消费后 asset-usage-ledger.md update（工具 item-catalog-gen.ps1 在役） | City3D-staging/asset-usage-ledger.md | R2 里程碑后领 |
-| 11 | probes 25 面健康报表：scan.ps1 全探针产出分布+游标健康一行表（纯读·零新增） | Tools/perceptor/scan.ps1 | 备治理窗回访引证 |
+| 7 | tick 日志 retention 盘点：logs/ gitignored R3/R4 族分布一行表（56.7MB 面量龄分布） | retention-scan 周测在役 | 纯读盘点零删除 |
+| 8 | events-registry 五型 reserved 域对账：LAB 三型/TRANSFER/PROPOSAL 双型 desc 态漂移检查（emitting/reserved 与发射端一致） | schema/events-registry.json | T2 否决窗族后置检查 |
+| 9 | City3D 48 包利用率图刷新：R2 模块壳消费后 asset-usage-ledger.md update（工具 item-catalog-gen.ps1 在役） | City3D-staging/asset-usage-ledger.md | R2 里程碑后领 |
+| 10 | probes 25 面健康报表：scan.ps1 全探针产出分布+游标健康一行表（纯读·零新增） | Tools/perceptor/scan.ps1 | 备治理窗回访引证 |
+| 11 | ps51-gdi-traps 双新律 bake 域适用面判读：vendored 误命中/取件通道两病（r235/r236）在 bake 管线的适用面评估——零适用=判负留痕·有适用=入册+同步 | Tools/skills/fluxverse-bake-pipeline/references/ps51-gdi-traps.md | r242 承件·r214 分布律注记范式 |

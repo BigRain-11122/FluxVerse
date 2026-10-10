@@ -9,6 +9,12 @@
 # v1.2 (r229 / T-FV-137): c1 midnight pre-first-tick window fallback - live
 # first observed 2026-09-28 00:05 round (FULL-ROUND fired on a healthy
 # fleet because the daily log does not exist before the first tick round).
+# v1.3 (r235): c5 candidate-panel filter. The aihot-poc vendored payload
+# (data\assets: pgAdmin/pgsql/node_modules library docs, 1534 html files)
+# landed in media/BigStream during the 10-06 keepdown and false-fired c5 on
+# every round after. P-16 row semantics = a BigStream PRODUCED panel html;
+# library docs are not panels. Excluded trees: data\assets\, node_modules\,
+# dot-directories. Live verify: 1534 files -> 0 candidate panels -> QUIET.
 #
 # Checks (mandate fastpath paragraph stays the authority; this is the
 # mechanical executor of it):
@@ -25,7 +31,9 @@
 #              = trigger (r69 rotating-artifact exemption built in).
 #   c3-ledger  cph4/evolution-ledger.md SHA12 vs state ledger_sha12.
 #   c4-tech    TECH.md SHA12 vs state tech_sha12 (section-9 authority face).
-#   c5-p16     media/BigStream recursive *.html present = trigger (unlock).
+#   c5-p16     media/BigStream candidate PANEL *.html present = trigger
+#              (unlock); vendored trees excluded (data\assets, node_modules,
+#              dot-dirs - v1.3/r235 aihot-poc docs false-trigger fix).
 #   c6-dec     docs/decisions.md SHA12 vs state dec_sha12.
 #   c7-orders  docs/orders.md SHA12 vs state orders_sha12.
 #   c0-state   state file missing/bad keys = trigger (self-heal direction);
@@ -289,15 +297,37 @@ Compare-ShaCheck -Label 'c3-ledger' -DiskPath $LedgerPath -StateKey 'ledger_sha1
 Compare-ShaCheck -Label 'c4-tech' -DiskPath $TechPath -StateKey 'tech_sha12'
 
 # --- c5: P-16 unlock quick check (still blocked = quiet) ---
+# v1.3 (r235): count only candidate PANEL html. Vendored third-party trees
+# are library docs, not BigStream-produced panels (P-16 row semantics:
+# panel unlock = a real panel html lands in the BigStream production face).
 $c5Trig = $false
 $c5d = 'no-dir'
 if (Test-Path -LiteralPath $P16Dir) {
-    $htmls = @(Get-ChildItem -LiteralPath $P16Dir -Recurse -Filter *.html -ErrorAction SilentlyContinue)
-    if ($htmls.Count -gt 0) {
+    $p16Full = ''
+    try { $p16Full = (Resolve-Path -LiteralPath $P16Dir).ProviderPath } catch { }
+    $p16Full = "$p16Full".TrimEnd('\')
+    if ([string]::IsNullOrEmpty($p16Full)) {
+        # fail-closed: broken resolve must never yield a quiet idle verdict
         $c5Trig = $true
-        $c5d = 'p16-unlock html=' + $htmls.Count
+        $c5d = 'p16-resolve-fail'
     } else {
-        $c5d = 'html=0'
+        $htmls = @(Get-ChildItem -LiteralPath $P16Dir -Recurse -Filter *.html -ErrorAction SilentlyContinue)
+        $panelCount = 0
+        foreach ($hf in $htmls) {
+            if ($null -eq $hf) { continue }
+            $rel = $hf.FullName.Substring($p16Full.Length).TrimStart('\')
+            if (-not $rel.StartsWith('\')) { $rel = '\' + $rel }
+            if ($rel -match '\\data\\assets\\') { continue }
+            if ($rel -match '\\node_modules\\') { continue }
+            if ($rel -match '\\\.[^\\]+\\') { continue }
+            $panelCount++
+        }
+        if ($panelCount -gt 0) {
+            $c5Trig = $true
+            $c5d = 'p16-unlock html=' + $panelCount
+        } else {
+            $c5d = 'html=0'
+        }
     }
 }
 if ($c5Trig) { $script:trig.Add('c5-p16') }

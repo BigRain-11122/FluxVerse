@@ -1,4 +1,4 @@
-# FluxVerseTick v1.2 - the city heartbeat (10-min OS loop, group-standard mechanism)
+# FluxVerseTick v1.7 - the city heartbeat (10-min OS loop, group-standard mechanism)
 # ASCII-only script (encoding law). Chinese mandate lives in mandate.txt (UTF-8).
 # v1.1 (CEO audit fix S1 2026-09-23, dual-session merge): single-instance lock
 # (logs/tick.lock, stale takeover after 15 min, try/finally cleanup) - a slow
@@ -38,8 +38,18 @@
 # half-edited stack). Fail-soft by design: an export problem logs 'pub:'
 # lines and never fails the round; an AC-5 gate FAIL keeps the last-good
 # snapshot on disk (two-phase promote inside the exporter).
+# v1.7 (2026-10-11 r240, Executive Protocol v1.1-4 freshness line): new
+#   round step 2.6 - the status-face freshness gate (statusface-freshness.ps1).
+#   state/status-face.json is the DevLoop single-writer status face; the DevLoop
+#   round-end duty refreshes it. A >24h stale face = the DevLoop lane is silent
+#   (the protocol's 24h empty-round verdict line). The gate logs ONE line per
+#   round; the stale line carries 'gate: FAIL', which the check-fastpath c1
+#   red-scan pattern '(gate|probe).*FAIL' already counts - a stale face fires
+#   c1-red at the next round start. Fail-soft: the round's health stays the
+#   verify gate; this step never changes the round exit.
 # Round: 1) perceptor (state -> .new)  2) verify gate (promotes on PASS)
-#        2.5) public snapshot export  3) log  4) rotate logs (7 days)
+#        2.5) public snapshot export  2.6) status-face freshness gate
+#        3) log  4) rotate logs (7 days)
 # Exit 0 = healthy round (or backoff skip); 1 = gate FAIL (old world-state kept).
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')       # -> gaming/FluxVerse
@@ -115,7 +125,20 @@ try {
     foreach ($l in $expOut) { $lines += ('  pub: ' + ([string]$l)) }
   } catch { $lines += ('  pub: export crashed (fail-soft): ' + ($_.Exception.Message -replace "[\r\n]", ' ')) }
 
-  # 2.6 round-end marker (v1.6, r94): stamp the block end BEFORE the log write
+  # 2.6 status-face freshness gate (v1.7, r240): DevLoop-lane liveness line.
+  #     The stale line carries 'gate: FAIL' so the c1 red-scan counts it at
+  #     the next round start; the fresh line is a quiet health trace. The
+  #     script's exit is logged, never propagated (fail-soft: verify keeps
+  #     the round-health role).
+  try {
+    $sfExit = 0
+    $sfOut = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'statusface-freshness.ps1') 2>&1
+    $sfExit = $LASTEXITCODE
+    foreach ($l in $sfOut) { $lines += ('  ' + ([string]$l)) }
+    if ($sfExit -ne 0) { $lines += ('  statusface: gate exit=' + $sfExit + ' (needs attention, round health unchanged)') }
+  } catch { $lines += ('  statusface: freshness check crashed (fail-soft): ' + ($_.Exception.Message -replace "[\r\n]", ' ')) }
+
+  # 2.7 round-end marker (v1.6, r94): stamp the block end BEFORE the log write
   #     so the marker actually lands in the file (old code appended it after
   #     WriteAllText = never written; the ticklog probe reads blocks by it)
   $lines += ('[' + (Get-Date).ToString('yyyy-MM-dd HH:mm:ss') + '] round end')

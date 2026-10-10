@@ -1,8 +1,8 @@
 {
-  "updated_utc": "2026-10-10T17:35:00Z",
-  "current_activity": "DevLoop r239：公开快照实况面三行接线（status_face 六键+内容预筛 fail-soft·v1.1③）",
-  "artifact": "City3D-staging/shots/R2_interior_cutwall.png（City3D R2 模块壳室内剖墙判据帧·交互窗产）",
-  "artifact_utc": "2026-10-10T16:07:53Z",
-  "milestone": "R2 判据帧取证轮：随 City3D R2 工程里程碑出帧入 qa/（L0/L1/L2+30fps 判据帧）",
+  "updated_utc": "2026-10-10T17:51:30Z",
+  "current_activity": "DevLoop r240：statusface 新鲜度门接线（tick v1.7 红线入 tick 日志·c1 零改消费·harness 25/25 全绿）",
+  "artifact": "Tools/tick/statusface-freshness.ps1（DevLoop 状态面新鲜度门·tick v1.7 接线）",
+  "artifact_utc": "2026-10-10T17:51:30Z",
+  "milestone": "新鲜度门生产首跑取证：tick 日志 statusface 行在产实证（v1.1④ 新鲜度回访面）",
   "milestone_eta_utc": "2026-10-12T16:00:00Z"
 }

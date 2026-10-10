@@ -12,4 +12,4 @@
 | 3 | T-FV-141 自驱提案 P3-003：三句式（现象+建议+判据 ≤3 问先立） | TECH §九 自驱提案行（P3-001/002 已交） | 下窗 2026-10-18 周日演化日窗 |
 | 4 | P3-002 编年史悬置防御续行：轮首 c2 行检 staged world-events 龄 >24h=0·收尾 pathspec 顺带 commit 当日档 | TECH §九 r235 行③（判据三问在册） | 持续执法项·每轮零额外 token |
 | 5 | R2 判据帧链取证轮：qa/smoke 判据帧（L0/L1/L2+30fps+多模态）随 City3D R2 里程碑出帧入 qa/ | docs/qa-smoke-test-charter.md（7 条清单） | 同仓协同件·R2 交互窗里程碑落地后即自可执行（非等他司） |
-| 6 | status_face 新鲜度自动判据接线：巡检/值守面挂 state/status-face.json updated_utc 龄期 >24h 速报位（v1.1④ 新鲜度回访面本仓自报） | 三行律正体=TECH §九 r239 行·领走先勘巡检判据现位（勿预设改 fastpath-state 契约） | 续配件·L1 确定性 |
+| 6 | statusface 新鲜度门生产消费实证：tick 日志 statusface 行在产取证（fresh 行+值守面 v1.1④ 回访注记） | logs/tick-<date>.log statusface 行（r240 门已接线） | r240 接线毕·本条=生产面取证（轮内已取证可即闭） |

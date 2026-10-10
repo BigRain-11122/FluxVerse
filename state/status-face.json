@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-10T22:28:41Z",
-    "current_activity":  "DevLoop r263：harness 第十一席收编闭合（r246-archgate-drill 复跑 34/34 双跑字节同 9F60F10DCE85×2+eol 表 i/lf w/lf·沙盒族十一席 375 断言）；main#6 三判判假续候一行注记；P3-002 行检 PASS（第二十六轮连续）",
-    "artifact":  "logs/devloop-r246-archgate-drill.ps1 git add -f 入库（第十一席收编·9020B·纯 ASCII 无 BOM·10-24 首实窗板门行为前置闭）+logs/devloop-r263-archseat-run.ps1 wrapper·TECH §九 r263 收口行·state/queue/tech.md #12 领走删+第十二席候选 r229-midnight-test 回填·state/runbook.md r263 态刷新",
-    "artifact_utc":  "2026-10-10T22:28:41Z",
-    "milestone":  "R2 判据帧链首跑（main#5·交互窗 City3D 在飞件收干后照 docs/qa-r2-frame-map.md 执行）；tech 队列常备（A3 负控根治预研/第十二席候选 r229-midnight-test 复跑）；时窗 10-18 周日演化日窗（T-FV-134 深扫+T-FV-141 提案 P3-003）",
+    "updated_utc":  "2026-10-10T22:40:34Z",
+    "current_activity":  "DevLoop r264：harness 第十二席收编闭合（r229-midnight-test 复跑 29/29 双跑字节同 5B045486A625×2+eol 表 i/lf w/lf·沙盒族十二席 404 断言族齐）；main#6 三判判假续候一行注记；P3-002 行检 PASS（第二十七轮连续）",
+    "artifact":  "logs/devloop-r229-midnight-test.ps1 git add -f 入库（第十二席收编·14187B·纯 ASCII 无 BOM·T-FV-137 午夜窗面全态回归闭）+logs/devloop-r264-midseat-run.ps1 wrapper·TECH §九 r264 收口行·state/queue/tech.md #12 领走换全族复跑健康轮回填·state/runbook.md r264 态刷新",
+    "artifact_utc":  "2026-10-10T22:40:34Z",
+    "milestone":  "R2 判据帧链首跑（main#5·交互窗 City3D 在飞件收干后照 docs/qa-r2-frame-map.md 执行）；tech 队列常备（十二席全族复跑健康轮/A3 负控根治预研/反向引用演练 等）；时窗 10-18 周日演化日窗（T-FV-134 深扫+T-FV-141 提案 P3-003）",
     "milestone_eta_utc":  "2026-10-12T22:00:00Z"
 }

@@ -17,4 +17,4 @@
 | 9 | tick.ps1 2>&1 双位 EAP=Stop 前置硬化（29 号律预防位：L124/L135 子进程捕获现零暴露〔EAP=Continue+try/catch〕——若 tick 未来改 EAP=Stop 即活化→双 redirect 换装+tick harness 复跑） | Tools/tick/tick.ps1+TECH §九 r246 行②+ps51-gdi-traps 29 号 | 重评条件=tick 改 EAP=Stop |
 | 10 | r233 沙盒复跑判读口径（常设·零施工）：fx2 两断言（fx2-exit2/fx2-r2-caught）=预存自指腐豁免非回归——ghost 键 T-FV-999 全库唯一提及=r233 收口行自身→R2 token 在场永豁免（r248 定谳·mentions=1 实证）；R2 ghost 能力现证=r246 演练 a5 隔离负控单证在役（r248 A3 真账面负控已自指腐豁免=r259 判负·999 同型·根治位=#11） | TECH §九 r248 行③④+logs/devloop-r248-r1fix-test.ps1 A3 | 复跑 35/37 两红=按本行判读勿再归因·沙盒保全律历史件零改 |
 | 11 | harness A3 负控自指腐根治预研：ghost id 动态推导沙盒 v2 设计（运行时扫 §九+档域选未用 T-FV-NNN·999→899 两例同型结构性=负控 id 一入收口行即自毁） | TECH §九 r259 行②⑤（归因+新债）+r248-r1fix-test 头注 | r248-r1fix-test 判负结案（§九 r259 行）勿再作候选重提；根治走 v2 新件（沙盒保全律·历史件零改） |
-| 12 | harness 十二席全族复跑健康轮：席齐后整族单轮回归——12 席沙盒逐席复跑全绿证（404 断言族总检=跨机可复跑面闭口件） | logs/ 十二席沙盒件（§九 r264 ③ 族账）+r264 wrapper 范式 | 单席红=按 §九 r264 ③ 行判读（判负族 r248-r1fix/r233 勿再提） |
+| 12 | harness A3 负控根治 v2 沙盒件施工：运行时扫 §九+档域动态选未用 T-FV-NNN ghost id（999→899 同型根治=A3 负控 id 一入收口行即自毁的结构病）·新沙盒件+双跑字节同+add -f 入库 | TECH §九 r259 行②⑤（tech#11 预研结论）+r265 判读器范式 | tech#11 预研落地承件·收编后并跑 r265-family-run 族账扩位 |

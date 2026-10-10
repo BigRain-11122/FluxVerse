@@ -11,6 +11,6 @@
 | 2 | T-FV-134 调研部周轮深扫：web_fetch 定向直查（锚域=City3D R2 模块壳/WFC 变体/数字孪生前沿） | docs/global-benchmarks.md（v1.2·下次到期 10-18） | 下窗 2026-10-18·hot=F- 行 24h 速报 |
 | 3 | T-FV-141 自驱提案 P3-003：三句式（现象+建议+判据 ≤3 问先立） | TECH §九 自驱提案行（P3-001/002 已交） | 下窗 2026-10-18 周日演化日窗 |
 | 4 | P3-002 编年史悬置防御续行：轮首 c2 行检 staged world-events 龄 >24h=0·收尾 pathspec 顺带 commit 当日档 | TECH §九 r235 行③（判据三问在册） | 持续执法项·每轮零额外 token |
-| 5 | R2 判据帧链取证轮：qa/smoke 判据帧（L0/L1/L2+30fps+多模态）随 City3D R2 里程碑出帧入 qa/ | docs/qa-smoke-test-charter.md（7 条清单） | 同仓协同件·R2 交互窗里程碑落地后即自可执行（非等他司） |
-| 6 | R2 里程碑落地判据机械探测：三判=git log --since=r241 -- City3D/ 新 commit≠0 且 r2-ignite 在飞件收干（untracked 归零/入库）且 shots 判据帧在库 → 判真即领 #5 判据帧链首跑 | git log --since=r241 -- City3D/ + git status r2-ignite 面 | 交互窗在飞期禁动 City3D（防双头 r236 定谳）；判假=每轮一行注记不重扫 |
-| 7 | R2 判据帧链预置件：docs/qa-smoke-test-charter.md 7 条清单→帧映射草稿（判据③成立前零 City3D 接触预演·判真后 main#5 首跑提速） | docs/qa-smoke-test-charter.md | 预置件·R2 判真即消费·r249 补 |
+| 5 | R2 判据帧链取证轮：qa/smoke 判据帧（L0/L1/L2+30fps+多模态）随 City3D R2 里程碑出帧入 qa/ | docs/qa-r2-frame-map.md（r250 预置件=配方+收据模板）+..\..\docs\qa-smoke-test-charter.md | 同仓协同件·R2 交互窗里程碑落地后即自可执行（非等他司） |
+| 6 | R2 里程碑落地判据机械探测：三判=git log --since=r241 -- City3D/ 新 commit≠0 且 r2-ignite 在飞件收干（untracked 归零/入库）且 shots 判据帧在库 → 判真即领 #5 判据帧链首跑 | git log --since=r241 -- City3D/ + git status r2-ignite 面 | 交互窗在飞期禁动 City3D（防双头 r236 定谳）；判假=每轮一行注记不重扫；③已于 867b59e 成立（r250 回正）·实操阻塞位=①② |
+| 7 | charter 上海全貌锚里程碑跟踪：黄浦江/白玉兰脑塔/居民/昼夜 四锚随 City3D 后续里程碑 commit 逐面开判（qa 收据从「缓判·归里程碑面」翻实判） | docs/qa-r2-frame-map.md §二（r250 映射表） | 触发=后续里程碑 commit 面·帧映射表维护位 |

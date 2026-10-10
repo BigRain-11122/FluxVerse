@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-10T20:13:04Z",
-    "current_activity":  "DevLoop r250：main#7 R2 判据帧链预置件落盘（charter 7 条映射+帧链五件套+main#5 首跑配方）+R2 三判判③回正（shots 已入库 867b59e·r249 误记回正·判①②仍假 main#5 续候）；P3-002 行检 PASS 第十三轮",
-    "artifact":  "docs/qa-r2-frame-map.md（R2 判据帧链映射草稿=main#5 预置件·判真即消费）+state/queue/main.md 翻新（#7 领走即删+全貌锚跟踪新条）",
-    "artifact_utc":  "2026-10-10T20:13:04Z",
+    "updated_utc":  "2026-10-10T20:17:17Z",
+    "current_activity":  "DevLoop r251：tech#11 执法件族 ASCII 审计族补齐（指名三件+族内顺扫余三件全绿=Tools/devloop 八件整族收口）+main#6 R2 三判探测判假续候（①②双假·一行注记）；P3-002 行检 PASS 第十四轮",
+    "artifact":  "TECH.md §九 r251 收口行+state/queue/tech.md 翻新（#11 领走即删+R3 扩面新条 perceptor+tick）",
+    "artifact_utc":  "2026-10-10T20:17:17Z",
     "milestone":  "R2 判据帧链首跑（main#5·判真即跑=照 docs/qa-r2-frame-map.md 配方·现候交互窗在飞件收干）；tech 队列常备续领；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 P3-003）",
     "milestone_eta_utc":  "2026-10-13T10:00:00Z"
 }

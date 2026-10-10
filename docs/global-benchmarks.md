@@ -2,7 +2,7 @@
 
 > 溯源：CEO 令 2026-09-24 ~16:00「各子公司和实验室，对自身业务和研发等，全面建立全球化的视野和执行标准，适合AI执行的，全面调研，各方面采集，不准闭门造车，且要按周期去更新。每条线都要。」（ledger P-2026-09-24-56）·正典=`cph4/global-vision.md` v1.0（§四 分工域图 FluxVerse 行）·T2 否决窗至 2026-10-01
 > 本仓线焦点：**数字孪生对标**——Kritzinger 2018 真孪生升格线（环B 令行通道=升格唯一通道·P-12 行）·组织孪生 DTO=文献空白坐标（R-20260923-academic §三判词「构件皆有出处·组合确属空白」）
-> 纪律：源分级 A/B/C/D/M·零断言（确认/待证两态标注）·零 key·**v1.1 新增 web_fetch 2 次**（NVIDIA Omniverse 官网+Siemens sw 域官网·2026-09-27·T-FV-134 首扫）·其余复用仓内已验证调研=R-20260923-academic〔web_fetch 17 次验证声明在册〕+R-20260924-hd-pixel-aesthetics
+> 纪律：源分级 A/B/C/D/M·零断言（确认/待证两态标注）·零 key·**v1.1 新增 web_fetch 2 次**（NVIDIA Omniverse 官网+Siemens sw 域官网·2026-09-27·T-FV-134 首扫）·**v1.2 新增 web_fetch 4 次**（WFC README 全量〔raw 正通道〕+arXiv:2410.15644 PCG 综述〔直址复取〕+Wikipedia 错路由/GitHub 仅回 LICENSE 两通道降级如实标注·2026-10-11·T-FV-134 深扫）·其余复用仓内已验证调研=R-20260923-academic〔web_fetch 17 次验证声明在册〕+R-20260924-hd-pixel-aesthetics
 
 ## ①视野面
 
@@ -26,6 +26,8 @@
 - 硬约束域动态：**《人工智能生成合成内容标识办法》2025-09-01 施行**——AI 生成内容显著标识（P-40 已接线·季度全扫+事件即时）
 - [B·确认·2026-09-27 官网实查（T-FV-134 首扫）] **NVIDIA Omniverse 主页已转「Simulation/Blueprints」面**——「Integrate Generative AI and Synthetic Data Generation into 3D Workflows」+NVIDIA Blueprints=AI agents/digital twins 参考工作流目录（build.nvidia.com）；在册 DT 蓝图=**MEGA 多机器人机队工业孪生**（官方原文「Simulate, test, and optimize physical AI and robotic fleets at scale in industrial digital twins **before real-world deployment**」=先仿真后部署方法论锚）+交互流体孪生蓝图；CAE 微服务目录=Ansys Fluent/**Siemens Simcenter STAR-CCM+**/Cadence Fidelity·Spectre-X（Rescale CAE Hub 宣称至快 100x）；页面未载=版本号/价格/城市级 AEC 专案
 - [B·确认·2026-09-27 官网实查（T-FV-134 首扫）] **Siemens 商用孪生线=Simcenter**（定位原文「uniquely combines system simulation, 3D CAE and test」三合一）·2026 发布节奏在证（Simcenter Testlab 2606 版本新闻 2026-09-22·STAR-CCM+ SPH 热耦合帖 2026-07）·NVIDIA 耦合双源在证（STAR-CCM+ 同件上架 NVIDIA API 目录·NVIDIA 侧页面载）；**城市级专案面两官网页均未载**=商用前沿实况「工业/机队级先行·城市级未产品化页」→本仓「城市级实时孪生」差异化空间入册
+- [B·确认·2026-10-11 arXiv 直址实查（T-FV-134 深扫·**通道病如实标注**：Wikipedia「Procedural generation」页请求被取件后端错路由至本 arXiv 页→直址复取确认·Wikipedia 原文未取到）] **PCG 学界 2024 综述锚**=Farrokhi Maleki & Zhao《Procedural Content Generation in Games: A Survey with Insights on Emerging LLM Integration》（arXiv:2410.15644·**AIIDE-24**〔第二十届 AAAI AIIDE·Lexington USA·2024-11〕·v1 2024-10-21）——摘要原文「PCG is defined as the automatic creation of game content using algorithms」「it is the arrival of Large Language Models (LLMs) that truly disrupted the trajectory of PCG advancement」=PCG 分类学与 LLM 整合双面正典（程序化生成面学术前沿行）
+- [A·确认·2026-10-11 README 全量实查（T-FV-134 深扫·**现行主线锚=City3D R2 模块壳**·GitHub 页首取仅回 LICENSE 视图〔MIT·Copyright 2016 Maxim Gumin·「Provided image samples and tiles are not part of WaveFunctionCollapse software」〕→raw 正通道〔r220 勘定〕全量复取）] **WFC（WaveFunctionCollapse·Gumin 2016·MIT）=模块壳邻接装配正典算法**——①「simple tiled model」=纯邻接约束传播生成 tilemap（D4 对称系缩短邻接枚举）；②**「easy tilesets」教训**（官方原文「easy tilesets don't produce interesting global arrangements, because correlations of tiles in easy tilesets quickly fall off with a distance」→模块壳须带非平凡约束集·禁整齐重复）；③**constrained synthesis**（官方原文「WFC algorithm supports constraints. Therefore, it can be easily combined with other generative algorithms or with manual creation」+人工起手自动补全演示=authored 壳与约束自动补全两径合法先例）；④产品实证=**Townscaper**（模块壳城镇玩具标杆·WFC×marching cubes·mixed-initiative）+Bad North/Caves of Qud（多 pass 管线）/Dead Static Drive/**Matrix Awakens**+Marian Kleineberg 无限城市生成器（tiled model+回溯+在线变体+Merrell「modifying in blocks」惰性生成=**城市生长线参考径**）；⑤学术根=Merrell《Model Synthesis》2009（AC-3·邻接约束派生）←Mackworth 1977 约束网←Efros-Leung 1999 纹理合成；⑥生态=UE5 官方 Blueprint API 内建+Unity/Houdini/Godot 移植+MarkovJunior 后继（3D simple tiled model）·DeepMind 以 WFC 生成 RL 竞技场（arXiv:2107.12808）
 
 ## ②执行标准表（发现→可执行标准→落地指针·L0 轮内纪律/L1 门禁/L2 司级判据/L3 集团律）
 
@@ -41,6 +43,7 @@
 | 8 | L2 | 呈现参数正典（P-17·CEO 参数令） | 像素动画 10fps·CEO_ORDER 脉冲 2s·commit 粒子穿城 15-30s·事件轮询 10s·相机双档切换 1.2s ease 禁瞬跳·日夜=真实北京时间 | TECH §九 P-17 行+City/CityCameraRig.cs | ✓ 现役 |
 | 9 | L0+L2 | Token 经济极限使用令（token-economy §3.3） | 呈现面零 LLM 调用（开面板零生成·L1 确定性选行）·生成面 L2 本地 Ollama（qwen2.5:7b·≈224ms/句实测）·新触点过三问门留痕 §九 | TECH §九 P-54 行+Tools/devloop/iteration_prompt.txt 优先级 4+watch/greetings.json（r70/r75） | ✓ 现役 |
 | 10 | L3 | 《人工智能生成合成内容标识办法》（2025-09-01 施行） | AI 生成内容显著标识：呈现面角标 ≥3 处（欢迎线/居民之声/万民之声·r61 实测）·M2 barks 预留位·直播角标位登记·硬约束域=事件即时+季度全扫 | TECH §九 P-40 行+watch/template.html `.aitag` | ✓ 现役 |
+| 11 | L2 | WFC「easy tilesets」教训+constrained synthesis（Gumin 2016·README 全量 2026-10-11） | **模块壳装配约束律**：模块壳装配与未来城市生长线一律约束驱动——邻接约束传播（WFC simple tiled model 族）或确定性 hash 变奏（r207 skyline 先例）·禁无约束自由放/禁整齐重复（easy tilesets=相关性随距离速衰减教训）；人工 authored 壳与约束自动补全两径合法（官方「easily combined with … manual creation」） | City3D R2 模块壳主线（交互窗在飞·防双头零接触）+docs/lowpoly3d-city-rebuild-plan.md+TECH §九 r236 行；生长线开线参考径=Marian 无限城市+Merrell modifying-in-blocks（r220 WFC 观察位升格） | ⬜（R2 在飞·生长线未开·标准先立法） |
 
 ## ③采集源清单（每域 ≥1 源·分级·通道·零 key）
 
@@ -61,6 +64,8 @@
 | 《人工智能生成合成内容标识办法》（2025-09-01 施行） | A | 法规（P-40 接线在册·集团验证） | 确认 |
 | NVIDIA Omniverse 平台动向（Simulation/Blueprints 面·MEGA 机队 DT 蓝图·CAE 微服务目录） | B | 官网 web_fetch 2026-09-27（nvidia.com/en-us/omniverse） | 确认（版本号/价格/城市级 AEC 专案页面未载） |
 | Siemens Simcenter 商用孪生线（系统仿真+3D CAE+test 三合一·2606 版本节奏·STAR-CCM+×NVIDIA 目录） | B | 官网 web_fetch 2026-09-27（sw.siemens.com/en-US/simcenter/·siemens.com 域两 URL 404 通道病如实标注） | 确认（城市级专案页面未载） |
+| Farrokhi Maleki & Zhao 2024《PCG in Games: A Survey with Insights on Emerging LLM Integration》（AIIDE-24·arXiv:2410.15644·PCG 定义+LLM 颠覆论） | B | arXiv 直址 web_fetch 2026-10-11（Wikipedia 请求通道错路由如实标注·直址复取确认） | 确认 |
+| WaveFunctionCollapse（mxgmn·Gumin 2016·MIT）README 全量（local similarity C1/C2+simple tiled model+D4 对称系+easy tilesets 教训+constrained synthesis+Townscaper/Bad North/Caves of Qud/Matrix Awakens/Marian 无限城市+Merrell 2009 学术根+UE5 Blueprint API 生态） | A | raw.githubusercontent web_fetch 2026-10-11（GitHub 页首取仅回 LICENSE 视图如实标注·raw 正通道 r220 律） | 确认 |
 
 零 key：全表零付费 API 零 key；robots/ToS：公开页 web_fetch 合规（R-20260923-academic 方法节在册）。
 
@@ -71,3 +76,4 @@
 | 2026-09-24 | 首版 v1.0（P-56①·r79）：四节齐备——视野面=五对标对象+判据史/综述前沿 2024-25/DTO 空白/元宇宙教训/硬约束动态；执行标准 10 条（L0-L3 层标+数字化判据+落地指针·✓8/⬜2 态如实分标）；源 15 项（确认 13/待证 2·全复用仓内已验证调研零新增网络采集） | 司级 7 天=**2026-10-01**（M 待证两项核验+三域快讯）；深潜 30 天=**2026-10-24**（城市孪生 2025-2026 新文献·Scopus/WoS 面）；硬约束域=事件即时+季度全扫 |
 | 2026-09-27 | **v1.1 刷新（T-FV-134 调研部首扫·周日演化日窗·r219）**：两项 M·待证债核销（Omniverse/Siemens 官网双源实查·web_fetch 2 次）——Omniverse=Simulation/Blueprints 面+MEGA 机队 DT 蓝图+CAE 微服务目录；Simcenter=三合一+2606 节奏；**城市级专案两页均未载=如实标注·差异化空间入册**；零 hot（无 24h 级新事=零 F- 速报行） | 司级 7 天=**2026-10-04**；深潜 30 天=**2026-10-24** 不变（城市孪生 2025-2026 新文献·Scopus/WoS 面）；硬约束域=事件即时+季度全扫 |
 | 2026-10-11 | **观察位注记（r235 复线轮·非刷新）**：10-04/10-11 两窗因 DevLoop keepdown（10-06 CEO 回收令→10-11 O-20261011-0003 解除）顺延——本轮复线首班预算耗于 c5 假触发根治（check-fastpath v1.3·沙盒 15/15）+板面 keepdown 清账+P3-002 提案；**深扫=r236 首位（10-11 窗内·现行主线锚=City3D R2 模块壳）**——本轮零 web_fetch（诚实注记非零发现） | 司级 7 天=**2026-10-18**；深潜 30 天=**2026-10-24** 不变；硬约束域=事件即时+季度全扫 |
+| 2026-10-11 | **v1.2 刷新（T-FV-134 深扫·r236·周日演化日窗·现行主线锚=City3D R2 模块壳）**：WFC README 全量+arXiv:2410.15644（AIIDE-24 PCG 综述）两源入册——①动态两行+**②标准行 11「模块壳装配约束律」**（easy tilesets 教训+constrained synthesis 两径合法）+③源两行（B/A 级）；通道降级两例如实标注（Wikipedia 错路由→arXiv 直址复取/GitHub 页仅回 LICENSE 视图→raw 正通道 r220 律）；零 hot（非 24h 级新事=零 F- 速报行） | 司级 7 天=**2026-10-18**；深潜 30 天=**2026-10-24** 不变（城市孪生 2025-2026 新文献·Scopus/WoS 面）；硬约束域=事件即时+季度全扫 |

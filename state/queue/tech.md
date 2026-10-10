@@ -16,4 +16,4 @@
 | 8 | TECH.md EOL 检出态哨兵：git ls-files --eol（i/lf w/crlf=autocrlf 正常态）10-24 归档窗前复核+归档实跑后双档 w/eol 态一行回填 | TECH §九 r243 基线行+Tools/devloop/archive-section9.ps1 | 态翻转（检出重建/手动转码）即基线再新化 |
 | 9 | tick.ps1 2>&1 双位 EAP=Stop 前置硬化（29 号律预防位：L124/L135 子进程捕获现零暴露〔EAP=Continue+try/catch〕——若 tick 未来改 EAP=Stop 即活化→双 redirect 换装+tick harness 复跑） | Tools/tick/tick.ps1+TECH §九 r246 行②+ps51-gdi-traps 29 号 | 重评条件=tick 改 EAP=Stop |
 | 10 | r233 沙盒复跑判读口径（常设·零施工）：fx2 两断言（fx2-exit2/fx2-r2-caught）=预存自指腐豁免非回归——ghost 键 T-FV-999 全库唯一提及=r233 收口行自身→R2 token 在场永豁免（r248 定谳·mentions=1 实证）；R2 ghost 能力由 r246 演练 a5 隔离负控+r248 A3 真账面 rot-proof 负控（ghost id=T-FV-899）双证无恙 | TECH §九 r248 行③④+logs/devloop-r248-r1fix-test.ps1 A3 | 复跑 35/37 两红=按本行判读勿再归因·沙盒保全律历史件零改 |
-| 11 | harness 入库件 EOL+ASCII 双态复核：四件族（r69/r80/r239/r254）ls-files --eol 一行表+新增两件非 ASCII 字节扫（29 号律面入库后健康证·跨机复跑前置） | logs/ 四件+r252 正法（ReadAllBytes >127 判+BOM 探测） | r255 回填件·纯读零改码·判据=eol 表在案+RED=0 |
+| 11 | harness 第五席收编候选：r197 writer-test（write-fastpath-state.ps1 写侧沙盒·盘上在未入库·r196 已被 r197 头注定谳 superseded 留盘不入库）对当前 writer 回归复跑 | logs/devloop-r197-writer-test.ps1+r255 收编范式（git add -f）+29 号律证 | 判据=复跑 exit 0 才收编+eol 表在案+RED=0；红=判负留痕/陈旧重定谳 |

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-10T21:08:06Z",
-    "current_activity":  "DevLoop r255：harness 收编对齐——r80/r239 两沙盒 git add -f 入库，四件族（r69/r80/r239/r254·130 断言）齐全跨机可复跑；main#6 R2 三判判假续候一行注记+P3-002 行检 PASS（第十八轮连续）",
-    "artifact":  "logs/devloop-r80-releasegate-test.ps1+logs/devloop-r239-statusface-test.ps1（入库）+TECH §九 r255 行+state/queue/tech.md #11 换行回填",
-    "artifact_utc":  "2026-10-10T21:08:06Z",
+    "updated_utc":  "2026-10-10T21:19:38Z",
+    "current_activity":  "DevLoop r256：harness 四件族 EOL+ASCII 双态健康证 PASS（i/lf w/lf 恒等+nonAscii=0/BOM=none·29 号律面跨机复跑前置收口）；main#6 R2 三判判假续候一行注记+P3-002 行检 PASS（第十九轮连续）",
+    "artifact":  "TECH §九 r256 行+state/queue/tech.md #11 换行回填（r197 writer-test 收编候选）+四件族 eol/ASCII 证在案（logs/devloop-r{69,80,239,254}*.ps1）",
+    "artifact_utc":  "2026-10-10T21:19:38Z",
     "milestone":  "R2 判据帧链首跑（main#5·交互窗 City3D 在飞件收干后照 docs/qa-r2-frame-map.md 执行）；下轮 FASTPATH 队列取活；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 P3-003）",
     "milestone_eta_utc":  "2026-10-13T04:00:00Z"
 }

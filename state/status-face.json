@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-10T21:29:15Z",
-    "current_activity":  "DevLoop r257：harness 第五席收编（r197 writer-test 回归复跑 41/41 全绿+add -f 入库+eol/ASCII 双态证=沙盒族五席齐 171 断言）；main#6 R2 三判判假续候一行注记+P3-002 行检 PASS（第二十轮连续）",
-    "artifact":  "TECH §九 r257 行+state/queue/tech.md #11 换行回填（第六席候选=r247 facewriter-test）+logs/devloop-r197-writer-test.ps1 入库（git add -f·i/lf w/lf+nonAscii=0）",
-    "artifact_utc":  "2026-10-10T21:29:15Z",
-    "milestone":  "R2 判据帧链首跑（main#5·交互窗 City3D 在飞件收干后照 docs/qa-r2-frame-map.md 执行）；下轮 FULL-ROUND/FASTPATH 双径队列取活（tech 11 席常备）；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 P3-003）",
+    "updated_utc":  "2026-10-10T21:37:49Z",
+    "current_activity":  "DevLoop r258：harness 第六席收编（r247 facewriter-test 回归复跑 25/25 全绿+add -f 入库+eol/ASCII 双态证=沙盒族六席齐 196 断言）；main#6 R2 三判判假续候一行注记；P3-002 行检 PASS（第二十一轮连续）",
+    "artifact":  "TECH §九 r258 行·state/queue/tech.md #11 换行回填（第七席候选 r248-r1fix-test）·logs/devloop-r247-facewriter-test.ps1 入库（git add -f·i/lf w/lf+nonAscii=0）",
+    "artifact_utc":  "2026-10-10T21:37:49Z",
+    "milestone":  "R2 判据帧链首跑（main#5·交互窗 City3D 在飞件收干后照 docs/qa-r2-frame-map.md 执行）；下轮 FULL-ROUND/FASTPATH 双径队列取活（tech 11 常备）；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 P3-003）",
     "milestone_eta_utc":  "2026-10-13T04:00:00Z"
 }

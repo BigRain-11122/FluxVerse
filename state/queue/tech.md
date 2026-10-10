@@ -16,4 +16,4 @@
 | 8 | probes 25 面健康报表：scan.ps1 全探针产出分布+游标健康一行表（纯读·零新增） | Tools/perceptor/scan.ps1 | 备治理窗回访引证 |
 | 9 | ps51-gdi-traps 双新律 bake 域适用面判读：vendored 误命中/取件通道两病（r235/r236）在 bake 管线的适用面评估——零适用=判负留痕·有适用=入册+同步 | Tools/skills/fluxverse-bake-pipeline/references/ps51-gdi-traps.md | r242 承件·r214 分布律注记范式 |
 | 10 | TECH.md EOL 检出态哨兵：git ls-files --eol（i/lf w/crlf=autocrlf 正常态）10-24 归档窗前复核+归档实跑后双档 w/eol 态一行回填 | TECH §九 r243 基线行+Tools/devloop/archive-section9.ps1 | 态翻转（检出重建/手动转码）即基线再新化 |
-| 11 | ps51-gdi-traps 律册滚动第三轮：r244 `*>`+EAP=Stop 子进程 stderr 终错陷阱入册（NativeCommandError 包装升格）+安装副本 SHA 同步+census 重钉+三门烟测复绿 | Tools/skills/fluxverse-bake-pipeline/references/ps51-gdi-traps.md+logs/devloop-r242-rolls-test.ps1 范式 | r244 当轮自中实锚·沙盒正法=Start-Process 双 redirect |
+| 11 | harness 族 `*>` 用法普查：logs/ 现役 harness/编排脚本中 `*>`/`2>&1` 捕获面盘点（EAP=Stop 终错面=r245 律册 29 号执法前置） | r245 §九 行+ps51-gdi-traps 29 号 | 纯读盘点零改码·发现即修单回填 tech 队列 |

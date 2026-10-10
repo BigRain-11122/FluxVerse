@@ -16,4 +16,4 @@
 | 8 | TECH.md EOL 检出态哨兵：git ls-files --eol（i/lf w/crlf=autocrlf 正常态）10-24 归档窗前复核+归档实跑后双档 w/eol 态一行回填 | TECH §九 r243 基线行+Tools/devloop/archive-section9.ps1 | 态翻转（检出重建/手动转码）即基线再新化 |
 | 9 | tick.ps1 2>&1 双位 EAP=Stop 前置硬化（29 号律预防位：L124/L135 子进程捕获现零暴露〔EAP=Continue+try/catch〕——若 tick 未来改 EAP=Stop 即活化→双 redirect 换装+tick harness 复跑） | Tools/tick/tick.ps1+TECH §九 r246 行②+ps51-gdi-traps 29 号 | 重评条件=tick 改 EAP=Stop |
 | 10 | r233 沙盒复跑判读口径（常设·零施工）：fx2 两断言（fx2-exit2/fx2-r2-caught）=预存自指腐豁免非回归——ghost 键 T-FV-999 全库唯一提及=r233 收口行自身→R2 token 在场永豁免（r248 定谳·mentions=1 实证）；R2 ghost 能力由 r246 演练 a5 隔离负控+r248 A3 真账面 rot-proof 负控（ghost id=T-FV-899）双证无恙 | TECH §九 r248 行③④+logs/devloop-r248-r1fix-test.ps1 A3 | 复跑 35/37 两红=按本行判读勿再归因·沙盒保全律历史件零改 |
-| 11 | Tools 域 ASCII 审计扩面 R3：perceptor 双件 scan.ps1/verify.ps1+tick.ps1 全字节 >127 扫（族外首件·红=入册修复轨） | Tools/perceptor/{scan,verify}.ps1+Tools/tick/tick.ps1 | r249/r251 正法复用·零红=过门 |
+| 11 | export-public-snapshot 确定性抽检：同输入双跑比对（AC-5 五门确定性旁证·时戳键若在产先立豁免清单） | Tools/tick/export-public-snapshot.ps1+world-public/city-snapshot.json | tick 侧确定性证·烘焙幂等族姊妹件（#2）；双跑须零扰动 staged 递延件（r62 模式） |

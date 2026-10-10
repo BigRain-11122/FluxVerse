@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-10T19:24:21Z",
-    "current_activity":  "DevLoop r247：c1 红根治——status-face 写侧执法件 write-status-face.ps1 落地（updated_utc 恒机器盖戳·r246 手写猜钟病根除·r196 write-fastpath-state 同族）",
-    "artifact":  "Tools/devloop/write-status-face.ps1（六键原子写+读回断言+future 防线）+logs/devloop-r247-facewriter-test.ps1 沙盒 25/25 全绿",
-    "artifact_utc":  "2026-10-10T19:24:21Z",
-    "milestone":  "R2 判据帧链候触发（r2-ignite 已判真 5/5·待交互窗在飞件收干入库→main#5 领首跑）；tech#10 R1 措辞修法可领；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 提案）·10-24 归档首非零窗",
-    "milestone_eta_utc":  "2026-10-12T18:00:00Z"
+    "updated_utc":  "2026-10-10T19:43:34Z",
+    "current_activity":  "DevLoop r248：R1 移除集措辞缺口修法收口——板门正则泛化（近邻有界窗+窗内禁第二 id），4 逃逸键全捕零错配，r248 沙盒 20/20 全绿",
+    "artifact":  "Tools/devloop/tasks-board-check.ps1（R1 修法）+logs/devloop-r248-r1fix-{probe,test}.ps1；真机板门 PASS s9_removed=25",
+    "artifact_utc":  "2026-10-10T19:43:34Z",
+    "milestone":  "tech 队列常备续领（沙盒/审计/抽检族）；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 提案）；R2 判据帧链续候（探测判假·交互窗在飞件未收干）",
+    "milestone_eta_utc":  "2026-10-13T10:00:00Z"
 }

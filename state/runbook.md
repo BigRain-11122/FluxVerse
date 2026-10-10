@@ -6,12 +6,12 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r247 毕：c1 红（statusface future-ts）根治——status-face 写侧执法件 write-status-face.ps1 落地（updated_utc 恒机器盖戳·r246 手写猜钟病根除·r196 同族）+沙盒 25/25 全绿+生产修面（gate fresh 证）。r2-ignite 已判真（5/5）但交互窗在飞件未收干→main#5 判据帧链续候；现无在飞件，下轮从「下一步」取活。
+r248 毕：R1 移除集措辞缺口修法（tech#10 领走）——板门 $rxRemove 泛化（有界近邻窗 ≤14+tempered 禁第二 id）·4 逃逸键全闭零错配；r246 演练 34/34+r248 沙盒 20/20 全绿；r233 复跑 35/37 两红=预存自指腐（T-FV-999 收口行自指·判读口径=tech 队列#11 常设行）。R2 探测判假续候（在飞件未收干）；现无在飞件，下轮从「下一步」取活。
 
 ## 下一步（队列头）
 1. 轮首先跑 Tools\devloop\check-fastpath.ps1：FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。
 2. 时窗件：T-FV-134 调研深扫+T-FV-141 提案=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24 首窗/11-01 月界。
-3. main/tech 近件：main#6 R2 探测一行注记（r2-ignite 判真·判据②在飞件收干未成立·成立即领 main#5 判据帧链首跑）/tech#10 R1 措辞修法可领/P3-002 防御行检（常设）。
+3. main/tech 近件：main#6 R2 探测一行注记（判据②在飞件收干未成立·成立即领 main#5 判据帧链首跑）/tech 队列常备可领（#1 反向引用演练/#2 双执法件 ASCII 审计/#3 烘焙幂等抽检/#4 retention 盘点等）/P3-002 防御行检（常设）。
 4. **常设收尾步（r247 起改道执法件）**：commit 前刷面=写 logs/devloop-face-content.json（六键·updated_utc/artifact_utc 留空机器盖戳）→ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\write-status-face.ps1 → FACE OK 才 commit；禁手写 state/status-face.json（r246 future-ts 红根因）。
 
 ## 验收标准（怎么算完成）

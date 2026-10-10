@@ -55,7 +55,15 @@ if (Test-Path -LiteralPath $archDir) {
 # --- R1 material: closed-row mentions in sec9 + archives ---
 # CJK via code points only (PS5.1 GBK law): yi-chu = remove, shuang/yi = pair/row modifiers
 $yiChu = [string][char]0x79FB + [string][char]0x9664
-$rxRemove = 'T-FV-(\d+)[\s' + [string][char]0x53CC + [string][char]0x884C + ']{0,4}' + $yiChu
+# r248 phrase-gap fix (tech queue #10, r246 new-debt): window widened from the
+# [\s shuang xing]{0,4} char class to any chars {0,14} so descriptive removal
+# phrasing ("done <row> <remove>", "QA wiring-row <remove>" etc.) is captured.
+# Two guard rails keep attribution correct: (a) bounded near-adjacency window
+# (misattribution via far-away removal words stays out, e.g. r246 line
+# "T-FV-150 ... R1 from-archive <remove> mention" at 23 chars), and (b) the
+# tempered scan blocks any second T-FV- id inside the window (r200 line
+# "T-FV-121 ... = T-FV-120 <remove>" attributes to 120 only).
+$rxRemove = 'T-FV-(\d+)(?:(?!T-FV-)[\s\S]){0,14}' + $yiChu
 $removedSet = @{}
 foreach ($ln in $s9Lines) {
   foreach ($mm in [regex]::Matches($ln, $rxRemove)) { $removedSet['T-FV-' + $mm.Groups[1].Value] = $true }

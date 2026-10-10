@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-10T19:43:34Z",
-    "current_activity":  "DevLoop r248：R1 移除集措辞缺口修法收口——板门正则泛化（近邻有界窗+窗内禁第二 id），4 逃逸键全捕零错配，r248 沙盒 20/20 全绿",
-    "artifact":  "Tools/devloop/tasks-board-check.ps1（R1 修法）+logs/devloop-r248-r1fix-{probe,test}.ps1；真机板门 PASS s9_removed=25",
-    "artifact_utc":  "2026-10-10T19:43:34Z",
-    "milestone":  "tech 队列常备续领（沙盒/审计/抽检族）；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 提案）；R2 判据帧链续候（探测判假·交互窗在飞件未收干）",
+    "updated_utc":  "2026-10-10T19:58:13Z",
+    "current_activity":  "DevLoop r249：tech#2 双执法件 ASCII 全字节审计零红过门（write-fastpath-state 8364B+check-fastpath 15011B 全量零非 ASCII 字节）；R2 三判机械探测判假注记（在飞件 8 件未收干·main#5 判据帧链续候）；P3-002 行检 PASS 第十二轮",
+    "artifact":  "TECH.md §九 r249 行+state/queue/tech.md 翻新（#2 领走即删+renumber+新条回填）+state/queue/main.md 补 main#7 预置件行",
+    "artifact_utc":  "2026-10-10T19:58:13Z",
+    "milestone":  "tech 队列常备续领（#1 反向引用演练/#2 烘焙幂等抽检/#3 retention 盘点等）；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 提案）；R2 判据帧链续候（探测判假·交互窗在飞件未收干）",
     "milestone_eta_utc":  "2026-10-13T10:00:00Z"
 }

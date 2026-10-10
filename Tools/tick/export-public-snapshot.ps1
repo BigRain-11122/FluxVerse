@@ -282,11 +282,18 @@ try {
   foreach ($p in $snap.PSObject.Properties) {
     if ($WL_TOP -notcontains $p.Name) { throw ('G2 whitelist: top-level key ' + $p.Name) }
   }
-  Assert-List (Get-Val $snap 'zones') $WL_ZONES 'zones'
-  Assert-List (Get-Val $snap 'flows') $WL_FLOWS 'flows'
+  # r254 fix: the three list sections are read by DIRECT property access, not
+  # Get-Val. Get-Val's 'return $p.Value' sends the value through the output
+  # pipeline, which unwraps an EMPTY array to no output - so a legitimate
+  # empty flows/events_tail section (quiet city day) arrived as $null and
+  # Assert-List misread @($null) as a [null] element, spurious-G2-FAILing the
+  # export forever. Direct access preserves the empty array; non-empty arrays
+  # and the [null]-element defense behave exactly as before.
+  Assert-List $snap.zones $WL_ZONES 'zones'
+  Assert-List $snap.flows $WL_FLOWS 'flows'
   Assert-Obj (Get-Val $snap 'city') $WL_CITY 'city'
   Assert-Obj (Get-Val $snap 'reality_public') $WL_REAL 'reality_public'
-  Assert-List (Get-Val $snap 'events_tail') $WL_EVENT 'events_tail'
+  Assert-List $snap.events_tail $WL_EVENT 'events_tail'
   $sfSnap = Get-Val $snap 'status_face'
   if ($null -ne $sfSnap) { Assert-Obj $sfSnap $WL_STATUS 'status_face' }
 

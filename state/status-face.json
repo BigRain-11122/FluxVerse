@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-10T20:40:46Z",
-    "current_activity":  "DevLoop r253：tech#11 export-public-snapshot 确定性抽检 PASS（冻结输入双跑字节恒等·AC-5 五门双绿）；main#6 R2 三判探测判假续候（①②·一行注记）；P3-002 行检 PASS 第十六轮",
-    "artifact":  "TECH.md §九 r253 收口行+state/queue/tech.md 更新（#11 领走即删+五门负控沙盒新条回填）+world-public/city-snapshot.json 递延五回载",
-    "artifact_utc":  "2026-10-10T20:40:46Z",
-    "milestone":  "R2 判据帧链首跑（main#5·判真即跑=照 docs/qa-r2-frame-map.md 配方·现候交互窗在飞收干）；下轮 FASTPATH 走队列取活；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 P3-003）",
+    "updated_utc":  "2026-10-10T21:00:18Z",
+    "current_activity":  "DevLoop r254：export 五门负控沙盒 65 断言全绿（七毒注入全拦截+last-good 字节保全）+首跑逮出空段 G2 假报潜伏缺陷当轮根治（Get-Val 管线 unwrap 陷阱→三列表段直读）；四 harness 回归 130 断言全绿（r254/r80/r239/r69 重定基）；main#6 R2 三判判假续候一行注记",
+    "artifact":  "logs/devloop-r254-export-negcon.ps1（65 断言）+Tools/tick/export-public-snapshot.ps1 G2 外科修复+logs/devloop-r69-public-test.ps1 重定基+TECH §九 r254 行",
+    "artifact_utc":  "2026-10-10T21:00:18Z",
+    "milestone":  "R2 判据帧链首跑（main#5·判真即跑=交互窗 City3D 在飞件收干后照 docs/qa-r2-frame-map.md）；下轮 FASTPATH 队列取活；时窗 10-18 演化日窗（T-FV-134 深扫/T-FV-141 P3-003）",
     "milestone_eta_utc":  "2026-10-13T04:00:00Z"
 }

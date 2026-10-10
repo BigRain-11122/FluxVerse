@@ -16,4 +16,4 @@
 | 8 | TECH.md EOL 检出态哨兵：git ls-files --eol（i/lf w/crlf=autocrlf 正常态）10-24 归档窗前复核+归档实跑后双档 w/eol 态一行回填 | TECH §九 r243 基线行+Tools/devloop/archive-section9.ps1 | 态翻转（检出重建/手动转码）即基线再新化 |
 | 9 | tick.ps1 2>&1 双位 EAP=Stop 前置硬化（29 号律预防位：L124/L135 子进程捕获现零暴露〔EAP=Continue+try/catch〕——若 tick 未来改 EAP=Stop 即活化→双 redirect 换装+tick harness 复跑） | Tools/tick/tick.ps1+TECH §九 r246 行②+ps51-gdi-traps 29 号 | 重评条件=tick 改 EAP=Stop |
 | 10 | r233 沙盒复跑判读口径（常设·零施工）：fx2 两断言（fx2-exit2/fx2-r2-caught）=预存自指腐豁免非回归——ghost 键 T-FV-999 全库唯一提及=r233 收口行自身→R2 token 在场永豁免（r248 定谳·mentions=1 实证）；R2 ghost 能力由 r246 演练 a5 隔离负控+r248 A3 真账面 rot-proof 负控（ghost id=T-FV-899）双证无恙 | TECH §九 r248 行③④+logs/devloop-r248-r1fix-test.ps1 A3 | 复跑 35/37 两红=按本行判读勿再归因·沙盒保全律历史件零改 |
-| 11 | export-public-snapshot 五门负控沙盒：坏输入注入（G1 秘钥串/G2 白名单外键/G3 违禁词/G5 路径漏）→exit 2+旧快照保全断言（G4 1MB 帽构造代价高=缓判注记） | Tools/tick/export-public-snapshot.ps1+r248 代际沙盒范式 | 正法=隔离夹具零扰动生产 world-public/（-OutDir 临时件·r253 正跑确定性 PASS 的姊妹负控面） |
+| 11 | harness 收编对齐：r80/r239 两沙盒 git add -f 入库（r69/r254 两件已入库·四件族齐全跨机可复跑） | logs/devloop-r80-releasegate-test.ps1+devloop-r239-statusface-test.ps1 | r254 回填件·零改码纯收编·判据=入库后 git ls-files 可见 |

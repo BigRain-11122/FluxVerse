@@ -7,7 +7,7 @@
 
 | # | 待办 | 指针/判据 | 备注 |
 |---|---|---|---|
-| 1 | T-FV-145 Executive Protocol 适配：state/runbook.md <2KB 建立+规则文件 ≤5 盘点（瘦身令④·check-fastpath SHA-only 快道保留口径落定稿） | tasks/TASKS.md T-FV-145 行 | 接续链下轮候选首位 |
+| 1 | Executive Protocol v1.1③ 实况面三行律接线：对外实况面（world-public/city-snapshot.json 公面包）增「当前活/最近实物/下个里程碑」可验字段——消费面勘定+白名单扩容评估（加字段向后兼容=协议宪法 §三·G2 白名单树断言同步面） | docs/executive-protocol.md v1.1③+Tools/tick/export-public-snapshot.ps1+TECH §九 r238 行 | 协议续件·L1 确定性·下轮候选 |
 | 2 | T-FV-139 §九 月度代际归档轮：archive-section9.ps1 迁移 30 天窗外行入月档 | Tools/devloop/archive-section9.ps1（判据四条 fail-loud） | 时窗件·首行达窗 2026-10-24·首个非零窗 11-01 月界·零行窗诚实报 0 |
 | 3 | T-FV-134 调研部周轮深扫：web_fetch 定向直查（锚域=City3D R2 模块壳/WFC 变体/数字孪生前沿） | docs/global-benchmarks.md（v1.2·下次到期 10-18） | 下窗 2026-10-18·hot=F- 行 24h 速报 |
 | 4 | T-FV-141 自驱提案 P3-003：三句式（现象+建议+判据 ≤3 问先立） | TECH §九 自驱提案行（P3-001/002 已交） | 下窗 2026-10-18 周日演化日窗 |

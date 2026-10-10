@@ -33,13 +33,13 @@
 
 | # | 层 | 发现（外部锚） | 可执行标准（数字化判据） | 落地指针 | 状态 |
 |---|---|---|---|---|---|
-| 1 | L2 | Kritzinger 2018 三级判据（S03） | 真孪生升格线：环B 令行通道接通前=Digital Shadow·接通后=Digital Twin——升格判据=城内令行四步（指令出口→签收关卡→OS 循环消费→回流事件）各 ≥1 事件实证入 world-events.jsonl | TECH §九 令行通道行+P-12 行·DESIGN §十四.6/§十五·docs/BLUEPRINT.md §八 环B | ⬜（自动通道四步事件未落·P-12 待裁定〔F-13 在案〕） |
+| 1 | L2 | Kritzinger 2018 三级判据（S03） | 真孪生升格线：环B 令行通道接通前=Digital Shadow·接通后=Digital Twin——升格判据=城内令行四步（指令出口→签收关卡→OS 循环消费→回流事件）各 ≥1 事件实证入 world-events.jsonl | TECH §九 令行通道行+P-12 行·DESIGN §十四.6/§十五·docs/_archive/BLUEPRINT.md §八 环B | ⬜（自动通道四步事件未落·P-12 待裁定〔F-13 在案〕） |
 | 2 | L2 | 持续同步红线（S04） | 孪生话术防线：scan→state/events 全链新鲜——world-state.json ts_utc 距今 ≤10min（tick 周期）·公开快照延迟 ≤20min SLA·AC-5 四门（secret 0/白名单树断言/禁词 0/≤1MB）每导出轮绿 | Tools/perceptor/scan.ps1+Tools/tick/export-public-snapshot.ps1（r69）+cph4/research/R-20260924-server-city.md §1 | ✓ 现役 |
 | 3 | L2 | 反装饰律（Jacobs 街道芭蕾 S13+生成涌现 S18） | 城内每个动画锚 ≥1 登记事件型·渲染层零硬编码剧本——映射面=events-registry `city_action` 字段（已挂 11 型·r67）·演出实证每已挂型 ≥1 截图 | schema/events-registry.json+docs/design/brain-engine-architecture.md §四+TECH §九 P-41 行 | 映射表 ✓·演出实证 ⬜（P-41①③ 编辑器预算轮） |
 | 4 | L1 | 过程挖掘数据底座（S24） | 事件流=可审计账本：每轮 verify PASS+quarantined=0·探针失败一律 return null 静默降级（禁拖垮全城扫描）·新探针沙盒 ≥10 断言全绿才上岗 | Tools/perceptor/{scan,verify}.ps1+probes/_template.ps1 契约（轮扫面） | ✓ 现役 |
 | 5 | L2 | 警报疲劳（S23） | 注意力配给三级节流：罕见红事件全城演出/常规事件聚合背景车流 10min 一呼吸/高频噪声只入 jsonl 不上街·barks <24 字·同画面 ≤2 气泡 | TECH §九 P-23 行+DESIGN §七+Assets/Data/residents-barks.json（r41/42） | ✓ 现役 |
 | 6 | L2 | 受众分离律（S21/S22） | CEO 面=高信息密度操作工具·参观面=组织剧场+脱敏：公开快照白名单包（zones/flows/city 六聚量/reality_public 五键/events_tail 尾 50 条·型白名单七式）·敏感面（market/fx/governance/机详/事件文本载荷）预设排除 | world-public/city-snapshot.json（r69）+TECH §九 P-52③a 行 | ✓ 现役 |
-| 7 | L2 | 消费元宇宙红线（S08 证据链） | 禁化身社交/乐园化：BLUEPRINT 零化身社交条目·城=集团镜窗（CEO 概念令「城即集团」·README 定位行） | docs/BLUEPRINT.md §二+README.md 定位 | ✓ 立法在册 |
+| 7 | L2 | 消费元宇宙红线（S08 证据链） | 禁化身社交/乐园化：BLUEPRINT 零化身社交条目·城=集团镜窗（CEO 概念令「城即集团」·README 定位行） | docs/_archive/BLUEPRINT.md §二+README.md 定位 | ✓ 立法在册 |
 | 8 | L2 | 呈现参数正典（P-17·CEO 参数令） | 像素动画 10fps·CEO_ORDER 脉冲 2s·commit 粒子穿城 15-30s·事件轮询 10s·相机双档切换 1.2s ease 禁瞬跳·日夜=真实北京时间 | TECH §九 P-17 行+City/CityCameraRig.cs | ✓ 现役 |
 | 9 | L0+L2 | Token 经济极限使用令（token-economy §3.3） | 呈现面零 LLM 调用（开面板零生成·L1 确定性选行）·生成面 L2 本地 Ollama（qwen2.5:7b·≈224ms/句实测）·新触点过三问门留痕 §九 | TECH §九 P-54 行+Tools/devloop/iteration_prompt.txt 优先级 4+watch/greetings.json（r70/r75） | ✓ 现役 |
 | 10 | L3 | 《人工智能生成合成内容标识办法》（2025-09-01 施行） | AI 生成内容显著标识：呈现面角标 ≥3 处（欢迎线/居民之声/万民之声·r61 实测）·M2 barks 预留位·直播角标位登记·硬约束域=事件即时+季度全扫 | TECH §九 P-40 行+watch/template.html `.aitag` | ✓ 现役 |

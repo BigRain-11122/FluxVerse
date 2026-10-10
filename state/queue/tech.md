@@ -6,8 +6,8 @@
 
 | # | 待办 | 指针/判据 | 备注 |
 |---|---|---|---|
-| 1 | runbook 压缩工艺勘定：Executive Protocol「读面 <2KB」vs r52 §九 单一权威制两全口径（SHA-only 快道+runbook 启动首读面）落 mandate 定稿 | T-FV-145 承接·docs/executive-protocol.md v1.1 | 科学判断注记 r234④ 在册 |
-| 2 | 规则文件 ≤5 盘点：根域五件（README/DESIGN/TECH/HQ-FEEDBACK/mandate）体量+引用面 grep 对账+归档候选勘定（禁破 §九 单一权威与 fastpath c4 锚） | 瘦身令④（orders 09-28 批） | 移档面=HQ 治理窗承接非本仓擅动 |
+| 1 | TECH §九 基线复测：r230 基线（613,218B/479 行）已陈——r238 后行数/字节复测落 archive-section9 G1 对账基线（10-24 迁移窗前基线新鲜化） | Tools/devloop/archive-section9.ps1 G1+logs/devloop-r230-measure*.ps1 | 纯读复测·一轮可毕 |
+| 2 | docs/_archive/ 反向引用健康演练：§九/HQ-FEEDBACK 历史行旧路径提及→档内可寻性 grep 实证（历史保全不回改·档内字节恒等双证） | docs/_archive/（七件）+rg 双径 | 零改码·判负留痕合法 |
 | 3 | check-fastpath 沙盒合并回归：r198 79 断言+r235 15 断言（c5 vendored 过滤）合并跑一轮（历史件保全前提） | logs/devloop-r{198,235}-*.ps1 | 双跑字节同=判据 |
 | 4 | tasks-board-check 归档期 fixture 演练：模拟 30 天窗行迁移场景（R1 移除集跨档寻址 docs/archive/tech-section9/*.md 实证） | Tools/devloop/tasks-board-check.ps1 | 10-24 首个非零窗前完成 |
 | 5 | 双执法件 ASCII 全字节审计：write-fastpath-state.ps1+check-fastpath.ps1 非 ASCII 字节 grep（抽样升全量） | r163 归一化律族 | 零红=过门 |

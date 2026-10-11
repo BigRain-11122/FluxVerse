@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T15:49:36Z",
-    "current_activity":  "r345毕：explore#37 开街路缘停车带节拍谱成件——own-街归属门五类全账（177=LOT21+CURB119+ASPHALT23+SIDEWALK9+OFF-rot5），§E 9.1-12.2m带语义正面化定谳=路缘平行停车带间距（面证据链：带车全落人行道与沥青tile间5m裸条带·唯一覆盖=Skyline基座y=-5.7），r344「队列vs路缘临停不可分」诚实注记化解；五对复现门=三MATCH（9.10/12.10/12.20）+两对LOT侧正确排除；curb节拍谱=停车链med10.10m/横偏2.5m档76辆/路口距med22.5m/线密度0.6车每10m；R2街道车摆五律入册+警示位第四五坑（车族yaw抖动2°容差·lane单链聚类0.6m）",
-    "artifact":  "docs/research/R-20261011-ad022-street-curb-parking-rhythm-census.md",
-    "artifact_utc":  "2026-10-11T15:49:36Z",
-    "milestone":  "P3死线滚动10-13 23:4x前出一笔（#38 curb链簇-空档结构谱=r345新补条优先）；R2里程碑后判据帧链首跑",
-    "milestone_eta_utc":  "2026-10-13T15:40:00Z"
+    "updated_utc":  "2026-10-11T16:01:41Z",
+    "current_activity":  "r346毕：explore#38 curb链簇-空档结构谱成件——合并键模型勘定（每(axis,row,dir)一条curb线·probe17姊妹链拆分42实例→35键·幻影检查0/29溶解+合并反铸4新空档=实例模型少计·合并=空档普查正模型）；簇谱=68簇{单38/双13/三13/四4·簇容上限4车}·68%车在n≥2簇·簇内节拍med10.30m；双种空档核心发现=转角18/33（med43m·8例空档罩路口）vs街中15/33（med25m·20-30m档主导）→路口净空设计值=40-50m转角让空窗（3.5m=禁入硬底线非设计值）；观测包络簇覆盖仅31%（七成留白）；R2摆车落段六律入册（段位/簇容/转角让空/街中断口/密度/线型）=r345律3段级展开；G7门7/8 MATCH+警示位第六坑（姊妹链拆分少计空档）",
+    "artifact":  "docs/research/R-20261011-ad022-curb-cluster-gap-structure-census.md",
+    "artifact_utc":  "2026-10-11T16:01:41Z",
+    "milestone":  "P3死线滚动10-14 00:0x前出一笔（#39转角空档×路口臂数联动谱=r346新补条优先）；R2里程碑后判据帧链首跑",
+    "milestone_eta_utc":  "2026-10-13T16:00:00Z"
 }

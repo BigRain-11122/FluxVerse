@@ -16,7 +16,7 @@
 | 9 | 微信小游戏 3D 性能上限案例集：团结引擎 WeChat 3D 分发面参考 | 团结 SDK 新仓（r219 勘正 c） | 分发面参考 |
 | 10 | world-events viz 消费端候选观察：M2 时态轮探针扩面口径（CityWatch 停役后唯一观测窗归 MiniGame 侧） | r164 evolution 扩面先例 | M2 排队面·观察不预建 |
 | 11 | 行情 K 线 M2 视觉映射设计稿：BigMoney state.reality.market 消费（数据已备 r47 注记） | M2 排队面 | 纸面设计稿·零引擎实现 |
-| 12 | **P3 48h 节律死线件（滚动计数位）**：r333 已满足（explore#25 Environments 域全景盘点成件 R-20261011-ad022-environments-domain-label-vs-source.md·20:3x）——末笔=r333·**下次死线=10-13 20:3x 前出一笔 P3 产出**（领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r333 行 | r319 入册·r320~r333 十四轮连翻（死线机械化滚动·防静默超窗） |
+| 12 | **P3 48h 节律死线件（滚动计数位）**：r334 已满足（explore#26 Characters/Vehicles 微域并窗盘点成件 R-20261011-ad022-charveh-microdomain-label-vs-source.md·20:4x·五域盘点收官出册）——末笔=r334·**下次死线=10-13 20:4x 前出一笔 P3 产出**（领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r334 行 | r319 入册·r320~r334 十五轮连翻（死线机械化滚动·防静默超窗） |
 | 13 | Quaternius Modular Streets Pack 拼装语法拆解：件名谱/网格尺寸/与 Kenney Roads 及 AD-022 路族三方对照（Kenney Roads 二比一的另一侧·r320 §2 记录件） | R-20261011-kenney-citykit-assembly-syntax.md §5 | r321 轮尾补条（导入前纸面对照·零下载） |
 | 17 | 真 demo 街具密度/自由摆基准对我方 v6/v7 格点摆法对照评估（自由化扰动=活城感方向·观感调优输入） | R-20261011-ad022-truedemo-census.md §2 | r324 轮尾补条·纸面对照零导入 |
-| 26 | Characters/Vehicles 微域并窗盘点：9+9 源谱「标签 vs 源谱」（probe9 双跑·dir 过滤两连·五域盘点收官件=333 源全息账终谳出册） | R-20261011-ad022-environments-domain-label-vs-source.md §7 | r333 轮尾补条·probe9 正典形直用 |
+| 27 | 街道断面×车体配比纸面稿：Road 谱 fbx x/z-bounds 实测（车道宽/停车带宽）+5.17m 车长/2.17m 车宽/0.72m 轮径三锚配比（R2 街道模块底表） | R-20261011-ad022-charveh-microdomain-label-vs-source.md §4/§7 | r334 轮尾补条·probe10 直用·纯纸面零导入 |

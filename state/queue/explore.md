@@ -16,9 +16,9 @@
 | 9 | 微信小游戏 3D 性能上限案例集：团结引擎 WeChat 3D 分发面参考 | 团结 SDK 新仓（r219 勘正 c） | 分发面参考 |
 | 10 | world-events viz 消费端候选观察：M2 时态轮探针扩面口径（CityWatch 停役后唯一观测窗归 MiniGame 侧） | r164 evolution 扩面先例 | M2 排队面·观察不预建 |
 | 11 | 行情 K 线 M2 视觉映射设计稿：BigMoney state.reality.market 消费（数据已备 r47 注记） | M2 排队面 | 纸面设计稿·零引擎实现 |
-| 12 | **P3 48h 节律死线件（滚动计数位）**：r372 已满足（explore#64 四件选型判据池终版合成件=R-20261012-r2-block-expansion-selection-pool-final.md 成件〔统一六闸判据表+四件位差矩阵+五轴分工定谳+部署面分流+导入窗执行序六步·**选型池收口位毕**〕）——末笔=r372·**下次死线=10-14 06:0x 前出一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r372 行 | r319 入册·r320~r372 五十三轮连翻（死线机械化滚动·防静默超窗） |
-| 17 | 真 demo 街具密度/自由摆基准对我方 v6/v7 格点摆法对照评估（自由化扰动=活城感方向·观感调优输入） | R-20261011-ad022-truedemo-census.md §2 | r324 轮尾补条·纸面对照零导入 |
-| 47 | 涂装 lot 渲染终验：z=75/150 行 PL 骑素面带的 z 序显隐实拍（§14.6 G 层共承 11/19 件的渲染次序真相——vendor z 序赌注 §4 同律·YL 虚线候选〔§14.3③〕同窗） | R-20261011-ad022-marking-occupation-syntax.md §14.3③+§14.6 | r354 轮尾补条·导入窗后置低优 |
+| 12 | **P3 48h 节律死线件（滚动计数位）**：r373 已满足（explore#17 真 demo 自由摆基准 vs v6/v7 格点摆法对照评估=R-20261012-ad022-freepose-vs-v6v7.md 成件〔四面定谳+自由化配方 M1-M4+三问判据·**truedemo-census §2 自由化扰动开放注收口**〕）——末笔=r373·**下次死线=10-14 06:4x 前出一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r373 行 | r319 入册·r320~r373 五十四轮连翻（死线机械化滚动·防静默超窗） |
+| 47 | 涂装 lot 渲染终验：z=75/150 行 PL 骑素面带的 z 序显隐实拍（§14.6 G 层共承 11/19 件的渲染次序真相——vendor z 序赌注 §4 同律·YL 虚线候选〔§14.3③〕同窗） | R-20261011-ad022-marking-occupation-syntax.md §14.3③+§14.6 | r354 轮尾补条·导入窗后置低优（#17 已领走毕 r373·R-20261012-ad022-freepose-vs-v6v7.md） |
 | 61 | R2 生成器输入门禁消费接线跟踪（被动·零施工）：生成器实现窗开工首跑 Tools/city/r2-spec-input-validate.py 入其门禁链（38 行输入自检=fail-loud 前置门·argv 负控通道随件）——判据=实现窗 commit/消息或 TECH 行引用本件 | Tools/city/r2-spec-input-validate.py+R-20261012-ad022-r2-spec-input.md §7 | r368 轮尾补条 |
 | 65 | R2 选型池六闸导入窗执行跟踪（被动·零施工）：R2 里程碑落地+导入窗开工时首跑 R-20261012-r2-block-expansion-selection-pool-final.md §1 六闸判据表逐闸执行+闸果回填其 §5——判据=实现窗 commit/消息或 TECH 行引用本件 | R-20261012-r2-block-expansion-selection-pool-final.md §1/§5 | r372 轮尾补条（explore#61 同式被动跟踪律） |
+| 66 | R2 细节摆位自由化三判据实现窗首跑跟踪（被动·零施工）：R2 细节摆位生成器实现窗开工首跑 R-20261012-ad022-freepose-vs-v6v7.md §5 三问判据（自由旋转占比∈[15%,35%]/NN<2.5m∈[30%,50%]/on5.0≤10%·probe21 复跑式）+果回填其 §5——判据=实现窗 commit/消息或 TECH 行引用本件 | R-20261012-ad022-freepose-vs-v6v7.md §4/§5 | r373 轮尾补条（explore#61/#65 同式被动跟踪律） |
 

@@ -6,11 +6,11 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r372 毕：explore#64 四件选型判据池终版合成件成件（R-20261012-r2-block-expansion-selection-pool-final.md·统一六闸判据表+位差矩阵+五轴分工+部署面分流+导入窗执行序·**选型池收口位毕**）。
+r373 毕：explore#17 真 demo 自由摆基准 vs v6/v7 格点摆法对照评估成件（R-20261012-ad022-freepose-vs-v6v7.md·四面定谳+自由化配方 M1-M4+三问判据·truedemo-census §2 自由化扰动开放注收口）。
 
 ## 下一步（队列头）
-1. 轮首跑 Tools\devloop\check-fastpath.ps1：判读一律依 stdout `VERDICT:` 行字节（禁读 Exit Code 显示面·r293 假显判例）；FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r372 收尾=tech_sha12 传棒 KEEP（TECH §九 open=main#8 触发器行+explore#17/47/61/65 可领面→下轮④查 mismatch=全轮续领·r95 律）。
-2. **main#8 腿②触发器每轮检**：main#6 判②收干+GPU 空窗双现即领（配方五步·判据三条·死线 10-13）；explore#12 P3 48h 死线=**10-14 06:0x 前**（r372 已交卷·下笔候选=#17/#47 备选）；T-FV-134/141=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24/11-01。
+1. 轮首跑 Tools\devloop\check-fastpath.ps1：判读一律依 stdout `VERDICT:` 行字节（禁读 Exit Code 显示面·r293 假显判例）；FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r373 收尾=tech_sha12 传棒 KEEP（TECH §九 open=main#8 触发器行+explore#47/61/65/66 可领面→下轮④查 mismatch=全轮续领·r95 律）。
+2. **main#8 腿②触发器每轮检**：main#6 判②收干+GPU 空窗双现即领（配方五步·判据三条·死线 10-13）；explore#12 P3 48h 死线=**10-14 06:4x 前**（r373 已交卷·下笔候选=#47 备选〔导入窗后置低优〕+被动跟踪族 #61/#65/#66 非活源）；T-FV-134/141=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24/11-01。
 3. main#5/#7 判③门槛未达（shots 判据帧未入库·交互窗在飞期禁动 City3D）；tech 队列常备=观察位族——**真无活时一行声明合法（禁造活凑数）**。
 4. **常设收尾步**：commit 前写 logs/devloop-face-content.json（六键·updated_utc/artifact_utc 留空机器盖戳）→ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\write-status-face.ps1 → FACE OK 才 commit（禁手写 state/status-face.json·r246）；**板面同步门**=Tools\devloop\check-runbook-sync.ps1 一行判读（SYNC 才 commit）；**板面-§九 双账门**=Tools\devloop\tasks-board-check.ps1（动板面必过）；**commit pathspec 限定律**=c2 触发轮 commit 一律 -m 后 -- <本轮路径清单>（防吞交互窗 staged 面）。
 

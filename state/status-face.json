@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T21:31:32Z",
-    "current_activity":  "r366 毕：explore#58 广场网格域 25 逐格读出=§16.16 成件（面域结构终账——全件 y90 单一姿态·R02 六件=z=95 北行整行 L 角 trim·28 格框帧缺格两型〔西南双格凹口+东北单格〕·零街挂 gateways=0/25 完全隔离面域孤岛·停车域语义正身〔PL 泊位线 4 件 8 格=露天停车场全套语法〕·面域正判据新立零灰区〔cheb≤10 deg-4 计 ≥2：广场 25/25 过·extras-58 格 0 过〕·FILL-JSON 生成器直读输入——extras 111 候选五类全逐格逐件化全闭合·R2 输入四档定型）——纯机械读出轮（探针 333 行捕获件·零编辑器零 API·一次全绿）；main#6/#8 判假续候（0 新 City3D commit+8 件未收干恒定+GPU 98%/11.8G 非空窗·死线 10-13 维持）",
-    "artifact":  "docs/research/R-20261011-ad022-marking-occupation-syntax.md",
-    "artifact_utc":  "2026-10-11T21:31:32Z",
-    "milestone":  "explore#12 P3 死线 10-14 05:5x 前（r366 已交卷·#59 R2 生成器输入规格合流件=下笔优先条·extras 线收口后总装件）；main#8 腿②触发器死线 10-13（每轮检·判②收干+GPU 空窗双现即领）",
+    "updated_utc":  "2026-10-11T21:39:37Z",
+    "current_activity":  "r367 毕：explore#59 R2 生成器输入规格合流件=SPEC-INPUT 总装件成件（docs/research/R-20261012-ad022-r2-spec-input.md——四档单一合流：节点档 GEN-JSON 34+ATTACH-JSON 3/过滤律双门/装饰档六型/面域档 FILL-JSON+五型·38 行 JSON 内嵌 tracked+字段词典+横切律四条；提取件逐行 JSON 校验 fail-loud 38/38+终验 N1=13/N2=18/N3=3 全账对上·零探针零编辑器零 API）；main#6/#8 判假续候（0 新 City3D commit+8 件未收干恒定+GPU 98%/11.8G 非空窗·死线 10-13 维持）",
+    "artifact":  "docs/research/R-20261012-ad022-r2-spec-input.md",
+    "artifact_utc":  "2026-10-11T21:39:37Z",
+    "milestone":  "explore#12 P3 死线 10-14 05:5x 前（r367 已交卷·#60 jsonschema 校验件草案=下笔候选·#13/#17/#47 备选）；main#8 腿② 触发器死线 10-13（每轮检·判②收干+GPU 空窗双现即领）",
     "milestone_eta_utc":  "2026-10-13T21:50:00Z"
 }

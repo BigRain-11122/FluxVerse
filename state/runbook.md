@@ -6,7 +6,7 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r277 毕：tech#1 归档反向引用演练 PASS（七件字节恒等 7/7+提及→档可寻性双证·「分工表」字面缺席=措辞差注记）+tech#3 registry 五型对账零漂移（TRANSFER/LAB 三型/PROPOSAL 双型+伴查 RESIDENT_BIRTH·单双引双扫方法注记）；main#6 注记=判① 867b59e 存量维持·判② r2-ignite 8 件未收干（main#5 续候）。下轮候选=tech#1 烘焙抽检轮转位（bake-* 下批抽 3）/tech#3 probes 健康报表/tech#4 ps51 bake 域判读。
+r278 毕：tech#1 烘焙幂等抽检批 2 38/38 全绿（canopies 3 png+water-tiles 8 帧+resident-street json 三族轮转·JSON 族对今晨再生 census 零漂=名册新鲜双证·PS5.1 无 ArgumentList 新法候选一行）；main#6 注记=判① 867b59e 存量维持·判② r2-ignite 8 件未收干（main#5 续候）。下轮候选=tech#1 轮转位批 3（居民 UI 族或 lab 族）/tech#3 probes 健康报表/tech#4 ps51 bake 域判读。
 
 ## 下一步（队列头）
 1. 轮首先跑 Tools\devloop\check-fastpath.ps1：FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。

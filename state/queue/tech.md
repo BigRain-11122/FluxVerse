@@ -6,7 +6,7 @@
 
 | # | 待办 | 指针/判据 | 备注 |
 |---|---|---|---|
-| 1 | 烘焙幂等抽检轮转位：bake-* 23 件轮换抽 3 件双跑（r276 已抽 being-glow/ground-shadows/banner-text·r277 队列重号后首位——下批候选=写 JSON 族〔resident-street/barks〕或多目录族〔canopies/water-tiles〕·多目录件先 Select-String 勘 Save 径禁猜） | logs/devloop-r276-bake-idem-test.ps1（17 门范式：reproduce-pre+idem 双跑+树洁终门） | r276 承件·抽检不重建 |
+| 1 | 烘焙幂等抽检轮转位批 3：bake-* 余 17 件轮换抽 3 件双跑（两批累计 6 件〔r276 批1 being-glow/ground-shadows/banner-text+r278 批2 canopies/water-tiles/resident-street〕——下批候选=居民 UI 族〔cards/plates/ui-labels/company-plates〕或 lab 族〔lab-glass/lab-digits/office-mirror/tower-antennas〕·多目录件先 Select-String 勘 Save 径禁猜） | logs/devloop-r276/r278-bake-idem-test.ps1（17/38 门范式：reproduce-pre+idem 双跑+树洁终门） | r278 承件·抽检不重建·新法候选=PS5.1 ProcessStartInfo 无 ArgumentList（r278 行②·随滚动轮入 ps51-traps 册） |
 | 2 | City3D 48 包利用率图刷新：R2 模块壳消费后 asset-usage-ledger.md update（工具 item-catalog-gen.ps1 在役） | City3D-staging/asset-usage-ledger.md | R2 里程碑后领 |
 | 3 | probes 25 面健康报表：scan.ps1 全探针产出分布+游标健康一行表（纯读·零新增） | Tools/perceptor/scan.ps1 | 备治理窗回访引证 |
 | 4 | ps51-gdi-traps 双新律 bake 域适用面判读：vendored 误命中/取件通道两病（r235/r236）在 bake 管线的适用面评估——零适用=判负留痕·有适用=入册+同步 | Tools/skills/fluxverse-bake-pipeline/references/ps51-gdi-traps.md | r242 承件·r214 分布律注记范式 |

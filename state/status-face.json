@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T02:10:39Z",
-    "current_activity":  "tech#1 archive back-ref drill PASS (7/7 blob byte-identity vs pre-move + mention-to-archive findability dual-proof) + tech#3 registry 5-type reconciliation zero-drift (emitter single/double-quote dual-scan method note)",
-    "artifact":  "TECH.md s9 r277 row (archive drill + registry audit dual-evidence) + state/queue/tech.md renumber 11 rows",
-    "artifact_utc":  "2026-10-11T02:10:39Z",
-    "milestone":  "next: tech#1 bake idempotency rotation (3 of 23 bakers next batch) or tech#3 probes health report; R2 criteria-frame chain (main#5) waits for interactive window r2-ignite 8-file collection (judgment-2 uncommitted)",
-    "milestone_eta_utc":  "2026-10-12T04:30:00Z"
+    "updated_utc":  "2026-10-11T02:22:01Z",
+    "current_activity":  "tech#1 bake idempotency spot-check batch-2 38/38 all green (canopies 3 png + water-tiles 8 frames + resident-street json; JSON writer vs today-regenerated census = zero drift, street roster fresh-vs-source)",
+    "artifact":  "TECH.md s9 r278 row + logs/devloop-r278-bake-idem-test.ps1 (38-gate harness) + logs/devloop-r278-bake-idem.json (per-file sha spectrum)",
+    "artifact_utc":  "2026-10-11T02:22:01Z",
+    "milestone":  "next: tech#1 rotation batch-3 (resident-UI or lab family, 17 bakers left) or tech#3 probes health report; R2 criteria-frame chain (main#5) waits for interactive window r2-ignite 8-file collection (judgment-2 uncommitted)",
+    "milestone_eta_utc":  "2026-10-12T05:00:00Z"
 }

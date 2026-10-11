@@ -194,7 +194,9 @@ Chk (@($trackedSeats | Where-Object { $_ -eq 'logs/devloop-r279-rolls-test.ps1' 
 $seatsTxt = [IO.File]::ReadAllText((Join-Path $repo 'Tools\devloop\family-seats.txt'))
 $rollsLine = [regex]::Match($seatsTxt, 'r279-rolls\|devloop-r279-rolls-test\.ps1\|(\d+)\|(\d+)')
 Chk ($rollsLine.Success) 'A4: family wiring has r279-rolls seat line'
-Chk ($rollsLine.Success -and $rollsLine.Groups[1].Value -eq '32' -and $rollsLine.Groups[2].Value -eq '0') 'A4: r279-rolls seat pin = 32|0'
+# r287 rot-proof lower bound (A2 same cure, third exact-pin rot in this seat):
+# seat expansions (r285 32->37, r286 37->55) are legal growth; exf=0 is the real invariant.
+Chk ($rollsLine.Success -and [int]$rollsLine.Groups[1].Value -ge 32 -and $rollsLine.Groups[2].Value -eq '0') 'A4: r279-rolls seat pin >= 32 exf=0 (lower bound, r287)'
 
 # ============ A5 probes: real-machine scan + verify double green ============
 $scanR = RunCap (Join-Path $repo 'Tools\perceptor\scan.ps1') @()

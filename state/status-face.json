@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T00:07:40Z",
-    "current_activity":  "r269 收口：tech#11+#12 合并——family-runner -SeatsFile 参数化落地（Tools/devloop/family-run.ps1+family-seats.txt 14 席清单·新席收编单=清单一行）+14 席族跑 FAM-TOTAL 482/482 全绿（r212 席入族首绿·fmtC 判读缺口当轮自修·跨日 SHA 双证维持）；队列负控新条回填",
-    "artifact":  "logs/devloop-r269-family-full.out（14 席族跑 482/482 FAMILY-ALL-GREEN·2026-10-11 ~09:3x·ELAPSED 320s err 0B）",
-    "artifact_utc":  "2026-10-11T00:07:40Z",
-    "milestone":  "10-18 周日演化日窗：T-FV-134 调研深扫+T-FV-141 自驱提案 P3-003（判② r2-ignite 滞留面候选在册）",
-    "milestone_eta_utc":  "2026-10-18T23:59:00Z"
+    "updated_utc":  "2026-10-11T00:27:58Z",
+    "current_activity":  "family-run 判读面负控沙盒第 15 席收编（fmtC 影子免疫+fail-loud 七径 42 断言全绿·FAM-TOTAL 524/524）",
+    "artifact":  "logs/devloop-r270-family-negcon.ps1",
+    "artifact_utc":  "2026-10-11T00:27:58Z",
+    "milestone":  "R2 模块壳里程碑链：交互窗在飞件收干后领 main#5 判据帧链首跑",
+    "milestone_eta_utc":  "2026-10-13T00:00:00Z"
 }

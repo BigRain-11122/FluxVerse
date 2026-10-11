@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T03:28:58Z",
-    "current_activity":  "tech#13 bake-city-greetings already-current anti-overwrite guard shipped (r203 water-fx pattern port; door fires before any input check / Ollama touch, bare rerun = no-op) - harness 4 tests 18/18 green, zero LLM: T1 real-repo refusal with canonical sha byte-identical + report status=ALREADY-CURRENT, T2 sandbox allow full promote gates live, T3 sandbox refusal bytes preserved, T4 -Force override rebuild",
-    "artifact":  "Tools/city/bake-city-greetings.ps1 (guard + -Force) + logs/devloop-r283-greetings-guard-test.ps1 + logs/devloop-r283-greetings-guard.json + TECH.md s9 r283 row",
-    "artifact_utc":  "2026-10-11T03:28:58Z",
-    "milestone":  "next: tech queue 13 items (bake-idem batch-7 final live-source family barks/bubbles/cards with source-drift pre-check / #13 guard-liveness passive re-verify row / probes health report); R2 criteria-frame chain (main#5) waits for interactive window r2-ignite 8-file collection (judgment-2 uncommitted)",
-    "milestone_eta_utc":  "2026-10-11T12:00:00Z"
+    "updated_utc":  "2026-10-11T03:41:33Z",
+    "current_activity":  "tech#12 bake-idem rotation batch-7 FINAL green (24/24): cards 33 + bubbles 1081 frozen-chain reproduce byte-identical vs HEAD + idem double-run green; barks live-pool drift probe = gate-refused (BigLife cognition pool grew to 18/bucket x 6 axes = 1296 lines, over the baker v1.8 contract gate 4..15, mtime today = expansion in flight; canonical residents-barks.json untouched since r107) - rotation pool CLOSED: 23 items = 19 reproduced + 1 probe-refused + 3 negative verdicts",
+    "artifact":  "logs/devloop-r284-bake-idem-test.ps1 + logs/devloop-r284-bake-idem.json (24/24 evidence) + TECH.md s9 r284 row + state/queue/tech.md (rotation row removed, barks water-mark passive probe row added)",
+    "artifact_utc":  "2026-10-11T03:41:33Z",
+    "milestone":  "next: tech queue deep-work rows (#3 ps51-traps bake-domain readout / #5 tick EAP re-eval / #2 probes health report); R2 criteria-frame chain (main#5) still waits on interactive window r2-ignite 8-file collection; Sunday 10-18 evolution window = T-FV-134 scan + P3-003 proposal",
+    "milestone_eta_utc":  "2026-10-12T03:30:00Z"
 }

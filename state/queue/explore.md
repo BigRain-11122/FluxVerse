@@ -16,5 +16,6 @@
 | 9 | 微信小游戏 3D 性能上限案例集：团结引擎 WeChat 3D 分发面参考 | 团结 SDK 新仓（r219 勘正 c） | 分发面参考 |
 | 10 | world-events viz 消费端候选观察：M2 时态轮探针扩面口径（CityWatch 停役后唯一观测窗归 MiniGame 侧） | r164 evolution 扩面先例 | M2 排队面·观察不预建 |
 | 11 | 行情 K 线 M2 视觉映射设计稿：BigMoney state.reality.market 消费（数据已备 r47 注记） | M2 排队面 | 纸面设计稿·零引擎实现 |
-| 12 | **P3 48h 节律死线件（滚动计数位）**：r320 已满足（explore#5 成件 R-20261011-lowpoly-asset-ecosystem.md·18:2x）——末笔=r320·**下次死线=10-13 18:20 前出一笔 P3 产出**（领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r320 行 | r319 入册·r320 翻面（死线机械化滚动·防静默超窗） |
-| 13 | Kenney City Kit 四件族拼装语法拆解：Commercial/Industrial/Roads/Suburban 模块网格尺寸与 City3D R2 街区拼装的适配性对照（R2 街区扩展选型前置） | R-20261011-lowpoly-asset-ecosystem.md §1 | r320 派生（导入前纸面对照·零下载） |
+| 12 | **P3 48h 节律死线件（滚动计数位）**：r321 已满足（explore#13 成件 R-20261011-kenney-citykit-assembly-syntax.md·18:3x）——末笔=r321·**下次死线=10-13 18:5x 前出一笔 P3 产出**（领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r321 行 | r319 入册·r320/r321 两轮连翻（死线机械化滚动·防静默超窗） |
+| 13 | Quaternius Modular Streets Pack 拼装语法拆解：件名谱/网格尺寸/与 Kenney Roads 及 AD-022 路族三方对照（Kenney Roads 二比一的另一侧·r320 §2 记录件） | R-20261011-kenney-citykit-assembly-syntax.md §5 | r321 轮尾补条（导入前纸面对照·零下载） |
+| 14 | AD-022 CityPack 拼装 pitch 实测位：vendor demo 路件步距定基准（R2 街区扩展米制定标的 AD 侧常数·R-20261011-kenney-citykit-assembly-syntax.md §4 判据② 的前置数据） | R-20261011-kenney-citykit-assembly-syntax.md §3/§4 | 场景 YAML 只读实测·零导入 |

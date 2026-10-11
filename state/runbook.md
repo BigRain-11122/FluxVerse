@@ -6,7 +6,7 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r313 毕：main#6 R2 判①②双假续候（17:06 实测 0 新 commit+8 件未收干恒定·r290 口径维持）+P3-002 行检第七十六回 PASS（staged world-events=0）——可领面近零一行声明轮（时窗件未到窗·tech/explore 全被动位·决策链三步全静）。
+r314 毕：main#6 R2 判①②双假续候（17:16 实测 0 新 commit+8 件未收干恒定·r290 口径维持）+P3-002 行检第七十七回 PASS（staged world-events=0）——可领面近零一行声明轮（时窗件未到窗·tech/explore 全被动位·决策链三步全静）。
 
 ## 下一步（队列头）
 1. 轮首先跑 Tools\devloop\check-fastpath.ps1：**判读一律依 stdout `VERDICT:` 行字节**（FASTPATH=快道改道/FULL-ROUND=全轮/行缺失=手查后备）——**禁读工具 Exit Code 显示面**（r293 判例：-File 形态恒假显 1≠真实码·显示 1≠不可解析）。FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r303 收尾=状态档四键全重写清屏（§九 open=时窗件族·队列归 FASTPATH 消费径·r288⑧~r304 先例）→七查静轮即 FASTPATH 队列取活（r309 收尾同式四键全重写）。

@@ -16,9 +16,9 @@
 | 9 | 微信小游戏 3D 性能上限案例集：团结引擎 WeChat 3D 分发面参考 | 团结 SDK 新仓（r219 勘正 c） | 分发面参考 |
 | 10 | world-events viz 消费端候选观察：M2 时态轮探针扩面口径（CityWatch 停役后唯一观测窗归 MiniGame 侧） | r164 evolution 扩面先例 | M2 排队面·观察不预建 |
 | 11 | 行情 K 线 M2 视觉映射设计稿：BigMoney state.reality.market 消费（数据已备 r47 注记） | M2 排队面 | 纸面设计稿·零引擎实现 |
-| 12 | **P3 48h 节律死线件（滚动计数位）**：r367 已满足（explore#59 R2 生成器输入规格合流件=SPEC-INPUT 总装件成件〔四档单一合流：节点档 GEN 34+ATTACH 3/过滤律双门/装饰档六型/面域档 FILL-JSON+五型——38 行 JSON 内嵌 tracked+逐行 JSON 校验 fail-loud〕）——末笔=r367·**下次死线=10-14 05:5x 前出一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r367 行 | r319 入册·r320~r367 四十八轮连翻（死线机械化滚动·防静默超窗） |
+| 12 | **P3 48h 节律死线件（滚动计数位）**：r368 已满足（explore#60 SPEC-INPUT jsonschema 校验件草案=生成器输入自检门成件〔draft-07 三型 schema GEN/ATTACH/FILL+r2-spec-input-validate.py 38/38 全行过校+负控 FAIL 路径验讫·L1 零 API〕）——末笔=r368·**下次死线=10-14 05:5x 前出一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r368 行 | r319 入册·r320~r368 四十九轮连翻（死线机械化滚动·防静默超窗） |
 | 13 | Quaternius Modular Streets Pack 拼装语法拆解：件名谱/网格尺寸/与 Kenney Roads 及 AD-022 路族三方对照（Kenney Roads 二比一的另一侧·r320 §2 记录件） | R-20261011-kenney-citykit-assembly-syntax.md §5 | r321 轮尾补条（导入前纸面对照·零下载） |
 | 17 | 真 demo 街具密度/自由摆基准对我方 v6/v7 格点摆法对照评估（自由化扰动=活城感方向·观感调优输入） | R-20261011-ad022-truedemo-census.md §2 | r324 轮尾补条·纸面对照零导入 |
 | 47 | 涂装 lot 渲染终验：z=75/150 行 PL 骑素面带的 z 序显隐实拍（§14.6 G 层共承 11/19 件的渲染次序真相——vendor z 序赌注 §4 同律·YL 虚线候选〔§14.3③〕同窗） | R-20261011-ad022-marking-occupation-syntax.md §14.3③+§14.6 | r354 轮尾补条·导入窗后置低优 |
-| 60 | SPEC-INPUT 38 行 JSON 的 jsonschema 校验件草案：draft-07 三型 schema（GEN/ATTACH/FILL）+全行过校验——生成器输入自检门（#59 合流件机器面收口·L1 纯机械零 API） | R-20261012-ad022-r2-spec-input.md §1/§2/§5 | r367 轮尾补条 |
+| 61 | R2 生成器输入门禁消费接线跟踪（被动·零施工）：生成器实现窗开工首跑 Tools/city/r2-spec-input-validate.py 入其门禁链（38 行输入自检=fail-loud 前置门·argv 负控通道随件）——判据=实现窗 commit/消息或 TECH 行引用本件 | Tools/city/r2-spec-input-validate.py+R-20261012-ad022-r2-spec-input.md §7 | r368 轮尾补条 |
 

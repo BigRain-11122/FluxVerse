@@ -6,11 +6,11 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r367 毕：explore#59 R2 生成器输入规格合流件=SPEC-INPUT 总装件成件（docs/research/R-20261012-ad022-r2-spec-input.md——**四档单一合流**：节点档 GEN-JSON 34+ATTACH-JSON 3/过滤律双门/装饰档六型/面域档 FILL-JSON+五型·**38 行 JSON 内嵌 tracked**+字段词典+横切律四条+外围指针；提取件逐行 ConvertFrom-Json 校验 fail-loud 38/38+终验 N1=13/N2=18/N3=3 全账对上）——P3 纯纸面合流轮（零探针零编辑器零 API·一次全绿·生成器实现窗单一输入件就位）。
+r368 毕：explore#60 SPEC-INPUT jsonschema 校验件草案=生成器输入自检门成件（Tools/city/r2-spec-input-{gen,attach,fill}.schema.json 三型 draft-07+r2-spec-input-validate.py——域耦合 if/then 三支+闭词汇 census 锁+38/38 正控一次全绿+负控 FAIL 路径验讫〔exit 1·坏行精准指位〕·L1 零 API）。
 
 ## 下一步（队列头）
-1. 轮首跑 Tools\devloop\check-fastpath.ps1：判读一律依 stdout `VERDICT:` 行字节（禁读 Exit Code 显示面·r293 假显判例）；FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r367 收尾=tech_sha12 传棒 KEEP（TECH §九 open=main#8 触发器行+explore#60/13/17/47 可领面→下轮④查 mismatch=全轮续领·r95 律）。
-2. **main#8 腿②触发器每轮检**：main#6 判②收干+GPU 空窗双现即领（配方五步·判据三条·死线 10-13）；explore#12 P3 48h 死线=**10-14 05:5x 前**（r367 已交卷·#60 jsonschema 校验件草案=下笔候选·#13/#17/#47 备选）；T-FV-134/141=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24/11-01。
+1. 轮首跑 Tools\devloop\check-fastpath.ps1：判读一律依 stdout `VERDICT:` 行字节（禁读 Exit Code 显示面·r293 假显判例）；FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r368 收尾=tech_sha12 传棒 KEEP（TECH §九 open=main#8 触发器行+explore#13/17/47/61 可领面→下轮④查 mismatch=全轮续领·r95 律）。
+2. **main#8 腿②触发器每轮检**：main#6 判②收干+GPU 空窗双现即领（配方五步·判据三条·死线 10-13）；explore#12 P3 48h 死线=**10-14 05:5x 前**（r368 已交卷·下笔候选=#13 Quaternius 拼装语法拆解·#17/#47 备选）；T-FV-134/141=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24/11-01。
 3. main#5/#7 判③门槛未达（shots 判据帧未入库·交互窗在飞期禁动 City3D）；tech 队列常备=观察位族——**真无活时一行声明合法（禁造活凑数）**。
 4. **常设收尾步**：commit 前写 logs/devloop-face-content.json（六键·updated_utc/artifact_utc 留空机器盖戳）→ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\write-status-face.ps1 → FACE OK 才 commit（禁手写 state/status-face.json·r246）；**板面同步门**=Tools\devloop\check-runbook-sync.ps1 一行判读（SYNC 才 commit）；**commit pathspec 限定律**=c2 触发轮 commit 一律 -m 后 -- <本轮路径清单>（防吞交互窗 staged 面）。
 

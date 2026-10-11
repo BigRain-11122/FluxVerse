@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T21:39:37Z",
-    "current_activity":  "r367 毕：explore#59 R2 生成器输入规格合流件=SPEC-INPUT 总装件成件（docs/research/R-20261012-ad022-r2-spec-input.md——四档单一合流：节点档 GEN-JSON 34+ATTACH-JSON 3/过滤律双门/装饰档六型/面域档 FILL-JSON+五型·38 行 JSON 内嵌 tracked+字段词典+横切律四条；提取件逐行 JSON 校验 fail-loud 38/38+终验 N1=13/N2=18/N3=3 全账对上·零探针零编辑器零 API）；main#6/#8 判假续候（0 新 City3D commit+8 件未收干恒定+GPU 98%/11.8G 非空窗·死线 10-13 维持）",
-    "artifact":  "docs/research/R-20261012-ad022-r2-spec-input.md",
-    "artifact_utc":  "2026-10-11T21:39:37Z",
-    "milestone":  "explore#12 P3 死线 10-14 05:5x 前（r367 已交卷·#60 jsonschema 校验件草案=下笔候选·#13/#17/#47 备选）；main#8 腿② 触发器死线 10-13（每轮检·判②收干+GPU 空窗双现即领）",
+    "updated_utc":  "2026-10-11T21:50:40Z",
+    "current_activity":  "r368 毕：explore#60 SPEC-INPUT jsonschema 校验件草案成件=生成器输入自检门（Tools/city/r2-spec-input-{gen,attach,fill}.schema.json 三型 draft-07+r2-spec-input-validate.py——38/38 正控一次全绿+负控 FAIL 路径验讫〔exit 1·坏行精准指位〕·域耦合 if/then 三支+闭词汇 census 锁·L1 零 API）；main#6/#8 判假续候（0 新 City3D commit+8 件未收干恒定+GPU 98%/11.8G 非空窗·死线 10-13 维持）",
+    "artifact":  "Tools/city/r2-spec-input-validate.py",
+    "artifact_utc":  "2026-10-11T21:50:40Z",
+    "milestone":  "explore#12 P3 死线 10-14 05:5x 前（r368 已交卷·下笔候选 #13/#17/#47）；main#8 腿②触发器死线 10-13（每轮检·判②收干+GPU 空窗双现即领）",
     "milestone_eta_utc":  "2026-10-13T21:50:00Z"
 }

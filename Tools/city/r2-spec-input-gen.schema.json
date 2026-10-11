@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fluxverse.local/r2-spec-input/gen-node.schema.json",
+  "title": "R2 SPEC-INPUT GEN node line (34 rows: N1=13 / N2=18 / N3=3)",
+  "description": "Structural gate for the GEN-JSON block embedded in docs/research/R-20261012-ad022-r2-spec-input.md section 1. Field dictionary authority = that file; closed vocabularies are census-locked to the 34-row corpus (single-domain rows; multi-domain labels would need a conscious schema bump).",
+  "type": "object",
+  "definitions": {
+    "cell2": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}},
+    "occ-string": {"type": "string", "pattern": "^Road_[A-Za-z0-9_]+@\\(-?[0-9.]+(?:[eE][-+]?[0-9]+)?,-?[0-9.]+(?:[eE][-+]?[0-9]+)?\\)y[0-9]+M?$"},
+    "carrier-string": {"type": "string", "pattern": "^Road_[A-Za-z0-9_]+ y[0-9]+$"},
+    "arm-empty": {"type": "object", "required": ["arm", "state"], "additionalProperties": false, "properties": {"arm": {"const": false}, "state": {"const": "EMPTY"}}},
+    "arm-seg": {"type": "object", "required": ["arm", "occ", "seg"], "additionalProperties": false, "properties": {"arm": {"const": true}, "occ": {"type": "array", "items": {"$ref": "#/definitions/occ-string"}}, "seg": {"type": "boolean"}}},
+    "arm-neighbor": {"type": "object", "required": ["arm", "neighbor", "occ", "role", "street"], "additionalProperties": false, "properties": {"arm": {"const": true}, "neighbor": {"enum": ["NEW", "PAVE"]}, "occ": {"type": "array", "items": {"$ref": "#/definitions/occ-string"}}, "role": {"anyOf": [{"enum": ["EXTEND", "BRIDGE", "NEW"]}, {"type": "null"}]}, "street": {"type": "array", "minItems": 2, "maxItems": 2, "items": [{"enum": ["EW", "NS"]}, {"type": "number"}], "additionalItems": false}}},
+    "arm-n12": {"anyOf": [{"$ref": "#/definitions/arm-empty"}, {"$ref": "#/definitions/arm-seg"}]},
+    "arm-n3": {"anyOf": [{"$ref": "#/definitions/arm-empty"}, {"$ref": "#/definitions/arm-neighbor"}]},
+    "arms-quad-any": {"type": "object", "required": ["N", "S", "E", "W"], "additionalProperties": false, "properties": {"N": {"anyOf": [{"$ref": "#/definitions/arm-empty"}, {"$ref": "#/definitions/arm-seg"}, {"$ref": "#/definitions/arm-neighbor"}]}, "S": {"anyOf": [{"$ref": "#/definitions/arm-empty"}, {"$ref": "#/definitions/arm-seg"}, {"$ref": "#/definitions/arm-neighbor"}]}, "E": {"anyOf": [{"$ref": "#/definitions/arm-empty"}, {"$ref": "#/definitions/arm-seg"}, {"$ref": "#/definitions/arm-neighbor"}]}, "W": {"anyOf": [{"$ref": "#/definitions/arm-empty"}, {"$ref": "#/definitions/arm-seg"}, {"$ref": "#/definitions/arm-neighbor"}]}}},
+    "arms-quad-n12": {"type": "object", "required": ["N", "S", "E", "W"], "additionalProperties": false, "properties": {"N": {"$ref": "#/definitions/arm-n12"}, "S": {"$ref": "#/definitions/arm-n12"}, "E": {"$ref": "#/definitions/arm-n12"}, "W": {"$ref": "#/definitions/arm-n12"}}},
+    "arms-quad-n3": {"type": "object", "required": ["N", "S", "E", "W"], "additionalProperties": false, "properties": {"N": {"$ref": "#/definitions/arm-n3"}, "S": {"$ref": "#/definitions/arm-n3"}, "E": {"$ref": "#/definitions/arm-n3"}, "W": {"$ref": "#/definitions/arm-n3"}}},
+    "street-n1": {"type": "object", "required": ["axis", "fixed", "n", "node_pos", "span"], "additionalProperties": false, "properties": {"axis": {"enum": ["EW", "NS"]}, "fixed": {"type": "number"}, "n": {"type": "integer", "minimum": 1}, "node_pos": {"enum": ["east-end", "west-end", "north-end", "south-end", "interior"]}, "span": {"$ref": "#/definitions/cell2"}}},
+    "street-n3": {"type": "object", "required": ["axis", "class", "fixed", "node_pos", "role_here", "span"], "additionalProperties": false, "properties": {"axis": {"enum": ["EW", "NS"]}, "class": {"enum": ["FILLER-EXTEND", "FILLER-JOIN", "MARK-NEW-STANDALONE"]}, "fixed": {"type": "number"}, "node_pos": {"enum": ["east-end", "west-end", "north-end", "south-end", "interior"]}, "role_here": {"enum": ["EXTEND", "BRIDGE", "NEW"]}, "span": {"$ref": "#/definitions/cell2"}}},
+    "concession": {"type": "object", "required": ["carriers", "mode", "same_pivot_extra"], "additionalProperties": false, "properties": {"carriers": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/carrier-string"}}, "mode": {"enum": ["single-concession", "pivot-pair", "double-overlay(z-fight-ban)"]}, "same_pivot_extra": {"type": "array", "items": {"$ref": "#/definitions/carrier-string"}}}}
+  },
+  "required": ["arms", "cell", "domains", "occupants", "type"],
+  "additionalProperties": false,
+  "properties": {
+    "arms": {"$ref": "#/definitions/arms-quad-any"},
+    "cell": {"$ref": "#/definitions/cell2"},
+    "domains": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"enum": ["N1", "N2", "N3"]}},
+    "occupants": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/occ-string"}},
+    "type": {"enum": ["corner", "T-junction", "cross"]},
+    "degree": {"type": "integer", "minimum": 2, "maximum": 4},
+    "degree_roadfam_pivot": {"type": "integer", "minimum": 1, "maximum": 4},
+    "degree_seg_pivot": {"type": "integer", "minimum": 1, "maximum": 4},
+    "cell_degree": {"type": "integer", "minimum": 1, "maximum": 4},
+    "coplanar": {"type": "boolean"},
+    "concession": {"$ref": "#/definitions/concession"},
+    "streets": {"type": "array", "minItems": 1, "items": {"anyOf": [{"$ref": "#/definitions/street-n1"}, {"$ref": "#/definitions/street-n3"}]}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"domains": {"const": ["N1"]}}},
+      "then": {
+        "required": ["arms", "cell", "concession", "degree", "domains", "occupants", "streets", "type"],
+        "properties": {"arms": {"$ref": "#/definitions/arms-quad-n12"}, "streets": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/street-n1"}}}
+      }
+    },
+    {
+      "if": {"properties": {"domains": {"const": ["N2"]}}},
+      "then": {
+        "required": ["arms", "cell", "cell_degree", "coplanar", "degree_roadfam_pivot", "degree_seg_pivot", "domains", "occupants", "type"],
+        "properties": {"arms": {"$ref": "#/definitions/arms-quad-n12"}}
+      }
+    },
+    {
+      "if": {"properties": {"domains": {"const": ["N3"]}}},
+      "then": {
+        "required": ["arms", "cell", "degree", "domains", "occupants", "streets", "type"],
+        "properties": {"arms": {"$ref": "#/definitions/arms-quad-n3"}, "streets": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/street-n3"}}}
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+# FluxVerse devloop harness family seats (data file for Tools/devloop/family-run.ps1)
+# Line law: one seat per line = name|sandbox-file|expected-pass|expected-fail
+#   name         seat id (also the -Only subset filter key and the output file prefix)
+#   sandbox-file path under logs/ (gitignored domain; consolidated seats are git add -f tracked)
+#   expected-pass / expected-fail  pinned verdict counts; exf>0 = exempt-red standing seat
+#   judged per named-red law (tech#10), excluded from FAM-TOTAL.
+# Onboarding a new consolidated seat = ONE line here, zero runner edits (tech#12 / r269).
+# Family ledger: FAM-TOTAL 482 = 404 (11 seats) + 28 (r266-a3root-v2) + 50 (r212-psa).
+r69-public|devloop-r69-public-test.ps1|41|0
+r80-release|devloop-r80-releasegate-test.ps1|15|0
+r197-writer|devloop-r197-writer-test.ps1|41|0
+r198-fastcheck|devloop-r198-fastcheck-test.ps1|79|0
+r229-midnight|devloop-r229-midnight-test.ps1|29|0
+r230-archive|devloop-r230-archive-test.ps1|37|0
+r239-statusface|devloop-r239-statusface-test.ps1|9|0
+r243-crlf|devloop-r243-crlf-archive-test.ps1|29|0
+r246-archgate|devloop-r246-archgate-drill.ps1|34|0
+r247-facewriter|devloop-r247-facewriter-test.ps1|25|0
+r254-export|devloop-r254-export-negcon.ps1|65|0
+r266-a3root-v2|devloop-r266-a3root-v2-test.ps1|28|0
+r212-psa|devloop-r212-psa-test.ps1|50|0
+r233-boardcheck|devloop-r233-boardcheck-test.ps1|35|2

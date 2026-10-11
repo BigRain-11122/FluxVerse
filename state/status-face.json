@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-10T23:40:49Z",
-    "current_activity":  "r268 收口：tech#11 r212 席复活件收编——A2 观察钉新化（28+r267 日期基线标签）→复跑 50/50 全绿→git add -f 第 13 收编席（族账 FAM-TOTAL 482）；队列回填；下轮候选=#12 family-runner -SeatsFile 参数化 / #11 入族跑复证",
-    "artifact":  "logs/devloop-r268-psa-rerun-073756.out（50 断言复跑全绿 50/50·2026-10-11 07:37·err 0B）",
-    "artifact_utc":  "2026-10-10T23:40:49Z",
-    "milestone":  "family-runner -SeatsFile 参数化+r212 席入族跑 14 席全绿（FAM-TOTAL 482 复证·404+28+50）",
-    "milestone_eta_utc":  "2026-10-13T00:00:00Z"
+    "updated_utc":  "2026-10-11T00:07:40Z",
+    "current_activity":  "r269 收口：tech#11+#12 合并——family-runner -SeatsFile 参数化落地（Tools/devloop/family-run.ps1+family-seats.txt 14 席清单·新席收编单=清单一行）+14 席族跑 FAM-TOTAL 482/482 全绿（r212 席入族首绿·fmtC 判读缺口当轮自修·跨日 SHA 双证维持）；队列负控新条回填",
+    "artifact":  "logs/devloop-r269-family-full.out（14 席族跑 482/482 FAMILY-ALL-GREEN·2026-10-11 ~09:3x·ELAPSED 320s err 0B）",
+    "artifact_utc":  "2026-10-11T00:07:40Z",
+    "milestone":  "10-18 周日演化日窗：T-FV-134 调研深扫+T-FV-141 自驱提案 P3-003（判② r2-ignite 滞留面候选在册）",
+    "milestone_eta_utc":  "2026-10-18T23:59:00Z"
 }

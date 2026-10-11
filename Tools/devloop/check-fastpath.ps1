@@ -9,6 +9,19 @@
 # v1.2 (r229 / T-FV-137): c1 midnight pre-first-tick window fallback - live
 # first observed 2026-09-28 00:05 round (FULL-ROUND fired on a healthy
 # fleet because the daily log does not exist before the first tick round).
+# v1.4 (r293 / display-face exit-code law): the codely shell wrapper's
+# displayed "Exit Code" is UNRELIABLE for script calls - live triple-probe:
+#   real exit 2 (byte-level .NET Process read, stderr 0 bytes) yet wrapper
+#   displayed 1 (via -File direct, x2 repro) / 0 (via -Command + explicit
+#   exit $LASTEXITCODE) - three forms three values, none equals real 2.
+# JUDGING LAW (authority, supersedes any exit-code display): judge ONLY by
+# the stdout "VERDICT:" line bytes - "VERDICT: FASTPATH" = idle fastpath,
+# "VERDICT: FULL-ROUND" = full round. Line missing/unparseable = fall back
+# to the mandate's hand-check paragraph (fail-closed kept). Never read the
+# wrapper's Exit Code display for this script (a displayed 1 here does NOT
+# mean "unparseable" - that misread would force hand-check idling every
+# round). Same family as r195 display-illusion law; probe preserved at
+# logs/devloop-r293-checkfast-exit-probe.ps1.
 # v1.3 (r235): c5 candidate-panel filter. The aihot-poc vendored payload
 # (data\assets: pgAdmin/pgsql/node_modules library docs, 1534 html files)
 # landed in media/BigStream during the 10-06 keepdown and false-fired c5 on

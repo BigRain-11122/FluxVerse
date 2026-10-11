@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T01:49:46Z",
-    "current_activity":  "tech#10 wrapper repo-self-location common piece shipped: resolve-repo.ps1 (.git-anchored walk replaces level arithmetic, sandbox 25/25 green, case-4 harness anchor self-caught fail-loud)",
-    "artifact":  "Tools/devloop/resolve-repo.ps1",
-    "artifact_utc":  "2026-10-11T01:49:46Z",
-    "milestone":  "next: watchdog live-fire receipt watch (tech queue #10) or R2 criteria-frame chain once in-flight files land; patrol resolve-repo adoption in new harnesses (tech #11)",
-    "milestone_eta_utc":  "2026-10-12T03:00:00Z"
+    "updated_utc":  "2026-10-11T01:59:39Z",
+    "current_activity":  "tech#2 bake idempotency spot-check 17/17 green (3 bakers double-run byte-identical + tree-clean gate) + tech#10 watchdog first dryrun observed (2 dryrun lines, zero real fire) + tech#11 patrol case-5 self-caught (harness layer jump fixed same round)",
+    "artifact":  "logs/devloop-r276-bake-idem-test.ps1 + logs/devloop-r276-bake-idem.json",
+    "artifact_utc":  "2026-10-11T01:59:39Z",
+    "milestone":  "next: tech#1 archive back-ref drill or tech#3 registry reserved-state audit; R2 criteria-frame chain (main#5) waits for interactive window to land r2-ignite files (run finished R2_EXIT=0 SHOTS=5/5, 8 files uncommitted)",
+    "milestone_eta_utc":  "2026-10-12T04:30:00Z"
 }

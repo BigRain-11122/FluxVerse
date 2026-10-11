@@ -1,0 +1,120 @@
+{
+    "tree_clean":  true,
+    "pass":  17,
+    "round":  "r276",
+    "fail":  0,
+    "bakers":  [
+                   {
+                       "exit2":  0,
+                       "exit1":  0,
+                       "lastline1":  "BEING-GLOW-BAKED-OK",
+                       "checks":  [
+                                      {
+                                          "ok":  true,
+                                          "file":  "being-glow.png",
+                                          "check":  "reproduce-pre"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "being-glow.png",
+                                          "check":  "idem-run1-run2"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "bake-being-glow",
+                                          "check":  "exit-run1"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "bake-being-glow",
+                                          "check":  "exit-run2"
+                                      }
+                                  ],
+                       "baker":  "bake-being-glow"
+                   },
+                   {
+                       "exit2":  0,
+                       "exit1":  0,
+                       "lastline1":  "SHADOWS-BAKED-OK",
+                       "checks":  [
+                                      {
+                                          "ok":  true,
+                                          "file":  "shadow-res.png",
+                                          "check":  "reproduce-pre"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "shadow-res.png",
+                                          "check":  "idem-run1-run2"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "shadow-res32.png",
+                                          "check":  "reproduce-pre"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "shadow-res32.png",
+                                          "check":  "idem-run1-run2"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "shadow-bot.png",
+                                          "check":  "reproduce-pre"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "shadow-bot.png",
+                                          "check":  "idem-run1-run2"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "bake-ground-shadows",
+                                          "check":  "exit-run1"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "bake-ground-shadows",
+                                          "check":  "exit-run2"
+                                      }
+                                  ],
+                       "baker":  "bake-ground-shadows"
+                   },
+                   {
+                       "exit2":  0,
+                       "exit1":  0,
+                       "lastline1":  "BAKE OK: C:\\Users\\sjs20\\Desktop\\FluxGroup\\gaming\\FluxVerse\\City\\BannerData\\interior-banner-text.png (1000x130, 62.8KB, family=Microsoft YaHei, fx=glow+shadow, title_px=42(29 chars), note_px=24(38 chars))",
+                       "checks":  [
+                                      {
+                                          "ok":  true,
+                                          "file":  "interior-banner-text.png",
+                                          "check":  "reproduce-pre"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "interior-banner-text.png",
+                                          "check":  "idem-run1-run2"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "bake-banner-text",
+                                          "check":  "exit-run1"
+                                      },
+                                      {
+                                          "ok":  true,
+                                          "file":  "bake-banner-text",
+                                          "check":  "exit-run2"
+                                      }
+                                  ],
+                       "baker":  "bake-banner-text"
+                   },
+                   {
+                       "ok":  true,
+                       "tree_dirty":  "",
+                       "checks":  [
+
+                                  ],
+                       "baker":  "tree-clean-gate"
+                   }
+               ]
+}

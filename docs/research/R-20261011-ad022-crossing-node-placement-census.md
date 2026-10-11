@@ -1,5 +1,7 @@
 # R-20261011 AD-022 demo Crossing 摆位谱——街口组织·衔接面·转向词汇（r337 成件）
 
+> **〔r338 勘正指针〕**本件 §5 两处表述由 R-20261011-ad022-roadnode-vocab-arbitration.md §0 勘正：①「我方 R0 装配·Kenney 件」实为 **AD-022 Path 族件**（assemble-report path_pick 铁证）；②「AD-022 vendor 无专用节点件」kit 级不成立（Path 族四件在库·仅 Road 族无·且 demo 零在用）。原文零删改（历史保全律）。
+
 - **触发**：explore#29 领走（r337）；同时刷新 explore#12 P3 48h 节律死线（末笔 r336 → r337 成件=新末笔·**下次死线 10-13 21:19 前一笔 P3 产出**）。
 - **口径**：场景 YAML+fbx 只读实测·零导入零下载零写 City3D（防双头 r236 定谳合规·交互窗在飞件未触）；双面计（改名标签+未改名 source-guid·r329 规则）。
 - **探针**：`.codely-cli/tmp/ad022_crossing_node_probe.py`（guid 解析+臂拓扑扫描）+`ad022_crossing_vert_dump.py`/`ad022_crossing_points.py`（标记布局解码）；gitignored·只读。

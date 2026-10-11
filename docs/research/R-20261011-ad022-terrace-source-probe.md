@@ -4,6 +4,7 @@
 - **口径**：场景 YAML 只读实测·零导入零下载零写 City3D（防双头 r236 定谳·交互窗在飞件未触）。证据源=`Assets/lowpoly/01_现代城市生活/AD-022_Scene场景_现代城市_CityPack/PolygonCity/Scenes/Demo.unity`（10,192,947B）全量实例解析（4763 命名 prefab instance·identity-parent 4295）。
 - **探针**：`.codely-cli/tmp/ad022_terr_source_probe.py`（五链证据面）+`…_probe2.py`（22 列构成+门变体号表）；gitignored·只读。
 - **扫描轮**：DevLoop r326（2026-10-11 19:1x-19:2x）。
+- **勘正指针（r327·历史保全·原文零删改）**：§3 词汇表「变体号→台阶型」=demo 改名标签惯例非资产谱（全谱盘点=R-20261011-ad022-door-variant-spectrum.md：台阶型=摆位 y 直写·生成器禁把标签当变体 ID 消费）；§3 门族 45/46 差额=Door_28 off-grid 格点过滤伤亡（实况=46 改名+3 未改名）；§1 证据④「+1.5 由门面变体号编码承载」句同勘正（+1.5 由摆位承载·标签随型编号）。
 
 ## 1. 定谳：台地源=第三态「门面件变体自带台基」（非地形台·非独立底座件）
 

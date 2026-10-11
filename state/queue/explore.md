@@ -16,7 +16,7 @@
 | 9 | 微信小游戏 3D 性能上限案例集：团结引擎 WeChat 3D 分发面参考 | 团结 SDK 新仓（r219 勘正 c） | 分发面参考 |
 | 10 | world-events viz 消费端候选观察：M2 时态轮探针扩面口径（CityWatch 停役后唯一观测窗归 MiniGame 侧） | r164 evolution 扩面先例 | M2 排队面·观察不预建 |
 | 11 | 行情 K 线 M2 视觉映射设计稿：BigMoney state.reality.market 消费（数据已备 r47 注记） | M2 排队面 | 纸面设计稿·零引擎实现 |
-| 12 | **P3 48h 节律死线件（滚动计数位）**：r326 已满足（explore#18 台地源探查成件 R-20261011-ad022-terrace-source-probe.md·19:2x）——末笔=r326·**下次死线=10-13 19:3x 前出一笔 P3 产出**（领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r326 行 | r319 入册·r320~r326 七轮连翻（死线机械化滚动·防静默超窗） |
+| 12 | **P3 48h 节律死线件（滚动计数位）**：r327 已满足（explore#19 门面变体全谱盘点成件 R-20261011-ad022-door-variant-spectrum.md·19:3x）——末笔=r327·**下次死线=10-13 19:3x 前出一笔 P3 产出**（领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r327 行 | r319 入册·r320~r327 八轮连翻（死线机械化滚动·防静默超窗） |
 | 13 | Quaternius Modular Streets Pack 拼装语法拆解：件名谱/网格尺寸/与 Kenney Roads 及 AD-022 路族三方对照（Kenney Roads 二比一的另一侧·r320 §2 记录件） | R-20261011-kenney-citykit-assembly-syntax.md §5 | r321 轮尾补条（导入前纸面对照·零下载） |
 | 17 | 真 demo 街具密度/自由摆基准对我方 v6/v7 格点摆法对照评估（自由化扰动=活城感方向·观感调优输入） | R-20261011-ad022-truedemo-census.md §2 | r324 轮尾补条·纸面对照零导入 |
-| 19 | AD-022 门面变体全谱盘点：pack 目录 prefab 名录只读 vs demo 实用 45 变体号差集（未用号段=R2 台阶型词汇表补全面） | R-20261011-ad022-terrace-source-probe.md §3+包目录 prefab 名录 | r326 轮尾补条·零导入零下载 |
+| 20 | AD-022 Stack/Roof/体族「标签 vs 源谱」同法盘点：改名标签惯例全族普查（Stack_NN/Roof_NN/Apartment_NN 号空间 vs Models 实源谱〔各 3 件〕·stack-grammar §3 槽位表勘正输入） | R-20261011-ad022-door-variant-spectrum.md §1 探针链复用 | r327 轮尾补条·零导入零下载 |

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T14:04:40Z",
-    "current_activity":  "r340毕：explore#32箭头方向语义×街段轴向一致性普查成件（箭头件=5m单车道件：双白边线inset 0.135/宽0.18全高；双用法分立=路口移动指示14/21·67%主律+离街散布7/21·33%噪声带禁复刻；12语义向勘全=r339「8向」勘正；镜像件占格足迹修正；R2车道方向规则五律·裁定包四件齐）",
-    "artifact":  "docs/research/R-20261011-ad022-arrow-direction-census.md",
-    "artifact_utc":  "2026-10-11T14:04:40Z",
-    "milestone":  "P3死线滚动10-13 23:2x前出一笔（explore#33箭头×177车联合摆位谱=r340新补条优先）；R2里程碑后判据帧链首跑",
-    "milestone_eta_utc":  "2026-10-13T15:25:00Z"
+    "updated_utc":  "2026-10-11T14:23:39Z",
+    "current_activity":  "r341毕：explore#33箭头×177车联合摆位谱成件（共现矩阵33对：ON上格1/21+A1指向首格0/21=清lane律；街轴停车语法优先=近圈街PARA 25/27·箭头指向≠停车轴向；双互斥=PL带×箭头格0共位+nose-in行×箭头仅1接口例；R2车摆位四律·裁定包五件齐）",
+    "artifact":  "docs/research/R-20261011-ad022-arrow-car-joint-placement-census.md",
+    "artifact_utc":  "2026-10-11T14:23:39Z",
+    "milestone":  "P3死线滚动10-13 22:2x前出一笔（#34 PL停车带×Crossing格互斥距离谱=r341新补条优先）；R2里程碑后判据帧链首跑",
+    "milestone_eta_utc":  "2026-10-13T14:25:00Z"
 }

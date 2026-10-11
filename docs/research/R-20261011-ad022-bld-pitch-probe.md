@@ -1,5 +1,7 @@
 # R-20261011 AD-022 vendor demo 建筑族步距实测（Path 5.0 建筑侧对齐验证·米制定标建筑侧收口）
 
+> **勘误指针（r324）**：本件证据面 CityAssembled.unity=我方 R0 装配场景**非 vendor demo**——本件结论修订表见 R-20261011-ad022-truedemo-census.md §0（Apartment 零在场/建筑侧无格语法/卫星簇构图三项翻案·原文零删改）。
+
 - **触发**：explore#14 领走（r323）；同时刷新 explore#12 P3 48h 节律死线（末笔 r322 → 本件 r323 成件=新末笔·下次死线 10-13 18:5x 前一笔 P3 产出）。
 - **口径**：场景 YAML 只读实测·零导入零下载零写 City3D（防双头 r236 定谳合规·交互窗在飞件未触）；证据=City3D/Assets/Scenes/CityAssembled.unity（AD-022 vendor demo 整场景·official-baseline.md 在案件）prefab instance 修改面全量解析+容器 Transform 面。
 - **探针**：`.codely-cli/tmp/ad022_bld_pitch_probe.py`（r322 路族探针同结构复用·过滤族 SM_Bld·增父容器 Transform 解析·只读·gitignored）。

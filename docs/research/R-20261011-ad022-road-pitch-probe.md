@@ -1,5 +1,7 @@
 # R-20261011 AD-022 vendor demo 路件拼装步距实测（City3D R2 米制定标 AD 侧常数落位）
 
+> **勘误指针（r324）**：本件证据面 CityAssembled.unity=我方 R0 装配场景**非 vendor demo**——本件结论修订表见 R-20261011-ad022-truedemo-census.md §0（Road 零在场/junction 密网两项作废·5.0 常数以真源存活·原文零删改）。
+
 - **触发**：explore#14 领走（r322）；同时刷新 explore#12 P3 48h 节律死线（末笔 r321 → 本件 r322 成件=新末笔·下次死线 10-13 18:4x 前）。
 - **口径**：场景 YAML 只读实测·零导入零下载零写 City3D（防双头 r236 定谳合规·交互窗在飞件未触）；证据=City3D/Assets/Scenes/CityAssembled.unity（AD-022 vendor demo 整场景·official-baseline.md 在案件·root_objects=4329）prefab instance 修改面全量解析。
 - **探针**：`.codely-cli/tmp/ad022_pitch_probe.py`（只读解析器·gitignored·m_Name/m_LocalPosition/m_LocalRotation/m_LocalScale 四通道）。

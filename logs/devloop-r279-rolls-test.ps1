@@ -4,7 +4,9 @@
 # scripts lived gitignored in logs/ and were PURGED by the r274 log rotation
 # (>14d threshold) -- a standing gate referenced by TECH rows rotted silently.
 # Gate essence of all three doors, consolidated into ONE tracked seat:
-#   A  sandbox harness template machinery (copy to logs/, direct run pass=9 fail=0)
+#   A  BOTH harness templates machinery: sandbox (copy to logs/, direct run
+#      pass=9 fail=0) + bake sample mode (VERDICT: ALL GREEN, FAIL=0, pass>=15
+#      lower bound -- r171 A-gate essence, completing the three-door charter)
 #   A0b PSA advisor self-scan of this seat (module absent = visible note)
 #   B  ledger census rot-proof lower bounds (ps51-traps bullet families by section
 #      ORDER - no CJK literals in this body; gdi-traps numbered entries) + roll markers
@@ -200,11 +202,39 @@ Assert 'tpl-run-exit0' ($tplCode -eq 0)
 Assert 'tpl-verdict-pass9-fail0' ($tplOut.Contains('pass=9 fail=0'))
 Assert 'tpl-temp-cleaned' ((Test-Path -LiteralPath $tplCopy) -eq $false)
 
+# --- A2: bake template machinery (r171 A-gate essence; sample mode = deterministic
+# PNG bake + six-face gates A0-A5; rot-proof asserts -- VERDICT line + FAIL=0 +
+# pass lower bound, never a hard PASS pin: template gates grow legally, cf. the
+# r212 A0b promotion that moved 15 -> 16). Sample scratch dirs under TEMP are
+# template-managed (pre-cleaned per run) but swept here too = zero residue law. --
+$bkCopy = Join-Path $PSScriptRoot 'devloop-r279-rolls-bktpl.ps1'
+$bkOut = ''
+$bkCode = -1
+try {
+    Copy-Item -LiteralPath $bkTpl -Destination $bkCopy -Force
+    $r2 = Invoke-Captured 'powershell' ('-NoProfile -ExecutionPolicy Bypass -File "' + $bkCopy + '"') $repo
+    $bkCode = $r2.code; $bkOut = $r2.out
+    [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'devloop-r279-rolls-bktpl.txt'), ($bkOut + "`n--err--`n" + $r2.err), (New-Object System.Text.UTF8Encoding($false)))
+} finally {
+    if (Test-Path -LiteralPath $bkCopy) { Remove-Item -LiteralPath $bkCopy -Force }
+    foreach ($rd in @('fv-bake-harness-run1', 'fv-bake-harness-run2', 'fv-bake-harness-run3')) {
+        $td = Join-Path $env:TEMP $rd
+        if (Test-Path -LiteralPath $td) { Remove-Item -LiteralPath $td -Recurse -Force }
+    }
+}
+Assert 'bktpl-run-exit0' ($bkCode -eq 0)
+Assert 'bktpl-verdict-allgreen' ($bkOut.Contains('VERDICT: ALL GREEN'))
+Assert 'bktpl-verdict-fail0' (([regex]::Match($bkOut, 'FAIL=\d+')).Value -eq 'FAIL=0')
+$bkPassN = [int](([regex]::Match($bkOut, 'PASS=\d+')).Value -replace 'PASS=', '')
+Assert 'bktpl-pass-ge15' ($bkPassN -ge 15)
+Assert 'bktpl-temp-cleaned' ((Test-Path -LiteralPath $bkCopy) -eq $false)
+
 # --- evidence json ---------------------------------------------------------------
 $evidence = [ordered]@{ round = 'r279'; seat = 'law-roll consolidated gate';
     pass = $pass; fail = $fail; notes = $notes; sync = $syncRows;
     ps51_sections = $secCounts; gdi_total = $gtot;
-    tpl_exit = $tplCode; tpl_verdict = ([regex]::Match($tplOut, 'pass=\d+ fail=\d+').Value) }
+    tpl_exit = $tplCode; tpl_verdict = ([regex]::Match($tplOut, 'pass=\d+ fail=\d+').Value);
+    bk_exit = $bkCode; bk_verdict = ([regex]::Match($bkOut, 'PASS=\d+ FAIL=\d+').Value) }
 $ej = ConvertTo-Json $evidence -Depth 4
 [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'devloop-r279-rolls.json'), $ej, (New-Object System.Text.UTF8Encoding($false)))
 

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T03:41:33Z",
-    "current_activity":  "tech#12 bake-idem rotation batch-7 FINAL green (24/24): cards 33 + bubbles 1081 frozen-chain reproduce byte-identical vs HEAD + idem double-run green; barks live-pool drift probe = gate-refused (BigLife cognition pool grew to 18/bucket x 6 axes = 1296 lines, over the baker v1.8 contract gate 4..15, mtime today = expansion in flight; canonical residents-barks.json untouched since r107) - rotation pool CLOSED: 23 items = 19 reproduced + 1 probe-refused + 3 negative verdicts",
-    "artifact":  "logs/devloop-r284-bake-idem-test.ps1 + logs/devloop-r284-bake-idem.json (24/24 evidence) + TECH.md s9 r284 row + state/queue/tech.md (rotation row removed, barks water-mark passive probe row added)",
-    "artifact_utc":  "2026-10-11T03:41:33Z",
-    "milestone":  "next: tech queue deep-work rows (#3 ps51-traps bake-domain readout / #5 tick EAP re-eval / #2 probes health report); R2 criteria-frame chain (main#5) still waits on interactive window r2-ignite 8-file collection; Sunday 10-18 evolution window = T-FV-134 scan + P3-003 proposal",
-    "milestone_eta_utc":  "2026-10-12T03:30:00Z"
+    "updated_utc":  "2026-10-11T03:50:21Z",
+    "current_activity":  "tech#11 r279-rolls seat bake-template machinery gate EXPANDED (+5 asserts, 37/37 one-pass green): new A2 section direct-runs bake-harness-template.ps1 sample mode (VERDICT: ALL GREEN, FAIL=0, pass\u003e=15 rot-proof lower bound -- measured PASS=16, r212 A0b legal growth proves the bound value), temp swept zero-residue; r171 A-gate essence now consolidated = three-door charter complete",
+    "artifact":  "logs/devloop-r279-rolls-test.ps1 (A2 +5) + Tools/devloop/family-seats.txt (exp 32-\u003e37, FAM-TOTAL 631-\u003e636) + family-run -Only r279-rolls A/B byte-stable (pass=37/37, shaSame=True) + TECH.md s9 r285 row",
+    "artifact_utc":  "2026-10-11T03:50:21Z",
+    "milestone":  "next: tech queue 14 rows (#13 A2 negcon candidate / #14 family-run full 18-seat 636 re-verify / #3 ps51-gdi bake-domain readout / #2 probes health report); R2 criteria-frame chain (main#5) still waits on interactive window r2-ignite 8-file collection; Sunday 10-18 evolution window = T-FV-134 scan + P3-003 proposal",
+    "milestone_eta_utc":  "2026-10-11T05:30:00Z"
 }

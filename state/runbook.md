@@ -6,12 +6,12 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r284 毕：tech#12 烘焙幂等抽检批 7 终批（cards 33+bubbles 1081 冻结链复现+barks 活池漂移探针 gate-refused 24/24 全绿·轮转池 23 件清账=19 复现+1 探针+3 判负）+barks 活池水位 18/桶超 v1.8 契约门定谳（re-bake=消费线决策·tech#13 探测位入册）。下轮候选=tech 队列 13 条（#3 ps51-traps bake 域判读/#5 tick EAP=Stop 重评位/#2 probes 报表/#11 rolls machinery 扩位候选 等）。
+r285 毕：tech#11 r279-rolls 席 bake 模板 machinery 门扩位（r171 A 门义收编=三门合一 charter 补全·A2 段+5 断言 37/37 一次过+FAM-TOTAL 631→636+family-run -Only A/B 字节稳 shaSame=True·实测 bake 样本态 PASS=16 FAIL=0）。下轮候选=tech 队列 14 条（#13 A2 段负控沙盒候选/#14 family-run 全席 636 复证位/#3 ps51-gdi bake 域判读/#2 probes 报表 等）。
 
 ## 下一步（队列头）
 1. 轮首先跑 Tools\devloop\check-fastpath.ps1：FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。
 2. 时窗件：T-FV-134 调研深扫+T-FV-141 提案 P3-003（判②滞留面候选在册）=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24 首窗/11-01 月界。
-3. main/tech 近件：main#6 R2 探测一行注记（r284 注记毕：判① 存量口径维持·判② 8 件未收干维持→判假续候·判真即领 main#5 判据帧链照 docs/qa-r2-frame-map.md 执行）+P3-002 防御行检（常设·第四十七轮 PASS）/tech 队列常备 13 条（#12 护栏复证/#13 barks 水位探测〔被动〕/#3/#5/#2/#11 可领）。
+3. main/tech 近件：main#6 R2 探测一行注记（r285 注记毕：三判全假续候——判① 0 新 commit/判② 8 件未收干/判③ 成立）+P3-002 防御行检（常设·第四十八轮 PASS）/tech 队列常备 14 条（#13/#14 r285 承件可领·#3/#2 可领）。
 4. **常设收尾步（r247 起改道执法件）**：commit 前刷面=写 logs/devloop-face-content.json（六键·updated_utc/artifact_utc 留空机器盖戳）→ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\write-status-face.ps1 → FACE OK 才 commit；禁手写 state/status-face.json（r246 future-ts 红根因）；**板面同步门（r272 起）**=Tools\devloop\check-runbook-sync.ps1 轮尾手跑一行判读（SYNC 才 commit·DRIFT=runbook/§九 轮号先对齐再收工）。
 
 ## 验收标准（怎么算完成）

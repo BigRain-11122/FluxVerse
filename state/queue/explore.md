@@ -16,9 +16,9 @@
 | 9 | 微信小游戏 3D 性能上限案例集：团结引擎 WeChat 3D 分发面参考 | 团结 SDK 新仓（r219 勘正 c） | 分发面参考 |
 | 10 | world-events viz 消费端候选观察：M2 时态轮探针扩面口径（CityWatch 停役后唯一观测窗归 MiniGame 侧） | r164 evolution 扩面先例 | M2 排队面·观察不预建 |
 | 11 | 行情 K 线 M2 视觉映射设计稿：BigMoney state.reality.market 消费（数据已备 r47 注记） | M2 排队面 | 纸面设计稿·零引擎实现 |
-| 12 | **P3 48h 节律死线件（滚动计数位）**：r369 已满足（explore#13 Quaternius Modular Streets 拼装语法拆解=R-20261012-quaternius-modular-streets-syntax.md 成件〔25 件谱+三方对照+T 拓扑疑缺位判读·Kenney Roads 二比一两侧全闭合〕）——末笔=r369·**下次死线=10-14 06:0x 前出一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r369 行 | r319 入册·r320~r369 五十轮连翻（死线机械化滚动·防静默超窗） |
+| 12 | **P3 48h 节律死线件（滚动计数位）**：r370 已满足（explore#62 Downtown City MegaKit 拼装语法拆解=R-20261012-quaternius-downtown-city-megakit-syntax.md 成件〔315 件族+hero 渲染判读+三方对照·Quaternius 两代路线评估就此闭合·选型池三件全〕）——末笔=r370·**下次死线=10-14 06:0x 前出一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r370 行 | r319 入册·r320~r370 五十一轮连翻（死线机械化滚动·防静默超窗） |
 | 17 | 真 demo 街具密度/自由摆基准对我方 v6/v7 格点摆法对照评估（自由化扰动=活城感方向·观感调优输入） | R-20261011-ad022-truedemo-census.md §2 | r324 轮尾补条·纸面对照零导入 |
 | 47 | 涂装 lot 渲染终验：z=75/150 行 PL 骑素面带的 z 序显隐实拍（§14.6 G 层共承 11/19 件的渲染次序真相——vendor z 序赌注 §4 同律·YL 虚线候选〔§14.3③〕同窗） | R-20261011-ad022-marking-occupation-syntax.md §14.3③+§14.6 | r354 轮尾补条·导入窗后置低优 |
 | 61 | R2 生成器输入门禁消费接线跟踪（被动·零施工）：生成器实现窗开工首跑 Tools/city/r2-spec-input-validate.py 入其门禁链（38 行输入自检=fail-loud 前置门·argv 负控通道随件）——判据=实现窗 commit/消息或 TECH 行引用本件 | Tools/city/r2-spec-input-validate.py+R-20261012-ad022-r2-spec-input.md §7 | r368 轮尾补条 |
-| 62 | Quaternius Downtown City MegaKit 拼装语法拆解：315+ 件街区模块族（buildings/streets/sidewalks/intersections/props）件族谱+米制/网格语义+与 AD-022 拼装对照（2018 Modular Streets 现役后继件·走 Quaternius 路线优先评估新件） | R-20261012-quaternius-modular-streets-syntax.md §4/§5 | r369 轮尾补条（导入前纸面对照·零下载同口径） |
+| 63 | Kenney Retro Urban Kit 拼装语法拆解：R2 街区扩展选型池**第四件候选**（tmhsdigital 相关链与 Kenney City Kit Roads/Commercial 同页族——复古都市件族·件数/米制/贴图语法零下载纸面对照·同口径三闸+判读） | kenney.nl 官方包页+R-20261012-quaternius-downtown-city-megakit-syntax.md §4 六闸（判据池三件全后备料位） | r370 轮尾补条（Quaternius 路线闭合后选型池续扩候选·导入前纸面零下载） |
 

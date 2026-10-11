@@ -6,11 +6,11 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r369 毕：explore#13 Quaternius Modular Streets 拼装语法拆解 R- 件成件（25 件谱+三方对照+T 拓扑疑缺位判读·Kenney Roads 二比一两侧全闭合·L1 零 API）。
+r370 毕：explore#62 Quaternius Downtown City MegaKit 拼装语法拆解 R- 件成件（315 件族+hero 渲染判读+三方对照·Quaternius 两代路线评估闭合·R2 街区扩展选型池三件全）。
 
 ## 下一步（队列头）
-1. 轮首跑 Tools\devloop\check-fastpath.ps1：判读一律依 stdout `VERDICT:` 行字节（禁读 Exit Code 显示面·r293 假显判例）；FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r369 收尾=tech_sha12 传棒 KEEP（TECH §九 open=main#8 触发器行+explore#17/47/61/62 可领面→下轮④查 mismatch=全轮续领·r95 律）。
-2. **main#8 腿②触发器每轮检**：main#6 判②收干+GPU 空窗双现即领（配方五步·判据三条·死线 10-13）；explore#12 P3 48h 死线=**10-14 06:0x 前**（r369 已交卷·下笔候选=#62 Downtown City MegaKit 拆解·#17/#47 备选）；T-FV-134/141=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24/11-01。
+1. 轮首跑 Tools\devloop\check-fastpath.ps1：判读一律依 stdout `VERDICT:` 行字节（禁读 Exit Code 显示面·r293 假显判例）；FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r370 收尾=tech_sha12 传棒 KEEP（TECH §九 open=main#8 触发器行+explore#17/47/61/63 可领面→下轮④查 mismatch=全轮续领·r95 律）。
+2. **main#8 腿②触发器每轮检**：main#6 判②收干+GPU 空窗双现即领（配方五步·判据三条·死线 10-13）；explore#12 P3 48h 死线=**10-14 06:0x 前**（r370 已交卷·下笔候选=#63 Kenney Retro Urban Kit 拆解·#17/#47 备选）；T-FV-134/141=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24/11-01。
 3. main#5/#7 判③门槛未达（shots 判据帧未入库·交互窗在飞期禁动 City3D）；tech 队列常备=观察位族——**真无活时一行声明合法（禁造活凑数）**。
 4. **常设收尾步**：commit 前写 logs/devloop-face-content.json（六键·updated_utc/artifact_utc 留空机器盖戳）→ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\write-status-face.ps1 → FACE OK 才 commit（禁手写 state/status-face.json·r246）；**板面同步门**=Tools\devloop\check-runbook-sync.ps1 一行判读（SYNC 才 commit）；**板面-§九 双账门**=Tools\devloop\tasks-board-check.ps1（动板面必过）；**commit pathspec 限定律**=c2 触发轮 commit 一律 -m 后 -- <本轮路径清单>（防吞交互窗 staged 面）。
 

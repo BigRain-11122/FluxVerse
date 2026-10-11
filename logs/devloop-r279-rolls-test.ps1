@@ -229,12 +229,112 @@ $bkPassN = [int](([regex]::Match($bkOut, 'PASS=\d+')).Value -replace 'PASS=', ''
 Assert 'bktpl-pass-ge15' ($bkPassN -ge 15)
 Assert 'bktpl-temp-cleaned' ((Test-Path -LiteralPath $bkCopy) -eq $false)
 
+# --- A3: poisoned-template negative controls (tech#13, r270 negcon 5th application)
+# The A2 four-assert face has only ever seen green (r285: PASS=16 FAIL=0). This section
+# proves the seat asserts are NON-CONSTANT by feeding three known-bad COPIES of the
+# tracked template (TEMP GUID sandbox; the canonical template is never touched).
+# Single-point text splices on the copy; splice-applied asserts fail loud if the anchor
+# text ever drifts (r235 silent-miss lesson).
+#   n1 baker-tamper: opaque band FromArgb 255 -> 200 (baked output no longer matches
+#      the A5 recount spec) -> FAIL A5 recount alpha 250..255 -> VERDICT: RED + exit 1.
+#   n2 variant-collapse: RunDir3 hue 160 -> 64 (variant byte-identical to run1) ->
+#      FAIL A3 variant inter-different -> VERDICT: RED + exit 1.
+#   n3 verdict-sabotage (stacked on n1): FAIL threshold 0 -> 99 -> FAIL=1 yet
+#      VERDICT: ALL GREEN + exit 0 = fake green. The seat's bktpl-verdict-fail0
+#      assert reads the count line, not the verdict marker, so it still goes red --
+#      three-surface redundancy (VERDICT marker / exit code / FAIL=N count) pays.
+# Seat-assert-face census across the three poisons ($a3SeatRed counts RED asserts of
+# the four-assert face, i.e. each `if` fires when the seat assert's condition is
+# FALSE): n1 = 3 red (exit0/allgreen/fail0 red; pass-ge15 stays green at PASS=15 --
+# the lower bound's legal insensitivity to one poisoned gate, recorded as boundary,
+# not a defect); n2 = 3 red (same face, PASS=15 again green at floor); n3 = 1 red
+# (exit0 and allgreen go green by sabotage design, pass-ge15 green at floor; only
+# fail0 catches the fake green -- the count-line redundancy is the payoff).
+# Rot-proof law: asserts bind to gate LOGIC (named red line, exit code, fail-ge1),
+# never to exact PASS pins (r212/r266 lessons).
+$bkTplText = [IO.File]::ReadAllText($bkTpl)
+$negRoot = Join-Path $env:TEMP ('r279-rolls-negcon-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $negRoot | Out-Null
+$a3SeatRed = 0
+try {
+    $n1Path = Join-Path $negRoot 'bktpl-n1-tamper.ps1'
+    $n1Text = $bkTplText.Replace('[System.Drawing.Color]::FromArgb(255, 30, 40, 50)', '[System.Drawing.Color]::FromArgb(200, 30, 40, 50)')
+    Assert 'a3-n1-splice-applied' ($n1Text -ne $bkTplText)
+    [IO.File]::WriteAllText($n1Path, $n1Text)
+    $rN1 = Invoke-Captured 'powershell' ('-NoProfile -ExecutionPolicy Bypass -File "' + $n1Path + '"') $repo
+    Assert 'a3-n1-exit1' ($rN1.code -eq 1)
+    Assert 'a3-n1-verdict-red' ($rN1.out.Contains('VERDICT: RED'))
+    $n1FailN = 0
+    $m1 = [regex]::Match($rN1.out, 'FAIL=(\d+)')
+    if ($m1.Success) { $n1FailN = [int]$m1.Groups[1].Value }
+    Assert 'a3-n1-fail-ge1' ($n1FailN -ge 1)
+    Assert 'a3-n1-a5-red-named' ($rN1.out.Contains('FAIL A5 recount alpha 250..255'))
+    $n1PassN = -1
+    $p1 = [regex]::Match($rN1.out, 'PASS=(\d+)')
+    if ($p1.Success) { $n1PassN = [int]$p1.Groups[1].Value }
+    if ($rN1.code -ne 0) { $a3SeatRed++ }
+    if (-not $rN1.out.Contains('VERDICT: ALL GREEN')) { $a3SeatRed++ }
+    if ($n1FailN -ne 0) { $a3SeatRed++ }
+    if ($n1PassN -lt 15) { $a3SeatRed++ }
+
+    $n2Path = Join-Path $negRoot 'bktpl-n2-collapse.ps1'
+    $n2Text = $bkTplText.Replace('Bake-Sample $RunDir3 160', 'Bake-Sample $RunDir3 64')
+    Assert 'a3-n2-splice-applied' ($n2Text -ne $bkTplText)
+    [IO.File]::WriteAllText($n2Path, $n2Text)
+    $rN2 = Invoke-Captured 'powershell' ('-NoProfile -ExecutionPolicy Bypass -File "' + $n2Path + '"') $repo
+    Assert 'a3-n2-exit1' ($rN2.code -eq 1)
+    Assert 'a3-n2-verdict-red' ($rN2.out.Contains('VERDICT: RED'))
+    $n2FailN = 0
+    $m2 = [regex]::Match($rN2.out, 'FAIL=(\d+)')
+    if ($m2.Success) { $n2FailN = [int]$m2.Groups[1].Value }
+    Assert 'a3-n2-fail-ge1' ($n2FailN -ge 1)
+    Assert 'a3-n2-variant-red-named' ($rN2.out.Contains('FAIL A3 variant inter-different'))
+    $n2PassN = -1
+    $p2 = [regex]::Match($rN2.out, 'PASS=(\d+)')
+    if ($p2.Success) { $n2PassN = [int]$p2.Groups[1].Value }
+    if ($rN2.code -ne 0) { $a3SeatRed++ }
+    if (-not $rN2.out.Contains('VERDICT: ALL GREEN')) { $a3SeatRed++ }
+    if ($n2FailN -ne 0) { $a3SeatRed++ }
+    if ($n2PassN -lt 15) { $a3SeatRed++ }
+
+    $n3Path = Join-Path $negRoot 'bktpl-n3-verdict-sabotage.ps1'
+    $n3Text = $n1Text.Replace('if ($script:FAIL -gt 0)', 'if ($script:FAIL -gt 99)')
+    Assert 'a3-n3-splice-applied' ($n3Text -ne $n1Text)
+    [IO.File]::WriteAllText($n3Path, $n3Text)
+    $rN3 = Invoke-Captured 'powershell' ('-NoProfile -ExecutionPolicy Bypass -File "' + $n3Path + '"') $repo
+    Assert 'a3-n3-exit0-fake-green' ($rN3.code -eq 0)
+    Assert 'a3-n3-verdict-allgreen-fake' ($rN3.out.Contains('VERDICT: ALL GREEN'))
+    $n3FailN = 0
+    $m3 = [regex]::Match($rN3.out, 'FAIL=(\d+)')
+    if ($m3.Success) { $n3FailN = [int]$m3.Groups[1].Value }
+    Assert 'a3-n3-fail-ge1-count-survives' ($n3FailN -ge 1)
+    Assert 'a3-n3-fail0-assert-red' (($m3.Success) -and ($m3.Groups[1].Value -ne '0'))
+    Assert 'a3-n3-a5-red-named' ($rN3.out.Contains('FAIL A5 recount alpha 250..255'))
+    $n3PassN = -1
+    $p3 = [regex]::Match($rN3.out, 'PASS=(\d+)')
+    if ($p3.Success) { $n3PassN = [int]$p3.Groups[1].Value }
+    if ($rN3.code -ne 0) { $a3SeatRed++ }
+    if (-not $rN3.out.Contains('VERDICT: ALL GREEN')) { $a3SeatRed++ }
+    if ($n3FailN -ne 0) { $a3SeatRed++ }
+    if ($n3PassN -lt 15) { $a3SeatRed++ }
+
+    Assert 'a3-posctrl-preceded' ($bkCode -eq 0)
+    Assert 'a3-seat-asserts-red-ge6' ($a3SeatRed -ge 6)
+} finally {
+    if (Test-Path -LiteralPath $negRoot) { Remove-Item -LiteralPath $negRoot -Recurse -Force -ErrorAction SilentlyContinue }
+    foreach ($rd in @('fv-bake-harness-run1', 'fv-bake-harness-run2', 'fv-bake-harness-run3')) {
+        $td = Join-Path $env:TEMP $rd
+        if (Test-Path -LiteralPath $td) { Remove-Item -LiteralPath $td -Recurse -Force -ErrorAction SilentlyContinue }
+    }
+}
+
 # --- evidence json ---------------------------------------------------------------
 $evidence = [ordered]@{ round = 'r279'; seat = 'law-roll consolidated gate';
     pass = $pass; fail = $fail; notes = $notes; sync = $syncRows;
     ps51_sections = $secCounts; gdi_total = $gtot;
     tpl_exit = $tplCode; tpl_verdict = ([regex]::Match($tplOut, 'pass=\d+ fail=\d+').Value);
-    bk_exit = $bkCode; bk_verdict = ([regex]::Match($bkOut, 'PASS=\d+ FAIL=\d+').Value) }
+    bk_exit = $bkCode; bk_verdict = ([regex]::Match($bkOut, 'PASS=\d+ FAIL=\d+').Value);
+    neg_exits = @($rN1.code, $rN2.code, $rN3.code); a3_seat_red = $a3SeatRed }
 $ej = ConvertTo-Json $evidence -Depth 4
 [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'devloop-r279-rolls.json'), $ej, (New-Object System.Text.UTF8Encoding($false)))
 

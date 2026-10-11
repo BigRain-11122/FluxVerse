@@ -1,7 +1,7 @@
 {
     "round":  "r279",
     "seat":  "law-roll consolidated gate",
-    "pass":  37,
+    "pass":  55,
     "fail":  0,
     "notes":  [
 
@@ -78,5 +78,11 @@
     "tpl_exit":  0,
     "tpl_verdict":  "pass=9 fail=0",
     "bk_exit":  0,
-    "bk_verdict":  "PASS=16 FAIL=0"
+    "bk_verdict":  "PASS=16 FAIL=0",
+    "neg_exits":  [
+                      1,
+                      1,
+                      0
+                  ],
+    "a3_seat_red":  7
 }

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T03:50:21Z",
-    "current_activity":  "tech#11 r279-rolls seat bake-template machinery gate EXPANDED (+5 asserts, 37/37 one-pass green): new A2 section direct-runs bake-harness-template.ps1 sample mode (VERDICT: ALL GREEN, FAIL=0, pass\u003e=15 rot-proof lower bound -- measured PASS=16, r212 A0b legal growth proves the bound value), temp swept zero-residue; r171 A-gate essence now consolidated = three-door charter complete",
-    "artifact":  "logs/devloop-r279-rolls-test.ps1 (A2 +5) + Tools/devloop/family-seats.txt (exp 32-\u003e37, FAM-TOTAL 631-\u003e636) + family-run -Only r279-rolls A/B byte-stable (pass=37/37, shaSame=True) + TECH.md s9 r285 row",
-    "artifact_utc":  "2026-10-11T03:50:21Z",
-    "milestone":  "next: tech queue 14 rows (#13 A2 negcon candidate / #14 family-run full 18-seat 636 re-verify / #3 ps51-gdi bake-domain readout / #2 probes health report); R2 criteria-frame chain (main#5) still waits on interactive window r2-ignite 8-file collection; Sunday 10-18 evolution window = T-FV-134 scan + P3-003 proposal",
-    "milestone_eta_utc":  "2026-10-11T05:30:00Z"
+    "updated_utc":  "2026-10-11T04:00:23Z",
+    "current_activity":  "tech#13 r279-rolls A3 poisoned-template negative control LANDED (r270 negcon 5th application, +18 asserts, 55/55 one-pass green): three single-point splice copies of bake-harness-template.ps1 run in TEMP GUID sandbox -- n1 baker-tamper (alpha 255-\u003e200) caught by A5 recount gate RED/exit1, n2 variant-collapse (hue 160-\u003e64) caught by A3 inter-different gate RED/exit1, n3 verdict-sabotage (threshold 0-\u003e99 stacked on n1) yields FAKE GREEN exit0 but the seat\u0027s fail0 assert reads the count line and still goes red = three-surface redundancy payoff; census semantics self-caught and fixed (a3_seat_red 6-\u003e7 matches preregistered); pass-ge15 floor stays green at PASS=15 across single-gate poisons = legal lower-bound boundary recorded",
+    "artifact":  "logs/devloop-r279-rolls-test.ps1 (A3 +18) + Tools/devloop/family-seats.txt (exp 37-\u003e55, FAM-TOTAL 636-\u003e654) + family-run -Only r279-rolls A/B byte-stable (pass=55/55, shaSame=True, err 0/0) + TECH.md s9 r286 row",
+    "artifact_utc":  "2026-10-11T04:00:23Z",
+    "milestone":  "next: tech queue 14 rows (#14 family-run full 18-seat 654 re-verify / #3 ps51-gdi bake-domain readout / #2 probes health report); R2 criteria-frame chain (main#5) still waits on interactive window r2-ignite 8-file collection; Sunday 10-18 evolution window = T-FV-134 scan + P3-003 proposal",
+    "milestone_eta_utc":  "2026-10-11T07:30:00Z"
 }

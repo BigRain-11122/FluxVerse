@@ -5,7 +5,7 @@
 #   expected-pass / expected-fail  pinned verdict counts; exf>0 = exempt-red standing seat
 #   judged per named-red law (tech#10), excluded from FAM-TOTAL.
 # Onboarding a new consolidated seat = ONE line here, zero runner edits (tech#12 / r269).
-# Family ledger: FAM-TOTAL 576 = 524 (15 seats) + 52 (r271-keep-negcon).
+# Family ledger: FAM-TOTAL 599 = 524 (15 seats) + 52 (r271-keep-negcon) + 23 (r272-runbooksync-negcon).
 r69-public|devloop-r69-public-test.ps1|41|0
 r80-release|devloop-r80-releasegate-test.ps1|15|0
 r197-writer|devloop-r197-writer-test.ps1|41|0
@@ -22,3 +22,4 @@ r212-psa|devloop-r212-psa-test.ps1|50|0
 r270-family-negcon|devloop-r270-family-negcon.ps1|42|0
 r271-keep-negcon|devloop-r271-keep-negcon.ps1|52|0
 r233-boardcheck|devloop-r233-boardcheck-test.ps1|35|2
+r272-runbooksync|devloop-r272-runbooksync-negcon.ps1|23|0

@@ -6,12 +6,12 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r272 毕：tech#11 领走——check-runbook-sync.ps1 落地（runbook↔§九 轮号一致性·r238 契约机械判读位·exit 0=SYNC/2=DRIFT/1=FAIL·纯读零守护·已挂常设收尾步）+负控沙盒 23 断言两跑收绿（首跑 5 假红=工具件自定位/前导零两病·修后全绿·r272 席收编候选在队）。下轮候选=tech#12 第 17 席收编（r272-runbooksync-negcon 入 family-seats+全族复跑扩位）/tech 队列 #1 反向引用演练/#2 烘焙幂等抽检/#4 registry 对账。
+r273 毕：tech#12 领走——第 17 席收编（r272-runbooksync 入 family-seats+恒绿先行 23/23+全族 17 席 FAM-TOTAL 599/599 全绿+eol/ASCII 双态证）；famwrap 自定位过跳自中当轮修（r247 同病·tech#11 新条根治位）+r212 活树席 SHA 分族判读注记（跨日恒等证面按 fixture/活树分族）。下轮候选=tech#11 wrapper 自定位公共件/tech#1 反向引用演练/tech#2 烘焙幂等抽检/tech#4 registry 对账。
 
 ## 下一步（队列头）
 1. 轮首先跑 Tools\devloop\check-fastpath.ps1：FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。
 2. 时窗件：T-FV-134 调研深扫+T-FV-141 提案 P3-003（判②滞留面候选在册）=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24 首窗/11-01 月界。
-3. main/tech 近件：main#6 R2 探测一行注记（判①② 阻塞维持·判真即领 main#5 首跑照 docs/qa-r2-frame-map.md 执行）/tech 队列常备可领（#12 第 17 席收编/#1 反向引用演练/#2 烘焙幂等抽检/#4 registry 对账 等）/P3-002 防御行检（常设）。
+3. main/tech 近件：main#6 R2 探测一行注记（判①② 阻塞维持·判真即领 main#5 首跑照 docs/qa-r2-frame-map.md 执行）/tech 队列常备可领（#11 wrapper 自定位公共件/#1 反向引用演练/#2 烘焙幂等抽检/#4 registry 对账 等）/P3-002 防御行检（常设）。
 4. **常设收尾步（r247 起改道执法件）**：commit 前刷面=写 logs/devloop-face-content.json（六键·updated_utc/artifact_utc 留空机器盖戳）→ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\write-status-face.ps1 → FACE OK 才 commit；禁手写 state/status-face.json（r246 future-ts 红根因）；**板面同步门（r272 起）**=Tools\devloop\check-runbook-sync.ps1 轮尾手跑一行判读（SYNC 才 commit·DRIFT=runbook/§九 轮号先对齐再收工）。
 
 ## 验收标准（怎么算完成）

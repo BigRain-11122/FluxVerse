@@ -4,6 +4,7 @@
 - **口径**：场景 YAML 只读实测·零导入零下载零写 City3D（防双头 r236 定谳合规·交互窗在飞件未触）。**证据面=两场景对照**：①真 vendor demo=`Assets/lowpoly/01_现代城市生活/AD-022_Scene场景_现代城市_CityPack/PolygonCity/Scenes/Demo.unity`（10,192,947B·r322/r323 均未扫过·本件首扫）②`Assets/Scenes/CityAssembled.unity`（**勘正=我方 R0 装配产物·非 vendor demo**·见 §0）。
 - **探针**：`.codely-cli/tmp/ad022_detail_probe.py`（CityAssembled 全实例分桶普查）+`.codely-cli/tmp/ad022_true_demo_probe.py`（真 demo 普查·root-parent=fileID 0=恒等判定修正）；gitignored·只读。
 - **扫描轮**：DevLoop r324（2026-10-11 19:0x）。
+- **勘正指针（r329）**：本件计数面=m_Name 改名标签面（未改名实例结构性不可见）——FE 实锚=总量 160（69 改名+91 未改名·漏 57%）·§2 抬升件 y 谱未含 FE 未改名地下带（−3×45/−6×38/−9×7）；**后续一切 demo 普查一律双面计（改名+未改名）**→R-20261011-ad022-fe-office-label-vs-source.md（原文零删改）。
 
 ## 0. 勘误（r322/r323 场景归因勘正·结论修订表）
 

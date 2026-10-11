@@ -15,5 +15,5 @@
 | 7 | TECH.md EOL 检出态哨兵：git ls-files --eol（i/lf w/crlf=autocrlf 正常态）10-24 归档窗前复核+归档实跑后双档 w/eol 态一行回填 | TECH §九 r243 基线行+Tools/devloop/archive-section9.ps1 | 态翻转（检出重建/手动转码）即基线再新化 |
 | 8 | tick.ps1 2>&1 双位 EAP=Stop 前置硬化（29 号律预防位：L124/L135 子进程捕获现零暴露〔EAP=Continue+try/catch〕——若 tick 未来改 EAP=Stop 即活化→双 redirect 换装+tick harness 复跑） | Tools/tick/tick.ps1+TECH §九 r246 行②+ps51-gdi-traps 29 号 | 重评条件=tick 改 EAP=Stop |
 | 9 | r233 沙盒复跑判读口径（常设·零施工）：fx2 两断言（fx2-exit2/fx2-r2-caught）=预存自指腐豁免非回归——ghost 键 T-FV-999 全库唯一提及=r233 收口行自身→R2 token 在场永豁免（r248 定谳·mentions=1 实证）；R2 ghost 能力现证=r246 演练 a5 隔离负控单证在役（r248 A3 真账面负控已自指腐豁免=r259 判负·999 同型·根治位=r266 a3root-v2 已闭） | TECH §九 r248 行③④+logs/devloop-r248-r1fix-test.ps1 A3 | 复跑 35/37 两红=按本行判读勿再归因·沙盒保全律历史件零改 |
-| 10 | wrapper 族 repo 自定位公共件：Tools/devloop/resolve-repo.ps1（脚本所在深度入参化单源自定位）+沙盒（误层负控三径=过跳/欠跳/正层）——r247/r273/r274 三案同病（$PSScriptRoot 层级算术错→子进程起于错误域或读错根）根治位 | r273 行③+r247 行③+r274 行③实锚 | 新 wrapper 一行调用防复发·判据=负控三径全捕+现役 wrapper 顺扫归一 |
-| 11 | ollama-watchdog 生产观察位（被动·零施工）：读 logs/ollama-watchdog-receipt.jsonl——首真发行=重启段 live 补证+§九 注记呈报；零行=健康态 | logs/ollama-watchdog-receipt.jsonl+TECH §九 r274 行 | r274 装机承件·值守轮回执核销面候选 |
+| 10 | ollama-watchdog 生产观察位（被动·零施工）：读 logs/ollama-watchdog-receipt.jsonl——首真发行=重启段 live 补证+§九 注记呈报；零行=健康态 | logs/ollama-watchdog-receipt.jsonl+TECH §九 r274 行 | r274 装机承件·值守轮回执核销面候选 |
+| 11 | resolve-repo 公共件采用面巡逻（被动·零施工）：新 wrapper/沙盒自定位是否走公共件一行采用律——rg 新增 harness 的 Split-Path 层级手算=漂移点名+§九 注记；Tools 存量 22 处零迁移维持 | Tools/devloop/resolve-repo.ps1+TECH §九 r275 行④（四案实锚） | r275 落地承件·防第五案 |

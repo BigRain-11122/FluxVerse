@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T01:18:30Z",
-    "current_activity":  "第 17 席收编：r272-runbooksync 沙盒入 family-seats+恒绿先行 23/23+全族 17 席 FAM-TOTAL 599/599 全绿（eol/ASCII 双态证·famwrap 自定位过跳当轮修）",
-    "artifact":  "Tools/devloop/family-seats.txt",
-    "artifact_utc":  "2026-10-11T01:18:30Z",
-    "milestone":  "R2 模块壳里程碑：交互窗在飞件收干后领 main#5 判据帧链首跑",
-    "milestone_eta_utc":  "2026-10-13T00:00:00Z"
+    "updated_utc":  "2026-10-11T01:49:46Z",
+    "current_activity":  "tech#10 wrapper repo-self-location common piece shipped: resolve-repo.ps1 (.git-anchored walk replaces level arithmetic, sandbox 25/25 green, case-4 harness anchor self-caught fail-loud)",
+    "artifact":  "Tools/devloop/resolve-repo.ps1",
+    "artifact_utc":  "2026-10-11T01:49:46Z",
+    "milestone":  "next: watchdog live-fire receipt watch (tech queue #10) or R2 criteria-frame chain once in-flight files land; patrol resolve-repo adoption in new harnesses (tech #11)",
+    "milestone_eta_utc":  "2026-10-12T03:00:00Z"
 }

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T00:45:00Z",
-    "current_activity":  "write-fastpath-state KEEP 键负控沙盒第 16 席收编（marker 七径 fail-loud+两径锁档夹具 52 断言全绿·FAM-TOTAL 576/576）",
-    "artifact":  "logs/devloop-r271-keep-negcon.ps1",
-    "artifact_utc":  "2026-10-11T00:45:00Z",
-    "milestone":  "R2 模块壳里程碑链：交互窗在飞件收干后领 main#5 判据帧链首跑",
+    "updated_utc":  "2026-10-11T01:01:11Z",
+    "current_activity":  "check-runbook-sync.ps1 轮号一致性小工具落地（r238 契约机械判读位·exit 0=SYNC/2=DRIFT/1=FAIL）+负控沙盒 23 断言两跑收绿（首跑 5 假红=工具件两病·修后全绿）",
+    "artifact":  "Tools/devloop/check-runbook-sync.ps1",
+    "artifact_utc":  "2026-10-11T01:01:11Z",
+    "milestone":  "R2 模块壳里程碑：交互窗在飞件收干后领 main#5 判据帧链首跑",
     "milestone_eta_utc":  "2026-10-13T00:00:00Z"
 }

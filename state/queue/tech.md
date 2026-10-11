@@ -16,4 +16,4 @@
 | 8 | TECH.md EOL 检出态哨兵：git ls-files --eol（i/lf w/crlf=autocrlf 正常态）10-24 归档窗前复核+归档实跑后双档 w/eol 态一行回填 | TECH §九 r243 基线行+Tools/devloop/archive-section9.ps1 | 态翻转（检出重建/手动转码）即基线再新化 |
 | 9 | tick.ps1 2>&1 双位 EAP=Stop 前置硬化（29 号律预防位：L124/L135 子进程捕获现零暴露〔EAP=Continue+try/catch〕——若 tick 未来改 EAP=Stop 即活化→双 redirect 换装+tick harness 复跑） | Tools/tick/tick.ps1+TECH §九 r246 行②+ps51-gdi-traps 29 号 | 重评条件=tick 改 EAP=Stop |
 | 10 | r233 沙盒复跑判读口径（常设·零施工）：fx2 两断言（fx2-exit2/fx2-r2-caught）=预存自指腐豁免非回归——ghost 键 T-FV-999 全库唯一提及=r233 收口行自身→R2 token 在场永豁免（r248 定谳·mentions=1 实证）；R2 ghost 能力现证=r246 演练 a5 隔离负控单证在役（r248 A3 真账面负控已自指腐豁免=r259 判负·999 同型·根治位=#11） | TECH §九 r248 行③④+logs/devloop-r248-r1fix-test.ps1 A3 | 复跑 35/37 两红=按本行判读勿再归因·沙盒保全律历史件零改 |
-| 11 | runbook↔§九 轮号一致性小工具候选：runbook 现行段 r 号 vs TECH §九 尾行 r 号一行判读（漂移即红·零守护进程·轮尾手跑位）——r238 契约「收尾若下一步有变则更新本件」的机械判读位 | state/runbook.md+TECH §九 尾行 | r271 收尾手对面自动化候选 |
+| 12 | 第 17 席收编：r272-runbooksync-negcon 沙盒入 family-seats.txt+全族复跑 FAM-TOTAL 扩位（工具件 check-runbook-sync 同族席位） | Tools/devloop/family-run.ps1+family-seats.txt | 收编律=沙盒件恒绿先行·r271 第 16 席同式 |

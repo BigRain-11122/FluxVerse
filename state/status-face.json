@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T04:41:42Z",
-    "current_activity":  "r288 tech#3 readout: both r242 laws (vendored tree mis-hit + fetch-channel) judged ZERO-APPLICABLE to the bake domain -- 24-surface sweep (skill 5 files + 23 Tools/city/bake-*.ps1) shows every Get-ChildItem pins owned paths with explicit filters and zero -Recurse detection faces (only Recurse hit = harness %TEMP% cleanup); vendored payload-receiver trees (node_modules/data-assets/dotdirs) absent from all bake input paths; only network touch = 127.0.0.1:11434 local Ollama generate already guarded by r283 canonical-sha REFUSED gate; companion sweep: law-29 redirect-trap zero hits across bake domain = r246 census scope closed domain-wide; verdict filed as trace (no gdi-book entry, laws stay sandbox-book per r214 dual-book distribution law)",
-    "artifact":  "TECH.md s9 r288 row + state/queue/tech.md #3 claimed, #14 vendored-receiver-tree sentinel backfilled + state/queue/main.md #6 r288 probe note + state/runbook.md r288 refresh",
-    "artifact_utc":  "2026-10-11T04:41:42Z",
-    "milestone":  "next: tech queue #2 probes 25-probe health report (queue head, FASTPATH claimable); R2 criteria-frame chain (main#5) still waits on interactive window r2-ignite 8-file collection; Sunday 10-18 evolution window = T-FV-134 scan + P3-003 proposal",
-    "milestone_eta_utc":  "2026-10-11T06:30:00Z"
+    "updated_utc":  "2026-10-11T04:49:05Z",
+    "current_activity":  "r289 tech#2 delivered: probes 25-face health report -- live scan v0.7 run 25/25 OK zero FAIL quarantined=0 events+5, verify.ps1 VERIFY PASS (state promotion green); today live stream 1561 lines across 11 event types (COMMIT 536 / GITHUB_EVENT 435 / GAME_STAGE 212 / HEARTBEAT 127 / OS_TICK trio 77x3); cursor health across all families zero-stale (clock today, ticklog daily keys 20260929-20261011 continuous, fleet+bgfleet today, res within 24h, repo shas in place, dedup families monotonic); 3 observations filed (fleet_tasks two unknown-state cursors -\u003e new tech queue #14 attribution item, ownerless open ticket, BG-DEL sweep marker); main#6 probe baseline corrected in-passing: r241 = 10-11 02:11 not 10-10, 867b59e (00:26) re-confirmed stock, verdicts 1-3 all still false -\u003e main#5 keeps waiting",
+    "artifact":  "docs/probes-health-report-20261011.md (governance-window 10-16 citation, all-green baseline) + TECH.md s9 r289 row + state/queue/tech.md #2 claimed \u0026 renumbered 14 rows with #14 unknown-cursor attribution backfilled + state/runbook.md r289 refresh",
+    "artifact_utc":  "2026-10-11T04:49:05Z",
+    "milestone":  "next: FASTPATH queue pickup when seven-checks quiet (tech queue 14 rows; #14 fleet_tasks unknown-cursor attribution claimable); R2 criteria-frame chain (main#5) still waits on interactive window r2-ignite 8-file collection; Sunday 10-18 evolution window = T-FV-134 scan + P3-003 proposal",
+    "milestone_eta_utc":  "2026-10-11T16:30:00Z"
 }

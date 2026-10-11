@@ -43,7 +43,7 @@
 | 8 | L2 | 呈现参数正典（P-17·CEO 参数令） | 像素动画 10fps·CEO_ORDER 脉冲 2s·commit 粒子穿城 15-30s·事件轮询 10s·相机双档切换 1.2s ease 禁瞬跳·日夜=真实北京时间 | TECH §九 P-17 行+City/CityCameraRig.cs | ✓ 现役 |
 | 9 | L0+L2 | Token 经济极限使用令（token-economy §3.3） | 呈现面零 LLM 调用（开面板零生成·L1 确定性选行）·生成面 L2 本地 Ollama（qwen2.5:7b·≈224ms/句实测）·新触点过三问门留痕 §九 | TECH §九 P-54 行+Tools/devloop/iteration_prompt.txt 优先级 4+watch/greetings.json（r70/r75） | ✓ 现役 |
 | 10 | L3 | 《人工智能生成合成内容标识办法》（2025-09-01 施行） | AI 生成内容显著标识：呈现面角标 ≥3 处（欢迎线/居民之声/万民之声·r61 实测）·M2 barks 预留位·直播角标位登记·硬约束域=事件即时+季度全扫 | TECH §九 P-40 行+watch/template.html `.aitag` | ✓ 现役 |
-| 11 | L2 | WFC「easy tilesets」教训+constrained synthesis（Gumin 2016·README 全量 2026-10-11） | **模块壳装配约束律**：模块壳装配与未来城市生长线一律约束驱动——邻接约束传播（WFC simple tiled model 族）或确定性 hash 变奏（r207 skyline 先例）·禁无约束自由放/禁整齐重复（easy tilesets=相关性随距离速衰减教训）；人工 authored 壳与约束自动补全两径合法（官方「easily combined with … manual creation」） | City3D R2 模块壳主线（交互窗在飞·防双头零接触）+docs/lowpoly3d-city-rebuild-plan.md+TECH §九 r236 行；生长线开线参考径=Marian 无限城市+Merrell modifying-in-blocks（r220 WFC 观察位升格） | ⬜（R2 在飞·生长线未开·标准先立法） |
+| 11 | L2 | WFC「easy tilesets」教训+constrained synthesis（Gumin 2016·README 全量 2026-10-11） | **模块壳装配约束律**：模块壳装配与未来城市生长线一律约束驱动——邻接约束传播（WFC simple tiled model 族）或确定性 hash 变奏（r207 skyline 先例）·禁无约束自由放/禁整齐重复（easy tilesets=相关性随距离速衰减教训）；人工 authored 壳与约束自动补全两径合法（官方「easily combined with … manual creation」） | City3D R2 模块壳主线（交互窗在飞·防双头零接触）+docs/lowpoly3d-city-rebuild-plan.md+TECH §九 r236 行；生长线开线参考径=Marian 无限城市+Merrell modifying-in-blocks（r220 WFC 观察位升格）+Townscaper 深拆 R-20261012-townscaper-mixed-initiative-teardown（explore#2·Stålberg 一手源·P2 长细物禁 WFC=band-run 律第三方背书·r374） | ⬜（R2 在飞·生长线未开·标准先立法） |
 
 ## ③采集源清单（每域 ≥1 源·分级·通道·零 key）
 
@@ -66,6 +66,7 @@
 | Siemens Simcenter 商用孪生线（系统仿真+3D CAE+test 三合一·2606 版本节奏·STAR-CCM+×NVIDIA 目录） | B | 官网 web_fetch 2026-09-27（sw.siemens.com/en-US/simcenter/·siemens.com 域两 URL 404 通道病如实标注） | 确认（城市级专案页面未载） |
 | Farrokhi Maleki & Zhao 2024《PCG in Games: A Survey with Insights on Emerging LLM Integration》（AIIDE-24·arXiv:2410.15644·PCG 定义+LLM 颠覆论） | B | arXiv 直址 web_fetch 2026-10-11（Wikipedia 请求通道错路由如实标注·直址复取确认） | 确认 |
 | WaveFunctionCollapse（mxgmn·Gumin 2016·MIT）README 全量（local similarity C1/C2+simple tiled model+D4 对称系+easy tilesets 教训+constrained synthesis+Townscaper/Bad North/Caves of Qud/Matrix Awakens/Marian 无限城市+Merrell 2009 学术根+UE5 Blueprint API 生态） | A | raw.githubusercontent web_fetch 2026-10-11（GitHub 页首取仅回 LICENSE 视图如实标注·raw 正通道 r220 律） | 确认 |
+| Game Developer《How Townscaper Works: A Story Four Games in the Making》（Tommy Thompson 2022-04-06·Stålberg 访谈原话全·四作谱系 Brick Block/Bad North/Night Call/Townscaper+garden 优先级+边界律+长细物弱项+skew 容差+生成装饰分离） | A | 原站 403→Wayback 2024 存档三段全量直取 2026-10-12（42,672 字符·r374） | 确认 |
 
 零 key：全表零付费 API 零 key；robots/ToS：公开页 web_fetch 合规（R-20260923-academic 方法节在册）。
 

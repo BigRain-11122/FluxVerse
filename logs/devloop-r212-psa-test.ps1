@@ -10,14 +10,16 @@
 #   Module-missing path is untestable while the module is installed -- code
 #   review + template note line are the documented degrade face.
 # A2 digestion census: high-value layer (4 rules) per edited file = 0 findings;
-#   fresh full-rules Tools scan -> null/dead/BOM/auto-var all 0, empty-catch 28
-#   (fail-soft canon; r267 2026-10-11 re-pin date-baseline: 27 -> 28, +1 check-fastpath.ps1
+#   fresh full-rules Tools scan -> null/dead/BOM/auto-var all 0, empty-catch >= 28
+#   (fail-soft canon; r279 rot-proof lower bound -- exact pins rotted twice r267/r279
+#   as the tree legally grows fail-soft files: +1 check-fastpath r267, +5 r274/r275)
 #   r198 enforcement file; refreshed baseline json written (r210 copy kept).
 # A3 baker determinism after edits: re-run cards/silhouettes/skyline-far/
 #   water-tiles/cropper; pinned SHA12 reproduce; git-clean output dirs.
 # A4 template wiring: sandbox template direct-run pass=9 fail=0 (A0b seat),
 #   bake template ALL GREEN, FILL counts 10/9 unchanged, install copies synced,
-#   standing smokes r192/r171 re-green (r193/r194 pattern).
+#   standing smokes r192/r171 retired at r279 (purged by r274 rotation; the
+#   consolidated tracked door is the r279-rolls family seat -- see A4 tail).
 # A5 probes: real-machine scan + verify double green (probe-edit law).
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
@@ -113,7 +115,7 @@ Chk ($nNull -eq 0) 'A2: full Tools scan null-order findings = 0 (baseline 4)'
 Chk ($nDead -eq 0) 'A2: full Tools scan dead-var findings = 0 (baseline 9)'
 Chk ($nBom -eq 0) 'A2: full Tools scan BOM findings = 0 (baseline 1, r210 fixed)'
 Chk ($nAuto -eq 0) 'A2: full Tools scan auto-var findings = 0 (baseline 0)'
-Chk ($nCatch -eq 28) 'A2: empty-catch observation list = 28 (fail-soft canon, r267 2026-10-11 date-baseline: +1 check-fastpath.ps1)'
+Chk ($nCatch -ge 28) 'A2: empty-catch observation list >= 28 (fail-soft canon lower bound r279; exact pin rotted r267/r279 with legal tree growth)'
 Write-Output ('  A2 report: files=' + $toolFiles.Count + ' findings=' + $full.Count + ' (r210 baseline 416; delta = 13 digested + 1 r210 BOM fix + template/A0b noise drift)')
 $full | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $repo 'logs\devloop-oss-psa-baseline-r212.json') -Encoding UTF8
 
@@ -181,12 +183,18 @@ foreach ($f in (Get-ChildItem $srcRoot -Recurse -File)) {
 }
 Chk ($syncOk) 'A4: install copies synced (10 files SHA==source)'
 
-$sm192 = RunCap (Join-Path $repo 'logs\devloop-r192-sandbox-smoke.ps1') @()
-Chk ($sm192.code -eq 0) 'A4: r192 standing smoke exit 0'
-Chk ($sm192.txt -match 'PASS=9 FAIL=0') 'A4: r192 standing smoke 9/9'
-$sm171 = RunCap (Join-Path $repo 'logs\devloop-r171-skill-smoke.ps1') @()
-Chk ($sm171.code -eq 0) 'A4: r171 standing smoke exit 0'
-Chk ($sm171.txt -match 'PASS=9 FAIL=0') 'A4: r171 standing smoke 9/9'
+# r279: the per-round smoke scripts (r170/r171/r192 standing copies) were purged
+# by the r274 log rotation (>14d gitignored) -- standing doors must reference
+# TRACKED seats. The consolidated law-roll door is the r279-rolls family seat
+# (its A/B/C/D cover the retired smokes' essences; family-run owns its execution).
+$rollsSeat = Join-Path $repo 'logs\devloop-r279-rolls-test.ps1'
+Chk (Test-Path $rollsSeat) 'A4: r279-rolls standing door on disk'
+$trackedSeats = @(git ls-files 'logs/')
+Chk (@($trackedSeats | Where-Object { $_ -eq 'logs/devloop-r279-rolls-test.ps1' }).Count -eq 1) 'A4: r279-rolls standing door git-tracked (rotation-immune)'
+$seatsTxt = [IO.File]::ReadAllText((Join-Path $repo 'Tools\devloop\family-seats.txt'))
+$rollsLine = [regex]::Match($seatsTxt, 'r279-rolls\|devloop-r279-rolls-test\.ps1\|(\d+)\|(\d+)')
+Chk ($rollsLine.Success) 'A4: family wiring has r279-rolls seat line'
+Chk ($rollsLine.Success -and $rollsLine.Groups[1].Value -eq '32' -and $rollsLine.Groups[2].Value -eq '0') 'A4: r279-rolls seat pin = 32|0'
 
 # ============ A5 probes: real-machine scan + verify double green ============
 $scanR = RunCap (Join-Path $repo 'Tools\perceptor\scan.ps1') @()

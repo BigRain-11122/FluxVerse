@@ -24,6 +24,8 @@
 - **$LASTEXITCODE 未设**：纯 cmdlet 链 `if ($LASTEXITCODE -ne 0)` 对 $null 恒真 = 链式门误杀后段（r97）。修：显式置 0 或脚本自身 exit 传播。
 - **网页抓取正则 0 命中假象**：外站 HTML 属性常单引号 + href 绝对 URL（kenney.nl 实证·`?q=` 搜索参服务端不接=四查恒返默认首页同族）——按「双引号+相对径」预写的 `href="(/assets/…)"` 恒 0 命中（r213·17 URL 逐页扫描实锤）。修：锚域名 `kenney\.nl/assets/([a-z0-9\-]+)['"]` 兼容单双引号收尾。
 - **取件通道两病**：web_fetch 后端错路由（Wikipedia 请求被路由至 arXiv 综述页——内容相关但域与标题错）+ GitHub 页面首取仅回 LICENSE 视图（非 README 正文）→ 取件「空/错」双假象（r236·WFC 全量+PCG 综述两源实锚）。修：直址复取核对域与标题；GitHub 正文一律走 raw.githubusercontent.com 正通道（r220 勘定）——页首视图不可当全量。
+- **逗号数组吞后续二元算子**：表达式模式 `A -op1 p, r -op2 s` 永不解析为 `((A -op1 p, r) -op2 s)`——逗号数组把 `r -op2 s` 吸收为 -op1 的 operand 数组元素，-op2 从未作用于整体 → `-replace "`r", '' -split "`n"` 实为「去 CR 不切行」，下游零节/整串迭代 [System.Char] StartsWith 炸（r279 rolls 席位首写自中·r64 参数态家族的纯表达式镜像）。修：每层二元算子应用显式括号 `((A -op1 p, r) -op2 s)`；切行一律两步 `($txt -replace "`r", '') -split "`n"`。
+- **集合 LHS null 比较过滤语义**：`$x -ne $null` 当 $x 为集合（空 List/数组）→ 比较算子按过滤算子运作返回匹配元素集——空集=if 面恒假，「非空守卫」结构性永不触发（r279 rolls 席位 Get-Sections 实锚：elseif 加行永不执行·节恒空·空 List 出函数又遇管道摊平=空管道→$null 下游连环假象；**psa-advisor PSPossibleIncorrectComparisonWithNull 门本可拦=席位自扫门价值首证**）。修：**null 判一律 $null 置左**（`$null -ne $x` 标量 LHS=布尔语义）；嵌套集合出函数须一元逗号 `return ,$secs`（r65 摊平律伴生）。
 
 ## 变量与类型族
 
@@ -36,6 +38,7 @@
 - **十六进制字面量补码**：PS5.1 把 `0xFFFFFFFF` 解析为 Int32 −1（32 位补码语义非 4294967295）→ `-band 0xFFFFFFFF` 恒等掩码失效、乘法溢出 int64 自动升 double（6.09E+23 实测炸点）（r180）。修：mod-2^32 位算一律 `0xFFFFFFFFL` 长后缀。
 - **外壳会话变量展开**：外层 shell 命令内联双引号串中 `$var` 被外层会话先展开（未定义=空串）→ `.Replace("'x", "$v")` 类内联文件手术把替换材料毁成空串全场污染（r180）——律在册仍复发（r204 预检/r213 普查两度=三击实锤）。修：**内联 -Command 带 $vars=禁区·一律落盘 .ps1 后 -File 执行**（r204⑤/r213 执法形）；文件内容手术一律走专用 replace 工具或单引号字面量。
 - **-match 捕获组 $Matches[1] 裸串无 .Value**：捕获组取值已是裸串——`.Value` 属性不存在 → 静默 $null 进 [int]::TryParse = 恒 false 假静（r198 心跳连串首版 hb_streak=0 双红实锤）。修：捕获组取值一律 [regex]::Match + Groups[1].Value（r197 writer 正解）——-match 族禁照抄 .Value 后缀。
+- **ProcessStartInfo 无 ArgumentList**：PS5.1=.NET Framework——ProcessStartInfo 只有 .Arguments 单串属性，ArgumentList 是 .NET Core 2.1+/PS7 专属面 → PS5.1 下按 PS7 肌肉记忆写 `$psi.ArgumentList.Add(...)` 当场炸「找不到属性/方法」（r278 harness 首写自中·29 号律姊妹面）。修：Arguments 字符串形态传参（含引号路径时显式内嵌引号）——r276/r278/r279 Invoke-Captured 正法在案。
 
 ## 工序律（纪律面）
 

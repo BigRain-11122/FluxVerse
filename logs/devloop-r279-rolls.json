@@ -1,0 +1,80 @@
+{
+    "round":  "r279",
+    "seat":  "law-roll consolidated gate",
+    "pass":  32,
+    "fail":  0,
+    "notes":  [
+
+              ],
+    "sync":  [
+                 {
+                     "s":  "fluxverse-city-sandbox",
+                     "f":  "SKILL.md",
+                     "i":  1,
+                     "state":  true
+                 },
+                 {
+                     "s":  "fluxverse-city-sandbox",
+                     "f":  "active-tables.md",
+                     "i":  2,
+                     "state":  true
+                 },
+                 {
+                     "s":  "fluxverse-city-sandbox",
+                     "f":  "gate-family.md",
+                     "i":  3,
+                     "state":  true
+                 },
+                 {
+                     "s":  "fluxverse-city-sandbox",
+                     "f":  "ps51-traps.md",
+                     "i":  4,
+                     "state":  true
+                 },
+                 {
+                     "s":  "fluxverse-city-sandbox",
+                     "f":  "sandbox-harness-template.ps1",
+                     "i":  5,
+                     "state":  true
+                 },
+                 {
+                     "s":  "fluxverse-bake-pipeline",
+                     "f":  "SKILL.md",
+                     "i":  6,
+                     "state":  true
+                 },
+                 {
+                     "s":  "fluxverse-bake-pipeline",
+                     "f":  "bake-recipes.md",
+                     "i":  7,
+                     "state":  true
+                 },
+                 {
+                     "s":  "fluxverse-bake-pipeline",
+                     "f":  "ps51-gdi-traps.md",
+                     "i":  8,
+                     "state":  true
+                 },
+                 {
+                     "s":  "fluxverse-bake-pipeline",
+                     "f":  "style-gate.md",
+                     "i":  9,
+                     "state":  true
+                 },
+                 {
+                     "s":  "fluxverse-bake-pipeline",
+                     "f":  "bake-harness-template.ps1",
+                     "i":  10,
+                     "state":  true
+                 }
+             ],
+    "ps51_sections":  [
+                          6,
+                          13,
+                          10,
+                          6
+                      ],
+    "gdi_total":  29,
+    "tpl_exit":  0,
+    "tpl_verdict":  "pass=9 fail=0"
+}

@@ -1,5 +1,7 @@
 # R-20261011 AD-022 路口词汇仲裁输入——街层贴接法 vs 节点件法（R2 路网生成器词汇表裁定前置）
 
+> **〔r339 勘正指针〕**本件 §1 表「Patch 1.0×1.02」为 raw fbx 口径；prefab 子节点 scale=(2.198/0.290/3.477) 应用后**有效足迹=2.20×3.55m·y 包络=−0.275..−0.135（沉面）**——分类结论（非满格件·≤5m 格件谱位不变）稳·数值面以 R-20261011-ad022-marking-occupation-syntax.md §2 为准。原文零删改（历史保全律）。
+
 - **触发**：explore#30 领走（r338）；同时刷新 explore#12 P3 48h 节律死线（末笔 r337 → r338 成件=新末笔·**下次死线 10-13 21:3x 前一笔 P3 产出**）。
 - **口径**：纯纸面+只读探针（prefab guid 引用计数+FBX 顶点包络+装配回执对源）；零导入零下载零写 City3D（防双头 r236 定谳合规·交互窗在飞件未触）。
 - **探针**：`.codely-cli/tmp/ad022_path_vert_probe.py`（Path 四件顶点包络·r337 vert_dump 探针族直改）+guid 计数直读（Select-String `*.prefab.meta`→Demo.unity 引用）；gitignored·只读。

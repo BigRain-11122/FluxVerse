@@ -26,8 +26,13 @@
 # Gates at promote (fail-loud): every bucket exactly LinesPerBucket lines;
 #   every line 4..18 chars / zero digits / >=2 CJK chars; whole-library
 #   zero-dup; two builds byte-identical; round-trip parse counts.
+# Already-current door (r283 guard, r203 water-fx pattern port): if the
+#   canonical watch\greetings.json is in place the script refuses to
+#   overwrite it and exits 0 - a bare rerun with the staging cursor gone
+#   (logs rotation) would regenerate every line at temp 0.9 and silently
+#   replace the committed artifact. Pass -Force for an explicit full rebuild.
 # ASCII-only script body (PS5.1 GBK law). CJK lives only in the data files.
-param([int]$MaxSeconds = 220, [int]$LinesPerBucket = 4)
+param([int]$MaxSeconds = 220, [int]$LinesPerBucket = 4, [switch]$Force)
 $ErrorActionPreference = "Stop"
 
 $repo       = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent   # Tools\city -> repo
@@ -43,6 +48,21 @@ if (-not (Test-Path $logsDir)) { New-Item -ItemType Directory -Path $logsDir | O
 $utf8   = New-Object System.Text.UTF8Encoding($false)
 $model  = 'qwen2.5:7b-instruct'
 $phases = @('dawn','day','dusk','night')
+
+# ---- already-current door (r283; r203 water-fx pattern port) ----
+# Fires before any input check and before any Ollama touch: canonical in
+# place + no explicit -Force = refuse + report + clean exit. This is the
+# anti-overwrite guard for the committed library (bare-rerun hazard r282).
+if ((Test-Path -LiteralPath $out) -and -not $Force) {
+    $shaGuard = (Get-FileHash -LiteralPath $out -Algorithm SHA256).Hash
+    $rl = New-Object 'System.Collections.Generic.List[string]'
+    $rl.Add("status=ALREADY-CURRENT")
+    $rl.Add("sha256=" + $shaGuard)
+    $rl.Add("forced=" + [bool]$Force)
+    [System.IO.File]::WriteAllLines($report, $rl, $utf8)
+    Write-Output ("GREETINGS ALREADY CURRENT sha12=" + $shaGuard.Substring(0, 12) + " - refusing to overwrite canonical (pass -Force to rebuild)")
+    exit 0
+}
 
 if (-not (Test-Path $promptFile)) { throw "prompt data file missing: $promptFile" }
 if (-not (Test-Path $phaseFile))  { throw "phase data file missing: $phaseFile" }

@@ -4,6 +4,7 @@
 - **口径**：场景 YAML 只读实测·零导入零下载零写 City3D（防双头 r236 定谳·交互窗在飞件未触）。证据源=`Assets/lowpoly/01_现代城市生活/AD-022_Scene场景_现代城市_CityPack/PolygonCity/Scenes/Demo.unity`（10.19MB）bld 族 829 件全量零抽样。
 - **探针**：`.codely-cli/tmp/ad022_apt_stack_probe.py`（族普查+y 谱）+`…_probe2.py`（列聚类+楼簇并查集+样本装配）+`…_probe3.py`（变体隐含高度/台地族/侧挂件）+`…_probe4.py`（FE 排除修正——**FireEscape=逐层着陆件非模块顶标记，隐含高度必须排除 FE 再算**·_10/_12/_28/_34/_52 等误读修正案）；gitignored·只读。
 - **扫描轮**：DevLoop r325（2026-10-11 20:0x）。
+- **勘正指针（r326）**：§3「+1.5×22 列」→**18 真台地柱**（12 抬门+6 沉门）+4 mod-3.0 计数伪影；§7④ 台地源已闭合=**第三态「门面件变体自带台基」**（非地形台·非独立底座件）→R-20261011-ad022-terrace-source-probe.md（原文零删改）。
 
 ## 1. 拼装原子=竖列（column）
 

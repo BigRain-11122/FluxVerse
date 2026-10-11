@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T00:27:58Z",
-    "current_activity":  "family-run 判读面负控沙盒第 15 席收编（fmtC 影子免疫+fail-loud 七径 42 断言全绿·FAM-TOTAL 524/524）",
-    "artifact":  "logs/devloop-r270-family-negcon.ps1",
-    "artifact_utc":  "2026-10-11T00:27:58Z",
+    "updated_utc":  "2026-10-11T00:45:00Z",
+    "current_activity":  "write-fastpath-state KEEP 键负控沙盒第 16 席收编（marker 七径 fail-loud+两径锁档夹具 52 断言全绿·FAM-TOTAL 576/576）",
+    "artifact":  "logs/devloop-r271-keep-negcon.ps1",
+    "artifact_utc":  "2026-10-11T00:45:00Z",
     "milestone":  "R2 模块壳里程碑链：交互窗在飞件收干后领 main#5 判据帧链首跑",
     "milestone_eta_utc":  "2026-10-13T00:00:00Z"
 }

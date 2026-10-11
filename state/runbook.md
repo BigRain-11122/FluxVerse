@@ -6,11 +6,11 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r361 毕：explore#53 双带交点格全谱扩展=§16.11 成件（R- 件 §16.11：三路口度数谱=十字 1（(5,95) 四臂全 NEW=全城唯一零素面臂十字·最重补链位）+T 2（(0,95) W 断口线端/(65,35) 街端接岛 PAVE 进 NEW 出）+corner 0·臂态四态词表+占用三谱（一件双街/双占/岛件兼街端接驳）+**方位词勘注一则**（(65,35)=x=65 街 +z 端延·§16.10.1「南端延」与 §16.9.2 x=5 先例不同轨·坐标读出为正身）+GEN-JSON 三行=生成器直读节点输入）——P3 实物产出轮（explore#12 末笔=r361·探针 ad022_intersection_node_readout.py+捕获件 48 行全 gitignored）。
+r362 毕：explore#54 union 网路口总账口径预研=§16.12 成件（三域合流 N1/N2/N3 节点定义+cell-key 去重律+度数分布初账+全网十字唯一性定谳〔素面域 X 零·union 唯一十字=(5,95)〕+Crossing 语义纯度 51%+缺口三件标注）——P3 纯纸面产出轮（零探针零编辑器·r337 谱×§16.7.3/§16.7.4×§16.11 三素材合流）。
 
 ## 下一步（队列头）
-1. 轮首跑 Tools\devloop\check-fastpath.ps1：判读一律依 stdout `VERDICT:` 行字节（禁读 Exit Code 显示面·r293 假显判例）；FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r361 收尾=tech_sha12 传棒 KEEP（TECH §九 open=main#8 触发器行+explore#54/13/17/47 可领面→下轮④查 mismatch=全轮续领·r95 律）。
-2. **main#8 腿②触发器每轮检**：main#6 判②收干+GPU 空窗双现即领（配方五步·判据三条·死线 10-13）；explore#12 P3 48h 死线=**10-14 04:1x 前**（r361 已交卷·#54 union 网路口总账口径预研=下笔优先条〔素面-素面 Crossing×街口三型×标记-only 交点格三域合流·union 解析核复用〕·#13/#17/#47 备选）；T-FV-134/141=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24/11-01。
+1. 轮首跑 Tools\devloop\check-fastpath.ps1：判读一律依 stdout `VERDICT:` 行字节（禁读 Exit Code 显示面·r293 假显判例）；FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r362 收尾=tech_sha12 传棒 KEEP（TECH §九 open=main#8 触发器行+explore#55/13/17/47 可领面→下轮④查 mismatch=全轮续领·r95 律）。
+2. **main#8 腿②触发器每轮检**：main#6 判②收干+GPU 空窗双现即领（配方五步·判据三条·死线 10-13）；explore#12 P3 48h 死线=**10-14 04:2x 前**（r362 已交卷·#55 union 网路口总账机械读出件=下笔优先条〔缺口三件探针：N1 corner 格清单+度数/N1∩N2 查重/N2 共面 8 格臂态→全网 GEN-JSON〕·#13/#17/#47 备选）；T-FV-134/141=10-18 周日演化日窗；T-FV-139 §九月度归档=10-24/11-01。
 3. main#5/#7 判③门槛未达（shots 判据帧未入库·交互窗在飞期禁动 City3D）；tech 队列常备=观察位族——**真无活时一行声明合法（禁造活凑数）**。
 4. **常设收尾步**：commit 前写 logs/devloop-face-content.json（六键·updated_utc/artifact_utc 留空机器盖戳）→ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\write-status-face.ps1 → FACE OK 才 commit（禁手写 state/status-face.json·r246）；**板面同步门**=Tools\devloop\check-runbook-sync.ps1 一行判读（SYNC 才 commit）；**commit pathspec 限定律**=c2 触发轮 commit 一律 -m 后 -- <本轮路径清单>（防吞交互窗 staged 面）。
 

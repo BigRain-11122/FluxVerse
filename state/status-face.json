@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T15:24:39Z",
-    "current_activity":  "r344毕：explore#36 §E c2c紧排带（9.1-12.2m）lot语义重读成件——五对逐值复现+归因终谳=OPEN-OPEN 4+LOT-VS-OPEN 3+lot内对0（strip伪带=开街队列间距非停车词汇·r342跨湾/跨巷猜想判否）+lot真间距谱（湾↔巷med3.25/跨巷湾对med6.75/跨件同侧湾对10m模数）+律2涂装街腿溶解（替代实锚=模块10m模数）·裁定包八件齐",
-    "artifact":  "docs/research/R-20261011-ad022-c2c-band-lot-reread.md",
-    "artifact_utc":  "2026-10-11T15:24:39Z",
-    "milestone":  "P3死线滚动10-13 23:4x前出一笔（#37 开街车道停驶队列节拍谱=r344新补条优先）；R2里程碑后判据帧链首跑",
+    "updated_utc":  "2026-10-11T15:49:36Z",
+    "current_activity":  "r345毕：explore#37 开街路缘停车带节拍谱成件——own-街归属门五类全账（177=LOT21+CURB119+ASPHALT23+SIDEWALK9+OFF-rot5），§E 9.1-12.2m带语义正面化定谳=路缘平行停车带间距（面证据链：带车全落人行道与沥青tile间5m裸条带·唯一覆盖=Skyline基座y=-5.7），r344「队列vs路缘临停不可分」诚实注记化解；五对复现门=三MATCH（9.10/12.10/12.20）+两对LOT侧正确排除；curb节拍谱=停车链med10.10m/横偏2.5m档76辆/路口距med22.5m/线密度0.6车每10m；R2街道车摆五律入册+警示位第四五坑（车族yaw抖动2°容差·lane单链聚类0.6m）",
+    "artifact":  "docs/research/R-20261011-ad022-street-curb-parking-rhythm-census.md",
+    "artifact_utc":  "2026-10-11T15:49:36Z",
+    "milestone":  "P3死线滚动10-13 23:4x前出一笔（#38 curb链簇-空档结构谱=r345新补条优先）；R2里程碑后判据帧链首跑",
     "milestone_eta_utc":  "2026-10-13T15:40:00Z"
 }

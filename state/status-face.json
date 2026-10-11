@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-11T16:34:11Z",
-    "current_activity":  "r348毕：explore#40 PL反向谱Model E臂标签重表成件——复现三门全绿（R1 D反向谱五键逐位+R2双直方图）；勘误一=r347§0「6口降档」实况10口标签变动=6×3→2+4×2→1（3→1零例·直方图差分漏2→1通道）；勘误二=标记臂位13→14（Lines_02×10+Arrow_01/02各×2）；E口径重表=3臂16口26.9/46.1·2臂19口10.0/36.1·1臂7口11.2/39.1——梯度双面HOLDS且分离度扩大（med差6.6→10.0·标记膨胀臂原在稀释3臂禁区·D-min持有口idx=33实为E-2臂）；R2禁区三律口径无关性收口（律2 T口25m锚E口径余量+1.9m）；main#6判①②双假续候+P3-002第一百一十一回PASS",
-    "artifact":  "docs/research/R-20261012-ad022-pl-reverse-model-e-arm-retable.md",
-    "artifact_utc":  "2026-10-11T16:34:11Z",
-    "milestone":  "P3死线滚动10-14 00:3x前出一笔（#41 E-1臂7口让空窗扩证=r348新补条优先·probe19 E-sensitivity读出即可）；R2里程碑后判据帧链首跑",
+    "updated_utc":  "2026-10-11T16:53:49Z",
+    "current_activity":  "r349毕：explore#41 E口径1臂7口让空窗扩证成件（纯纸面双源读出零新探针：probe19 G8c E-sensitivity段×probe20 43行全表坐标映射）——med 40.5双口径同值（上中位约定）+max 40.5→46.8新上界证据落40-50设计窗+第三空档归因降档口idx13（D L贴角→E尽端·同一物理空档两口径归档不同宽度同窗=「让空窗宽度绑定转向拓扑而非臂数标签」再证）+18转角空档守恒门（D 10+6+2⇌E 7+8+3）+律1 40m档n=2弱证据→n=3双侧口径支持（设计窗40-50维持·下界勿因min 29.8下调）；main#6判①②双假续候+P3-002第一百一十二回PASS；决策链轮尾复扫三sha轮中翻面=他域簿记零新涉本例行",
+    "artifact":  "docs/research/R-20261012-ad022-e1arm-7port-window-census.md",
+    "artifact_utc":  "2026-10-11T16:53:49Z",
+    "milestone":  "P3死线滚动10-14 00:3x前出一笔（#42 标记层overlay/独立槽双型×marking-occupation-syntax对照归并=r349新补条优先·纯纸面）；R2里程碑后判据帧链首跑",
     "milestone_eta_utc":  "2026-10-13T16:30:00Z"
 }

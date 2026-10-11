@@ -16,7 +16,7 @@
 | 9 | 微信小游戏 3D 性能上限案例集：团结引擎 WeChat 3D 分发面参考 | 团结 SDK 新仓（r219 勘正 c） | 分发面参考 |
 | 10 | world-events viz 消费端候选观察：M2 时态轮探针扩面口径（CityWatch 停役后唯一观测窗归 MiniGame 侧） | r164 evolution 扩面先例 | M2 排队面·观察不预建 |
 | 11 | 行情 K 线 M2 视觉映射设计稿：BigMoney state.reality.market 消费（数据已备 r47 注记） | M2 排队面 | 纸面设计稿·零引擎实现 |
-| 12 | **P3 48h 节律死线件（滚动计数位）**：r348 已满足（explore#40 PL 反向谱 Model E 臂标签重表成件 R-20261012-ad022-pl-reverse-model-e-arm-retable.md·10 口标签变动明细〔6×3→2+4×2→1·3→1 零例〕+梯度双面 HOLDS 分离度扩大〔3 臂 min 25.5→26.9·med 差 6.6→10.0〕+r347 §0 两注记级勘误+R2 禁区三律口径无关性收口）——末笔=r348·**下次死线=10-14 00:3x 前出一笔 P3 产出**（领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r348 行 | r319 入册·r320~r348 二十九轮连翻（死线机械化滚动·防静默超窗） |
+| 12 | **P3 48h 节律死线件（滚动计数位）**：r349 已满足（explore#41 E 口径 1 臂 7 口让空窗扩证成件 R-20261012-ad022-e1arm-7port-window-census.md·med 40.5 双口径同值+max 40.5→46.8 落 40-50 设计窗+第三空档归因降档口 idx 13〔D L 贴角→E 尽端·同一物理空档两口径归档不同宽度同窗=转向拓扑再证〕+18 转角空档守恒门+双源读出零新探针）——末笔=r349·**下次死线=10-14 00:3x 前出一笔 P3 产出**（领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r349 行 | r319 入册·r320~r349 三十轮连翻（死线机械化滚动·防静默超窗） |
 | 13 | Quaternius Modular Streets Pack 拼装语法拆解：件名谱/网格尺寸/与 Kenney Roads 及 AD-022 路族三方对照（Kenney Roads 二比一的另一侧·r320 §2 记录件） | R-20261011-kenney-citykit-assembly-syntax.md §5 | r321 轮尾补条（导入前纸面对照·零下载） |
 | 17 | 真 demo 街具密度/自由摆基准对我方 v6/v7 格点摆法对照评估（自由化扰动=活城感方向·观感调优输入） | R-20261011-ad022-truedemo-census.md §2 | r324 轮尾补条·纸面对照零导入 |
-| 41 | E-1臂 7 口让空窗扩证：r347 §4 律1「1 臂尽端窗 40m 档 n=2 弱证据」的 E 口径扩证——4 个 2→1 降档口（idx 11/13/15/35·距离带 21.2~44.7）入 1 臂档后让空窗宽度带复核 | R-20261012-ad022-curb-corner-gap-junction-arm-census.md §1+R-20261012-ad022-pl-reverse-model-e-arm-retable.md §1 | r348 轮尾补条·probe19 G8c E-sensitivity 段读出即可·纯纸面零导入 |
+| 42 | 标记层 overlay/独立槽双型×marking-occupation-syntax 对照归并：r348 §4 观察位（Arrow_01 共占 2/2=叠放装饰型·Arrow_02 独立 2/2=独立槽型·Lines_02 独立 8/10）并入 R-20261011-ad022-marking-occupation-syntax.md 防重复面——R2 标记层语法输入 | R-20261012-ad022-pl-reverse-model-e-arm-retable.md §4 | r349 轮尾补条·纯纸面零导入 |

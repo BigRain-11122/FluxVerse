@@ -7,11 +7,10 @@
 | # | 待办 | 指针/判据 | 备注 |
 |---|---|---|---|
 | 3 | arXiv:2410.15644 引用链跟踪：LLM×PCG 融合新作扫描（AIIDE-25/26 域） | docs/global-benchmarks.md ①动态行 | 半年一次续扫 |
-| 6 | WoWA godview（O-024）可行性预研：街机观察端技术参考 | O-023 roadmap（commit 3fdb268） | 纯预研零实现 |
 | 7 | 4K master+2K/1K 自适应分级参考调研：性能分层（perf tiers 预注册配套） | O-023 roadmap M0-M5 | 纯调研 |
 | 10 | world-events viz 消费端候选观察：M2 时态轮探针扩面口径（CityWatch 停役后唯一观测窗归 MiniGame 侧） | r164 evolution 扩面先例 | M2 排队面·观察不预建 |
 | 11 | 行情 K 线 M2 视觉映射设计稿：BigMoney state.reality.market 消费（数据已备 r47 注记） | M2 排队面 | 纸面设计稿·零引擎实现 |
-| 12 | **P3 48h 节律死线件（滚动计数位）**：r404 已满足（explore#96 Echoes.xyz 平台本体扫描成件=R-20261012-echoesxyz-platform-b2b-scan.md〔三要点落件=创作者付费层三层结构〔免费全功能无广告+ESSENTIAL/EXTRA 双会员+walk IAP 售卖 15% 抽成 FAQ 正身〕/存活样本〔iOS 2026-09-28 更新=活跃维护·Play 50K+ 下载〕/平台本体〔ECHOES.XYZ Limited UK 2015-09-03 注册 CIN 9762677·Unfunded 12 年·UK 实体 1 人/整体 7 人〕+超预期发现=社区买断 co-owner 征集探索+Open Collective 捐赠柱死亡实证〔7 年总收入 £3,877.68·现行年化 £21·赞助档全零〕+同赛道对照 izi 多边五流 vs Echoes 代理供养两路活法并排〕）——末笔=r404·**下次死线=10-14 12:2x 前出下一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r404 行 | r319 入册·r320~r404 八十五轮连翻（死线机械化滚动·防静默超窗） |
+| 12 | **P3 48h 节律死线件（滚动计数位）**：r405 已满足（explore#6 WoWA godview 可行性预研成件=R-20261012-wowa-godview-camera-feasibility.md〔判据三问全落=WoW 参数族双源可引源〔cameraDistanceMax 15yd×factor 封顶 39yd/pitchLimit ~88°/cameraSmoothStyle 四态〕+城建观察端可迁移四件〔CS2 四大件/pitch-on-zoom/zoom-to-cursor〕+手写 rig 判读〔~150 行零依赖·结构上造不出自由飞行=O-024 硬约束契合〕+§3.1 参数族候选表=R2+ 相机实现窗直接输入〕·前笔 r404 Echoes 平台扫描件在档）——末笔=r405·**下次死线=10-14 12:2x 前出下一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r405 行 | r319 入册·r320~r405 八十六轮连翻（死线机械化滚动·防静默超窗） |
 | 47 | 涂装 lot 渲染终验：z=75/150 行 PL 骑素面带的 z 序显隐实拍（§14.6 G 层共承 11/19 件的渲染次序真相——vendor z 序赌注 §4 同律·YL 虚线候选〔§14.3③〕同窗） | R-20261011-ad022-marking-occupation-syntax.md §14.3③+§14.6 | r354 轮尾补条·导入窗后置低优（#17 已领走毕 r373·R-20261012-ad022-freepose-vs-v6v7.md） |
 | 61 | R2 生成器输入门禁消费接线跟踪（被动·零施工）：生成器实现窗开工首跑 Tools/city/r2-spec-input-validate.py 入其门禁链（38 行输入自检=fail-loud 前置门·argv 负控通道随件）——判据=实现窗 commit/消息或 TECH 行引用本件 | Tools/city/r2-spec-input-validate.py+R-20261012-ad022-r2-spec-input.md §7 | r368 轮尾补条 |
 | 65 | R2 选型池六闸导入窗执行跟踪（被动·零施工）：R2 里程碑落地+导入窗开工时首跑 R-20261012-r2-block-expansion-selection-pool-final.md §1 六闸判据表逐闸执行+闸果回填其 §5——判据=实现窗 commit/消息或 TECH 行引用本件 | R-20261012-r2-block-expansion-selection-pool-final.md §1/§5 | r372 轮尾补条（explore#61 同式被动跟踪律） |
@@ -21,4 +20,5 @@
 | 69 | 微信官方性能评估标准数值表+团结成功转换案例手册页文本面获取：总览页 §二标准表为图片面（r376 8 源尽后仍文本不可达）·Unite PPT/阶段一案例清单页/后续文档改版补数 | R-20261012-wechat-3d-minigame-performance-cases.md §0 盲区注+§5 回填行 | r376 轮尾补条 |
 | 90 | ccgp 频控窗后政采全量普查补数（被动·零施工）：ccgp 主站频控解除后单年全量计数复核+金额未采集 10 案补采（瓯海/青海/长城博物馆/枣庄/叙永/运维 winner 等面）——判据=20 案基线对全量普查数的偏差率注记（R- 件 §1 三面拦实录=S8 事件 ID） | R-20261012-museum-digitization-procurement-annual-tam.md §1/§2/§3 | r397 轮尾补条（explore#61 同式被动跟踪律） |
 | 97 | Echoes 社区买断进展被动跟踪（零施工·年检位）：Companies House ECHOES.XYZ LTD（CIN 9762677）年账/股东变更面+买断页状态翻面（意向征集→正式 prospectus/撤页）——判据=状态翻面时 R- 件 §4.3 回填注记一行 | R-20261012-echoesxyz-platform-b2b-scan.md §4.3 | r404 轮尾补条（explore#61 同式被动跟踪律） |
+| 98 | R2+ godview 相机 rig 实现窗消费跟踪（被动·零施工）：相机实现窗开工首跑 R-20261012-wowa-godview-camera-feasibility.md §3.1 参数候选表→与 Phase 0 三档基线（b6b0a17）合流定稿+§5 回填行+zoom 两端判据帧注册引用其 §4——判据=实现窗 commit/消息或 TECH 行引用本件 | R-20261012-wowa-godview-camera-feasibility.md §3.1/§4/§5 | r405 轮尾补条（explore#61 同式被动跟踪律） |
 

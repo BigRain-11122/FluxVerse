@@ -11,7 +11,7 @@
 | 7 | 4K master+2K/1K 自适应分级参考调研：性能分层（perf tiers 预注册配套） | O-023 roadmap M0-M5 | 纯调研 |
 | 10 | world-events viz 消费端候选观察：M2 时态轮探针扩面口径（CityWatch 停役后唯一观测窗归 MiniGame 侧） | r164 evolution 扩面先例 | M2 排队面·观察不预建 |
 | 11 | 行情 K 线 M2 视觉映射设计稿：BigMoney state.reality.market 消费（数据已备 r47 注记） | M2 排队面 | 纸面设计稿·零引擎实现 |
-| 12 | **P3 48h 节律死线件（滚动计数位）**：r400 已满足（explore#92 digimuseo.fi 机构自建反例候选验伪成件=R-20261012-digimuseo-selfbuild-counter-verdict.md〔运营主体三破=协会共建公司 2020-01→2024-06-01 整体出售 Reveel·自运营存续 ≈4.3 年+平台成本面询价暗面+零开源=「资产开源+平台闭源」分裂态·r387 判读升格终局收敛级〕）——末笔=r400·**下次死线=10-14 12:2x 前出下一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r400 行 | r319 入册·r320~r400 八十一轮连翻（死线机械化滚动·防静默超窗） |
+| 12 | **P3 48h 节律死线件（滚动计数位）**：r401 已满足（explore#93 Reveel 平台本体 B 端模式扫描成件=R-20261012-reveel-platform-b2b-scan.md〔三要点落件+B 端服务谱/定价面/技术栈+超预期发现=平台商自身转型横向·博物馆垂直线降级旧站·r387 判读商业承体面〕）——末笔=r401·**下次死线=10-14 12:2x 前出下一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r401 行 | r319 入册·r320~r401 八十二轮连翻（死线机械化滚动·防静默超窗） |
 | 47 | 涂装 lot 渲染终验：z=75/150 行 PL 骑素面带的 z 序显隐实拍（§14.6 G 层共承 11/19 件的渲染次序真相——vendor z 序赌注 §4 同律·YL 虚线候选〔§14.3③〕同窗） | R-20261011-ad022-marking-occupation-syntax.md §14.3③+§14.6 | r354 轮尾补条·导入窗后置低优（#17 已领走毕 r373·R-20261012-ad022-freepose-vs-v6v7.md） |
 | 61 | R2 生成器输入门禁消费接线跟踪（被动·零施工）：生成器实现窗开工首跑 Tools/city/r2-spec-input-validate.py 入其门禁链（38 行输入自检=fail-loud 前置门·argv 负控通道随件）——判据=实现窗 commit/消息或 TECH 行引用本件 | Tools/city/r2-spec-input-validate.py+R-20261012-ad022-r2-spec-input.md §7 | r368 轮尾补条 |
 | 65 | R2 选型池六闸导入窗执行跟踪（被动·零施工）：R2 里程碑落地+导入窗开工时首跑 R-20261012-r2-block-expansion-selection-pool-final.md §1 六闸判据表逐闸执行+闸果回填其 §5——判据=实现窗 commit/消息或 TECH 行引用本件 | R-20261012-r2-block-expansion-selection-pool-final.md §1/§5 | r372 轮尾补条（explore#61 同式被动跟踪律） |
@@ -20,5 +20,5 @@
 | 68 | Marian/Merrell 六法生长线消费跟踪（被动·零施工）：城市生长线开线（需 P1 署名·r220 重评条件）时消费 R-20261012-wfc-variants-marian-merrell-teardown.md §3 六法（P1 惰性字典流=chunk 接口法判负留痕/P2 已知好边界 seeding 三态自愈/P3 无界件配对闸+连接器三层语法/P4 矛盾三策菜单/P5 确定性预注册判据先行/P6 商用判负锚）+果回填其 §5——判据=开线窗 commit/消息或 TECH 行引用本件 | R-20261012-wfc-variants-marian-merrell-teardown.md §3/§5 | r375 轮尾补条（explore#61/#65/#66/#67 同式被动跟踪律） |
 | 69 | 微信官方性能评估标准数值表+团结成功转换案例手册页文本面获取：总览页 §二标准表为图片面（r376 8 源尽后仍文本不可达）·Unite PPT/阶段一案例清单页/后续文档改版补数 | R-20261012-wechat-3d-minigame-performance-cases.md §0 盲区注+§5 回填行 | r376 轮尾补条 |
 | 90 | ccgp 频控窗后政采全量普查补数（被动·零施工）：ccgp 主站频控解除后单年全量计数复核+金额未采集 10 案补采（瓯海/青海/长城博物馆/枣庄/叙永/运维 winner 等面）——判据=20 案基线对全量普查数的偏差率注记（R- 件 §1 三面拦实录=S8 事件 ID） | R-20261012-museum-digitization-procurement-annual-tam.md §1/§2/§3 | r397 轮尾补条（explore#61 同式被动跟踪律） |
-| 93 | Reveel（STEP Technologies Oy）平台本体 B 端模式扫描：digimuseo 收购方=「平台托管终局收敛」判读的商业侧承体（站内文章在册「THE B2B BENEFITS OF PARTNERING WITH REVEEL」）——判据=B 端服务谱/定价面/技术栈三要点落件 | R-20261012-digimuseo-selfbuild-counter-verdict.md §0.5+S132 站头新闻链 | r400 轮尾补条（r387 判读商业承体面·与 r399 Sketchfab 成本面同链） |
+| 94 | izi.TRAVEL 平台本体 B 端模式扫描：r387「平台托管唯一存活」判读的独立第二平台样本（防单样本偏差——全球最大博物馆音频导览平台之一·freemium 增值模式在册候选）——判据=B 端服务谱/定价面/技术栈三要点同式落件 | R-20261012-reveel-platform-b2b-scan.md §0/§5（同式三要点判据） | r401 轮尾补条（与 Reveel r401/Sketchfab r399/digimuseo r400 三案并列成平台谱系·10-18 提案证据链第五锚候选） |
 

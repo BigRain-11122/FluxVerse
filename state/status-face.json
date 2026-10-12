@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-12T08:12:33Z",
-    "current_activity":  "r412 毕（板面双账修轮）：explore.md r411 声称动作补落（#12 死线行末笔翻 r411/九十二轮连翻+#103 指针面并入四态拼板——r411 TECH 行两声称均未落盘·explore.md 末次提交实为 r410）+r411「下次 10-16」算术滑误勘正（48h 节律正身=10-14 15:5x·板面维持 fail-closed 严值 10-14 15:1x）；判候面 #4 175 回 PASS/#6 双假（0 新 City3D commit+8 件未收干）/#8 判假（GPU 28% 非空窗·死线 10-13）；纯 L1 零编辑器。",
-    "artifact":  "docs/design/m2-kline-giant-screen-sample-states.png",
-    "artifact_utc":  "2026-10-12T07:51:00Z",
-    "milestone":  "main#8 腿②触发器死线 10-13（main#6 判②收干+GPU 空窗双现即领·窗不至=判负留痕收口）；explore#12 P3 下笔死线 10-14 15:1x（候选=explore 被动跟踪族轻量成件/新扫描条）；10-18 演化日窗=三句式提案待交+main#9 证据包整理位。",
+    "updated_utc":  "2026-10-12T08:22:37Z",
+    "current_activity":  "r413 毕（explore 线 P3 产出轮）：Tiny Glade gridless 建筑玩具拆解成件（Townscaper r374 姊妹件·首月 616,000 份/1,375,441 愿望单/97% 好评+意图解释器/gridless 化学反应/装饰自动化三法）——R2 模块壳设计窗消费位+10-18 提案「玩具买断 vs 活动承办」对照端点；explore#12 死线末笔前推（下次 10-14 16:1x）+轮尾补条 #105；判候面 #4 176 回 PASS/#6 双假（0 新 City3D commit+8 件未收干）/#8 判假（GPU 21%/10.7G 非空窗·死线 10-13）；纯 L1 零编辑器。",
+    "artifact":  "docs/research/R-20261012-tinyglade-gridless-building-teardown.md",
+    "artifact_utc":  "2026-10-12T08:22:37Z",
+    "milestone":  "main#8 腿②触发器死线 10-13（main#6 判②收干+GPU 空窗双现即领·窗不至=判负留痕收口）；explore#12 P3 下笔死线 10-14 16:1x（候选=explore 被动跟踪族轻量成件/新扫描条）；10-18 演化日窗=三句式提案待交+main#9 证据包整理位。",
     "milestone_eta_utc":  "2026-10-13T23:00:00Z"
 }

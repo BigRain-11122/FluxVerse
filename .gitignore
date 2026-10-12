@@ -37,3 +37,6 @@ City3D/Assets/lowpoly/
 
 # City3D AD-049 Megacity 资产库（2026-10-08 CEO 1008 增量包进城副本·194MB/1794 件）——同 lowpoly 律：git 不承载单机大资产；库正典位=MiniGame Art Assets/lowpoly/01_现代城市生活/AD-049_*；中台备份同律
 City3D/Assets/ithappy/
+
+# Playwright MCP browser session artifacts (r384: snapshot/console auto-dump dir - tool cache, never committable)
+.playwright-mcp/

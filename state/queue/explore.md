@@ -11,7 +11,7 @@
 | 7 | 4K master+2K/1K 自适应分级参考调研：性能分层（perf tiers 预注册配套） | O-023 roadmap M0-M5 | 纯调研 |
 | 10 | world-events viz 消费端候选观察：M2 时态轮探针扩面口径（CityWatch 停役后唯一观测窗归 MiniGame 侧） | r164 evolution 扩面先例 | M2 排队面·观察不预建 |
 | 11 | 行情 K 线 M2 视觉映射设计稿：BigMoney state.reality.market 消费（数据已备 r47 注记） | M2 排队面 | 纸面设计稿·零引擎实现 |
-| 12 | **P3 48h 节律死线件（滚动计数位）**：r383 已满足（explore#74 Zoan Studio 凤凰壳财务面闭卷=R-20261012-zoan-virtual-helsinki-event-economics.md §5 行3 闭卷+§3 新主体财务面节〔FY2024 营收 €193k/EBIT €68k 35.2%/净利 €63k/1 人·四聚合源同数·凤凰壳=创始人自雇转型非规模续命〕）——末笔=r383·**下次死线=10-14 08:1x 前出一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r383 行 | r319 入册·r320~r383 六十四轮连翻（死线机械化滚动·防静默超窗） |
+| 12 | **P3 48h 节律死线件（滚动计数位）**：r384 已满足（explore#75 MetAmazonia 案例面闭卷=R-20261012-zoan-virtual-helsinki-event-economics.md §5 行4 闭卷+§3 旗舰案例面节〔客户=AMA Group 生态·UE5 定制制作合同·metamazonia.io 客户端平台死域·平台路线终局三证闭环〕）——末笔=r384·**下次死线=10-14 08:3x 前出一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r384 行 | r319 入册·r320~r384 六十五轮连翻（死线机械化滚动·防静默超窗） |
 | 47 | 涂装 lot 渲染终验：z=75/150 行 PL 骑素面带的 z 序显隐实拍（§14.6 G 层共承 11/19 件的渲染次序真相——vendor z 序赌注 §4 同律·YL 虚线候选〔§14.3③〕同窗） | R-20261011-ad022-marking-occupation-syntax.md §14.3③+§14.6 | r354 轮尾补条·导入窗后置低优（#17 已领走毕 r373·R-20261012-ad022-freepose-vs-v6v7.md） |
 | 61 | R2 生成器输入门禁消费接线跟踪（被动·零施工）：生成器实现窗开工首跑 Tools/city/r2-spec-input-validate.py 入其门禁链（38 行输入自检=fail-loud 前置门·argv 负控通道随件）——判据=实现窗 commit/消息或 TECH 行引用本件 | Tools/city/r2-spec-input-validate.py+R-20261012-ad022-r2-spec-input.md §7 | r368 轮尾补条 |
 | 65 | R2 选型池六闸导入窗执行跟踪（被动·零施工）：R2 里程碑落地+导入窗开工时首跑 R-20261012-r2-block-expansion-selection-pool-final.md §1 六闸判据表逐闸执行+闸果回填其 §5——判据=实现窗 commit/消息或 TECH 行引用本件 | R-20261012-r2-block-expansion-selection-pool-final.md §1/§5 | r372 轮尾补条（explore#61 同式被动跟踪律） |
@@ -19,5 +19,5 @@
 | 67 | R2 实现窗 Townscaper 三法消费跟踪（被动·零施工）：R2 街区/生成器实现窗开工时消费 R-20261012-townscaper-mixed-initiative-teardown.md §3 三法（P1 连接约束律=union 网络连通门候选/P3 recipe 优先级+边界律=围合区地标时刻·P-71③ 候选法/P5 生成装饰分离=装饰层后置步）+果回填其 §5——判据=实现窗 commit/消息或 TECH 行引用本件 | R-20261012-townscaper-mixed-initiative-teardown.md §3/§5 | r374 轮尾补条（explore#61/#65/#66 同式被动跟踪律） |
 | 68 | Marian/Merrell 六法生长线消费跟踪（被动·零施工）：城市生长线开线（需 P1 署名·r220 重评条件）时消费 R-20261012-wfc-variants-marian-merrell-teardown.md §3 六法（P1 惰性字典流=chunk 接口法判负留痕/P2 已知好边界 seeding 三态自愈/P3 无界件配对闸+连接器三层语法/P4 矛盾三策菜单/P5 确定性预注册判据先行/P6 商用判负锚）+果回填其 §5——判据=开线窗 commit/消息或 TECH 行引用本件 | R-20261012-wfc-variants-marian-merrell-teardown.md §3/§5 | r375 轮尾补条（explore#61/#65/#66/#67 同式被动跟踪律） |
 | 69 | 微信官方性能评估标准数值表+团结成功转换案例手册页文本面获取：总览页 §二标准表为图片面（r376 8 源尽后仍文本不可达）·Unite PPT/阶段一案例清单页/后续文档改版补数 | R-20261012-wechat-3d-minigame-performance-cases.md §0 盲区注+§5 回填行 | r376 轮尾补条 |
-| 75 | MetAmazonia 案例面拆解（新主体现役旗舰案例·§5 行4 Burst/Cornerstone 终局跟踪的实件入口）：客户主体/技术栈/合同形态任一实数 | zoan.com Work/MetAmazonia 页（S11）+S12 rendrfestival | r383 轮尾补条（与 explore#74 闭环同窗） |
+| 76 | ZOAN Virtual Showroom 族（Spinnova）产品化展厅合同形态拆解：产品目录化展厅 vs 按场定制差异面（可复用模板/收费形态）——承接提案产品菜单第二证据位 | zoan.com/work/ Virtual Showroom 分区（S19 同站面·Metaverse 域外独立品类=产品化信号） | r384 轮尾补条（#75 闭卷后姊妹位） |
 

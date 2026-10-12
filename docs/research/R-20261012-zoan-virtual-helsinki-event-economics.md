@@ -3,12 +3,13 @@
 > explore#71 领走件；母件=R-20261012-helsinki-3dplus-open-data-ecosystem.md §2C+§5 回填行#1；判据（母件 §5）=收费主体/场次收入任一实数落件——**双判据均落+公司终局实数（破产）超预期命中**。本件=活动承接提案（10-18 演化日窗三句式）的收入结构证据底座。
 > **explore#72 回填**（r381：§5 行1「破产清算文件面」闭卷——单场合同额三查确认公开面不可达〔破产文件不公开客户合同〕+**清算债务实数四件落件**〔€366k+ 税务债权/€200k+ 工资垫付/≥€10k 尾量税债/€497.6k 国贷债权候选〕·§3 债务面节新增+§4③ 成本锚更新·判据满足=清算债务实数落件）。
 > **explore#74 回填**（r383：§5 行3「新主体财务面」闭卷——**FY2024 营收 €193k/EBIT €68k（35.2%）/净利 €63k/员工 1 人**四聚合源同数·**凤凰壳=创始人自雇转型非规模续命**·§3 新主体财务面节新增+§4② 平台路线终局判读配套+源 S15-S18 四源增补·判据满足=FY 营收实数落件）。
+> **explore#75 回填**（r384：§5 行4「Burst/Cornerstone 平台化终局」闭卷——旗舰案例 MetAmazonia=**AMA Group B 端定制制作合同**（UE5·开发者档案直证·非平台产物）+**客户端平台死域**（metamazonia.io→赌博站重定向·Wayback 末档 2026-02-12 仍 200）+r383 新主体 1 人咨询所=**平台路线未走通·终局三证闭环**·§3 旗舰案例面节新增+§4⑤ ESG 承接面+源 S19-S24 六源增补·判据满足=案例面合同形态实数落件·平台签约/收入实数判负留痕）。
 
 ## §0 结论（TL;DR）
 1. **收费主体=纯 B 端机构**（市府/演出主办方/美术馆/双年展/会议场馆/IP 权利方），零 C 端票务——旗舰场（JVG 五一演唱会）对市民免费、市府+Fullsteam Agency（演出主办方）买单；30+ 制作无一卖票。
 2. **单场量级实数（旗舰场 2020-04-30）**：46 万台电脑在线直播+149,403 人建 avatar 入场（同屏上限 500）；观众总量=The Guardian 保守估 ~70 万（1.5 人/电脑）↔Forbes 100 万+，=芬兰史上最大线上活动、全国人口 13%。
 3. **公司终局（重磅新发现）**：Zoan Oy（2010 年立·芬兰 VR 先锋·Moomin/国家博物馆/Käärijä 客户链）FY2021 营收 €3M（+60.1%）→FY2022 €5M（营业利润 ~€1M）→FY2023 €4.67M（**亏损 −€308k**）→**2024-05-14 宣告破产**（Kauppalehti 注册面 Konkurssi+Yle 报道双源·**explore#72 债务面实数**：破产申请方=Verohallinto〔2024-03 提请〕·税务债权 €366k+·欠薪 ≥20 人〔国家工资保障垫付 €200k+〕·20+ 支付违约记录——**€4.67M 营收公司被 €366k 级债权压死=现金流断裂死非资不抵债死**）——**70 万人旗舰场救不了定制制作公司的命**。**凤凰壳终局（r383）**：新主体 Zoan Studio Oy（同 CEO Rosendahl·2023-07 立）FY2024 营收 €193k/员工 1 人=创始人自雇转型（详 §3 新主体财务面节）。
-4. **判读**：活动承接=需求验证成立（机构愿付+百万人次可达）但**商业模式判负样本**——按场次定制制作（每场新人力）=收入集中+薄毛利+单年翻车即死；ZOAN 末期自救方向（Burst 平台化+Cornerstone 自有元宇宙平台）=正确但太晚。超体宇宙城活动承接提案须以**平台/订阅经济**立项、禁以「按场接单的制作所」立项——**r383 凤凰壳实数终证**：新主体 1 人/€193k 咨询所（对比原主体 €4.67M/60 人）=平台路线未以公司规模走通·平台叙事只活在 zoan.com 站面。
+4. **判读**：活动承接=需求验证成立（机构愿付+百万人次可达）但**商业模式判负样本**——按场次定制制作（每场新人力）=收入集中+薄毛利+单年翻车即死；ZOAN 末期自救方向（Burst 平台化+Cornerstone 自有元宇宙平台）=正确但太晚。超体宇宙城活动承接提案须以**平台/订阅经济**立项、禁以「按场接单的制作所」立项——**r383 凤凰壳实数终证**：新主体 1 人/€193k 咨询所（对比原主体 €4.67M/60 人）=平台路线未以公司规模走通·平台叙事只活在 zoan.com 站面；**r384 旗舰案例终证**：MetAmazonia（现役站面 Work 首列案例）=AMA Group B 端定制制作（UE5·非平台产物）+客户端平台 metamazonia.io 死域（赌博站重定向）——平台路线三证闭环（详 §3 旗舰案例面节）。
 
 ## §1 收费主体结构（谁买单·逐场对账）
 | 制作 | 付费主体（B 端） | C 端票务 | 源 |
@@ -39,6 +40,14 @@
 - Yle 定位原文：2010 年立·芬兰 VR 技术与 3D 建模先驱·合作过国家博物馆与 Moomin Characters Oy（S9）——**先驱+顶流客户链+国家背书三全，仍破产**。
 - 品牌延续面：zoan.com 现役（Zoan Studio 新主体 3375478-1+MetAmazonia 案例+Cornerstone 自有元宇宙平台 S12；Burst 平台 2023-05 曾发 Super Bowl 伙伴新闻 S7）——**凤凰式续壳，原主体已死**。
 - **新主体财务面实数（explore#74 回填·r383·S15/S16/S17/S18）**：Zoan Studio Oy（3375478-1）——**2023-07-14 立**（Kaupparekisteri·初始登记 2023-07-03 未注册态 10 天后转正 S16）·Kauppalehti 注册面 **Aktiivinen**（软件设计生产 62100·Lahti Fellmaninkatu 1 C 31·**CEO Miikka Petteri Rosendahl 连任**=原主体同帅 S15）；**FY2024 全套实数（S17 luottoriskit 全文）=营收 €193k·毛利 €104k·EBIT €68k（35.2%）·净利 €63k·股东权益 €63k·资产负债表 €66k·净现金 −€16k·权益比 96.9%·ROE 100%**——**员工 1 人（2024）**；FY 标签差注记=luottoriskit 标 FY2024「无对比年」vs b2b.profinder 标 FY 止 2025-03（2023-07 立司会计期所致·**四聚合源同数 €193k**：finder €194k/asiakastieto/b2b.profinder/luottoriskit·S18 快照交叉）；税表旁证（S16 woorati 同式）=FY2024 应税所得 **€10,000**（税额 €2,500·091 Helsinki 税区）+2024-04-30 零税债零申报瑕疵；**对比判读：原主体 €4.67M/60 人团→新主体 €193k/1 人=凤凰壳不是规模续命、是创始人自雇咨询转型**（MetAmazonia/Cornerstone 平台叙事仍在站面 S11/S12=产品化尝试的营销延续·非营收实体面——§5 行4 终局跟踪的配套判读）。
+- **旗舰案例面实数（explore#75 回填·r384·S19-S24）**：MetAmazonia（zoan.com 现役站面 Work 页 Metaverse 域案例+首页 Selected work 双列位）——
+  - **客户主体=AMA Group 生态**（巴西 greentech/fintech-for-good 集团·2008 年首社企 EBCF〔Brazilian Rainforest Conservation Company〕起家·2013 EBCF 认证亚马逊首个私营可持续发展保护区 RPPN·amagroup.com.br/metamazonia 页在役；项目载体=MetAmazonia Inc.〔LinkedIn/Crunchbase/Messari/CBInsights 公司档〕）；
+  - **ZOAN 角色=承建方**（开发者档案直证「real-time project made at ZOAN」+「the client's conservation programme」S21）→**合同形态=B 端定制制作**（非平台签约·非订阅）；
+  - **技术栈=Unreal Engine 5**（S21 直证）+实时数据+VR·**15 村中 1 村数字孪生**（"explore and interact with one of the 15 villages that our client assists"）·首次公开展示=**Gitex Global 2022 Dubai**；
+  - **项目机制=保护区资金投放透明化可视化**（companies/individuals 查看资金投放去向·S21）——r378 §3 律5「标识符=基础设施」的实件同构（孪生体=投资透明化面）；
+  - **客户端平台形态=AmazonRio I 数字孪生+Web3**（S23：最大私营保护区数字孪生·VR 可逛·实时数据；S24：ApexBrasil COP star 页「AI + Web3 + GIS」「individuals and institutions can easily invest and profit from the climate economy」+Scribd pitch deck 2023=NFT 地块模型〔plot↔真实地块·flora/fauna/音视频传感器稀有度·land owner rewards〕）；
+  - **2030 目标三数**（S19 案例页：500 万公顷保护雨林/50 万林中居民/5 亿吨碳缓解）；
+  - **终局=平台死域**：metamazonia.io 今日（2026-10-12 Playwright 直航）重定向赌博站 slotmenang88.com（死域/劫持实锚 S20）·Wayback 生死区间=**2022-06-30 首档→2026-02-12 末档仍 200 活态**→2026-10-12 死域（availability API+CDX 双证）——客户端平台未以持续运营形态存活；ZOAN 站面案例页 © 2022 陈旧未更新（案例仍在卖=营销延续非运营延续）。
 - **破产清算债务面实数（explore#72 回填·S13 全文/S14 官方登记聚合）**：
   - 破产申请方=**Verohallinto（税务部门）**·2024-03 提请·申请时点债权含滞纳金 **€366,000+**（S13）；
   - 破产前已**欠薪/欠费 ≥20 人**·ELY-keskus 国家工资保障（palkkaturva）至 2024-03 已代垫 **€200,000+**（=工资债权下界·S13）；
@@ -53,6 +62,7 @@
 2. **商业模式红线（本件核心增量）**：提案三句式必须写**平台经济不是制作经济**——按场次定制=ZOAN 死法（€5M 峰值营收/60 人团队/r378 S11=薄毛利制作所+单一坏年即破产）；正路=可复用活动平台（场景件复用+工具化+按场次轻制作）+**底座方收平台费/租金**（Guardian 记录的市府收租意图同向 S2）；**r383 凤凰壳终证**=新主体 FY2024 €193k/1 人（原主体 €4.67M/60 人）——平台路线未以公司规模走通·承接提案收入面只能按「底座方收租」立项。
 3. **报价锚（explore#72 回填后）**：单场合同额=公开面不可达（破产文件不公开客户合同·三查闭卷）——提案判据维持「人次×平台费」模型，禁用「对标 ZOAN 单场制作费」；**成本侧新锚**=平台级能力建设实数（2020 年 Business Finland 研发贷款 **€497,600 全额提取**+五周 crash 人力密集〔S2〕+60 人团队峰值〔r378 S11〕）——自建平台级能力的资本消耗=€0.5M 级国贷起·承接方以平台复用摊薄此面；**债务面教训锚**=€4.67M 营收公司死于 €366k 级现金流缺口——活动承接提案的**账期/垫资风险条款为必写项**（机构客户付款慢=压死先行者）。
 4. **免费旗舰策略**：ZOAN 旗舰场=免费市民活动（获客成本逻辑·r378 §3 律1 同构）——超体宇宙城首场活动若办，免费+冠名/机构买单结构=已验证形态。
+5. **ESG/资金透明化承接面（r384 新）**：MetAmazonia=孪生体作为「资金投放去向可视化」基础设施的 B 端实案（客户愿付=greentech 集团 ESG 预算·非政府非 C 端）——超体宇宙城承接产品菜单候选位：城内公共项目/公益面资金流向可视化（活动承接之外的 B 端第二出口·r377 §0 出口排序补充位）；反面锚=客户侧平台死域再证红线：**承接方只做可复用制作+收租·平台运营归底座方自己**。
 
 ## §5 后续待挖（回填行）
 | 待挖 | 口 | 判据 |
@@ -60,7 +70,7 @@
 | ~~ZOAN 破产清算文件面~~ **✅ explore#72 闭卷（r381）**：单场合同额=公开面不可达（破产文件不公开合同）；清算债务实数四件落件=€366k+ 税务债权/€200k+ 工资垫付/≥€10k 尾量税债/€497.6k 国贷债权候选（详 §3 债务面节） | oikeus.fi/HS 深度=无 Zoan 专题命中（Bing 面三查·S13/S14） | 判据满足（清算债务实数落件）·单场合同额面判死留痕 |
 | Fullsteam Agency 付费角色二源（演唱会成本分摊：市府 vs 主办方） | 芬兰语媒体 2020-05 报道族 | 分摊比例/任一方出资实数 |
 | ~~Zoan Studio Oy（3375478-1）新主体财务面（凤凰壳实态）~~ **✅ explore#74 闭卷（r383）**：FY2024 营收 €193k/EBIT 35.2%/净利 €63k/1 人（四聚合源同数·详 §3 新主体财务面节） | Kauppalehti yrityshaku 同式（A 注册面）+luottoriskit/woorati 全文 | 判据满足（FY 营收实数落件） |
-| Burst/Cornerstone 平台化终局（平台路线是否走通） | zoan.com news/rendrfestival 页跟踪 | 平台签约/收入形态任一实数（r383 配套判读=新主体 1 人/€193k 咨询所·平台未以公司规模走通·跟踪维持开行） |
+| ~~Burst/Cornerstone 平台化终局（平台路线是否走通）~~ **✅ explore#75 闭卷（r384）**：判负留痕——旗舰案例 MetAmazonia=B 端定制制作合同（AMA Group·UE5·详 §3 旗舰案例面节）非平台产物+客户端平台死域（metamazonia.io→赌博站重定向·Wayback 末档 2026-02-12 仍 200）+r383 新主体 1 人/€193k 咨询所=**平台路线未走通·终局三证闭环**；平台签约/收入形态实数全程未现身（判死留痕·未来实数出现再开行） | zoan.com cases 页+metamazonia.io 死域直航+开发者档案 S21 | 判据满足（案例面合同形态实数落件·平台面判负留痕） |
 
 ## §6 源清单（16 源·A=官方/一手·B=权威转述）
 - S1 prnewswire.com Helsinki Marketing 官方 PR（A·**全文 fetch**·2020-04-29·市府+Fullsteam+Burst Live+免费）
@@ -81,5 +91,12 @@
 - S16 woorati.com/companies/3375478-1/zoan-studio-oy（B·**r383 全文 fetch**·2023-07-14 立/初始地址 Bulevardi 1 Helsinki/FY2024 应税所得 €10,000·税 €2,500/2024-04-30 零税债零申报瑕疵）
 - S17 luottoriskit.fi/fi/yritykset/3375478-1（B·**r383 全文 fetch**·FY2024 全套实数：营收 193k/毛利 104k/EBIT 68k/净利 63k/权益 63k/资产负债表 66k/净现金 −16k/权益比 96.9%/quick ratio 33/ROE 100%/员工 1 人/「无对比年」）
 - S18 finder.fi+asiakastieto.fi+b2b.profinder.fi 三源快照（B·r383 检索面交叉·同数 €193-194k/EBIT 68k/35.2%/1 人〔b2b.profinder 标 FY 止 2025-03+「营收持平」·asiakastieto 标 2025〕）
+- S19 zoan.com/cases/metamazonia（**A·Playwright 页面读（r384）**·「first metaverse with real-world positive impacts」+2030 三目标+carbon credit 参与机制+EXPLORE 外链→metamazonia.io；work 页 Metaverse 域六案清单=GOTEVERSE/THE BROOK/VIRTUAL HELSINKI/CORNERSTONE/METAMAZONIA/KÄÄRIJÄ IN FORTNITE）
+- S20 metamazonia.io 死域+Wayback 双 API（r384：Playwright 直航→slotmenang88.com 赌博站重定向〔死域/劫持实锚〕；availability API 末档 20260212194751/200+CDX 首档 2022-06-30 生死区间——Wayback 页面体 503 瞬态二拦以 API 面收口）
+- S21 jonathanbiz.com/metamazonia.html（**B·ZOAN 开发者作品档案·全文 fetch（r384）**·「real-time project made at ZOAN」+「the client's conservation programme」+Unreal Engine 5+Gitex Global 2022 Dubai 首秀+15 村 1 村数字孪生+资金去向可视化机制）
+- S22 amagroup.com.br/metamazonia（**A·客户主体页·全文 fetch（r384）**·AMA Group=greentech/fintech-for-good 集群·2008 EBCF·2013 首个私营可持续发展保护区 RPPN）
+- S23 messari.io/project/metamazonia+cbinsights.com/company/metamazonia+linkedin.com/company/metamazonia（B·快照·AmazonRio I=最大私营保护区数字孪生·3D metaverse+blockchain·实时数据·MetAmazonia Inc. 公司档）
+- S24 apexbrasil.com.br APEX-COP star 页+scribd.com Pitch Deck 2023（B·快照·「AI + Web3 + GIS」+「invest and profit from the climate economy」+NFT 地块模型〔plot↔真实地块·传感器稀有度·land owner rewards〕+Green Zone·Startup Village #54·12/8-12 时窗）
+- S12补 rendrfestival.com/zoan 讲者页（B·r384 重取全文·Marko Martiskainen 讲者档——Cornerstone 定性原文「photorealistic Metaverse platform」+Zoan real-time game engine 业务面向 Fortune 500）
 
-> 检索通道注记：DuckDuckGo MCP+html 端点反爬拦（2026-10-12 实测）→Bing 检索走 Playwright 浏览器面+权威源 fetch_content 直取双路；iq-mag/Forbes/Evermade 全文被 403/拦——以标题快照+引注重复源交叉（判据满足：三独立源同数）；r381 同律复现（DuckDuckGo 双 query 零回→Bing/Playwright 三查+yle/woorati fetch_content 直取双命中）。
+> 检索通道注记：DuckDuckGo MCP+html 端点反爬拦（2026-10-12 实测）→Bing 检索走 Playwright 浏览器面+权威源 fetch_content 直取双路；iq-mag/Forbes/Evermade 全文被 403/拦——以标题快照+引注重复源交叉（判据满足：三独立源同数）；r381 同律复现（DuckDuckGo 双 query 零回→Bing/Playwright 三查+yle/woorati fetch_content 直取双命中）；r384：内置 search 通道通（DuckDuckGo 拦未复现·2 query 全回）·zoan.com/metamazonia.io=JS 渲染/死域面走 Playwright 浏览器读（fetch 空/404→浏览器面正法）·Wayback 页面体 503 瞬态二拦（web_fetch+浏览器双路同拦）→availability/CDX API 面收口。

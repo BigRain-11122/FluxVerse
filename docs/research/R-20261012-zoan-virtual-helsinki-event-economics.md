@@ -4,12 +4,14 @@
 > **explore#72 回填**（r381：§5 行1「破产清算文件面」闭卷——单场合同额三查确认公开面不可达〔破产文件不公开客户合同〕+**清算债务实数四件落件**〔€366k+ 税务债权/€200k+ 工资垫付/≥€10k 尾量税债/€497.6k 国贷债权候选〕·§3 债务面节新增+§4③ 成本锚更新·判据满足=清算债务实数落件）。
 > **explore#74 回填**（r383：§5 行3「新主体财务面」闭卷——**FY2024 营收 €193k/EBIT €68k（35.2%）/净利 €63k/员工 1 人**四聚合源同数·**凤凰壳=创始人自雇转型非规模续命**·§3 新主体财务面节新增+§4② 平台路线终局判读配套+源 S15-S18 四源增补·判据满足=FY 营收实数落件）。
 > **explore#75 回填**（r384：§5 行4「Burst/Cornerstone 平台化终局」闭卷——旗舰案例 MetAmazonia=**AMA Group B 端定制制作合同**（UE5·开发者档案直证·非平台产物）+**客户端平台死域**（metamazonia.io→赌博站重定向·Wayback 末档 2026-02-12 仍 200）+r383 新主体 1 人咨询所=**平台路线未走通·终局三证闭环**·§3 旗舰案例面节新增+§4⑤ ESG 承接面+源 S19-S24 六源增补·判据满足=案例面合同形态实数落件·平台签约/收入实数判负留痕）。
+> **explore#76 回填**（r385：产品化展厅族闭卷——Spinnova=Virtual Showroom 品类**唯一案例**〔work 页四域 11 案=Metaverse 6/Showroom 1/Productions 2/Heritage 1·单案例品类=目录化意图非规模化现实〕+交付形态=**客户自维护品牌展厅**〔「hub is flexible to edit, adding interactive elements made as easy as possible」+CDX digest 2022→2024 变=客户实更新过〕+**hub 终局=DNS 死域**〔ERR_NAME_NOT_RESOLVED·Wayback 2022-07-06→2025-07-08 仍 200→今无解析=3 年寿命客户弃管死〕+UNITS 三单元=Studio 承载全部制作〔Cornerstone/Burst=平台单元〕+站面零价格面〔收费实数判死留痕〕——§3 产品化展厅面节新增+§0⑤+§4⑥ 产品菜单第二证据位+§5 行5+源 S25-S27 增补）。
 
 ## §0 结论（TL;DR）
 1. **收费主体=纯 B 端机构**（市府/演出主办方/美术馆/双年展/会议场馆/IP 权利方），零 C 端票务——旗舰场（JVG 五一演唱会）对市民免费、市府+Fullsteam Agency（演出主办方）买单；30+ 制作无一卖票。
 2. **单场量级实数（旗舰场 2020-04-30）**：46 万台电脑在线直播+149,403 人建 avatar 入场（同屏上限 500）；观众总量=The Guardian 保守估 ~70 万（1.5 人/电脑）↔Forbes 100 万+，=芬兰史上最大线上活动、全国人口 13%。
 3. **公司终局（重磅新发现）**：Zoan Oy（2010 年立·芬兰 VR 先锋·Moomin/国家博物馆/Käärijä 客户链）FY2021 营收 €3M（+60.1%）→FY2022 €5M（营业利润 ~€1M）→FY2023 €4.67M（**亏损 −€308k**）→**2024-05-14 宣告破产**（Kauppalehti 注册面 Konkurssi+Yle 报道双源·**explore#72 债务面实数**：破产申请方=Verohallinto〔2024-03 提请〕·税务债权 €366k+·欠薪 ≥20 人〔国家工资保障垫付 €200k+〕·20+ 支付违约记录——**€4.67M 营收公司被 €366k 级债权压死=现金流断裂死非资不抵债死**）——**70 万人旗舰场救不了定制制作公司的命**。**凤凰壳终局（r383）**：新主体 Zoan Studio Oy（同 CEO Rosendahl·2023-07 立）FY2024 营收 €193k/员工 1 人=创始人自雇转型（详 §3 新主体财务面节）。
 4. **判读**：活动承接=需求验证成立（机构愿付+百万人次可达）但**商业模式判负样本**——按场次定制制作（每场新人力）=收入集中+薄毛利+单年翻车即死；ZOAN 末期自救方向（Burst 平台化+Cornerstone 自有元宇宙平台）=正确但太晚。超体宇宙城活动承接提案须以**平台/订阅经济**立项、禁以「按场接单的制作所」立项——**r383 凤凰壳实数终证**：新主体 1 人/€193k 咨询所（对比原主体 €4.67M/60 人）=平台路线未以公司规模走通·平台叙事只活在 zoan.com 站面；**r384 旗舰案例终证**：MetAmazonia（现役站面 Work 首列案例）=AMA Group B 端定制制作（UE5·非平台产物）+客户端平台 metamazonia.io 死域（赌博站重定向）——平台路线三证闭环（详 §3 旗舰案例面节）。
+5. **展厅线终态（r385 新）**：Virtual Showroom 品类 6+ 年作品集**仅 Spinnova 一案**——品牌展厅需求真实（B 端品牌方付费+「客户自维护/可编辑」诉求实证·hub 内容 2024 年实更新过）但**未成复购品类**；Spinnova hub 3 年寿命后 **DNS 死域**（客户域名弃管）=展厅交付物与平台同终局——**底座方托管收租=唯一活路**（详 §3 产品化展厅面节+§4⑥）。
 
 ## §1 收费主体结构（谁买单·逐场对账）
 | 制作 | 付费主体（B 端） | C 端票务 | 源 |
@@ -48,6 +50,13 @@
   - **客户端平台形态=AmazonRio I 数字孪生+Web3**（S23：最大私营保护区数字孪生·VR 可逛·实时数据；S24：ApexBrasil COP star 页「AI + Web3 + GIS」「individuals and institutions can easily invest and profit from the climate economy」+Scribd pitch deck 2023=NFT 地块模型〔plot↔真实地块·flora/fauna/音视频传感器稀有度·land owner rewards〕）；
   - **2030 目标三数**（S19 案例页：500 万公顷保护雨林/50 万林中居民/5 亿吨碳缓解）；
   - **终局=平台死域**：metamazonia.io 今日（2026-10-12 Playwright 直航）重定向赌博站 slotmenang88.com（死域/劫持实锚 S20）·Wayback 生死区间=**2022-06-30 首档→2026-02-12 末档仍 200 活态**→2026-10-12 死域（availability API+CDX 双证）——客户端平台未以持续运营形态存活；ZOAN 站面案例页 © 2022 陈旧未更新（案例仍在卖=营销延续非运营延续）。
+- **产品化展厅面实数（explore#76 回填·r385·S25-S27）**：Spinnova（work 页 **Virtual Showroom 品类唯一案例**）——
+  - **客户主体=Spinnova Oyj**（芬兰可持续纤维品牌·「the world's most sustainable fiber brand」·蜘蛛丝仿生纳米纤维素纤维·牛津讲座起源故事在案例页）；
+  - **交付形态=品牌展厅非活动**：interactive 3D content platform（2D+3D 混合·产品/工艺/可持续理念展示+**factory tour 工厂参观**·「consumers concretely experience the company's philosophy」）——B 端品牌方**常年在线空间**·与 JVG 单场活动构成差异面两极；
+  - **产品化信号（vs 按场定制差异面核心）**：案例页 LEARNING 节自述「**there was no room for complexity when updating it. The hub is flexible to edit, and adding interactive elements to engage users is made as easy as possible**」=交付物按**客户自维护**设计（可编辑模板·非一次性交付走人）；CDX 客观佐证=**首档 2022-07-06 digest W6POO…→2024-04-23 digest 变 VNZAY…（内容实更新 ≥1 次）**→「flexible to edit」承诺被真实行使过；
+  - **生命周期=3 年后客户弃管死**：virtualhub.spinnova.com 今日 **ERR_NAME_NOT_RESOLVED**（DNS 无解析·S26）·Wayback 生死区间=**2022-07-06 首档 200→2025-07-08 末档仍 200→2026-10-12 DNS 死**——比 metamazonia.io 更彻底的死法（赌博站劫持 vs 直接无解析）但同终局：**挂客户域名的交付物=客户弃管即死**；
+  - **品类结构实数**：work 页四域 11 案例=**Metaverse 6/Virtual Showroom 1/Virtual Productions 2/Heritage Metaverse 1**——Showroom 品类 6+ 年仅 1 案+「YOUR BRAND HERE? WE'D LOVE THAT.」开放招揽 CTA=产品化目录有 taxonomy 无复购的站面自证；UNITS 页三单元=**ZOAN Studio（定制制作·全部案例承载单元·「showcase your processes and products, host exhibitions and trainings」）/Cornerstone（photorealistic Metaverse 平台）/BURST（fan spaces 平台）**——Showroom 与 Metaverse 案例同属 Studio 定制单元·无独立 SKU；
+  - **收费形态=站面零价格面**（案例页/Units 页均无价格/订阅/菜单定价·询价表单制）——合同额与定价模型公开不可达·判死留痕。
 - **破产清算债务面实数（explore#72 回填·S13 全文/S14 官方登记聚合）**：
   - 破产申请方=**Verohallinto（税务部门）**·2024-03 提请·申请时点债权含滞纳金 **€366,000+**（S13）；
   - 破产前已**欠薪/欠费 ≥20 人**·ELY-keskus 国家工资保障（palkkaturva）至 2024-03 已代垫 **€200,000+**（=工资债权下界·S13）；
@@ -63,6 +72,7 @@
 3. **报价锚（explore#72 回填后）**：单场合同额=公开面不可达（破产文件不公开客户合同·三查闭卷）——提案判据维持「人次×平台费」模型，禁用「对标 ZOAN 单场制作费」；**成本侧新锚**=平台级能力建设实数（2020 年 Business Finland 研发贷款 **€497,600 全额提取**+五周 crash 人力密集〔S2〕+60 人团队峰值〔r378 S11〕）——自建平台级能力的资本消耗=€0.5M 级国贷起·承接方以平台复用摊薄此面；**债务面教训锚**=€4.67M 营收公司死于 €366k 级现金流缺口——活动承接提案的**账期/垫资风险条款为必写项**（机构客户付款慢=压死先行者）。
 4. **免费旗舰策略**：ZOAN 旗舰场=免费市民活动（获客成本逻辑·r378 §3 律1 同构）——超体宇宙城首场活动若办，免费+冠名/机构买单结构=已验证形态。
 5. **ESG/资金透明化承接面（r384 新）**：MetAmazonia=孪生体作为「资金投放去向可视化」基础设施的 B 端实案（客户愿付=greentech 集团 ESG 预算·非政府非 C 端）——超体宇宙城承接产品菜单候选位：城内公共项目/公益面资金流向可视化（活动承接之外的 B 端第二出口·r377 §0 出口排序补充位）；反面锚=客户侧平台死域再证红线：**承接方只做可复用制作+收租·平台运营归底座方自己**。
+6. **产品菜单第二证据位（r385 新）**：承接提案产品菜单=活动承接（首位·r377）+**品牌展厅承接（第二位·本件新锚）**——Spinnova 实案=品牌方付费建常年在线展厅（产品+工艺+工厂参观动线·B 端品牌预算·非政府非活动方）；差异面定谳=**活动承接=一次性大制作+人次逻辑；展厅承接=常年在线+客户自维护+内容更新逻辑**（「flexible to edit」=客户侧可编辑诉求实证·底座方模板化+客户自编辑=正确交付形态）；**终局红线复现加固**=即使可编辑长寿命展厅·挂客户域名=3 年后 DNS 死（Spinnova）与平台劫持（MetAmazonia）同判——提案合同形态关键位=**底座方托管收租（活）vs 客户域名自挂（死）**；单案例品类=展厅路线需求真实但复购未验证·提案判据按「**模板复用+托管费双段模型**」写·禁按「单场/单项目制作费」写（3 年存活 CDX=维护段真实存在过的生命周期证据）。
 
 ## §5 后续待挖（回填行）
 | 待挖 | 口 | 判据 |
@@ -71,8 +81,9 @@
 | Fullsteam Agency 付费角色二源（演唱会成本分摊：市府 vs 主办方） | 芬兰语媒体 2020-05 报道族 | 分摊比例/任一方出资实数 |
 | ~~Zoan Studio Oy（3375478-1）新主体财务面（凤凰壳实态）~~ **✅ explore#74 闭卷（r383）**：FY2024 营收 €193k/EBIT 35.2%/净利 €63k/1 人（四聚合源同数·详 §3 新主体财务面节） | Kauppalehti yrityshaku 同式（A 注册面）+luottoriskit/woorati 全文 | 判据满足（FY 营收实数落件） |
 | ~~Burst/Cornerstone 平台化终局（平台路线是否走通）~~ **✅ explore#75 闭卷（r384）**：判负留痕——旗舰案例 MetAmazonia=B 端定制制作合同（AMA Group·UE5·详 §3 旗舰案例面节）非平台产物+客户端平台死域（metamazonia.io→赌博站重定向·Wayback 末档 2026-02-12 仍 200）+r383 新主体 1 人/€193k 咨询所=**平台路线未走通·终局三证闭环**；平台签约/收入形态实数全程未现身（判死留痕·未来实数出现再开行） | zoan.com cases 页+metamazonia.io 死域直航+开发者档案 S21 | 判据满足（案例面合同形态实数落件·平台面判负留痕） |
+| ~~Virtual Showroom 产品化收费形态（模板定价/托管费模型实数）~~ **✅ explore#76 闭卷（r385）**：站面零价格面（案例页/Units 页询价制无定价）——收费实数判死留痕；生命周期证据=建站+3 年存活（2022-2025 CDX）支持「制作费+常年维护段」双段候选模型·品类结构=6+ 年仅 1 案（复购未验证）·未来实数出现再开行 | zoan.com/cases/spinnova+zoan.com/units+virtualhub.spinnova.com CDX | 判据满足（品类结构+交付形态+生命周期实数落件·定价面判负留痕） |
 
-## §6 源清单（16 源·A=官方/一手·B=权威转述）
+## §6 源清单（27 源·A=官方/一手·B=权威转述）
 - S1 prnewswire.com Helsinki Marketing 官方 PR（A·**全文 fetch**·2020-04-29·市府+Fullsteam+Burst Live+免费）
 - S2 theguardian.com Sarah Baxter 2020-05-05（B·**全文 fetch**·46 万电脑/149,403 avatar/70 万/五周 crash）
 - S3 en.wikipedia.org JVG (band)（B·**页面读**·70 万~100 万+三引注）
@@ -98,5 +109,8 @@
 - S23 messari.io/project/metamazonia+cbinsights.com/company/metamazonia+linkedin.com/company/metamazonia（B·快照·AmazonRio I=最大私营保护区数字孪生·3D metaverse+blockchain·实时数据·MetAmazonia Inc. 公司档）
 - S24 apexbrasil.com.br APEX-COP star 页+scribd.com Pitch Deck 2023（B·快照·「AI + Web3 + GIS」+「invest and profit from the climate economy」+NFT 地块模型〔plot↔真实地块·传感器稀有度·land owner rewards〕+Green Zone·Startup Village #54·12/8-12 时窗）
 - S12补 rendrfestival.com/zoan 讲者页（B·r384 重取全文·Marko Martiskainen 讲者档——Cornerstone 定性原文「photorealistic Metaverse platform」+Zoan real-time game engine 业务面向 Fortune 500）
+- S25 zoan.com/cases/spinnova（**A·Playwright 页面读（r385）**·「A STRIKING VIRTUAL HUB FOR THE WORLD'S MOST SUSTAINABLE FIBER BRAND」+2D/3D 混合 interactive 3D content platform+factory tour+LEARNING 节「**there was no room for complexity when updating it. The hub is flexible to edit, and adding interactive elements to engage users is made as easy as possible**」+ENTER 外链→virtualhub.spinnova.com+© 2022）
+- S26 virtualhub.spinnova.com 死域+Wayback 双 API（r385：Playwright 直航→**ERR_NAME_NOT_RESOLVED**〔DNS 无解析〕；availability API 末档 20250708184159/200+CDX 首档 20220706190457/200〔digest W6POOOS6DOGGQWXKOUCC2AKECUNM3RQB〕→20230403 revisit 同 digest→**20240423100556 digest 变**〔VNZAY5W5EVCN4SE7OONI6SGW5C5CK52F=内容实更新〕→末档 2025-07-08·生死区间 3 年）
+- S27 zoan.com/work/ + zoan.com/units/（**A·Playwright 页面读（r385）**·work 页四域全目录=Metaverse 6 案〔KÄÄRIJÄ IN FORTNITE/GOTEVERSE/THE BROOK/VIRTUAL HELSINKI/CORNERSTONE/METAMAZONIA〕/**Virtual Showroom 1 案〔仅 SPINNOVA〕**/Virtual Productions 2 案〔VELLAMO/NIGHTWISH〕/Heritage Metaverse 1 案〔TURKU 1827 & LUOSTARINMÄKI〕+「YOUR BRAND HERE? WE'D LOVE THAT.」CTA；units 页三单元=ZOAN Studio〔定制制作·「showcase your processes and products, host exhibitions and trainings」〕/Cornerstone〔photorealistic Metaverse 平台〕/BURST〔fan spaces 平台·Web3〕）
 
-> 检索通道注记：DuckDuckGo MCP+html 端点反爬拦（2026-10-12 实测）→Bing 检索走 Playwright 浏览器面+权威源 fetch_content 直取双路；iq-mag/Forbes/Evermade 全文被 403/拦——以标题快照+引注重复源交叉（判据满足：三独立源同数）；r381 同律复现（DuckDuckGo 双 query 零回→Bing/Playwright 三查+yle/woorati fetch_content 直取双命中）；r384：内置 search 通道通（DuckDuckGo 拦未复现·2 query 全回）·zoan.com/metamazonia.io=JS 渲染/死域面走 Playwright 浏览器读（fetch 空/404→浏览器面正法）·Wayback 页面体 503 瞬态二拦（web_fetch+浏览器双路同拦）→availability/CDX API 面收口。
+> 检索通道注记：DuckDuckGo MCP+html 端点反爬拦（2026-10-12 实测）→Bing 检索走 Playwright 浏览器面+权威源 fetch_content 直取双路；iq-mag/Forbes/Evermade 全文被 403/拦——以标题快照+引注重复源交叉（判据满足：三独立源同数）；r381 同律复现（DuckDuckGo 双 query 零回→Bing/Playwright 三查+yle/woorati fetch_content 直取双命中）；r384：内置 search 通道通（DuckDuckGo 拦未复现·2 query 全回）·zoan.com/metamazonia.io=JS 渲染/死域面走 Playwright 浏览器读（fetch 空/404→浏览器面正法）·Wayback 页面体 503 瞬态二拦（web_fetch+浏览器双路同拦）→availability/CDX API 面收口；r385：zoan.com JS 渲染面浏览器读正法复用（cases/units/work 三页零拦）·virtualhub.spinnova.com DNS 死走 Playwright 直航+Wayback 双 API 同 r384 收口式。

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-12T16:19:14Z",
-    "current_activity":  "r448 毕（FULL-ROUND 判候轮+P3-002 轮换收件轮·00:15 开工）：c6 dec 两行消费（D-20261013-01=本司三回执收讫+FV-02 腿②死线今日不催·D-20261013-02=Phase 0 交卷 executed·零动作）；P3-002 第 211 回 PASS+收件（10-12 编年史当日档 480KB pathspec commit 入库=r447 预告兑现）；main#6/#8 判假续候（0 新 City3D commit+8 件未收干+GPU 1%/9312MiB 批间态=双条件未现·今日终判窗日）；tech 队列 16 条被动维持。",
-    "artifact":  "world/world-events-20261012.jsonl",
-    "artifact_utc":  "2026-10-12T16:19:14Z",
-    "milestone":  "main#8 腿②触发器今日 10-13 终判窗（main#6 判②收干+GPU 稳定空窗双现即领·窗不至=判负留痕收口·15:0x 后仍窗不至即当班启 P3 提前笔）；explore#12 P3 下笔死线 10-14 21:0x 板面严值；T-FV-134/141 深扫+提案正文 10-18 演化日窗。",
+    "updated_utc":  "2026-10-12T16:32:41Z",
+    "current_activity":  "r449 毕（FULL-ROUND 判候轮+explore#12 P3 第 104 笔主产出·00:25 开工）：主产出=R-20261013-city-brand-placement-ads-benchmarks.md v1.0（城内品牌空间/广告位收入线基准：Roblox 程序化广告官方实数+ZEPETO 25 亿物品/52 品牌亭+虹宇宙国内对标+Web3 地块 -99.8% 死法对照·机理定谳=底座托管程序化位库存活/卖地块自建死·本城资产位三族+判据 J1-J3）；main#6/#8 判假续候（0 新 City3D commit+8 件未收干+GPU 1%/9264MiB 批间态=双条件未现·今日终判窗日）；P3-002 第 212 回 PASS（10-13 当日档未产·下轮复扫即收）。",
+    "artifact":  "docs/research/R-20261013-city-brand-placement-ads-benchmarks.md",
+    "artifact_utc":  "2026-10-12T16:32:41Z",
+    "milestone":  "main#8 腿②触发器今日 10-13 终判窗 15:0x 硬触发位（双现即领·窗不至=判负留痕收口——P3 提前笔已 r449 清偿·届时轻收口）；explore#12 P3 下笔死线 10-14 23:0x 板面严值；T-FV-134/141 深扫+提案正文 10-18 演化日窗。",
     "milestone_eta_utc":  "2026-10-13T07:00:00Z"
 }

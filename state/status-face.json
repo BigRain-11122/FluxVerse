@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-12T16:04:41Z",
-    "current_activity":  "r447 毕（判候轮·跨午夜 23:56→00:0x·真无活可拉一行声明收轮）：c7 delta 一行消费（75D4C1012E50=row 478 CLOUDWAVE-1 OK+波2 在飞·MV 云波实录零本司切片）；#6 判①②双假续候（0 新 City3D commit〔867b59e 恒定〕+8 件未收干恒定〔交互窗 R2 interior 在飞件〕）；#8 判假续候（判② 8 件未收干维持+GPU 1%/10408MiB 批间态非稳定空窗〔云端波接产·导演席 RAW 烧制窗在排〕·双现未至·今日 10-13=终判窗日）；P3-002 第 210 回 PASS（10-12 当日档未产候 tick 后置轮换）；决策链三步=日清零 open+c6/c3 静（席5 零动作）；tech 队列 16 条全被动维持。纯 CPU/git 零编辑器。",
-    "artifact":  "docs/research/R-20261012-virtual-event-concurrent-capacity-benchmarks.md",
-    "artifact_utc":  "2026-10-12T16:04:41Z",
-    "milestone":  "main#8 腿②触发器今日 10-13 终判窗（main#6 判②收干+GPU 稳定空窗双现即领·窗不至=判负留痕收口+防空转分支=21:0x 前落一分件〔硬触发=15:0x 后仍窗不至即当班启 P3 提前笔·r419 先例〕）；explore#12 P3 下笔死线 10-14 21:0x 板面严值（今日提前笔可双满足）；10-18 演化日窗=深扫+T-FV-141 三句式提案正文待交（附录 §A~§F+容量句锚一站引用）。",
-    "milestone_eta_utc":  "2026-10-13T13:00:00Z"
+    "updated_utc":  "2026-10-12T16:19:14Z",
+    "current_activity":  "r448 毕（FULL-ROUND 判候轮+P3-002 轮换收件轮·00:15 开工）：c6 dec 两行消费（D-20261013-01=本司三回执收讫+FV-02 腿②死线今日不催·D-20261013-02=Phase 0 交卷 executed·零动作）；P3-002 第 211 回 PASS+收件（10-12 编年史当日档 480KB pathspec commit 入库=r447 预告兑现）；main#6/#8 判假续候（0 新 City3D commit+8 件未收干+GPU 1%/9312MiB 批间态=双条件未现·今日终判窗日）；tech 队列 16 条被动维持。",
+    "artifact":  "world/world-events-20261012.jsonl",
+    "artifact_utc":  "2026-10-12T16:19:14Z",
+    "milestone":  "main#8 腿②触发器今日 10-13 终判窗（main#6 判②收干+GPU 稳定空窗双现即领·窗不至=判负留痕收口·15:0x 后仍窗不至即当班启 P3 提前笔）；explore#12 P3 下笔死线 10-14 21:0x 板面严值；T-FV-134/141 深扫+提案正文 10-18 演化日窗。",
+    "milestone_eta_utc":  "2026-10-13T07:00:00Z"
 }

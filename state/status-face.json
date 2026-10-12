@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-12T05:32:41Z",
-    "current_activity":  "r406 毕：explore#7 4K 母版+2K/1K 自适应分级参考调研成件（R-20261012-4k-master-adaptive-tiers-research.md——判据四落件：①Unity 官方 tier 路径正身〔每档一 URP Asset〔URP 3D Sample 默认〕+QualitySettings.SetQualityLevel+SystemInfo.graphicsMemorySize 2GB/4GB 双刀启动分档官方范式=roadmap §二.3 启动检测同构+官方警告=切换只在 loading screen/静态菜单→改档=主菜单态+场景重载〕②分辨率自适应双路判读〔renderScale=URP Asset 档位轴=正身路径 vs 系统 DRS=Windows Standalone DX12-only 硬门→Tuanjie PC 图形 API 未实证=保守判读手动档正身·DRS 自动档=M2 首跑 graphicsDeviceType 实测定谳位〕③C:S 系设置面 22 项成本带拆解〔体积/雾/DoF/MB 先关·AA/AO/阴影降 Low·纹理保 High=业界信号·城规模联动第四轴=C:S2 Traffic Simulation Accuracy 同构=roadmap §六.4 业界正身〕④M2 三档矩阵预注册建议表〔每档一 URP Asset 三件套 4K_HQ/2K_MQ/1K_LQ+renderScale/阴影距离×级联谱/MSAA/后处理成本带/LOD bias/城规模预算 ×0.7/×0.4——具体数值带=Phase 0 帧率基线落地后定谳〕=M2 实现窗直接输入）；CEO 让路令 pause 态合规（零 GPU·纯 web 职）；main#4/#6/#8 判候全落（P3-002 第一百六十九回 PASS+0 新 City3D commit+8 件未收干+GPU 26%/10.9G 非空窗·双条件未齐·死线 10-13 维持）；纯 L1（S1-S8 8 源全计入 token 预算·零生成触点）",
-    "artifact":  "docs/research/R-20261012-4k-master-adaptive-tiers-research.md",
-    "artifact_utc":  "2026-10-12T05:32:41Z",
-    "milestone":  "explore#12 P3 死线 10-14 12:2x 前（r406 已交卷·下笔候选=#69 官方性能标准表补数·#97/#90/#99 被动）；10-18 演化日窗=活动承接三句式提案待交（证据底座 r379~r405 全链+r406 4K 分级=八面+main#9 证据包整理位）；main#8 腿② 触发器死线 10-13（每轮检）",
+    "updated_utc":  "2026-10-12T05:41:49Z",
+    "current_activity":  "r407 毕：explore#69 官方性能评测标准数值矩阵+优秀案例页文本面获取成件（R-20261012-wechat-3d-minigame-performance-cases.md 升 v1.1——r376 盲区闭合：PerfMeasure.html 改版拆独立页直取〔标准表 2024-08-13 现行版〕+四张核心数值表图→文通道首用〔r376 只试文本解析未试图→文=盲区根因〕=§1b iOS/Android×启动/运行全数值矩阵〔机型三档×优/议/达·启动六指标+运行五指标+iOS Crash 双指标·单格 OCR 存疑注在案〕+ShowCase.html 17 上线案例收编 §3〔无尽冬日/地铁跑酷/巨兽战场等重 3D 面再证〕；消费校准四落 §4.2 内存带维持 ≤800MB 有效/§4.3 启动预算新增/§4.4 30fps 档位对表/§4.6 验收口径）；CEO 让路令 pause 态合规（零 GPU·纯 web+多模态提取职）；main#4/#6/#8 判候全落（P3-002 第一百七十回 PASS+0 新 City3D commit+8 件未收干+GPU 100%/10.9G 非空窗·双条件未齐·死线 10-13 维持）；纯 L1（4 源+4 图提取全计入 token 预算·零生成触点）",
+    "artifact":  "docs/research/R-20261012-wechat-3d-minigame-performance-cases.md",
+    "artifact_utc":  "2026-10-12T05:41:49Z",
+    "milestone":  "explore#12 P3 死线 10-14 12:2x 前（r407 已交卷·下笔候选=#100 PC 评测口径·#97/#90/#99 被动）；10-18 演化日窗=活动承接三句式提案待交（证据底座 r379~r406 全链+r407 标准矩阵=九面+main#9 证据包整理位）；main#8 腿② 触发器死线 10-13（每轮检·判②收干+GPU 空窗双现即领）",
     "milestone_eta_utc":  "2026-10-13T23:00:00Z"
 }

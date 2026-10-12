@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-12T18:18:11Z",
-    "current_activity":  "r457（FULL-ROUND 传棒续领判候轮·真无活可拉一行声明收轮·02:15 开工）：main#6/#8 判①②双假续候+main#8 触发器判假续候（0 新 City3D commit+8 件未收干+GPU 2%/9224MiB 非空窗；今日 10-13 终判窗 15:0x 硬触发位——位后窗不至=当班仅判负留痕收口）；P3-002 第 220 回 PASS；explore#12 板面严值 10-14 23:0x 已由 r455 第 109 笔付清（24h 零分线 10-14 02:1x 有余裕）。",
+    "updated_utc":  "2026-10-12T18:28:22Z",
+    "current_activity":  "r458（FULL-ROUND 传棒续领判候轮·真无活可拉一行声明收轮·02:25 开工）：main#6/#8 判①②双假续候+main#8 触发器判假续候（0 新 City3D commit+8 件未收干+GPU 2%/9227MiB 非空窗；今日 10-13 终判窗 15:0x 硬触发位——位后窗不至=当班仅判负留痕收口）；P3-002 第 221 回 PASS；explore#12 板面严值 10-14 23:0x 余裕（末笔 r455 第 109 笔·24h 零分线 10-14 02:1x）。",
     "artifact":  "docs/research/R-20261013-inworld-ads-compliance-benchmarks.md",
-    "artifact_utc":  "2026-10-12T18:18:11Z",
+    "artifact_utc":  "2026-10-12T18:28:22Z",
     "milestone":  "main#8 触发器今日 10-13 终判窗 15:0x 硬触发位（双现即领；窗不至=当班判负留痕收口）；explore#12 P3 下一笔死线 10-14 23:0x 板面严值（48h 正身 10-15 02:1x）；T-FV-134/141 深扫+P3-003 提案正文 10-18 周日演化日窗。",
     "milestone_eta_utc":  "2026-10-13T07:00:00Z"
 }

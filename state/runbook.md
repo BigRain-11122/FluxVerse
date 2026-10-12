@@ -6,7 +6,7 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r411 毕（本窗补完上轮中断收口）：explore#104 K 线巨屏四态评审拼板成件入库（docs/design/m2-kline-giant-screen-sample-states.png+Tools/city/bake-kline-sample-states.ps1+TECH 行——四态=收盘后/盘中/休市/维护·25 门全绿+多模态终评 9.5/10·与 r410 样张成双件套=QUANT 城巨屏 M2 过目套件齐）；附销账 ledger 转办件 LOGS_OLD（logs>14d 递归轮转 1666→0·对账精确）；main#8 触发器判假续候（死线 10-13）。
+r411 毕（本窗补完上轮中断收口）：explore#104 K 线巨屏四态评审拼板成件入库（docs/design/m2-kline-giant-screen-sample-states.png+Tools/city/bake-kline-sample-states.ps1+TECH 行——四态=收盘后/盘中/休市/维护·25 门全绿+多模态终评 9.5/10·与 r410 样张成双件套=QUANT 城巨屏 M2 过目套件齐）；附销账 ledger 转办件 LOGS_OLD（logs>14d 轮转：运行日志 1646 件清·tracked 历史脚本 20 件误删已 checkout 还原——轮转授权面=运行日志·tracked 正典件零删）；main#8 触发器判假续候（死线 10-13）。
 
 ## 下一步（队列头）
 1. 轮首跑 Tools\devloop\check-fastpath.ps1：判读一律依 stdout `VERDICT:` 行字节（禁读 Exit Code 显示面·r293 假显判例）；FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r411 收尾=tech_sha12 传棒 KEEP（§九 open 面=r410 同面：main#8 触发器行〔死线 10-13〕+main#9 提案证据包〔10-18〕+explore 被动跟踪族 #103/#101/#99/#98/#97/#90/#61/65/66/67/68+main#1 归档时窗 10-24+main#2/#3 深扫提案窗 10-18→下轮④查 mismatch=全轮续领·r95 律）。

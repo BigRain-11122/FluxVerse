@@ -1,0 +1,55 @@
+# Echoes.xyz（UGC 地理音频平台）本体扫描（三要点落件·izi 同赛道竞品第二样本+创作者付费层结构+Open Collective 透明账）
+
+> explore#96 领走件（r404）；姊件=R-20261012-izitravel-platform-b2b-scan.md（r402·izi 平台存活=多边五流样本）+R-20261012-elephantclock-izitravel-rebuild-contract.md（r403·外部承建样本）；判据（explore#96）=创作者付费层结构/UGC 音频导览竞品存活样本/平台本体三要点落件✓ 全落+超预期发现（**社区买断探索+捐赠柱透明账死亡实证**）；目的=izi 同赛道 UGC 竞品第二样本（防单样本偏差姊妹面·r400 digimuseo/r402 izi 后第三竞品本体）+10-18 提案证据链「UGC 创作层经济学」对照面（main#9 证据包整理位）。
+
+## §0 结论（GL;DR）
+1. **三要点全落**：①创作者付费层结构=**免费层全功能无广告+ESSENTIAL/EXTRA 双会员+walk 内购售卖**三层（§3）——免费层 verbatim「full functionality, no small print, no pesky ads. No trial period. Unlimited content.」+付费墙=创作者工具非创作量（不限量 walk/停点全免费）；②存活样本=**活且活跃维护**——iOS 版 **2026-09-28 更新**（官方 lookup API 实锚·203 评分 4.2）+Google Play 50K+ 下载/137 评 4.3+自述「thousands of walks worldwide」（§4.4）；③平台本体=**ECHOES.XYZ Limited**（England & Wales·CIN 9762677·**2015-09-03 注册·Active**·注册地 Okehampton Devon 小镇）·平台 2013 Hanoi 起源/Tracxn 2014 立·**Unfunded 12 年**·年收带 £0-£1M·**UK 实体 2024 员工数=1**（Tracxn 全档·整体 7 人）（§2）。
+2. **超预期发现一（本件核心增量）=社区买断（Community Buyout）探索**：平台 13 年后向自己的用户社区征集「集体所有权」——verbatim「This is your chance to **become a co-owner of Echoes.xyz** and shape the future of our geolocated walking audio platform. By investing in the company, you'll be directly contributing to the growth and development of a platform you love」+现状=意向征集态（「currently gauging interest」+REGISTER INTEREST 表单+免责「does not constitute a financial prospectus」）=**工程组织谱系第五型：用户所有制探索**（自雇死/协会共建出售/平台商收购降级/多边+外部承建后第 5 形态候选——前四型见 r379/r400/r401/r402+r403）。
+3. **超预期发现二=Open Collective 透明账=捐赠柱死亡实证**（「no ads, no data sales」承诺的资金双柱之一实况）：总收入 **£3,877.68**（2019-06 起 7 年·60 名贡献者）·今日余额 £3,881.17·**Estimated annual budget £21.00/年**（现行捐赠流≈唯一在投一档 £2/月 Sustaining member）·赞助档位 Bronze £20+/Silver £100+/Gold £500+/Power £1000+（0/3）/Headline £10,000/月（0/1）**全部零贡献者**——「funded by our wonderful Open Collective community」实况=象征级残流；**真供养柱=Echoes Labs 定制项目独柱**（about 页 verbatim「Our free apps are funded through Echoes Labs projects and our wonderful Open Collective community」双柱句·透明账揭示实重全在前柱）。
+4. **同赛道对照组定谳（防单样本偏差达成）**：izi（r402·多边平台+五流变现+€100-1000/月 Enterprise 公开带·14 年活）vs Echoes（本件·单边 UGC+代理供养+微会员+IAP 抽成·13 年活但捐赠柱死+社区买断求生）——**同为 Unfunded**（Tracxn 竞争榜 izi 第 2 位 41/100·Echoes 第 4 位 35/100·两案零融资），两路活法的 2026 现状并排：**多边生态变现 > 单边 UGC+代理补贴**（后者平台本体无独立收入引擎·靠 Labs 血袋输血·故走到社区买断门口）。
+5. **对超体宇宙城建锚（10-18 提案映射·main#9 证据包候选行）**：①UGC 创作层经济学反面教材=城内开放创作层（居民故事线/导览/场景音）**禁以捐赠/赞助为收入假设**（£21/年实数锚）·收入锚=B 端付费（Labs 定制/白标=城文化场景对外承接同型可复制·三线服务谱在册）；②walk 售卖 IAP 15% 抽成（FAQ 正身）=城内创作者内容售卖通道抽成档参照；③社区买断形态=城=集团资产结构的**非参照位**（用户集体所有制与集团资产制冲突·判读位非推荐位·如实记）。
+
+## §1 探测面（S 续词表·r403 S151 后）
+| # | 源 | 面 |
+|---|---|---|
+| S152 | echoes.xyz/community-buyout（fetch_content 直航全文） | 社区买断公告全文 verbatim（co-owner 措辞/gauging interest/REGISTER INTEREST 表单/非 prospectus 免责/ECHOES.XYZ Limited 注册地+联系方式） |
+| S153 | echoes.xyz/about-us（Playwright 直航） | 创始故事 verbatim（Hanoi 2013 GPS tour 起点）+**资金模型句**「funded through Echoes Labs projects and our wonderful Open Collective community (no ads, no data sales)」+创始人 Josh Kopeček 署名+合作史（bespoke apps/consultancy/content advising）+Open Collective 个体赞助者名单 25+ 实名 |
+| S154 | echoes.xyz/pricing（Playwright 直航） | 免费层全功能声明+会员功能门表（ESSENTIAL+EXTRA/EXCLUSIVE 分层·18 项功能）+walk 售卖双文案（功能卡 50/50 vs FAQ 15% 抽成）+IAP tiering 定价 FAQ verbatim+退款/增值税/非营利折扣 FAQ+Google Play/App Store 双链接+会员价 iframe 懒加载空（价目不在 web 面如实注） |
+| S155 | echoes.xyz/echoes-labs（Playwright 直航） | Labs 三线服务谱（Bespoke apps/White-label/Consultancy 各带功能清单）+**14 案例目录**（Zollverein UNESCO 世界遗产/The Royal Parks—Music for Trees/Lewes Castle and museum 无障碍优先/Opera North Earth & Sky/Ellen Reid SOUNDWALK/Planted Symphony—Drake Music 无障碍音轨/Sansâga 丹麦/Aurality 昆士兰等）+客户证言 9 条实名职务 |
+| S156 | opencollective.com/echoes（fetch_content 直航） | **透明账全数**（总收入 £3,877.68/余额 £3,881.17/年化预算 £21.00/60 贡献者/最新流水 2026-06-01 £2.00 月捐）+贡献档位表（£2 Sustaining 至 £10,000 Headline 六档+当前各档贡献者数）+个人榜（Jeanti St Clair £836 居首）+机构榜（New Music Players £300 居首）+Sound Walk Sunday 2019 历史事件 |
+| S157 | iTunes lookup API id1021511722（官方 JSON·r402 正法复用） | trackName「ECHOES interactive sound walks」·**currentVersionReleaseDate 2026-09-28T21:43:15Z**·userRatingCount 203·avg 4.2·fileSize ~140MB·EN/DE 双语·描述（GPS/iBeacon 触发+离线下载+社区内容） |
+| S158 | Tracxn Echoes 全档（fetch_content 直航·2026-09-10 更新版） | 「public company based in Hanoi (Vietnam), founded in 2014 by Yoann Fauche」+**Unfunded**+年收 £0-£1M（as on Sep 30, 2021）+员工数 7（Jul 2026）+法定实体表=ECHOES.XYZ LTD CIN 9762677 UK **2015-09-03 立 Active·员工 1（as on Sep 30, 2024）**+41 竞争者（6 funded 2 exited·**IZI Travel 列第 2 位 41/100 vs Echoes 第 4 位 35/100**·PinakinApp 第 1 位 47/100） |
+| S159 | DDG 检索面 15 结果（echoes.xyz 站内页+周边） | 首页 hero「use our free platform to create soundwalks…or commission us to build a custom app for you」+explore.echoes.xyz「There are thousands of walks and experiences worldwide」+Google Play 列面（Echoes.xyz Team·50K+ 下载·137 评 4.3·In-app purchases）+LinkedIn Josh Kopeček（「founder of ECHOES… and ECHOES Labs which designs and builds immersive mobile audio apps **as an agency**」）+docs.echoes.xyz FAQ 站在册 |
+
+**未达源如实记**：echoes.xyz 根域 web_fetch 连接失败（fetch_content 后端通·Playwright 通——三通道两通如实注）；about-us 首次 fetch_content 空响应（Playwright 直航补齐）；**会员价目 web 面不可得**（定价 iframe 懒加载空+会员价走 creator.echoes.xyz/subscription/purchase 登录态——£2/月 Sustaining 为 Open Collective 档非平台会员档·勿混）；Google Play/LinkedIn 取 snippet 级（Play 可直航但数据已足·预算收敛弃）。
+
+## §2 平台本体（公司面与法人谱）
+- **法人正身**（S152+S158 双源）：ECHOES.XYZ Limited·England & Wales·**CIN 9762677**·注册日 **2015-09-03**·状态 Active·注册地 2nd Floor, 10 St James St, Okehampton, EX20 1DH（Devon 小镇·非伦敦科技区=低成本结构信号）·联系方式 +44 (0)7895 691248（英国手机号非座机=微型运营锚）。
+- **起源谱**：平台 2013 Hanoi 起源（S153 verbatim「We came together looking for a way to create a GPS-triggered audio tour in Hanoi in 2013 and ended up deciding to create our own platform」）→Tracxn 记 2014 立（S158·founder Yoann Fauche·site 署名 Josh Kopeček「Echoes Founder」=**双创始人谱**：Fauche=Tracxn 档面·Kopeček=对外创始人/现任运营正身）→UK 法人化 2015-09（S158）→现役 11+ 年。
+- **规模实数**：Unfunded（零融资 12 年·「has not raised any funding rounds yet」）+年收带 £0-£1M（2021-09 口径）+员工=UK 实体 **1 人**（2024-09）·整体 **7 人**（Tracxn 2026-07）——**「thousands of walks」平台×1 人 UK 实体=团队规模与平台规模脱钩第二例**（izi 16 人第一例·r403·更极端）。
+- **创始人面**（S159）：Josh Kopeček=「creative technologist, consultant and advisor」+ECHOES 与 ECHOES Labs 双创始人+「worked with sound, music, and geolocation for the past 10 years」——创始人=技术型单体（vs izi Alex Tourski 已转场 Web3·r403——**Echoes 创始人仍在位运营**=两案创始人离场谱两端）。
+
+## §3 创作者付费层结构（三层正身）
+- **第一层=免费创作层全功能**（S154 verbatim）：「Use both our apps for free: full functionality, no small print, no pesky ads. No trial period. Unlimited content. No credit card required.」——免费含不限量 walk+不限量停点（echoes）+封面/停点图+每 walk 独立 QR+邮件支持；付费墙=**创作者工具深度非创作量**（对照 VoiceMap 免费发布=Pro 档付费功能 r392——Echoes 免费发布更慷慨）。
+- **第二层=ESSENTIAL+EXTRA 双会员**（S154 功能门表）：ESSENTIAL+EXTRA 含=商家主页/任意音频格式上传（WAV/AIFF 代转码）/**walk 内购售卖**/条件播放/续播与淡出控制/GPX-KML 导入/GPS 坐标微调/排队/音轨组；EXTRA 独占=iBeacon/BLE 室内触发+路线线发布；全档限时=3D 声对象/Ambisonics 1-3 阶/节奏同步（新功能全档免费试用=拉新杠杆）；会员价=web 面不可得（IAP 登录态·§1 注）·FAQ 证「Prices vary from free upwards, and we don't set a maximum」走应用商店档位制。
+- **第三层=walk 售卖抽成**（S154·双文案矛盾如实注）：功能卡「We split the profits with you **50/50**」vs FAQ「We take **15% commission** on walks after taxes and platform fees, and you take the rest!」——FAQ 版为具体条款+「after taxes and platform fees」（商店抽 ~30%+税后）·功能卡 50/50 为营销粗粒度或旧文案；**判读取 FAQ 15% 为正身**（r389 Reveel ~10% 返还=r390 对照·Echoes 15% 同档位带）；定价权=创作者自定（「tell us which walks, and what price」平台代配置）。
+- **辅助面**：非营利/NGO/教育折扣（「always happy to adjust our prices for non-commercial projects」）+零退款+VAT 含价+会员挂 profile 非个人（多人协作支持）。
+
+## §4 三柱实况（Labs 独柱+捐赠残柱+买断探索）
+### §4.1 Echoes Labs=真供养柱（S155）
+三线服务谱 verbatim：①Bespoke apps（「Apps working with geolocation tailored to your needs」+空间音频+节拍同步+实验特性+移动 web）；②**White-label apps**（「Our technology with your branding」+「Competitive price」——**白标=平台能力商品化直通道**·对照 r401 Reveel 垂直降级=r399 Sketchfab Enterprise 白标三件套同型）；③Consultancy（地理定位专长+声音专长+内容制作+多语）。**14 案例带客户类型**=文化遗产（**Zollverein UNESCO 世界遗产**·Lewes Castle and museum「Accessibility first」）/皇家机构（The Royal Parks—Music for Trees）/表演艺术（Opera North·Huang Ruo 城市交响）/驻地艺术（Ellen Reid SOUNDWALK）/无障碍专项（Planted Symphony—Drake Music·盲与低视力用户）——**文化 B 端客户带与我方博物馆线（r394-r397）同型重合**=城文化场景对外承接的目标客户实证带。
+### §4.2 Open Collective=捐赠柱死亡实证（S156·透明账全数）
+总收入 **£3,877.68**（2019-06 至今）·年均 ≈£555·**现行年化 £21.00**（=仅剩一档 £2/月 Sustaining 在投·最新流水 2026-06-01 +£2.00）·7 年总 disbursed -£3.49（几乎零支出=捐赠进来即躺账）；档位表六档（£2 Sustaining 13 人/£20 Bronze 0/£100 Silver 0/£500 Gold 0/£1000 Power 0/£10000 Headline 0）——**除最低档外全档零贡献者**；个体榜首 Jeanti St Clair £836（=声音艺术家/点名 13 次月捐·社区核心用户即捐赠核心）；机构榜首 New Music Players £300。「no ads, no data sales」承诺的双柱资金模型实况=**Labs 独柱+捐赠象征级残流**。
+### §4.3 社区买断=所有权形态探索（S152）
+verbatim 核心：「we're excited to announce the possibility of a **community buyout scheme**…This is your chance to become a **co-owner of Echoes.xyz**…By investing in the company, you'll be directly contributing to the growth and development of a platform you love」+定义段「A community buyout allows members of a community, like you, to collectively own a portion of the company」+现状=「currently **gauging interest**」表单征集+免责「does not constitute a financial prospectus or offering」——**判读**：①时间点=捐赠柱死后（§4.2）向用户寻求股权级投入=把「用户当资金来源」从捐赠档升格到所有权档的结构尝试；②对照 digimuseo 协会共建 4.3 年出售给商业平台商（r400·用户侧失去控制）——Echoes 买断=**反向路径**（不出售给外部商业体、尝试直接产权化用户社区）；③结果未定（意向征集态非成交态·后续跟踪=explore 新条）。
+### §4.4 存活态五证（S157+S159+App 双店）
+iOS **2026-09-28 更新**（两周内·活跃维护实锚）+Play 50K+ 下载/4.3 分+自述 thousands of walks+docs 站+explore 检索门户+creator web app 全线在营——**13 年平台 2026 现役**（对照 r392 覆盖谱：izi 25-30k tour 走多边变现 vs Echoes thousands 走代理供养——规模小 10 倍量级但同存活态）。
+
+## §5 判读链+对城建锚
+- **工程组织谱系第五型候选（r379→r400→r401→r402→r403→本件）**：自雇定制死（ZOAN）/协会共建出售（digimuseo）/平台商收购降级（Reveel）/多边+外部承建合伙（izi×ElephantClock）/**用户社区所有制探索（Echoes·未决）**——五型里前四已终局、第五型在门上；**存活判据族第四支柱候选=所有权形态**（谁拥有平台=谁供养平台的制度化：ZOAN 股东融资死/digimuseo 协会卖给商业体/izi 业主自持+外部承建/Echoes 试图用户集体持）。
+- **UGC 平台经济学定谳（本件对 10-18 提案的最大值）**：单边 UGC（创作者免费发布+听众免费听）在零广告零数据销售承诺下=**平台本体无收入引擎**——Echoes 靠 Labs 代理利润补贴 13 年+捐赠柱已死+走到社区买断门口；izi 靠多边生态五流变现 14 年健康（r402）——**「先有 B 端付费引擎、再养 UGC 免费层」>「UGC 规模先行、变现后补」**（对照 muunie 15,000 场馆 AI 批量免费层 r392 与 musa $2/天付费加购 r391 的分层共存——免费层 Everywhere·收入层 Rare）。
+- **同赛道 Tracxn 竞争榜互证**（S158）：Echoes 第 4（35/100）·**IZI Travel 第 2（41/100）**·PinakinApp 第 1（47/100·2016 Bengaluru·Unfunded·「Mobile first audio travel guide」）——41 竞争者 6 funded 2 exited·**头部三家全 Unfunded**=地理音频赛道无资本赢家+我方两案样本即榜单前四之二（调研选样代表性旁证）。
+- **对超体宇宙城四映射**（10-18 提案证据包「UGC 创作层经济学」对照行候选）：①城内开放创作层（居民故事线/场景导览/空间音）收入模型**禁含捐赠/赞助假设**（£21/年实数锚·Open Collective 模式透明账=全行业可查的失败面证据）；②城文化场景对外承接=Labs 三线同型（bespoke/白标/咨询·客户带=UNESCO 遗产/皇家公园/博物馆=我方 r394-r397 政采档同客户域·白标=平台能力商品化直通道）；③创作者内容售卖抽成 15%（FAQ 正身）=城内创作者经济通道抽成档位参照（Reveel ~10% r389/Echoes 15%/izi Tour Sales 10-20% 信用券 r402=三案 10-20% 带闭合）；④社区买断形态=**非参照位如实记**（城=集团资产制·用户集体所有制与现行资产结构冲突·判读位仅供谱系完整）。
+
+## §6 板面
+explore#96 领走删行+轮尾补条 #97（Echoes 社区买断进展被动跟踪·Companies House 年账面+买断页状态复访）+explore#12 P3 死线翻 r404（r320~r404 八十五轮连翻·下次 10-14 12:2x）；main.md #4/#6/#8 行面 r390 冻结口径维持（r404 判读全落 TECH §九 r404 行：#4 P3-002 第一百六十七回 PASS=零 staged world-events+10-12 当日档未产=无件可收·#6 判①②双假续候=0 新 City3D commit+8 件未收干恒定·#8 触发器判假续候=判② 8 件未收干+GPU 3%/10.6G 非空窗·死线 10-13 维持）。

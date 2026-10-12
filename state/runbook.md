@@ -6,11 +6,11 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r419 毕（explore 线 P3 产出轮·explore#110 51WORLD 港股披露面终验回填成件=确认缺席定谳〔R-20261012-51meet-second-sample-scan.md v1.1 §7〕）：P3 48h 时钟重置（末笔 r419 18:3x·下次严值 10-14 17:0x·r320~r419 一百轮连翻）；main#8 触发器判假续候（判② 8 件未收干+GPU 1%/10.5G 非空窗·**死线 10-13=明日终判窗**）；#4 P3-002 第 182 回 PASS/#6 判①②双假（0 新 City3D commit+8 件未收干恒定）；决策链三步零新件（c3/c6 静·c7 令扫零本司直令）。详账=TECH §九 r419 行。
+r420 毕（main#9 前端装载轮·ZOAN 九案证据链提案附录引用面成件=R-20261012-p3003-proposal-appendix.md〔§A~§F 六节·10-18 提案窗正文引用面就绪·P3 落点=提案面〕）：explore#12 P3 48h 时钟重置（末笔 r420 18:4x·下次严值 10-14 18:0x·r320~r420 一百零一轮连翻）；main#8 触发器判假续候（判② 8 件未收干+GPU 0%/10.5G 非空窗·**死线 10-13=明日终判窗**）；#4 第 183 回 PASS/#6 判①②双假（0 新 City3D commit+8 件未收干恒定）；决策链三步零新件（c3/c6/c7 全静）。详账=TECH §九 r420 行。
 
 ## 下一步（队列头）
-1. 轮首跑 Tools\devloop\check-fastpath.ps1：判读一律依 stdout `VERDICT:` 行字节（禁读 Exit Code 显示面·r293 假显判例）；FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r419 收尾=tech_sha12 传棒 KEEP（§九 open 面：main#8 触发器行〔死线 10-13——**10-13 当日轮=终判窗**：双现即领·窗不至=判负留痕收口〕+main#9 提案证据包〔10-18〕+explore 被动跟踪族 #110〔首检毕 r419·年检位维持〕/#108/#107/#106/#105/#103/#101/#99/#98/#97/#90/#61+65-68+main#1 归档 10-24+main#2/#3 深扫提案窗 10-18→下轮④查 mismatch=全轮续领·r95 律）。
-2. main#8 腿②触发器每轮检（**死线 10-13 当日轮=终判窗**：main#6 判②收干+GPU 空窗双现即领·窗不至=判负留痕收口）；explore#12 P3 48h 死线=10-14 17:0x 前出下一笔（末笔 r419 #110 回填成件·下笔候选=被动跟踪族轻量成件或新扫描条〔#3 禁重扫维持〕）；T-FV-134/141=10-18 周日演化日窗（**三句式提案待交**·现象句消费 explore#107 §0+成本句消费 #106 §4+报价单国内锚消费 #108 源件+第二样本对照消费 #109 源件〔r419 资本面坐实句已回填其 §5.4〕）。
+1. 轮首跑 Tools\devloop\check-fastpath.ps1：判读一律依 stdout `VERDICT:` 行字节（禁读 Exit Code 显示面·r293 假显判例）；FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate（Tools/devloop/iteration_prompt.txt）读序施工。r420 收尾=tech_sha12 传棒 KEEP（§九 open 面：main#8 触发器行〔死线 10-13——**10-13 当日轮=终判窗**：双现即领·窗不至=判负留痕收口〕+main#10 benchmarks 深潜核验位〔10-24〕+explore 被动跟踪族 #111〔新活位·Fullsteam 分摊比例〕/#110〔年检位维持〕/#108/#107/#106/#105/#103/#101/#99/#98/#97/#90/#61+65-68+main#1 归档 10-24+main#2/#3 深扫提案窗 10-18→下轮④查 mismatch=全轮续领·r95 律）。
+2. main#8 腿②触发器每轮检（**死线 10-13 当日轮=终判窗**：main#6 判②收干+GPU 空窗双现即领·窗不至=判负留痕收口）；explore#12 P3 48h 死线=10-14 18:0x 前出下一笔（末笔 r420 提案附录件·下笔候选=被动跟踪族轻量成件〔#111 Fullsteam 分摊比例=新活位〕或新扫描条〔#3 禁重扫维持〕）；T-FV-134/141=10-18 周日演化日窗（深扫+**三句式提案正文待交**·证据面=R-20261012-p3003-proposal-appendix.md §A~§F 一站引用〔r420 前置交付〕+判据候选=其 §D 三问锁用）。
 3. main#5/#7 判③门槛未达（shots 判据帧未入库·交互窗在飞期禁动 City3D）；tech 队列常备=观察位族——**真无活时一行声明合法（禁造活凑数）**。
 4. **常设收尾步**：commit 前写 logs/devloop-face-content.json（六键·updated_utc/artifact_utc 留空机器盖戳）→ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\write-status-face.ps1 → FACE OK 才 commit（禁手写 state/status-face.json·r246）；**板面同步门**=Tools\devloop\check-runbook-sync.ps1（SYNC 才 commit）；**板面-§九 双账门**=Tools\devloop\tasks-board-check.ps1（动板面必过）；**commit pathspec 限定律**=commit 一律 -m 后 -- <本轮路径清单>（防吞交互窗 staged 面）。
 

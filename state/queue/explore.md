@@ -11,7 +11,7 @@
 | 7 | 4K master+2K/1K 自适应分级参考调研：性能分层（perf tiers 预注册配套） | O-023 roadmap M0-M5 | 纯调研 |
 | 10 | world-events viz 消费端候选观察：M2 时态轮探针扩面口径（CityWatch 停役后唯一观测窗归 MiniGame 侧） | r164 evolution 扩面先例 | M2 排队面·观察不预建 |
 | 11 | 行情 K 线 M2 视觉映射设计稿：BigMoney state.reality.market 消费（数据已备 r47 注记） | M2 排队面 | 纸面设计稿·零引擎实现 |
-| 12 | **P3 48h 节律死线件（滚动计数位）**：r388 已满足（explore#79 DigiMuseo/Reveel 收费三面闭卷=R-20261012-digimuseo-reveel-pricing.md〔**导览组价双档实数 €70/€55·max 25 人/组**·2021 Wayback 主锚+入驻=报价制结构锚+扩展票=freemium 档在册现行零付费展样本〕）——末笔=r388·**下次死线=10-14 09:0x 前出下一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r388 行 | r319 入册·r320~r388 六十九轮连翻（死线机械化滚动·防静默超窗） |
+| 12 | **P3 48h 节律死线件（滚动计数位）**：r389 已满足（explore#81 Reveel 票务线 C 端实数闭卷=R-20261012-reveel-tickets-cside-pricing.md〔**六店票价谱 €5-14/成人+平台抽 ~10% 实数**·#79 判读翻案=导览免费层/票务变现轴〕）——末笔=r389·**下次死线=10-14 09:0x 前出下一笔 P3 产出**（保守维持·领本表任一自可执行条轻量成件即满足） | self-drive.md §0 P3 行+TECH §九 r389 行 | r319 入册·r320~r389 七十轮连翻（死线机械化滚动·防静默超窗） |
 | 47 | 涂装 lot 渲染终验：z=75/150 行 PL 骑素面带的 z 序显隐实拍（§14.6 G 层共承 11/19 件的渲染次序真相——vendor z 序赌注 §4 同律·YL 虚线候选〔§14.3③〕同窗） | R-20261011-ad022-marking-occupation-syntax.md §14.3③+§14.6 | r354 轮尾补条·导入窗后置低优（#17 已领走毕 r373·R-20261012-ad022-freepose-vs-v6v7.md） |
 | 61 | R2 生成器输入门禁消费接线跟踪（被动·零施工）：生成器实现窗开工首跑 Tools/city/r2-spec-input-validate.py 入其门禁链（38 行输入自检=fail-loud 前置门·argv 负控通道随件）——判据=实现窗 commit/消息或 TECH 行引用本件 | Tools/city/r2-spec-input-validate.py+R-20261012-ad022-r2-spec-input.md §7 | r368 轮尾补条 |
 | 65 | R2 选型池六闸导入窗执行跟踪（被动·零施工）：R2 里程碑落地+导入窗开工时首跑 R-20261012-r2-block-expansion-selection-pool-final.md §1 六闸判据表逐闸执行+闸果回填其 §5——判据=实现窗 commit/消息或 TECH 行引用本件 | R-20261012-r2-block-expansion-selection-pool-final.md §1/§5 | r372 轮尾补条（explore#61 同式被动跟踪律） |
@@ -20,5 +20,5 @@
 | 68 | Marian/Merrell 六法生长线消费跟踪（被动·零施工）：城市生长线开线（需 P1 署名·r220 重评条件）时消费 R-20261012-wfc-variants-marian-merrell-teardown.md §3 六法（P1 惰性字典流=chunk 接口法判负留痕/P2 已知好边界 seeding 三态自愈/P3 无界件配对闸+连接器三层语法/P4 矛盾三策菜单/P5 确定性预注册判据先行/P6 商用判负锚）+果回填其 §5——判据=开线窗 commit/消息或 TECH 行引用本件 | R-20261012-wfc-variants-marian-merrell-teardown.md §3/§5 | r375 轮尾补条（explore#61/#65/#66/#67 同式被动跟踪律） |
 | 69 | 微信官方性能评估标准数值表+团结成功转换案例手册页文本面获取：总览页 §二标准表为图片面（r376 8 源尽后仍文本不可达）·Unite PPT/阶段一案例清单页/后续文档改版补数 | R-20261012-wechat-3d-minigame-performance-cases.md §0 盲区注+§5 回填行 | r376 轮尾补条 |
 | 80 | TURKU 1827 开源 3D 模型承诺实态跟踪：案例页「3D models all open source」的公开仓/下载面实探（UE5 复用开发面兑现度） | zoan.com/cases/turku-1827 宣言（S32）+museum/协会侧公开仓检索 | r387 轮尾补条——判据=模型公开仓在场与否+许可类型落件 |
-| 81 | Reveel C 端音频导览单馆售价实数：博物馆侧对观众收音频导览费案例价（「new revenue stream」S42 落地价·per-visit fee/单馆订阅）——承接 #79 判读「易主后变现主轴=音频导览非门票」 | reveel.now 客户案例页+芬兰博物馆侧公告/新闻面 | r388 轮尾补条（#79 后继）——判据=任一单馆 Reveel guide 观众售价实数落件 |
+| 82 | 博物馆音频导览行业定价模型对照谱：musa.guide（订阅/分成/信用三制）+convo.app+pathoura 三源定价模型拆解——per-visitor/月订阅/收入分成三制对文化面第四席收费模型的行业基准面（Reveel 纯分成路线〔r389 件 §3〕对照） | musa.guide/en/resources/audio-guide-pricing-models+convo.app/resources/buying-and-cost/audio-guide-pricing-models+pathoura.com/museum-audio-guide-pricing-models | r389 轮尾补条——判据=三源模型谱+任一实数价落件 |
 

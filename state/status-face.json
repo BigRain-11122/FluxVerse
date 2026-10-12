@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-12T20:19:31Z",
-    "current_activity":  "r469（FULL-ROUND 传棒续领判候轮·04:15 开工）：main#6/#8 判①②双假续候（0 新 City3D commit+8 件未收干+GPU 100%/9231MiB 非空窗〔MV 批夜窗驻留〕；今日 10-13 终判窗 15:0x 硬触发位未至〔04:15 位前夜窗〕——位前窗=判候注记续传·位后窗不至=当班仅判负留痕收口）；P3-002 第 232 回 PASS；explore#12 末分维持 r468 04:13〔commit 2eb6eab6〕·24h 零分线 10-14 04:13。",
-    "artifact":  "docs/research/R-20261013-virtual-event-audience-engagement-benchmarks.md",
-    "artifact_utc":  "2026-10-12T20:19:31Z",
-    "milestone":  "main#8 触发器今日 10-13 终判窗 15:0x 硬触发位（双现即领；位后窗不至=当班判负留痕收口）；explore#12 P3 下一笔死线 10-15 02:0x 板面严值（48h 正身 10-15 04:2x·r468 已付清）；T-FV-134/141 深扫+P3-003 提案正文 10-18 周日演化日窗。",
+    "updated_utc":  "2026-10-12T20:40:37Z",
+    "current_activity":  "r470（FULL-ROUND 传棒续领轮+@bm-a track-2 派单本窗直执主产出轮·04:25 开工）：c7 新令=04:3x @bm-a track-2 帧级再生派单（C03+C04+C09·夜窗 Krea2·死线 05:15）已本窗直执交付毕——三帧重生 s9031 择优·QC 8/9/9·lint 三绿·总控仓 main@94702cd+BigMoney 回执 MSG-0455 f2c8dac0f+bm-c poke ok:true（05:15 死线内余 18min·08:30 CEO 呈片死线链服务面）；main#6/#8 判①②双假续候+main#8 触发器判假续候（今日 10-13 终判窗 15:0x 硬触发位未至·04:25 位前夜窗=判候注记续传·位后窗不至=判负留痕收口）；P3-002 第 233 回 PASS；explore#12 末分推进 r470 04:5x（2 分位·三帧实物）·24h 零分线 10-14 04:5x。",
+    "artifact":  "cph4/fleet/mv0001-handover/outbound/krea2/kf-demo-20261012/track2-1013/（C03_dig_reveal/C04_words_alive/C09_oath_weather 三帧 PNG·1344×768·总控仓 main@94702cd）",
+    "artifact_utc":  "2026-10-12T20:40:37Z",
+    "milestone":  "main#8 触发器今日 10-13 终判窗 15:0x 硬触发位（双现即领；位后窗不至=当班判负留痕收口）；explore#12 P3 下一笔死线=10-15 02:0x 板面严值（48h 正身 10-15 04:2x·末笔 r468 已付清当前窗）；T-FV-134/141 深扫+P3-003 提案正文 10-18 周日演化日窗。",
     "milestone_eta_utc":  "2026-10-13T07:00:00Z"
 }

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-12T05:49:01Z",
-    "current_activity":  "r408 毕：explore#100 微信 PC 小游戏口径三页成件（R-20261012-wechat-pc-minigame-performance-docs.md v1.0——PC 独立口径证实：无运行时内存阈值/大盘 jank 1.04 vs 移动端 2.44~2.59/DXT5 禁 ASTC/免限帧免 WXAssetBundle/成本 0.5 人日起步+官方激励人均时长 +120%·PC 内购 10% 激励金；web_fetch 错路由坑首录=正通道 fetch_content markdown）；main#4/#6/#8 判候全落（P3-002 第一百七十一回 PASS+0 新 City3D commit+8 件未收干恒定+GPU 18%/10.9G 非空窗·双条件未现·死线 10-13 维持）；纯 L1：三页官方文本面直取·零生成触点。",
-    "artifact":  "docs/research/R-20261012-wechat-pc-minigame-performance-docs.md",
-    "artifact_utc":  "2026-10-12T05:49:01Z",
-    "milestone":  "explore#12 P3 死线 10-14 13:4x 已提前满足（r408 交卷·下笔走被动族翻新/提案轨）；main#8 腿② 触发器死线 10-13（每轮检·判②收干+GPU 空窗双现即领）；10-18 演化日窗=活动承接三句式提案待交（证据底座 r379~r408 件全链+main#9 证据包整理位）。",
+    "updated_utc":  "2026-10-12T06:00:55Z",
+    "current_activity":  "r409 毕：explore#11 行情 K 线 QUANT 城巨屏 M2 视觉映射设计稿成件（R-20261012-kline-quant-screen-m2-mapping.md v1.0——数据契约实测冻结：30 根日线+敏感面律禁走公开快照径/五色律红涨青跌三态机/只读轮询消费契约 CityAmbient 同式/M2 验收判据四条·纯仓内源零 web 零生成触点）；main#4/#6/#8 判候全落（P3-002 第一百七十二回 PASS+0 新 City3D commit+8 件未收干恒定+GPU 21%/10.9G 非空窗·双条件未现·死线 10-13 维持）；纯 L1。",
+    "artifact":  "docs/research/R-20261012-kline-quant-screen-m2-mapping.md",
+    "artifact_utc":  "2026-10-12T06:00:55Z",
+    "milestone":  "explore#12 P3 死线 10-14 13:4x（r409 交卷·下笔首选 explore#102 K 线巨屏 GDI+ 设计样张=可看证据位）；main#8 腿② 触发器死线 10-13（每轮检·判②收干+GPU 空窗双现即领）；10-18 演化日窗=三句式提案待交（证据底座 r379~r409 件全链+main#9 证据包整理位）。",
     "milestone_eta_utc":  "2026-10-13T23:00:00Z"
 }

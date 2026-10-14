@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-14T09:54:46Z",
-    "current_activity":  "r597 FULL-ROUND 续领轮收口（triggers=2：c2=交互窗在飞件族恒定零接触+c4=r596 传棒 KEEP）：explore#12 第 220 笔=20260948-T-469 征求意见稿全文直取级+意见窗双戳补录件（runbook 队列头首选兑现）；queue explore#225 补行+48h 钟重置",
-    "artifact":  "docs/research/R-20261014-automated-web-data-collection-20260948-draft-fulltext-benchmarks.md：征求意见稿 WD 51 页/35,192 CJK·sha12=DE8D590EABEE+编制说明 DI 6 页·sha12=98B962DB65C2（PyMuPDF 三验全过）；全文正身 14 章+四附录=robots 允许≠授权判定句 verbatim+工具十项技术要求（速率退避熔断/禁采清单/规则快照/SBOM/七项测试未过禁上线）+P 级七红线+来源侧 0.70 评分权重表+13.3 AI 训练数据八项（语料快照↔模型版本关联+未复核不入正式语料库）+附录C 默认配置表 verbatim；意见窗双戳=网安秘字〔2026〕70 号 2026-06-17~08-16 与 35273 同批同窗实证（窗已闭 59 天=候审阶段戳）",
-    "artifact_utc":  "2026-10-14T09:54:46Z",
-    "milestone":  "explore#12 第 221 笔窗（48h 钟 ~10-16 晚窗·r533 判法 grep 先行）：首选=20264754-T-469 网络数据标签标识计划窗（r596 备选①·族内互链滚 id）；main#2/#3 下窗 10-18；main#10/main#1 深潜窗 10-24",
+    "updated_utc":  "2026-10-14T10:20:28Z",
+    "current_activity":  "r598 FULL-ROUND 续领轮收口（triggers=2：c2=交互窗在飞件族恒定零接触+c4=r597 传棒 KEEP）：explore#12 第 221 笔 pivot——首选 20264754 计划窗判负实录（std.samr 域级权威 DNS SERVFAIL·三解析器同败+控制域正常·基础设施层坑首录+fail-loud 降级）→ 备选③滚出 AI 未成年人指南全文直取件；queue explore#226 补行+48h 钟重置",
+    "artifact":  "docs/research/R-20261014-ai-minor-app-security-20260326-draft-fulltext-benchmarks.md：《网络安全技术 人工智能技术涉及未成年人应用安全指南》（计划号 20260326-T-469 实锚·DI verbatim）征求意见稿 WD 133,400B·sha12=029A9AA6C943·6,009 CJK+编制说明 30,303B·sha12=D54DD09E5E2A（Wayback id_ 双收·r586 CDX 扫描法七步复用·07-10 批 5 GUID 逐开）；全文正身=六阶段+五原则+城 AI 居民未成年人红线句 verbatim（防情感依附/虚拟交互替代现实社会关系+附录A 情感操纵/虚拟恋人诱导充值/AI 换脸不雅内容）+终止运营 30 日 verbatim+认定办法 2026-02-11 八部门新锚+DI 分歧六条+姊妹件（未成年人产品个人信息保护要求）",
+    "artifact_utc":  "2026-10-14T10:20:28Z",
+    "milestone":  "explore#12 第 222 笔窗（48h 钟 ~10-16 晚窗）：首选=20264754 计划窗重试位（std.samr DNS 复测·恢复即直取·族表滚出法维持）；备选=零信任全文窗（hex 516da48c+3c25aa42 在册零 fetch 成本）；main#2/#3 下窗 10-18；main#10/main#1 深潜窗 10-24",
     "milestone_eta_utc":  "2026-10-16T12:00:00Z"
 }

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-14T12:39:35Z",
-    "current_activity":  "r607 FULL-ROUND 续领轮（triggers=2：c2=交互窗在飞件族恒定零接触+c4=r606 传棒 KEEP）：explore#12 第 230 笔——20260696 征求意见稿逐条消费件落盘（WD 92 页全文级+意见窗补录+双版本漂移+跨槽引用 45577 首实证）",
-    "artifact":  "docs/research/R-20261014-infosec-risk-assessment-implementation-guide-20260696-draft-fulltext-benchmarks.md",
-    "artifact_utc":  "2026-10-14T12:39:35Z",
-    "milestone":  "explore#12 第 231 笔窗（48h 钟 ~10-16 20:2x）：首选=20257066 DSMM 修订窗（TC260 通知 2026-08-26·60 日窗 ≈10-25 截止=活窗热候选·附件直取链复用）；备选=31509-2015 OCR 窗+网络数据安全风险评估办法 CAC 件",
-    "milestone_eta_utc":  "2026-10-16T12:20:00Z"
+    "updated_utc":  "2026-10-14T12:53:32Z",
+    "current_activity":  "r608 FULL-ROUND 续领轮（triggers=2：c2=交互窗在飞件族恒定 8 件+c4=r607 传棒 KEEP）：explore#12 第 231 笔—20257066 DSMM 修订窗件落盘（计划页正身+意见窗 verbatim 2026-08-26~10-25+双通道附件四收+双版本漂移第三案+30 PA 新谱）",
+    "artifact":  "docs/research/R-20261014-dsmm-revision-20257066-window-benchmarks.md",
+    "artifact_utc":  "2026-10-14T12:53:32Z",
+    "milestone":  "explore#12 第 232 笔窗（48h 钟 ~10-16 20:5x）：首选=DSMM WD 全文逐条消费件（30 PA×5 等级结构级+30↔19 PA 对照表·WD sha12 双件 logs/ 在册零 fetch）；备选=GB/T 37988—2019 openstd 现行版正身页",
+    "milestone_eta_utc":  "2026-10-16T12:50:00Z"
 }

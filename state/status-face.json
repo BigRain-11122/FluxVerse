@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-14T12:21:35Z",
-    "current_activity":  "r606 FULL-ROUND 续领轮（triggers=2：c2=交互窗在飞件族恒定·c4=r605 传棒 KEEP）：explore#12 第 229 笔——20260696-T-469 信息安全风险评估实施指南修订窗=计划页正身+征求意见稿双附件直取：30.20 正在征求意见+修订型第二案（全部代替 GB/T 31509-2015）+三槽三域谱信息系统槽正主落位（PIA 39335/重要数据 45577/信息系统 31509 三槽全齐）+WD 92 页/DI 8 页双附件直取+连号对坑第三案（两字符差 C7FA↔C776）等坑 4 条；queue explore#234 补行+48h 钟重置至 10-16 20:2x",
-    "artifact":  "docs/research/R-20261014-infosec-risk-assessment-implementation-guide-20260696-plan-benchmarks.md v1.0：20260696 计划页正身（82,343B·hex=39335 族表行锚 verbatim 滚出）+WD 征求意见稿 92 页 46,919 CJK sha12=8D08CF357756（封面「代替 GB/T 31509-2015·本稿完成日期 2025 年10 月」·logs/ 耐久副本）+DI 编制说明 8 页 sha12=B2A51EE27091+族页 6 件（31509 hex 首录+25058 等保/36466 工控/3896 关基三姊妹+20263732 攻击面/20261187 区块链新号首录）+城内六行消费位+J1-J3 三门",
-    "artifact_utc":  "2026-10-14T12:22:00Z",
-    "milestone":  "explore#12 第 230 笔窗（48h 钟 ~10-16 20:2x）：首选=20260696 征求意见稿逐条消费件（WD 92 页在手零 fetch·r597 逐条消费范式·意见窗起讫=TC260 通知页补录位）；备选=20257066 DSMM 修订窗+31509 现行版 OCR 窗（hex 首录·TC260 破口判法前置）；45654/45574 两消费件随 10-18 提案窗/SOP 窗；main#2/#3 下窗 10-18；main#10/main#1 深潜窗 10-24",
+    "updated_utc":  "2026-10-14T12:39:35Z",
+    "current_activity":  "r607 FULL-ROUND 续领轮（triggers=2：c2=交互窗在飞件族恒定零接触+c4=r606 传棒 KEEP）：explore#12 第 230 笔——20260696 征求意见稿逐条消费件落盘（WD 92 页全文级+意见窗补录+双版本漂移+跨槽引用 45577 首实证）",
+    "artifact":  "docs/research/R-20261014-infosec-risk-assessment-implementation-guide-20260696-draft-fulltext-benchmarks.md",
+    "artifact_utc":  "2026-10-14T12:39:35Z",
+    "milestone":  "explore#12 第 231 笔窗（48h 钟 ~10-16 20:2x）：首选=20257066 DSMM 修订窗（TC260 通知 2026-08-26·60 日窗 ≈10-25 截止=活窗热候选·附件直取链复用）；备选=31509-2015 OCR 窗+网络数据安全风险评估办法 CAC 件",
     "milestone_eta_utc":  "2026-10-16T12:20:00Z"
 }

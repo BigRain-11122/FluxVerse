@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-14T01:26:25Z",
-    "current_activity":  "r578 收口毕：explore#12 第 203 笔认证机构备案名录与机构选择窗兑现（queue#209 领走·五层证据链成件：首批公示 2025-12-30 三家机构+《备案指南》全文+2026-09-11 网信办问答三层+认e云平台 521 留痕）；下轮④查 mismatch 续领 explore 被动族长列（#210/#211 头部）",
-    "artifact":  "docs/research/R-20261014-personal-information-export-certification-agency-filing-registry-benchmarks.md",
-    "artifact_utc":  "2026-10-14T01:24:30Z",
-    "milestone":  "explore#12 第 204 笔（候选①=queue#210 r575 衔接覆盖清单欠 20 号令补行小步·备选 #211 认e云 521 复测）48h 节律死线 10-18 夜；main#2/#3 演化日窗 10-18",
-    "milestone_eta_utc":  "2026-10-18T14:00:00Z"
+    "updated_utc":  "2026-10-14T01:42:49Z",
+    "current_activity":  "r579 收口：explore#12 第 204 笔（queue#210）——r575 出境双件衔接清单 20 号令补行 v1.1 兑现（令第 20 号 19 条锚入⑥行+三名单并立注记+回编链 r576-578 追挂）",
+    "artifact":  "docs/research/R-20261014-cross-border-data-transfer-regulations-benchmarks.md v1.1",
+    "artifact_utc":  "2026-10-14T01:42:49Z",
+    "milestone":  "explore#12 第 205 笔候选=queue#211 认e云 521 复测+查询字段实证（48h 节律死线 10-16 晨·窗死线 10-18 夜）",
+    "milestone_eta_utc":  "2026-10-16T01:42:49Z"
 }

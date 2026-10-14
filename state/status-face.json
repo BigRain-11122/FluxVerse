@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-14T14:29:02Z",
-    "current_activity":  "r612 FULL-ROUND 续领轮：explore#12 第 234 笔交付——YD/T 6285-2024 医疗健康大数据平台 DSMM 评估正身窗件上链（产物壳先 commit=F-20261014-05 防截杀律首个执行轮·板面注记后补）",
-    "artifact":  "docs/research/R-20261014-ydt6285-medical-dsmm-assessment-benchmarks.md",
-    "artifact_utc":  "2026-10-14T14:29:02Z",
-    "milestone":  "explore#12 第 235 笔窗（48h 钟 ~10-16 22:2x）：首选 JR/T 0358—2026 金融垂类 DSMM 体系窗；备选 ISO/IEC 27045.2 DIS 年检位+YD/T 4558-2023 通用评估+6285 正文 32 页全文本窗",
-    "milestone_eta_utc":  "2026-10-16T14:25:00Z"
+    "updated_utc":  "2026-10-14T14:58:31Z",
+    "current_activity":  "r613 FULL-ROUND 续领轮：先手 r612 板面尾注收编（d9673bc4）+explore#12 第 235 笔交付——JR/T 0358-2026 金融数据安全 数据安全能力体系正身窗件上链（产物壳先 commit=防截杀律第二执行轮·4 域×19 子域谱+五级名谱≠DSMM+差异四判 vs 37988+规范性引用 37988 唯一·行业分域 DSMM 双垂类池闭）",
+    "artifact":  "docs/research/R-20261014-jrt0358-financial-dsmm-capability-benchmarks.md",
+    "artifact_utc":  "2026-10-14T14:58:31Z",
+    "milestone":  "explore#12 第 236 笔窗（48h 钟 ~10-16 23:0x）：首选 JR/T 0197-2020 金融数据安全 数据安全分级指南窗（金融族上游地基第一件）；备选 JR/T 0223-2021 生命周期规范+YD/T 4558-2023 通用评估+ISO 27045.2 DIS 年检位+0358 正文全文本窗",
+    "milestone_eta_utc":  "2026-10-16T15:00:00Z"
 }

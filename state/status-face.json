@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-14T12:53:32Z",
-    "current_activity":  "r608 FULL-ROUND 续领轮（triggers=2：c2=交互窗在飞件族恒定 8 件+c4=r607 传棒 KEEP）：explore#12 第 231 笔—20257066 DSMM 修订窗件落盘（计划页正身+意见窗 verbatim 2026-08-26~10-25+双通道附件四收+双版本漂移第三案+30 PA 新谱）",
-    "artifact":  "docs/research/R-20261014-dsmm-revision-20257066-window-benchmarks.md",
-    "artifact_utc":  "2026-10-14T12:53:32Z",
-    "milestone":  "explore#12 第 232 笔窗（48h 钟 ~10-16 20:5x）：首选=DSMM WD 全文逐条消费件（30 PA×5 等级结构级+30↔19 PA 对照表·WD sha12 双件 logs/ 在册零 fetch）；备选=GB/T 37988—2019 openstd 现行版正身页",
-    "milestone_eta_utc":  "2026-10-16T12:50:00Z"
+    "updated_utc":  "2026-10-14T13:58:50Z",
+    "current_activity":  "r611 r610 超时遗产收口轮（21:40 watchdog 截杀于 commit 前）：盘上核验四件产物完整后零改动原样收编上链——explore#12 第 233 笔 GB/T 37988-2019 正身全谱件+草稿 §六 v1.1 回填+决策面双回执核销",
+    "artifact":  "docs/research/R-20261014-gbt37988-dsmm-2019-published-benchmarks.md",
+    "artifact_utc":  "2026-10-14T13:58:50Z",
+    "milestone":  "explore#12 第 234 笔窗（48h 钟 ~10-16 21:54）：首选=YD/T 6285-2024 医疗健康大数据平台 DSMM 评估窗；备选=JR/T 0358-2026 金融+ISO 27045.2 DIS 年检位+意见反馈注记位（10-25 窗）",
+    "milestone_eta_utc":  "2026-10-16T13:54:00Z"
 }

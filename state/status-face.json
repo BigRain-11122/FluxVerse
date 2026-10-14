@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-14T13:58:50Z",
-    "current_activity":  "r611 r610 超时遗产收口轮（21:40 watchdog 截杀于 commit 前）：盘上核验四件产物完整后零改动原样收编上链——explore#12 第 233 笔 GB/T 37988-2019 正身全谱件+草稿 §六 v1.1 回填+决策面双回执核销",
-    "artifact":  "docs/research/R-20261014-gbt37988-dsmm-2019-published-benchmarks.md",
-    "artifact_utc":  "2026-10-14T13:58:50Z",
-    "milestone":  "explore#12 第 234 笔窗（48h 钟 ~10-16 21:54）：首选=YD/T 6285-2024 医疗健康大数据平台 DSMM 评估窗；备选=JR/T 0358-2026 金融+ISO 27045.2 DIS 年检位+意见反馈注记位（10-25 窗）",
-    "milestone_eta_utc":  "2026-10-16T13:54:00Z"
+    "updated_utc":  "2026-10-14T14:29:02Z",
+    "current_activity":  "r612 FULL-ROUND 续领轮：explore#12 第 234 笔交付——YD/T 6285-2024 医疗健康大数据平台 DSMM 评估正身窗件上链（产物壳先 commit=F-20261014-05 防截杀律首个执行轮·板面注记后补）",
+    "artifact":  "docs/research/R-20261014-ydt6285-medical-dsmm-assessment-benchmarks.md",
+    "artifact_utc":  "2026-10-14T14:29:02Z",
+    "milestone":  "explore#12 第 235 笔窗（48h 钟 ~10-16 22:2x）：首选 JR/T 0358—2026 金融垂类 DSMM 体系窗；备选 ISO/IEC 27045.2 DIS 年检位+YD/T 4558-2023 通用评估+6285 正文 32 页全文本窗",
+    "milestone_eta_utc":  "2026-10-16T14:25:00Z"
 }

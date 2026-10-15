@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-15T09:36:30Z",
-    "current_activity":  "移动金融客户端标准族全文线续采：第 275 绪毕=0098.7 检测规范第 7 部分全文窗收口（50 页全文级·bzId 勘正 1571→1579 笔误链坑首录）；下轮=第 276 绪首选 0098.x 检测族余席窗（queue #280·首选 0098.1 bzId 1573）",
-    "artifact":  "docs/research/R-20261015-jrt0098-7-2012-tsm-detection-fulltext-benchmarks.md",
-    "artifact_utc":  "2026-10-15T09:25:00Z",
-    "milestone":  "0098.x 检测族余席全文窗续采（第 276 绪·四层正法第七证候选·余五席 0098.1/2/4/5/6）",
-    "milestone_eta_utc":  "2026-10-17T09:45:00Z"
+    "updated_utc":  "2026-10-15T09:52:49Z",
+    "current_activity":  "移动金融客户端标准族全文线续采：第 276 绪毕=0098.1 检测规范第 1 部分移动终端非接触式接口全文窗收口（9 页短件面·qPBOC 500ms 硬指标+JR/T 0045 薄壳转致结构首录+全栈检测谱第四席）；下轮=第 277 绪首选 0098.2 安全芯片全文窗（bzId 1574 档案零检索）",
+    "artifact":  "docs/research/R-20261015-jrt0098-1-2012-contactless-interface-detection-fulltext-benchmarks.md",
+    "artifact_utc":  "2026-10-15T09:52:00Z",
+    "milestone":  "0098.x 检测族余席全文窗续采（第 277 绪·余四席 0098.2/4/5/6·四层正法第八证候选）",
+    "milestone_eta_utc":  "2026-10-17T10:00:00Z"
 }

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-15T05:52:41Z",
-    "current_activity":  "r646 FULL-ROUND 续领轮（triggers=2：c2=交互窗在飞件族 8 件恒定+c4=r645 传棒 KEEP）；explore#12 第 266 笔兑现：JR/T 0095—2012 应用安全规范+0097—2012 可信服务管理技术规范 单件双窗正身件（R-20261015-jrt0095-0097-application-security-tsm-benchmarks.md v1.0）——J2 满格×2（cfstc 档案零 fetch 复用×gstdHb×2 单发即闭）+**族间隔铆钉位结构发现**（0095=38778/0097=38785 多部分族隔位铆钉·bzId 序同构）+设计×检测对位两席闭合（0095↔0098 全栈/0097↔0098.7·三席谱就位）+0095 全域位判读（题名无通道限定词=通道无关全域应用安全设计位）+零换代 25 部扩容+0095=1636 全段第三位单件头峰+单班底第五证。判候三查：main#6 续候（City3D 0 新 commit·867b59eb 维持）·main#4 PASS 第一百八十九回·main#10 维持（10-24）。Token=L2 零生成触点（py 1+curl ~4）。",
-    "artifact":  "docs/research/R-20261015-jrt0095-0097-application-security-tsm-benchmarks.md",
-    "artifact_utc":  "2026-10-15T05:52:41Z",
-    "milestone":  "explore#12 第 267 笔窗（48h 钟 ~10-17 深夜）：首选=JR/T 0090—2012 非接触式接口规范+0091—2012 受理终端技术要求 单件双窗（r645 候选池②·bzId 1552/1553 r642 档案零 fetch〔view=992/1067·备案 38765/38766-2013〕·0090 设计×0098.1 检测=设计×检测对位第三例+0091 受理侧硬件正主·gstdHb×2 单发即闭）；备选=0089.1/.2 安全单元窗（bzId 1550/1551·view=1282/1045）/cfstc allowView=1 全文窗（0095/0097 两附件 URL r646 新入册+前窗 26 附件在册·r623 正法链）/0098.8 个保检测全文消费窗/38773 无名 gap 考古位/hbba 复活复检窗。main#2/#3 周轮深扫与提案 10-18；main#1/#10 归档/深潜 10-24。",
-    "milestone_eta_utc":  "2026-10-17T16:00:00Z"
+    "updated_utc":  "2026-10-15T06:03:14Z",
+    "current_activity":  "r647 FULL-ROUND 续领轮（triggers=2：c2=交互窗在飞件族 8 件恒定+c4=r646 传棒 KEEP）；explore#12 第 267 笔兑现：JR/T 0090—2012 非接触式接口规范+0091—2012 受理终端技术要求 单件双窗正身件（R-20261015-jrt0090-0091-contactless-interface-poi-terminal-benchmarks.md v1.0）——J2 满格×2（cfstc 档案零 fetch 复用×gstdHb×2 单发即闭）+双单件连座对结构发现（bzId 1552/1553+备案 38765/38766 连号=族界双铆钉首例）+设计×检测对位第三例闭合（0090↔0098.1·三席谱全闭）+0091 受理侧硬件正主+检测对位缺位首录（0098.x 谱无 POI 检测席）+0092 废止邻座存活分野第二案+零换代 27 部扩容+单班底第六证。判候三查：main#6 续候（City3D 0 新 commit·867b59eb 维持）·main#4 PASS 第一百九十回·main#10 维持（10-24）。Token=L2 零生成触点（py 1+curl ~4）。",
+    "artifact":  "docs/research/R-20261015-jrt0090-0091-contactless-interface-poi-terminal-benchmarks.md",
+    "artifact_utc":  "2026-10-15T06:03:14Z",
+    "milestone":  "explore#12 第 268 笔窗（48h 钟 ~10-17 午后）：首选=JR/T 0089.1—2012+0089.2—2012 安全单元双窗（r646 候选池②·bzId 1550/1551 r642 档案零 fetch〔view=1282/1045·备案 38763/38764-2013〕·支付域群全谱 34 席终笔·gstdHb×2 单发即闭〔stdId 19018/23519 公告存档在册零检索〕）；备选=cfstc allowView=1 全文窗（0090/0091 两附件 URL r647 新入册+前窗 28 附件在册·r623 正法链）/0098.8 个保检测全文消费窗（view=1838 次峰·城个保三链）/0092 废止层后继窗（客户端技术规范换代件正主定位）/38773 无名 gap 考古位/hbba 复活复检窗。main#2/#3 周轮深扫与提案 10-18；main#1/#10 归档/深潜 10-24。",
+    "milestone_eta_utc":  "2026-10-17T06:00:00Z"
 }

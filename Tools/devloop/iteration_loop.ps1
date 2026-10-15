@@ -50,6 +50,15 @@ try {
     if ($prompt.Length -lt 50) { Log 'FATAL: iteration_prompt.txt too short'; Beat 'error prompt file empty'; exit 2 }
     if ($prompt.Contains('"')) { $prompt = $prompt.Replace('"', "'") }
     $argLine = '-y -p "' + $prompt + '"'
+    # CLOUD_CAP preflight (C-20261015-03 sec.3 / O-20261015-1800, fleet cloud
+    # concurrency cap). Fail-open: probe blowup = proceed, never stall the lane.
+    $live = @(Get-CimInstance Win32_Process -Filter "Name='codely.exe'" -ErrorAction SilentlyContinue).Count
+    if ($live -ge 2) {
+        Add-Content -Path $heart -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | CLOUD_CAP_DEFER live=$live" -Encoding UTF8
+        Log "cloud cap defer: live codely.exe=$live (>=2) - yield this beat"
+        Beat "cloud cap defer live=$live"
+        exit 0   # yield this beat; next grid slot auto-retries
+    }
     Log "spawning headless dev round (budget ${RoundTimeoutMinutes}min, prompt_chars=$($prompt.Length))"
     $p = Start-Process -FilePath $codelyPath -ArgumentList $argLine -WorkingDirectory $Project -PassThru -NoNewWindow -RedirectStandardOutput $roundOut -RedirectStandardError $roundErr
     $null = $p.Handle

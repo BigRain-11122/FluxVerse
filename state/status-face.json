@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-16T19:16:55Z",
-    "current_activity":  "移动支付检测规范族收官收口：第 279 绪双连采=0098.5/0098.6 检测规范双全文窗收官（71+78 页·SE 嵌入式软件安全 9 SFR 类全谱+业务系统七检测类 14 表+判定准则 15% 阈值族+0089.x↔0098.5 对位检测侧全文级·0098.x 八席全文化 8/8 收官·下窗第 280 绪首选=0089.1 全文窗〔对位双全文化第一优先·bzId 1550 档案在册零检索〕）",
-    "artifact":  "docs/research/R-20261017-jrt0098-5-6-2012-se-embeddedsw-business-system-fulltext-benchmarks.md",
-    "artifact_utc":  "2026-10-16T19:16:55Z",
-    "milestone":  "0098.x 检测族八席全文化 8/8 已收官（本窗达成）；下一步=0089.1/0089.2/0090 设计侧三窗对位双全文化（第 280 绪起·四层正法通道在册零检索）",
-    "milestone_eta_utc":  "2026-10-18T19:10:00Z"
+    "updated_utc":  "2026-10-16T23:04:07Z",
+    "current_activity":  "移动支付 SE 设计族头件全文窗：第 280 笔=JR/T 0089.1—2012 安全单元 第1部分：通用技术要求全文窗（32 页·四形态全谱=SWP-(U)SIM/全终端/智能SD卡/双界面SIM+SWP 电气参数库+SCIF 协议族〔SSC 防重放〕·0089.1↔0098.2 对位双全文化达成=族内第二例·下窗第 281 绪首选=0089.2 全文窗〔SE 设计族双部收口件·bzId 1551 档案在册零检索〕）",
+    "artifact":  "docs/research/R-20261017-jrt0089-1-2012-secure-element-part1-general-requirements-fulltext-benchmarks.md",
+    "artifact_utc":  "2026-10-16T23:04:07Z",
+    "milestone":  "0089.1 全文窗已收口（本窗达成·commit 743da376）；下一里程碑=0089.2 全文窗（SE 设计族双部 2/2 收口+对位双全文化第三对·四层正法通道在册零检索）",
+    "milestone_eta_utc":  "2026-10-18T23:00:00Z"
 }

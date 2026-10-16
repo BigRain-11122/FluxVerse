@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-16T23:04:07Z",
-    "current_activity":  "移动支付 SE 设计族头件全文窗：第 280 笔=JR/T 0089.1—2012 安全单元 第1部分：通用技术要求全文窗（32 页·四形态全谱=SWP-(U)SIM/全终端/智能SD卡/双界面SIM+SWP 电气参数库+SCIF 协议族〔SSC 防重放〕·0089.1↔0098.2 对位双全文化达成=族内第二例·下窗第 281 绪首选=0089.2 全文窗〔SE 设计族双部收口件·bzId 1551 档案在册零检索〕）",
-    "artifact":  "docs/research/R-20261017-jrt0089-1-2012-secure-element-part1-general-requirements-fulltext-benchmarks.md",
-    "artifact_utc":  "2026-10-16T23:04:07Z",
-    "milestone":  "0089.1 全文窗已收口（本窗达成·commit 743da376）；下一里程碑=0089.2 全文窗（SE 设计族双部 2/2 收口+对位双全文化第三对·四层正法通道在册零检索）",
-    "milestone_eta_utc":  "2026-10-18T23:00:00Z"
+    "updated_utc":  "2026-10-16T23:53:41Z",
+    "current_activity":  "移动支付 SE 设计族双部收口：第 281 笔=JR/T 0089.2—2012 安全单元 第2部分：多应用管理规范全文窗（19 页·双框架模型+PAMID 唯一标识律+生命周期双谱+SCP02→SCP10 转换律+FCSD/FMSD 集成律·0089.2↔0098.4 对位双全文化达成=族内第三例+0089.x 双部 2/2 全文化收口·下窗第 282 绪首选=0090 全文窗〔对位双全文化第四对·bzId 1552 档案在册零检索〕）",
+    "artifact":  "docs/research/R-20261017-jrt0089-2-2012-secure-element-part2-multiapp-management-fulltext-benchmarks.md",
+    "artifact_utc":  "2026-10-16T23:53:27Z",
+    "milestone":  "0089.2 全文窗已收口（本窗达成·commit 0f84fa34）；下一里程碑=0090 非接触式接口规范全文窗（对位双全文化第四对·四层正法通道在册零检索）",
+    "milestone_eta_utc":  "2026-10-19T03:00:00Z"
 }

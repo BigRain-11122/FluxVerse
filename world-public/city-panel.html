@@ -108,11 +108,13 @@
     <h2>城市变化（跨轮对比） <span class="tag" id="cv-prev">—</span></h2>
     <div id="chg"></div>
     <div class="muted" id="cv-note" style="margin-top:8px">—</div>
+    <div class="muted" id="cv-trend-sum" style="margin-top:10px">—</div>
+    <div id="cv-trend"></div>
   </div>
 
   <div class="card" style="margin-top:14px">
     <h2>数据自检 <span class="tag" id="sc-sum">—</span></h2>
-    <div class="rhint">七项全部由本页数据推导（含跨轮摘要），异常以「注意」如实露出，不隐藏。</div>
+    <div class="rhint">八项全部由本页数据推导（含跨轮摘要与轨迹），异常以「注意」如实露出，不隐藏。</div>
     <div id="selfcheck"></div>
   </div>
 
@@ -144,13 +146,15 @@
 </div>
 
 <script>
-const SNAP = {"protocol":"fluxverse-public/0.1","ts_utc":"2026-10-19T21:36:02Z","zones":[{"id":"gaming","name":"FLUX Gaming","status":"active","activity":1},{"id":"quant","name":"FLUX Quant","status":"active","activity":1},{"id":"media","name":"FLUX Media","status":"active","activity":1}],"flows":[{"id":"data","zone":"gaming"},{"id":"capital","zone":"quant"},{"id":"traffic","zone":"media"}],"city":{"fleet_online":1,"games_total":33,"games_active":13,"renders_total":101,"last_render_utc":"2026-10-19T21:11:42Z","commits_total":28908},"reality_public":{"city_day_phase":"dawn","weather_kind":"cloud","weather_temp_c":"22","weekday":"2","beijing_hhmm":"05:36","season":"autumn"},"events_tail":[{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T21:36:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T21:36:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:36:02Z","type":"GAME_STAGE","zone":"gaming"}],"status_face":{"updated_utc":"2026-10-19T21:20:37Z","current_activity":"r670 产品轮：城市面板新增「数据自检」卡——六项全部由页内数据推导（必备节齐全/事件窗口与跨度/声明分区覆盖/时间顺序/未来时间/快照龄），异常以「注意」如实露出不隐藏；附桩 DOM 渲染测试双样本 8/8 PASS（真实快照 6 项通过；坏夹具 3 项注意=逆序/未来时间/时间不可解析）","artifact":"world-public/city-panel.html","artifact_utc":"2026-10-19T21:19:42Z","milestone":"下一里程碑=面板「数据自检」扩到跨轮对比（历史快照留存）+ global-benchmarks 司级 7 天刷新（已到期 10-18）+ explore#12 第 285 绪 JR/T 0025.12 现行层正身窗","milestone_eta_utc":"2026-10-20T14:00:00Z"}};
-const FACE = {"updated_utc":"2026-10-19T21:40:19Z","current_activity":"r671 产品轮：城市面板新增「城市变化（跨轮对比）」卡——构建器每 tick 记一条快照摘要到本地日志（不入库），面板把五项指标与上一条快照做差值；「数据自检」增第七项「跨轮单调」（累计计数回落即标注意）；桩 DOM 三样本 20/20 PASS","artifact":"world-public/city-panel.html","artifact_utc":"2026-10-19T21:40:19Z","milestone":"下一里程碑=面板跨轮摘要扩到 24 小时趋势曲线（累计 ≥24 条后开）+ global-benchmarks 司级 7 天刷新（已到期 10-18）+ explore#12 第 285 绪 JR/T 0025.12 现行层正身窗","milestone_eta_utc":"2026-10-20T14:00:00Z"};
-const BUILT = "2026-10-20 05:40:19 (+08:00)";
+const SNAP = {"protocol":"fluxverse-public/0.1","ts_utc":"2026-10-19T21:56:03Z","zones":[{"id":"gaming","name":"FLUX Gaming","status":"active","activity":1},{"id":"quant","name":"FLUX Quant","status":"active","activity":1},{"id":"media","name":"FLUX Media","status":"active","activity":1}],"flows":[{"id":"data","zone":"gaming"},{"id":"capital","zone":"quant"},{"id":"traffic","zone":"media"}],"city":{"fleet_online":1,"games_total":33,"games_active":13,"renders_total":101,"last_render_utc":"2026-10-19T21:11:42Z","commits_total":28914},"reality_public":{"city_day_phase":"dawn","weather_kind":"cloud","weather_temp_c":"22","weekday":"2","beijing_hhmm":"05:56","season":"autumn"},"events_tail":[{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T21:36:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T21:36:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T21:36:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:36:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:41:03Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:41:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:41:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:46:03Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:46:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:46:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:51:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:51:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:51:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:51:02Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-19T21:51:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T21:51:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T21:51:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T21:51:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T21:51:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:51:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:56:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:56:03Z","type":"GAME_STAGE","zone":"gaming"}],"status_face":{"updated_utc":"2026-10-19T21:40:19Z","current_activity":"r671 产品轮：城市面板新增「城市变化（跨轮对比）」卡——构建器每 tick 记一条快照摘要到本地日志（不入库），面板把五项指标与上一条快照做差值；「数据自检」增第七项「跨轮单调」（累计计数回落即标注意）；桩 DOM 三样本 20/20 PASS","artifact":"world-public/city-panel.html","artifact_utc":"2026-10-19T21:40:19Z","milestone":"下一里程碑=面板跨轮摘要扩到 24 小时趋势曲线（累计 ≥24 条后开）+ global-benchmarks 司级 7 天刷新（已到期 10-18）+ explore#12 第 285 绪 JR/T 0025.12 现行层正身窗","milestone_eta_utc":"2026-10-20T14:00:00Z"}};
+const FACE = {"updated_utc":"2026-10-19T21:57:16Z","current_activity":"r672 产品轮：城市面板「城市变化」卡新增「跨轮轨迹」子块——近 12 条快照逐条明细（提交数+与上一条的增量徽标）与区间汇总（近 N 条/约 M 分钟/提交 +Δ/渲染 +Δ/末条事件窗口），数据源是本地历史日志末端切片；数据自检加第八项「轨迹一致」（末条须=本快照且时间严格递增）；同日清账逾期 2 日的 benchmarks v1.3 刷新（WFC 前沿两新支/城市孪生开源三件/团结引擎 1.9.0-1.10.0 版本面·摘要级如实标待证）。","artifact":"world-public/city-panel.html + qa/city-panel-r672.png","artifact_utc":"2026-10-19T21:57:16Z","milestone":"下个里程碑：面板「跨轮轨迹」扩成 24 小时趋势曲线（候历史日志累计 ≥24 条·约 3 小时后到点）+ 自检第九项「tick 覆盖」（缺档自检）","milestone_eta_utc":"2026-10-20T15:00:00Z"};
+const BUILT = "2026-10-20 05:57:28 (+08:00)";
 // PREV = previous DISTINCT snapshot digest (null when this is the first one),
 // HIST = {n, max, ok, first_utc} local cross-round log meta (gitignored).
-const PREV = null;
-const HIST = {"n":1,"max":288,"ok":true,"first_utc":"2026-10-19T21:36:02Z"};
+const PREV = {"ts":"2026-10-19T21:51:02Z","c":28914,"r":101,"g":13,"f":1,"e":50};
+const HIST = {"n":5,"max":288,"ok":true,"first_utc":"2026-10-19T21:36:02Z"};
+// SERIES = tail slice of the local cross-round log (newest last, <=12 records).
+const SERIES = [{"ts":"2026-10-19T21:36:02Z","c":28908,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T21:41:03Z","c":28909,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T21:46:03Z","c":28910,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T21:51:02Z","c":28914,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T21:56:03Z","c":28914,"r":101,"g":13,"f":1,"e":50}];
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -281,13 +285,45 @@ function fmtAge(h){
     : '无上一条快照';
 
   const nHist = (hm && typeof hm.n === 'number') ? hm.n : 0;
-  const hSpan = (hm && hm.first_utc && !isNaN(curAnchor) && !isNaN(Date.parse(hm.first_utc)))
-    ? Math.max(0, Math.round((curAnchor - Date.parse(hm.first_utc)) / 3600000)) : null;
+  const histSpanMin = (hm && hm.first_utc && !isNaN(curAnchor) && !isNaN(Date.parse(hm.first_utc)))
+    ? Math.max(0, Math.round((curAnchor - Date.parse(hm.first_utc)) / 60000)) : null;
+  const histSpanTxt = histSpanMin == null ? ''
+    : (histSpanMin >= 60 ? '覆盖约 ' + (histSpanMin / 60).toFixed(1) + ' 小时'
+                         : '覆盖约 ' + histSpanMin + ' 分钟');
   $('cv-note').textContent =
     (prev ? '上一条 = 前一次 tick 的快照摘要，差值为「本快照 − 上一条」。'
           : '本卡自本次构建开始累积（每次 tick 记一条），暂无上一条可对比。') +
-    ' 已记录 ' + nHist + ' 条' + (hSpan != null && nHist > 1 ? ' · 覆盖约 ' + hSpan + ' 小时' : '') +
+    ' 已记录 ' + nHist + ' 条' + (histSpanTxt ? ' · ' + histSpanTxt : '') +
     ' · 上限 ' + ((hm && hm.max) || 288) + ' 条（约 24 小时·本地日志不入库）';
+
+  // 跨轮轨迹：历史日志的末端切片（builder 注入），只画已记录的部分；
+  // 条数不足就如实写「记录不足」，不自造点。
+  const series = Array.isArray(SERIES) ? SERIES.slice(-12) : [];
+  if (series.length >= 2) {
+    const s0 = series[0], sN = series[series.length - 1];
+    const t0 = Date.parse(s0.ts), tN = Date.parse(sN.ts);
+    const spanMin = (!isNaN(t0) && !isNaN(tN)) ? Math.round((tN - t0) / 60000) : null;
+    const dC = (Number(sN.c) || 0) - (Number(s0.c) || 0);
+    const dR = (Number(sN.r) || 0) - (Number(s0.r) || 0);
+    $('cv-trend-sum').textContent =
+      '近 ' + series.length + ' 条快照' + (spanMin != null ? '（约 ' + spanMin + ' 分钟）' : '') +
+      '：提交 ' + (dC >= 0 ? '+' : '') + dC + ' · 渲染 ' + (dR >= 0 ? '+' : '') + dR +
+      ' · 末条事件窗口 ' + (sN.e == null ? '—' : sN.e) + ' 条';
+    $('cv-trend').innerHTML = series.map((s, i) => {
+      const p = i ? series[i - 1] : null;
+      const dc = p ? (Number(s.c) - Number(p.c)) : null;
+      const cls = dc == null ? '' : (dc > 0 ? 'ok' : (dc < 0 ? 'warn' : ''));
+      const dtx = dc == null ? '起点' : (dc > 0 ? '+' + dc : (dc === 0 ? '持平' : String(dc)));
+      return '<div class="rowline"><span class="t">' +
+        esc(String(s.ts || '').replace('T', ' ').replace('Z', '')) + '</span>' +
+        '<span style="flex:1;font-variant-numeric:tabular-nums">提交 ' + esc(s.c == null ? '—' : s.c) + '</span>' +
+        '<span class="tag ' + cls + '">' + esc(dtx) + '</span>' +
+        '<span class="tag">事件 ' + esc(s.e == null ? '—' : s.e) + '</span></div>';
+    }).join('');
+  } else {
+    $('cv-trend-sum').textContent = '轨迹记录不足（当前 ' + series.length + ' 条，至少 2 条才显示跨轮轨迹）';
+    $('cv-trend').innerHTML = '';
+  }
 
   // 活动节律：近 12 小时逐时计数，锚=快照 ts_utc（不用浏览器时钟，
   // 快照停走时柱图也停走，与顶部新鲜度徽标同源）
@@ -366,6 +402,25 @@ function fmtAge(h){
       : { ok: true, vd: '提交/渲染未回落（对比 ' + String(prev.ts).slice(11, 19) + 'Z）' };
   }
   selfcheck.push({ ok: mono.ok, nm: '跨轮单调', vd: mono.vd });
+
+  // 轨迹一致：轨迹末条必须就是本快照，且窗口内时间严格递增
+  // （重复/逆序 = 本地历史日志被并发写坏或快照回退，如实标注意）
+  let tr = { ok: true, vd: '—' };
+  if (series.length === 0) {
+    tr = { ok: false, vd: '本地历史日志不可用或为空' };
+  } else {
+    const lastS = series[series.length - 1];
+    const sameTs = String(lastS.ts) === String(snap.ts_utc);
+    let dup = 0, back = 0;
+    for (let i = 1; i < series.length; i++) {
+      const x = Date.parse(series[i - 1].ts), y = Date.parse(series[i].ts);
+      if (!isNaN(x) && !isNaN(y)) { if (y === x) dup++; else if (y < x) back++; }
+    }
+    tr = { ok: sameTs && dup === 0 && back === 0,
+      vd: (sameTs ? '末条=本快照' : '末条与本快照不同刻') + ' · ' + series.length + ' 条' +
+        (dup ? ' · ' + dup + ' 条重复' : '') + (back ? ' · ' + back + ' 条逆序' : '') };
+  }
+  selfcheck.push({ ok: tr.ok, nm: '轨迹一致', vd: tr.vd });
 
   const warnN = selfcheck.filter(c => !c.ok).length;
   $('sc-sum').textContent = warnN ? (warnN + ' 项注意') : (selfcheck.length + ' 项通过');

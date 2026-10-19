@@ -161,6 +161,18 @@ $prevJs = 'null'
 if ($null -ne $prevRec) { $prevJs = To-JsLiteral -Obj $prevRec -Label 'prev-record' }
 $histJs = To-JsLiteral -Obj $histMeta -Label 'history-meta'
 
+# --- series: tail slice of the same local log (newest last, <= 12) ----------
+# The panel draws the last few ticks as a short trajectory. Same fail-soft
+# contract as PREV: no history => empty array => the panel says "not enough".
+$SeriesCount = 12
+$seriesArr = @()
+if ($histAll.Count -gt 0) {
+    $from = [Math]::Max(0, $histAll.Count - $SeriesCount)
+    for ($i = $from; $i -lt $histAll.Count; $i++) { $seriesArr += $histAll[$i] }
+}
+if ($seriesArr.Count -eq 0) { $seriesJs = '[]' }
+else { $seriesJs = To-JsLiteral -Obj @($seriesArr) -Label 'series' }
+
 $built = [DateTimeOffset]::Now.ToString('yyyy-MM-dd HH:mm:ss (zzz)',
     [Globalization.CultureInfo]::InvariantCulture)
 # Inject the INNER text only: the template already supplies the surrounding
@@ -174,12 +186,12 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__PREV_JSON__','__HIST_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
 # String.Replace (not regex) => JSON '$' chars stay literal.
-$out = $tpl.Replace('__SNAPSHOT_JSON__', $snapJs).Replace('__FACE_JSON__', $faceJs).Replace('__BUILT_JSON__', $builtJs).Replace('__PREV_JSON__', $prevJs).Replace('__HIST_JSON__', $histJs)
+$out = $tpl.Replace('__SNAPSHOT_JSON__', $snapJs).Replace('__FACE_JSON__', $faceJs).Replace('__BUILT_JSON__', $builtJs).Replace('__PREV_JSON__', $prevJs).Replace('__HIST_JSON__', $histJs).Replace('__SERIES_JSON__', $seriesJs)
 
 if ($out.IndexOf('__SNAPSHOT_JSON__') -ge 0) { Fail 'placeholder __SNAPSHOT_JSON__ still present after build' }
 if ($out.Length -lt 4000) { Fail ('output suspiciously small: ' + $out.Length + ' bytes') }
@@ -212,5 +224,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' built=' + $built + ' path=' + $OutPath)
 exit 0

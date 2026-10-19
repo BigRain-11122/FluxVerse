@@ -108,11 +108,13 @@
     <h2>城市变化（跨轮对比） <span class="tag" id="cv-prev">—</span></h2>
     <div id="chg"></div>
     <div class="muted" id="cv-note" style="margin-top:8px">—</div>
+    <div class="muted" id="cv-trend-sum" style="margin-top:10px">—</div>
+    <div id="cv-trend"></div>
   </div>
 
   <div class="card" style="margin-top:14px">
     <h2>数据自检 <span class="tag" id="sc-sum">—</span></h2>
-    <div class="rhint">七项全部由本页数据推导（含跨轮摘要），异常以「注意」如实露出，不隐藏。</div>
+    <div class="rhint">八项全部由本页数据推导（含跨轮摘要与轨迹），异常以「注意」如实露出，不隐藏。</div>
     <div id="selfcheck"></div>
   </div>
 
@@ -151,6 +153,8 @@ const BUILT = __BUILT_JSON__;
 // HIST = {n, max, ok, first_utc} local cross-round log meta (gitignored).
 const PREV = __PREV_JSON__;
 const HIST = __HIST_JSON__;
+// SERIES = tail slice of the local cross-round log (newest last, <=12 records).
+const SERIES = __SERIES_JSON__;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -281,13 +285,45 @@ function fmtAge(h){
     : '无上一条快照';
 
   const nHist = (hm && typeof hm.n === 'number') ? hm.n : 0;
-  const hSpan = (hm && hm.first_utc && !isNaN(curAnchor) && !isNaN(Date.parse(hm.first_utc)))
-    ? Math.max(0, Math.round((curAnchor - Date.parse(hm.first_utc)) / 3600000)) : null;
+  const histSpanMin = (hm && hm.first_utc && !isNaN(curAnchor) && !isNaN(Date.parse(hm.first_utc)))
+    ? Math.max(0, Math.round((curAnchor - Date.parse(hm.first_utc)) / 60000)) : null;
+  const histSpanTxt = histSpanMin == null ? ''
+    : (histSpanMin >= 60 ? '覆盖约 ' + (histSpanMin / 60).toFixed(1) + ' 小时'
+                         : '覆盖约 ' + histSpanMin + ' 分钟');
   $('cv-note').textContent =
     (prev ? '上一条 = 前一次 tick 的快照摘要，差值为「本快照 − 上一条」。'
           : '本卡自本次构建开始累积（每次 tick 记一条），暂无上一条可对比。') +
-    ' 已记录 ' + nHist + ' 条' + (hSpan != null && nHist > 1 ? ' · 覆盖约 ' + hSpan + ' 小时' : '') +
+    ' 已记录 ' + nHist + ' 条' + (histSpanTxt ? ' · ' + histSpanTxt : '') +
     ' · 上限 ' + ((hm && hm.max) || 288) + ' 条（约 24 小时·本地日志不入库）';
+
+  // 跨轮轨迹：历史日志的末端切片（builder 注入），只画已记录的部分；
+  // 条数不足就如实写「记录不足」，不自造点。
+  const series = Array.isArray(SERIES) ? SERIES.slice(-12) : [];
+  if (series.length >= 2) {
+    const s0 = series[0], sN = series[series.length - 1];
+    const t0 = Date.parse(s0.ts), tN = Date.parse(sN.ts);
+    const spanMin = (!isNaN(t0) && !isNaN(tN)) ? Math.round((tN - t0) / 60000) : null;
+    const dC = (Number(sN.c) || 0) - (Number(s0.c) || 0);
+    const dR = (Number(sN.r) || 0) - (Number(s0.r) || 0);
+    $('cv-trend-sum').textContent =
+      '近 ' + series.length + ' 条快照' + (spanMin != null ? '（约 ' + spanMin + ' 分钟）' : '') +
+      '：提交 ' + (dC >= 0 ? '+' : '') + dC + ' · 渲染 ' + (dR >= 0 ? '+' : '') + dR +
+      ' · 末条事件窗口 ' + (sN.e == null ? '—' : sN.e) + ' 条';
+    $('cv-trend').innerHTML = series.map((s, i) => {
+      const p = i ? series[i - 1] : null;
+      const dc = p ? (Number(s.c) - Number(p.c)) : null;
+      const cls = dc == null ? '' : (dc > 0 ? 'ok' : (dc < 0 ? 'warn' : ''));
+      const dtx = dc == null ? '起点' : (dc > 0 ? '+' + dc : (dc === 0 ? '持平' : String(dc)));
+      return '<div class="rowline"><span class="t">' +
+        esc(String(s.ts || '').replace('T', ' ').replace('Z', '')) + '</span>' +
+        '<span style="flex:1;font-variant-numeric:tabular-nums">提交 ' + esc(s.c == null ? '—' : s.c) + '</span>' +
+        '<span class="tag ' + cls + '">' + esc(dtx) + '</span>' +
+        '<span class="tag">事件 ' + esc(s.e == null ? '—' : s.e) + '</span></div>';
+    }).join('');
+  } else {
+    $('cv-trend-sum').textContent = '轨迹记录不足（当前 ' + series.length + ' 条，至少 2 条才显示跨轮轨迹）';
+    $('cv-trend').innerHTML = '';
+  }
 
   // 活动节律：近 12 小时逐时计数，锚=快照 ts_utc（不用浏览器时钟，
   // 快照停走时柱图也停走，与顶部新鲜度徽标同源）
@@ -366,6 +402,25 @@ function fmtAge(h){
       : { ok: true, vd: '提交/渲染未回落（对比 ' + String(prev.ts).slice(11, 19) + 'Z）' };
   }
   selfcheck.push({ ok: mono.ok, nm: '跨轮单调', vd: mono.vd });
+
+  // 轨迹一致：轨迹末条必须就是本快照，且窗口内时间严格递增
+  // （重复/逆序 = 本地历史日志被并发写坏或快照回退，如实标注意）
+  let tr = { ok: true, vd: '—' };
+  if (series.length === 0) {
+    tr = { ok: false, vd: '本地历史日志不可用或为空' };
+  } else {
+    const lastS = series[series.length - 1];
+    const sameTs = String(lastS.ts) === String(snap.ts_utc);
+    let dup = 0, back = 0;
+    for (let i = 1; i < series.length; i++) {
+      const x = Date.parse(series[i - 1].ts), y = Date.parse(series[i].ts);
+      if (!isNaN(x) && !isNaN(y)) { if (y === x) dup++; else if (y < x) back++; }
+    }
+    tr = { ok: sameTs && dup === 0 && back === 0,
+      vd: (sameTs ? '末条=本快照' : '末条与本快照不同刻') + ' · ' + series.length + ' 条' +
+        (dup ? ' · ' + dup + ' 条重复' : '') + (back ? ' · ' + back + ' 条逆序' : '') };
+  }
+  selfcheck.push({ ok: tr.ok, nm: '轨迹一致', vd: tr.vd });
 
   const warnN = selfcheck.filter(c => !c.ok).length;
   $('sc-sum').textContent = warnN ? (warnN + ' 项注意') : (selfcheck.length + ' 项通过');

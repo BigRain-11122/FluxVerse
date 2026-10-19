@@ -114,7 +114,7 @@
 
   <div class="card" style="margin-top:14px">
     <h2>数据自检 <span class="tag" id="sc-sum">—</span></h2>
-    <div class="rhint">八项全部由本页数据推导（含跨轮摘要与轨迹），异常以「注意」如实露出，不隐藏。</div>
+    <div class="rhint">九项全部由本页数据与今日 tick 日志推导（含跨轮摘要、轨迹与循环覆盖），异常以「注意」如实露出，不隐藏。</div>
     <div id="selfcheck"></div>
   </div>
 
@@ -155,6 +155,10 @@ const PREV = __PREV_JSON__;
 const HIST = __HIST_JSON__;
 // SERIES = tail slice of the local cross-round log (newest last, <=12 records).
 const SERIES = __SERIES_JSON__;
+// TICK = today's tick log probe ({exists,file,size,age_min,scan_lines,rounds,
+// read_ok}) - the panel is built BY that tick, so this is the only honest way
+// to tell whether the 10-minute loop actually ran.
+const TICK = __TICK_JSON__;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -390,6 +394,25 @@ function fmtAge(h){
 
   selfcheck.push({ ok: !(h != null && h > 2), nm: '快照龄',
     vd: fmtAge(h) + (h != null && h > 2 ? '（scan 停走）' : '') });
+
+  // tick 覆盖：本页由 tick 自身产出，日志缺档/停走是唯一能静默的故障面
+  // （页面照出、数据照旧，只是循环不再跑）。阈值 15 分钟 = 10 分钟轮 + 余量。
+  const tk = TICK || {};
+  let tOk, tVd;
+  if (!tk.exists) {
+    tOk = false; tVd = '今日 tick 日志缺档（' + (tk.file || '—') + '）';
+  } else if (!tk.read_ok) {
+    tOk = false; tVd = '日志在盘但不可读（' + (tk.file || '') + '）';
+  } else if (typeof tk.age_min !== 'number' || tk.age_min < 0) {
+    tOk = false; tVd = '日志龄不可判定';
+  } else if (tk.age_min > 15) {
+    tOk = false; tVd = '停走 ' + tk.age_min + ' 分钟（阈值 15）';
+  } else {
+    tOk = true;
+    tVd = '今日日志 · ' + tk.age_min + ' 分钟前 · scan ' + (tk.scan_lines || 0) + ' 行 · ' +
+      (tk.rounds || 0) + ' 轮';
+  }
+  selfcheck.push({ ok: tOk, nm: 'tick 覆盖', vd: tVd });
 
   // 跨轮单调：累计计数不得回落（回落=上游计数被重置或来源切换，须如实标注）
   let mono = { ok: true, vd: '无上一条记录（本卡首条）' };

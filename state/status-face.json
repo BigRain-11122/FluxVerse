@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-19T21:57:16Z",
-    "current_activity":  "r672 产品轮：城市面板「城市变化」卡新增「跨轮轨迹」子块——近 12 条快照逐条明细（提交数+与上一条的增量徽标）与区间汇总（近 N 条/约 M 分钟/提交 +Δ/渲染 +Δ/末条事件窗口），数据源是本地历史日志末端切片；数据自检加第八项「轨迹一致」（末条须=本快照且时间严格递增）；同日清账逾期 2 日的 benchmarks v1.3 刷新（WFC 前沿两新支/城市孪生开源三件/团结引擎 1.9.0-1.10.0 版本面·摘要级如实标待证）。",
-    "artifact":  "world-public/city-panel.html + qa/city-panel-r672.png",
-    "artifact_utc":  "2026-10-19T21:57:16Z",
-    "milestone":  "下个里程碑：面板「跨轮轨迹」扩成 24 小时趋势曲线（候历史日志累计 ≥24 条·约 3 小时后到点）+ 自检第九项「tick 覆盖」（缺档自检）",
-    "milestone_eta_utc":  "2026-10-20T15:00:00Z"
+    "updated_utc":  "2026-10-19T23:12:34Z",
+    "current_activity":  "r673 产品件：城市面板自检第九项「tick 覆盖」——构建器只读今日 tick 日志注入 TICK（存在/大小/龄/scan 行/轮数/可读），页内判定缺档、不可读、龄\u003e15 分钟停走或正常并给出「N 分钟前 · scan X 行 · Y 轮」；自检卡说明句改为九项；旧五套面板桩 DOM 测试改为标准推导式并全绿（新测 11/11）",
+    "artifact":  "world-public/city-panel.html + qa/city-panel-r673.png",
+    "artifact_utc":  "2026-10-19T23:12:34Z",
+    "milestone":  "面板「跨轮轨迹」扩成 24 小时趋势曲线（待 history 累计 ≥24 条，约 25 分钟后到点）",
+    "milestone_eta_utc":  "2026-10-20T04:00:00Z"
 }

@@ -30,7 +30,8 @@ param(
     [string]$FacePath = '',
     [string]$TemplatePath = '',
     [string]$OutPath = '',
-    [string]$HistoryPath = ''
+    [string]$HistoryPath = '',
+    [string]$TickLogPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -49,6 +50,9 @@ if ([string]::IsNullOrEmpty($FacePath))     { $FacePath     = Join-Path $repoDir
 if ([string]::IsNullOrEmpty($TemplatePath)) { $TemplatePath = Join-Path $PSScriptRoot 'city-panel-template.html' }
 if ([string]::IsNullOrEmpty($OutPath))      { $OutPath      = Join-Path $repoDir 'world-public\city-panel.html' }
 if ([string]::IsNullOrEmpty($HistoryPath))  { $HistoryPath  = Join-Path $repoDir 'logs\panel-history.jsonl' }
+if ([string]::IsNullOrEmpty($TickLogPath))  {
+    $TickLogPath = Join-Path $repoDir ('logs\tick-' + (Get-Date).ToString('yyyyMMdd') + '.log')
+}
 
 foreach ($p in @($SnapPath, $FacePath, $TemplatePath)) {
     if (-not (Test-Path -LiteralPath $p)) { Fail ('input missing: ' + $p) }
@@ -173,6 +177,44 @@ if ($histAll.Count -gt 0) {
 if ($seriesArr.Count -eq 0) { $seriesJs = '[]' }
 else { $seriesJs = To-JsLiteral -Obj @($seriesArr) -Label 'series' }
 
+# --- tick log coverage (self-check #9) --------------------------------------
+# A missing or stalled tick log is the quietest failure this panel can have:
+# the panel is produced BY that tick, so a stale build still looks normal until
+# you check the file itself. Read-only and fail-soft: an unreadable log yields
+# read_ok=false and the page shows a WARN instead of inventing a number.
+$tickExists = $false
+$tickSize = 0
+$tickAgeMin = -1
+$scanLines = 0
+$rounds = 0
+$readOk = $true
+try {
+    if (Test-Path -LiteralPath $TickLogPath) {
+        $tickExists = $true
+        $tickItem = Get-Item -LiteralPath $TickLogPath
+        $tickSize = [int]$tickItem.Length
+        $ageSec = ([DateTime]::UtcNow - $tickItem.LastWriteTimeUtc).TotalSeconds
+        if ($ageSec -lt 0) { $ageSec = 0 }
+        $tickAgeMin = [int][Math]::Floor($ageSec / 60)
+        foreach ($ln in [IO.File]::ReadAllLines($TickLogPath, [Text.Encoding]::UTF8)) {
+            if ($ln -match '^\s*scan:') { $scanLines++ }
+            if ($ln -match 'round end') { $rounds++ }
+        }
+    }
+} catch {
+    $readOk = $false
+}
+$tickMeta = New-Object PSObject -Property ([ordered]@{
+    exists     = [bool]$tickExists
+    file       = [string](Split-Path -Leaf $TickLogPath)
+    size       = [int]$tickSize
+    age_min    = [int]$tickAgeMin
+    scan_lines = [int]$scanLines
+    rounds     = [int]$rounds
+    read_ok    = [bool]$readOk
+})
+$tickJs = To-JsLiteral -Obj $tickMeta -Label 'tick-meta'
+
 $built = [DateTimeOffset]::Now.ToString('yyyy-MM-dd HH:mm:ss (zzz)',
     [Globalization.CultureInfo]::InvariantCulture)
 # Inject the INNER text only: the template already supplies the surrounding
@@ -186,12 +228,12 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TICK_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
 # String.Replace (not regex) => JSON '$' chars stay literal.
-$out = $tpl.Replace('__SNAPSHOT_JSON__', $snapJs).Replace('__FACE_JSON__', $faceJs).Replace('__BUILT_JSON__', $builtJs).Replace('__PREV_JSON__', $prevJs).Replace('__HIST_JSON__', $histJs).Replace('__SERIES_JSON__', $seriesJs)
+$out = $tpl.Replace('__SNAPSHOT_JSON__', $snapJs).Replace('__FACE_JSON__', $faceJs).Replace('__BUILT_JSON__', $builtJs).Replace('__PREV_JSON__', $prevJs).Replace('__HIST_JSON__', $histJs).Replace('__SERIES_JSON__', $seriesJs).Replace('__TICK_JSON__', $tickJs)
 
 if ($out.IndexOf('__SNAPSHOT_JSON__') -ge 0) { Fail 'placeholder __SNAPSHOT_JSON__ still present after build' }
 if ($out.Length -lt 4000) { Fail ('output suspiciously small: ' + $out.Length + ' bytes') }
@@ -224,5 +266,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' built=' + $built + ' path=' + $OutPath)
 exit 0

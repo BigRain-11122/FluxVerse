@@ -55,6 +55,13 @@
   .rcol.zero .rbar{background:#1b2430}
   .rlab{font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums}
   .muted{color:var(--dim);font-size:12px}
+  .chk{display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .chk:last-child{border-bottom:0}
+  .chk .st{font-size:11px;padding:0 7px;border-radius:6px;border:1px solid var(--line);min-width:46px;text-align:center}
+  .chk .st.ok{color:var(--ok);border-color:#1f4a3a;background:#0e1f19}
+  .chk .st.warn{color:var(--warn);border-color:#4a2020;background:#1f0e0e}
+  .chk .nm{min-width:104px;color:var(--dim)}
+  .chk .vd{flex:1;font-variant-numeric:tabular-nums}
   footer{margin-top:22px;color:#a9b8c9;font-size:12.5px;line-height:1.9;border-top:1px solid var(--line);padding-top:12px}
   code{color:#b9c8da;background:#0e141c;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
 </style>
@@ -96,6 +103,12 @@
   </div>
 
   <div class="card" style="margin-top:14px">
+    <h2>数据自检 <span class="tag" id="sc-sum">—</span></h2>
+    <div class="rhint">六项全部由本页数据推导，异常以「注意」如实露出，不隐藏。</div>
+    <div id="selfcheck"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
     <h2>事件分布（快照窗口内 <span class="tag" id="dist-total">0</span> 条）</h2>
     <div id="dist-zones"></div>
     <div id="dist-types" style="margin-top:10px"></div>
@@ -122,9 +135,9 @@
 </div>
 
 <script>
-const SNAP = {"protocol":"fluxverse-public/0.1","ts_utc":"2026-10-19T21:01:02Z","zones":[{"id":"gaming","name":"FLUX Gaming","status":"active","activity":1},{"id":"quant","name":"FLUX Quant","status":"active","activity":1},{"id":"media","name":"FLUX Media","status":"active","activity":1}],"flows":[{"id":"data","zone":"gaming"},{"id":"capital","zone":"quant"},{"id":"traffic","zone":"media"}],"city":{"fleet_online":1,"games_total":33,"games_active":13,"renders_total":100,"last_render_utc":"2026-10-19T20:56:53Z","commits_total":28835},"reality_public":{"city_day_phase":"dawn","weather_kind":"cloud","weather_temp_c":"22.1","weekday":"2","beijing_hhmm":"05:01","season":"autumn"},"events_tail":[{"ts_utc":"2026-10-19T20:11:02Z","type":"GITHUB_EVENT","zone":"media"},{"ts_utc":"2026-10-19T20:11:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T20:11:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:11:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:16:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T20:16:02Z","type":"COMMIT","zone":"media"},{"ts_utc":"2026-10-19T20:16:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T20:16:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T20:16:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T20:16:02Z","type":"GITHUB_EVENT","zone":"media"},{"ts_utc":"2026-10-19T20:16:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:16:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:21:02Z","type":"COMMIT","zone":"media"},{"ts_utc":"2026-10-19T20:21:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T20:21:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T20:21:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T20:21:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T20:21:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:21:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:26:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T20:26:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T20:26:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T20:26:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:26:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:31:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T20:31:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T20:31:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:31:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:36:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T20:36:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T20:36:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:36:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:41:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T20:41:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:41:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:46:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T20:46:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:46:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:51:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:51:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:56:03Z","type":"MEDIA_OUTPUT","zone":"media"},{"ts_utc":"2026-10-19T20:56:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T20:56:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T20:56:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T20:56:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T20:56:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:01:02Z","type":"COMMIT","zone":"media"},{"ts_utc":"2026-10-19T21:01:02Z","type":"COMMIT","zone":"media"},{"ts_utc":"2026-10-19T21:01:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:01:02Z","type":"GAME_STAGE","zone":"gaming"}],"status_face":{"updated_utc":"2026-10-19T20:09:18Z","current_activity":"r668 产品轮：城市面板信息密度升级——world-public/city-panel.html 新增「事件分布」卡（按分区/按类型两族柱条，只统计快照窗口内 50 条）与事件尾流分区筛选 chips（全部/各分区带计数，点击过滤）。模板改动后重建 PANEL OK bytes=16295，node --check 通过，无头 Edge 截图像素复核分布柱与 chips 全部就位，Node 桩 DOM 机械测试 11/11 PASS（含点击 gaming 后计数与行数一致）。","artifact":"world-public/city-panel.html","artifact_utc":"2026-10-19T20:07:16Z","milestone":"下一里程碑=面板数据面继续补强（分区活动趋势/刷新节律可视化）+ explore#12 第 285 绪 JR/T 0025.12 现行层正身窗；main#8 城市线附卷随 D-20261017-03 承接","milestone_eta_utc":"2026-10-20T14:00:00Z"}};
-const FACE = {"updated_utc":"2026-10-19T20:09:18Z","current_activity":"r668 产品轮：城市面板信息密度升级——world-public/city-panel.html 新增「事件分布」卡（按分区/按类型两族柱条，只统计快照窗口内 50 条）与事件尾流分区筛选 chips（全部/各分区带计数，点击过滤）。模板改动后重建 PANEL OK bytes=16295，node --check 通过，无头 Edge 截图像素复核分布柱与 chips 全部就位，Node 桩 DOM 机械测试 11/11 PASS（含点击 gaming 后计数与行数一致）。","artifact":"world-public/city-panel.html","artifact_utc":"2026-10-19T20:07:16Z","milestone":"下一里程碑=面板数据面继续补强（分区活动趋势/刷新节律可视化）+ explore#12 第 285 绪 JR/T 0025.12 现行层正身窗；main#8 城市线附卷随 D-20261017-03 承接","milestone_eta_utc":"2026-10-20T14:00:00Z"};
-const BUILT = "2026-10-20 05:02:35 (+08:00)";
+const SNAP = {"protocol":"fluxverse-public/0.1","ts_utc":"2026-10-19T21:21:03Z","zones":[{"id":"gaming","name":"FLUX Gaming","status":"active","activity":1},{"id":"quant","name":"FLUX Quant","status":"active","activity":1},{"id":"media","name":"FLUX Media","status":"active","activity":1}],"flows":[{"id":"data","zone":"gaming"},{"id":"capital","zone":"quant"},{"id":"traffic","zone":"media"}],"city":{"fleet_online":1,"games_total":33,"games_active":13,"renders_total":101,"last_render_utc":"2026-10-19T21:11:42Z","commits_total":28843},"reality_public":{"city_day_phase":"dawn","weather_kind":"cloud","weather_temp_c":"22","weekday":"2","beijing_hhmm":"05:21","season":"autumn"},"events_tail":[{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"media"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"media"},{"ts_utc":"2026-10-19T21:16:02Z","type":"COMMIT","zone":"media"},{"ts_utc":"2026-10-19T21:16:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T21:16:02Z","type":"GITHUB_EVENT","zone":"media"},{"ts_utc":"2026-10-19T21:16:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T21:16:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:16:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:21:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T21:21:03Z","type":"GITHUB_EVENT","zone":"media"},{"ts_utc":"2026-10-19T21:21:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T21:21:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T21:21:03Z","type":"GAME_STAGE","zone":"gaming"}],"status_face":{"updated_utc":"2026-10-19T21:20:37Z","current_activity":"r670 产品轮：城市面板新增「数据自检」卡——六项全部由页内数据推导（必备节齐全/事件窗口与跨度/声明分区覆盖/时间顺序/未来时间/快照龄），异常以「注意」如实露出不隐藏；附桩 DOM 渲染测试双样本 8/8 PASS（真实快照 6 项通过；坏夹具 3 项注意=逆序/未来时间/时间不可解析）","artifact":"world-public/city-panel.html","artifact_utc":"2026-10-19T21:19:42Z","milestone":"下一里程碑=面板「数据自检」扩到跨轮对比（历史快照留存）+ global-benchmarks 司级 7 天刷新（已到期 10-18）+ explore#12 第 285 绪 JR/T 0025.12 现行层正身窗","milestone_eta_utc":"2026-10-20T14:00:00Z"}};
+const FACE = {"updated_utc":"2026-10-19T21:20:37Z","current_activity":"r670 产品轮：城市面板新增「数据自检」卡——六项全部由页内数据推导（必备节齐全/事件窗口与跨度/声明分区覆盖/时间顺序/未来时间/快照龄），异常以「注意」如实露出不隐藏；附桩 DOM 渲染测试双样本 8/8 PASS（真实快照 6 项通过；坏夹具 3 项注意=逆序/未来时间/时间不可解析）","artifact":"world-public/city-panel.html","artifact_utc":"2026-10-19T21:19:42Z","milestone":"下一里程碑=面板「数据自检」扩到跨轮对比（历史快照留存）+ global-benchmarks 司级 7 天刷新（已到期 10-18）+ explore#12 第 285 绪 JR/T 0025.12 现行层正身窗","milestone_eta_utc":"2026-10-20T14:00:00Z"};
+const BUILT = "2026-10-20 05:21:22 (+08:00)";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -251,6 +264,49 @@ function fmtAge(h){
       '<div class="rbar" style="height:' + pct + '%"></div>' +
       '<span class="rlab">' + hh + '</span></div>';
   }).join('') : '';
+
+  // 数据自检：六项全部由页内数据推导（不引入新数据源），异常如实标注意
+  const selfcheck = [];
+  const secOk = !!(Array.isArray(snap.zones) && snap.city && snap.reality_public && Array.isArray(snap.events_tail));
+  selfcheck.push({ ok: secOk, nm: '必备节',
+    vd: secOk ? 'zones / city / reality_public / events_tail 齐全' : '存在缺失或类型异常' });
+
+  const tsAll = tail.map(e => Date.parse(e.ts_utc));
+  const badTs = tsAll.filter(t => isNaN(t)).length;
+  const goodTs = tsAll.filter(t => !isNaN(t));
+  const spanMin = goodTs.length > 1
+    ? Math.round((Math.max.apply(null, goodTs) - Math.min.apply(null, goodTs)) / 60000) : 0;
+  selfcheck.push({ ok: badTs === 0 && tail.length > 0, nm: '事件窗口',
+    vd: tail.length + ' 条 · 跨度 ' + spanMin + ' 分钟' + (badTs ? ' · ' + badTs + ' 条时间不可解析' : '') });
+
+  // 覆盖口径：声明分区（snap.zones）中被事件命中的数量 + 声明外出现过的分区名
+  const declaredIds = Array.isArray(snap.zones) ? snap.zones.map(z => z.id) : [];
+  const usedDeclared = declaredIds.filter(id => zoneCnt[id]).length;
+  const extraIds = zoneKeys.filter(k => declaredIds.indexOf(k) < 0);
+  selfcheck.push({ ok: extraIds.indexOf('unknown') < 0, nm: '覆盖',
+    vd: '声明分区 ' + usedDeclared + '/' + declaredIds.length +
+        (extraIds.length ? ' · 另有 ' + extraIds.join('/') : '') +
+        ' · 类型 ' + Object.keys(typeCnt).length + ' 种' });
+
+  let outOfOrder = 0;
+  for (let i = 1; i < goodTs.length; i++) { if (goodTs[i] < goodTs[i - 1]) outOfOrder++; }
+  selfcheck.push({ ok: outOfOrder === 0, nm: '时间顺序',
+    vd: outOfOrder === 0 ? '非递减（同刻并列合法）' : outOfOrder + ' 条逆序' });
+
+  const futureN = isNaN(anchor) ? 0 : goodTs.filter(t => t > anchor + 300000).length;
+  selfcheck.push({ ok: futureN === 0, nm: '未来时间',
+    vd: isNaN(anchor) ? '快照时间缺失，无法判定'
+      : (futureN === 0 ? '无（阈值 快照 +5 分钟）' : futureN + ' 条晚于快照') });
+
+  selfcheck.push({ ok: !(h != null && h > 2), nm: '快照龄',
+    vd: fmtAge(h) + (h != null && h > 2 ? '（scan 停走）' : '') });
+
+  const warnN = selfcheck.filter(c => !c.ok).length;
+  $('sc-sum').textContent = warnN ? (warnN + ' 项注意') : (selfcheck.length + ' 项通过');
+  $('selfcheck').innerHTML = selfcheck.map(c =>
+    '<div class="chk"><span class="st ' + (c.ok ? 'ok' : 'warn') + '">' + (c.ok ? '通过' : '注意') + '</span>' +
+    '<span class="nm">' + esc(c.nm) + '</span><span class="vd">' + esc(c.vd) + '</span></div>'
+  ).join('');
 
   // 分区筛选：只筛事件尾流，分布卡保持全窗口径
   let evFilter = '*';

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-19T21:04:28Z",
-    "current_activity":  "r669 产品轮：城市面板 v3——新增「活动节律」卡（近 12 小时逐时事件柱，锚=快照 ts_utc，只统计窗口内 50 条，不推断窗外），页面加 60 秒自动重载跟随 tick 重建；实证=重建 PANEL OK bytes=18405、内联脚本 node --check 通过、无头 Edge 截图 qa/city-panel-r669.png 五面有数、Node 桩 DOM 机械测试对独立分桶 9/9 PASS",
+    "updated_utc":  "2026-10-19T21:20:37Z",
+    "current_activity":  "r670 产品轮：城市面板新增「数据自检」卡——六项全部由页内数据推导（必备节齐全/事件窗口与跨度/声明分区覆盖/时间顺序/未来时间/快照龄），异常以「注意」如实露出不隐藏；附桩 DOM 渲染测试双样本 8/8 PASS（真实快照 6 项通过；坏夹具 3 项注意=逆序/未来时间/时间不可解析）",
     "artifact":  "world-public/city-panel.html",
-    "artifact_utc":  "2026-10-19T21:04:27Z",
-    "milestone":  "下一里程碑=面板可信度补强（空窗/停走态显式标注）+ explore#12 第 285 绪 JR/T 0025.12 现行层正身窗；main#8 城市线附卷 D-20261017-03 承接中",
+    "artifact_utc":  "2026-10-19T21:19:42Z",
+    "milestone":  "下一里程碑=面板「数据自检」扩到跨轮对比（历史快照留存）+ global-benchmarks 司级 7 天刷新（已到期 10-18）+ explore#12 第 285 绪 JR/T 0025.12 现行层正身窗",
     "milestone_eta_utc":  "2026-10-20T14:00:00Z"
 }

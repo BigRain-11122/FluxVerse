@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FLUXVERSE 城市底座 · 公开面</title>
+<style>
+  :root{
+    --bg:#0b0e13; --panel:#121821; --line:#1e2733; --ink:#e8eef6;
+    --dim:#8b9aad; --accent:#4cc9f0; --warm:#ffb703; --ok:#3ddc97; --warn:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#16202c 0%,var(--bg) 60%);
+       color:var(--ink);font:14px/1.6 "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 56px}
+  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-size:20px;margin:0;letter-spacing:.06em;font-weight:600}
+  .sub{color:var(--dim);font-size:12px}
+  .badge{margin-left:auto;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line)}
+  .badge.fresh{color:var(--ok);border-color:#1f4a3a;background:#0e1f19}
+  .badge.stale{color:var(--warn);border-color:#4a2020;background:#1f0e0e}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:18px 0 8px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card h2{font-size:12px;letter-spacing:.14em;color:var(--dim);margin:0 0 10px;font-weight:600}
+  .face p{margin:0 0 10px}
+  .face p:last-child{margin-bottom:0}
+  .k{color:var(--dim);font-size:12px;display:block;letter-spacing:.08em;margin-bottom:2px}
+  .v{font-size:13.5px;word-break:break-word}
+  .num{font-size:26px;font-weight:600;color:var(--accent);line-height:1.2}
+  .num small{font-size:12px;color:var(--dim);font-weight:400;margin-left:4px}
+  .rowline{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .rowline:last-child{border-bottom:0}
+  .dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;background:var(--accent)}
+  .zone-gaming{background:#4cc9f0}.zone-quant{background:#ffb703}.zone-media{background:#f72585}
+  .zone-governance{background:#9aa7b8}
+  .t{color:var(--dim);font-variant-numeric:tabular-nums;font-size:12px;min-width:118px}
+  .tag{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:6px;padding:0 6px}
+  .scroller{max-height:260px;overflow:auto}
+  footer{margin-top:22px;color:#a9b8c9;font-size:12.5px;line-height:1.9;border-top:1px solid var(--line);padding-top:12px}
+  code{color:#b9c8da;background:#0e141c;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>FLUXVERSE 城市底座</h1>
+    <span class="sub" id="proto">fluxverse-public</span>
+    <span class="badge" id="age">—</span>
+  </header>
+
+  <div class="grid">
+    <div class="card face">
+      <h2>本司实况（三行）</h2>
+      <p><span class="k">当前活</span><span class="v" id="f-act">—</span></p>
+      <p><span class="k">最近实物</span><span class="v" id="f-art">—</span></p>
+      <p><span class="k">下个里程碑</span><span class="v" id="f-mile">—</span></p>
+    </div>
+    <div class="card">
+      <h2>城市规模</h2>
+      <div class="num" id="c-commits">0<small>commits</small></div>
+      <div class="rowline"><span class="dot zone-gaming"></span><span id="c-games">—</span></div>
+      <div class="rowline"><span class="dot zone-quant"></span><span id="c-renders">—</span></div>
+      <div class="rowline"><span class="dot zone-media"></span><span id="c-fleet">—</span></div>
+    </div>
+    <div class="card">
+      <h2>现实锚</h2>
+      <div class="rowline"><span class="tag">时段</span><span id="r-phase">—</span></div>
+      <div class="rowline"><span class="tag">天气</span><span id="r-weather">—</span></div>
+      <div class="rowline"><span class="tag">北京时间</span><span id="r-clock">—</span></div>
+      <div class="rowline"><span class="tag">季节</span><span id="r-season">—</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>分区</h2>
+    <div id="zones"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>事件尾流 <span class="tag" id="ev-count">0</span> <span class="tag">可滚动</span></h2>
+    <div class="scroller"><div id="events"></div></div>
+  </div>
+
+  <footer>
+    数据源：<code>world-public/city-snapshot.json</code>（tick 每 5 分钟导出）+ <code>state/status-face.json</code>（DevLoop 执法件写入）。<br>
+    重建：<code>powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\build-city-panel.ps1</code><br>
+    构建时刻（本地）：<span id="built">—</span> · 自包含单文件，零服务器零外链。
+  </footer>
+</div>
+
+<script>
+const SNAP = {"protocol":"fluxverse-public/0.1","ts_utc":"2026-10-19T10:46:02Z","zones":[{"id":"gaming","name":"FLUX Gaming","status":"active","activity":1},{"id":"quant","name":"FLUX Quant","status":"active","activity":1},{"id":"media","name":"FLUX Media","status":"active","activity":1}],"flows":[{"id":"data","zone":"gaming"},{"id":"capital","zone":"quant"},{"id":"traffic","zone":"media"}],"city":{"fleet_online":2,"games_total":33,"games_active":13,"renders_total":98,"last_render_utc":"2026-10-18T23:16:20Z","commits_total":28662},"reality_public":{"city_day_phase":"dusk","weather_kind":"cloud","weather_temp_c":"23.4","weekday":"1","beijing_hhmm":"18:46","season":"autumn"},"events_tail":[{"ts_utc":"2026-10-19T10:01:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:01:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:01:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:01:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:01:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:01:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:01:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:01:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:01:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:01:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:01:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:01:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:01:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:06:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:06:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:11:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:11:02Z","type":"GITHUB_EVENT","zone":"media"},{"ts_utc":"2026-10-19T10:11:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T10:11:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:11:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:16:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T10:16:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:16:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:21:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:21:02Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T10:21:02Z","type":"COMMIT","zone":"media"},{"ts_utc":"2026-10-19T10:21:02Z","type":"COMMIT","zone":"media"},{"ts_utc":"2026-10-19T10:21:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T10:21:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T10:21:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T10:21:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:21:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:26:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T10:26:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:26:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:31:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T10:31:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T10:31:02Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T10:31:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:31:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:36:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T10:36:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T10:36:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T10:36:02Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T10:36:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:36:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:41:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:41:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:46:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T10:46:02Z","type":"GAME_STAGE","zone":"gaming"}],"status_face":{"updated_utc":"2026-10-19T18:16:56Z","current_activity":"r665 修红轮：statusface 面自 10-18 16:12 起 34h 未刷新（r664 收口后 DevLoop 断窗 34h）触发 tick stale 门 FAIL age_h=34 stale_h=24；本轮回填真实三行并重写面件，红点清零。队列头承接=r664 交付的 explore#12 第 285 绪窗（JR/T 0025.12 现行层正身窗·bzId 待探）。","artifact":"docs/research/R-20261018-jrt0025.8-2013-contactless-deprecated-fulltext-benchmarks.md","artifact_utc":"2026-10-18T08:12:43Z","milestone":"下一里程碑=explore#12 第 285 绪 JR/T 0025.12 现行层正身窗收口（非接触支付应用极·cfstc 滚出法定 bzId）+main#8 城市线附卷（D-20261017-03 六线派单）","milestone_eta_utc":"2026-10-20T14:00:00Z"}};
+const FACE = {"updated_utc":"2026-10-19T18:16:56Z","current_activity":"r665 修红轮：statusface 面自 10-18 16:12 起 34h 未刷新（r664 收口后 DevLoop 断窗 34h）触发 tick stale 门 FAIL age_h=34 stale_h=24；本轮回填真实三行并重写面件，红点清零。队列头承接=r664 交付的 explore#12 第 285 绪窗（JR/T 0025.12 现行层正身窗·bzId 待探）。","artifact":"docs/research/R-20261018-jrt0025.8-2013-contactless-deprecated-fulltext-benchmarks.md","artifact_utc":"2026-10-18T08:12:43Z","milestone":"下一里程碑=explore#12 第 285 绪 JR/T 0025.12 现行层正身窗收口（非接触支付应用极·cfstc 滚出法定 bzId）+main#8 城市线附卷（D-20261017-03 六线派单）","milestone_eta_utc":"2026-10-20T14:00:00Z"};
+const BUILT = "2026-10-20 02:22:04 (+08:00)";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function ago(iso){
+  const t = Date.parse(iso);
+  if (isNaN(t)) return null;
+  return (Date.now() - t) / 3600000;
+}
+
+function fmtAge(h){
+  if (h == null) return '时间未知';
+  if (h < 0) return '时钟偏差 ' + h.toFixed(1) + 'h';
+  if (h < 1) return Math.max(0, Math.round(h*60)) + ' 分钟前';
+  return h.toFixed(1) + ' 小时前';
+}
+
+(function render(){
+  const snap = SNAP || {};
+  const face = FACE || {};
+
+  $('proto').textContent = snap.protocol || 'fluxverse-public';
+  $('built').textContent = BUILT || '—';
+
+  // 新鲜度：以快照 ts_utc 为准（scan 跳过时该值会停走，如实标红）
+  const h = ago(snap.ts_utc);
+  const badge = $('age');
+  const stale = (h != null && h > 2);
+  badge.className = 'badge ' + (stale ? 'stale' : 'fresh');
+  badge.textContent = '快照 ' + fmtAge(h) + (stale ? '（scan 停走）' : '');
+
+  // 三行实况
+  const setKV = (id, main, ts) => {
+    const el = $(id);
+    el.textContent = main || '—';
+    if (ts) {
+      const s = document.createElement('span');
+      s.className = 'tag';
+      s.style.marginLeft = '6px';
+      s.textContent = fmtAge(ago(ts));
+      el.appendChild(s);
+    }
+  };
+  setKV('f-act', face.current_activity);
+  setKV('f-art', face.artifact, face.artifact_utc);
+  setKV('f-mile', face.milestone);
+
+  const city = snap.city || {};
+  $('c-commits').innerHTML = esc(city.commits_total || 0) + '<small>commits</small>';
+  $('c-games').textContent = '游戏 ' + (city.games_active ?? 0) + ' / ' + (city.games_total ?? 0) + ' 在跑';
+  $('c-renders').textContent = '渲染累计 ' + (city.renders_total ?? 0) + '（最近 ' + fmtAge(ago(city.last_render_utc)) + '）';
+  $('c-fleet').textContent = '机队在线 ' + (city.fleet_online ?? 0) + ' 台';
+
+  const rp = snap.reality_public || {};
+  $('r-phase').textContent = rp.city_day_phase || '—';
+  $('r-weather').textContent = (rp.weather_kind || '—') + (rp.weather_temp_c ? ' · ' + rp.weather_temp_c + '°C' : '');
+  $('r-clock').textContent = rp.beijing_hhmm || '—';
+  $('r-season').textContent = rp.season || '—';
+
+  const zones = snap.zones || [];
+  $('zones').innerHTML = zones.length ? zones.map(z =>
+    '<div class="rowline"><span class="dot zone-' + esc(z.id) + '"></span>' +
+    '<span style="min-width:120px">' + esc(z.name || z.id) + '</span>' +
+    '<span class="tag">' + esc(z.status || '') + '</span>' +
+    '<span class="t">activity ' + esc(z.activity ?? 0) + '</span></div>'
+  ).join('') : '<div class="rowline"><span class="t">无分区数据</span></div>';
+
+  const evs = (snap.events_tail || []).slice().reverse();
+  $('ev-count').textContent = evs.length;
+  $('events').innerHTML = evs.length ? evs.map(e =>
+    '<div class="rowline"><span class="dot zone-' + esc(e.zone || 'governance') + '"></span>' +
+    '<span class="t">' + esc((e.ts_utc || '').replace('T',' ').replace('Z','')) + '</span>' +
+    '<span style="min-width:130px">' + esc(e.type || '') + '</span>' +
+    '<span class="tag">' + esc(e.zone || '') + '</span></div>'
+  ).join('') : '<div class="rowline"><span class="t">无事件</span></div>';
+})();
+</script>
+</body>
+</html>

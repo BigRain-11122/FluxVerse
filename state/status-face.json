@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-18T08:12:43Z",
-    "current_activity":  "金融 IC 卡非接触接口基座件：第 284 笔=JR/T 0025.8—2013 废止层全文正身件（0025.8 双版全文级闭卷——四代版本链 2005→2010→2013→2018 闭合+首版判读位负发现+结构反转 9 章+附录A-I vs 2018 薄壳+2018 技术变化 14 条 diff 基线闭环·下窗第 285 绪首选=0025.12 现行层正身窗〔bzId 待探〕）",
+    "updated_utc":  "2026-10-19T18:16:56Z",
+    "current_activity":  "r665 修红轮：statusface 面自 10-18 16:12 起 34h 未刷新（r664 收口后 DevLoop 断窗 34h）触发 tick stale 门 FAIL age_h=34 stale_h=24；本轮回填真实三行并重写面件，红点清零。队列头承接=r664 交付的 explore#12 第 285 绪窗（JR/T 0025.12 现行层正身窗·bzId 待探）。",
     "artifact":  "docs/research/R-20261018-jrt0025.8-2013-contactless-deprecated-fulltext-benchmarks.md",
     "artifact_utc":  "2026-10-18T08:12:43Z",
-    "milestone":  "0025.8 双版闭卷已收口（本窗达成·commit 04500aa8 产物壳先收）；下一里程碑=0025.12 现行层正身窗（非接触三角余极）+main#8 城市线级附卷（D-20261017-03·10-19 委员会窗）",
-    "milestone_eta_utc":  "2026-10-19T11:00:00Z"
+    "milestone":  "下一里程碑=explore#12 第 285 绪 JR/T 0025.12 现行层正身窗收口（非接触支付应用极·cfstc 滚出法定 bzId）+main#8 城市线附卷（D-20261017-03 六线派单）",
+    "milestone_eta_utc":  "2026-10-20T14:00:00Z"
 }

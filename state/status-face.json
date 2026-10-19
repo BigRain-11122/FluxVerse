@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-19T20:09:18Z",
-    "current_activity":  "r668 产品轮：城市面板信息密度升级——world-public/city-panel.html 新增「事件分布」卡（按分区/按类型两族柱条，只统计快照窗口内 50 条）与事件尾流分区筛选 chips（全部/各分区带计数，点击过滤）。模板改动后重建 PANEL OK bytes=16295，node --check 通过，无头 Edge 截图像素复核分布柱与 chips 全部就位，Node 桩 DOM 机械测试 11/11 PASS（含点击 gaming 后计数与行数一致）。",
+    "updated_utc":  "2026-10-19T21:04:28Z",
+    "current_activity":  "r669 产品轮：城市面板 v3——新增「活动节律」卡（近 12 小时逐时事件柱，锚=快照 ts_utc，只统计窗口内 50 条，不推断窗外），页面加 60 秒自动重载跟随 tick 重建；实证=重建 PANEL OK bytes=18405、内联脚本 node --check 通过、无头 Edge 截图 qa/city-panel-r669.png 五面有数、Node 桩 DOM 机械测试对独立分桶 9/9 PASS",
     "artifact":  "world-public/city-panel.html",
-    "artifact_utc":  "2026-10-19T20:07:16Z",
-    "milestone":  "下一里程碑=面板数据面继续补强（分区活动趋势/刷新节律可视化）+ explore#12 第 285 绪 JR/T 0025.12 现行层正身窗；main#8 城市线附卷随 D-20261017-03 承接",
+    "artifact_utc":  "2026-10-19T21:04:27Z",
+    "milestone":  "下一里程碑=面板可信度补强（空窗/停走态显式标注）+ explore#12 第 285 绪 JR/T 0025.12 现行层正身窗；main#8 城市线附卷 D-20261017-03 承接中",
     "milestone_eta_utc":  "2026-10-20T14:00:00Z"
 }

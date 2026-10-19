@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="60">
 <title>FLUXVERSE 城市底座 · 公开面</title>
 <style>
   :root{
@@ -47,6 +48,12 @@
   .bar.zone-gaming{background:#4cc9f0}.bar.zone-quant{background:#ffb703}
   .bar.zone-media{background:#f72585}.bar.zone-governance{background:#9aa7b8}
   .barval{min-width:40px;text-align:right;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
+  .rhint{color:var(--dim);font-size:12px;margin-bottom:8px}
+  .rhythm{display:flex;gap:5px;align-items:flex-end;height:96px}
+  .rcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;align-items:center;gap:5px}
+  .rbar{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#4cc9f0,#2a6b82);min-height:2px}
+  .rcol.zero .rbar{background:#1b2430}
+  .rlab{font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums}
   .muted{color:var(--dim);font-size:12px}
   footer{margin-top:22px;color:#a9b8c9;font-size:12.5px;line-height:1.9;border-top:1px solid var(--line);padding-top:12px}
   code{color:#b9c8da;background:#0e141c;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
@@ -95,6 +102,12 @@
   </div>
 
   <div class="card" style="margin-top:14px">
+    <h2>活动节律 <span class="tag" id="rh-total">0</span> <span class="tag">近 12 小时 · UTC</span></h2>
+    <div class="rhint" id="rh-hint">—</div>
+    <div class="rhythm" id="rhythm"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
     <h2>事件尾流 <span class="tag" id="ev-count">0</span> <span class="tag">可滚动</span></h2>
     <div class="chips" id="ev-chips"></div>
     <div class="scroller"><div id="events"></div></div>
@@ -103,7 +116,8 @@
   <footer>
     数据源：<code>world-public/city-snapshot.json</code>（tick 每 5 分钟导出）+ <code>state/status-face.json</code>（DevLoop 执法件写入）。<br>
     重建：<code>powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\build-city-panel.ps1</code><br>
-    构建时刻（本地）：<span id="built">—</span> · 自包含单文件，零服务器零外链。
+    构建时刻（本地）：<span id="built">—</span> · 自包含单文件，零服务器零外链。<br>
+    本页每 60 秒自动重载一次，跟随 tick 重建拿到新快照；时间轴一律 UTC，本地读取以 <code>built</code> 行为准。
   </footer>
 </div>
 
@@ -207,6 +221,36 @@ function fmtAge(h){
     (typeKeys.length
       ? typeKeys.map(k => barRow(k, typeCnt[k], typeCnt[typeKeys[0]], '')).join('')
       : '<div class="muted">无数据</div>');
+
+  // 活动节律：近 12 小时逐时计数，锚=快照 ts_utc（不用浏览器时钟，
+  // 快照停走时柱图也停走，与顶部新鲜度徽标同源）
+  const anchor = Date.parse(snap.ts_utc);
+  const HOURS = 12;
+  const hourly = [];
+  if (!isNaN(anchor)) {
+    const anchorHour = Math.floor(anchor / 3600000) * 3600000;
+    for (let i = HOURS - 1; i >= 0; i--) {
+      const start = anchorHour - i * 3600000;
+      const end = start + 3600000;
+      const n = tail.filter(e => {
+        const t = Date.parse(e.ts_utc);
+        return !isNaN(t) && t >= start && t < end;
+      }).length;
+      hourly.push({ start: start, n: n });
+    }
+  }
+  const peak = hourly.reduce((m, b) => Math.max(m, b.n), 0);
+  $('rh-total').textContent = tail.length;
+  $('rh-hint').textContent = hourly.length
+    ? '柱高 = 该小时事件数（窗口内共 ' + tail.length + ' 条；峰值 ' + peak + ' 条/时；截至快照时刻）'
+    : '快照时间缺失，无法绘制节律';
+  $('rhythm').innerHTML = hourly.length ? hourly.map(b => {
+    const hh = String(new Date(b.start).getUTCHours()).padStart(2, '0');
+    const pct = peak ? Math.max(2, Math.round(b.n / peak * 100)) : 2;
+    return '<div class="rcol' + (b.n ? '' : ' zero') + '" title="' + hh + ':00 UTC · ' + b.n + ' 条">' +
+      '<div class="rbar" style="height:' + pct + '%"></div>' +
+      '<span class="rlab">' + hh + '</span></div>';
+  }).join('') : '';
 
   // 分区筛选：只筛事件尾流，分布卡保持全窗口径
   let evFilter = '*';

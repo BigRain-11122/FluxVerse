@@ -17,6 +17,8 @@
 # Inputs : world-public\city-snapshot.json  (tick exporter, read-only)
 #          state\status-face.json           (DevLoop face writer, read-only)
 #          Tools\devloop\city-panel-template.html
+#          logs\panel-history.jsonl         (this script's own cross-round log;
+#                                            gitignored, best-effort)
 # Output : world-public\city-panel.html
 #
 # Note: this script only READS tick artifacts. It does not write them, so it
@@ -27,7 +29,8 @@ param(
     [string]$SnapPath = '',
     [string]$FacePath = '',
     [string]$TemplatePath = '',
-    [string]$OutPath = ''
+    [string]$OutPath = '',
+    [string]$HistoryPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -45,6 +48,7 @@ if ([string]::IsNullOrEmpty($SnapPath))     { $SnapPath     = Join-Path $repoDir
 if ([string]::IsNullOrEmpty($FacePath))     { $FacePath     = Join-Path $repoDir 'state\status-face.json' }
 if ([string]::IsNullOrEmpty($TemplatePath)) { $TemplatePath = Join-Path $PSScriptRoot 'city-panel-template.html' }
 if ([string]::IsNullOrEmpty($OutPath))      { $OutPath      = Join-Path $repoDir 'world-public\city-panel.html' }
+if ([string]::IsNullOrEmpty($HistoryPath))  { $HistoryPath  = Join-Path $repoDir 'logs\panel-history.jsonl' }
 
 foreach ($p in @($SnapPath, $FacePath, $TemplatePath)) {
     if (-not (Test-Path -LiteralPath $p)) { Fail ('input missing: ' + $p) }
@@ -85,6 +89,78 @@ function To-JsLiteral
 $snapJs = To-JsLiteral -Obj $snap -Label 'snapshot'
 $faceJs = To-JsLiteral -Obj $face -Label 'status-face'
 
+# --- cross-round history (best effort; never breaks the panel) ---------------
+# One compact record per DISTINCT snapshot ts, appended to a gitignored local
+# log, so the panel can show "what changed since the previous tick" instead of
+# one frozen frame. Failure here only drops the comparison card (PREV=null) --
+# it must never stop the panel itself from being rebuilt.
+$HistoryMax = 288
+$prevRec = $null
+$histAll = @()
+$histOk = $true
+try {
+    $rec = New-Object PSObject -Property ([ordered]@{
+        ts = [string]$snap.ts_utc
+        c  = [int]0; r = [int]0; g = [int]0; f = [int]0; e = [int]0
+    })
+    try { $rec.c = [int]$snap.city.commits_total } catch { $rec.c = 0 }
+    try { $rec.r = [int]$snap.city.renders_total } catch { $rec.r = 0 }
+    try { $rec.g = [int]$snap.city.games_active } catch { $rec.g = 0 }
+    try { $rec.f = [int]$snap.city.fleet_online } catch { $rec.f = 0 }
+    try { $rec.e = [int](@($snap.events_tail).Count) } catch { $rec.e = 0 }
+
+    if (Test-Path -LiteralPath $HistoryPath) {
+        foreach ($line in [IO.File]::ReadAllLines($HistoryPath, [Text.Encoding]::UTF8)) {
+            if ([string]::IsNullOrWhiteSpace($line)) { continue }
+            $o = $null
+            try { $o = ConvertFrom-Json $line } catch { continue }
+            if ($null -ne $o -and $null -ne $o.ts) { $histAll += $o }
+        }
+    }
+
+    $last = $null
+    if ($histAll.Count -gt 0) { $last = $histAll[$histAll.Count - 1] }
+    $append = $true
+    if ($null -ne $last -and ([string]$last.ts -eq [string]$rec.ts)) {
+        # Same snapshot already recorded (panel rebuilt inside one tick window)
+        $append = $false
+        if ($histAll.Count -gt 1) { $prevRec = $histAll[$histAll.Count - 2] }
+    } else {
+        $prevRec = $last
+    }
+
+    if ($append) {
+        $histAll += $rec
+        if ($histAll.Count -gt $HistoryMax) {
+            $histAll = $histAll[($histAll.Count - $HistoryMax)..($histAll.Count - 1)]
+        }
+        $sb = New-Object System.Text.StringBuilder
+        foreach ($h in $histAll) {
+            [void]$sb.Append((ConvertTo-Json $h -Compress))
+            [void]$sb.Append("`n")
+        }
+        $histDir = Split-Path -Parent $HistoryPath
+        if (-not (Test-Path -LiteralPath $histDir)) { New-Item -ItemType Directory -Path $histDir -Force | Out-Null }
+        [IO.File]::WriteAllText($HistoryPath, $sb.ToString(), (New-Object System.Text.UTF8Encoding($false)))
+    }
+} catch {
+    $histOk = $false
+    $prevRec = $null
+    $histAll = @()
+}
+
+$histMeta = New-Object PSObject -Property ([ordered]@{
+    n    = [int]$histAll.Count
+    max  = [int]$HistoryMax
+    ok   = [bool]$histOk
+})
+if ($histAll.Count -gt 0) { $histMeta | Add-Member -NotePropertyName first_utc -NotePropertyValue ([string]$histAll[0].ts) }
+else { $histMeta | Add-Member -NotePropertyName first_utc -NotePropertyValue '' }
+
+$prevJs = 'null'
+if ($null -ne $prevRec) { $prevJs = To-JsLiteral -Obj $prevRec -Label 'prev-record' }
+$histJs = To-JsLiteral -Obj $histMeta -Label 'history-meta'
+
 $built = [DateTimeOffset]::Now.ToString('yyyy-MM-dd HH:mm:ss (zzz)',
     [Globalization.CultureInfo]::InvariantCulture)
 # Inject the INNER text only: the template already supplies the surrounding
@@ -98,12 +174,12 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__PREV_JSON__','__HIST_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
 # String.Replace (not regex) => JSON '$' chars stay literal.
-$out = $tpl.Replace('__SNAPSHOT_JSON__', $snapJs).Replace('__FACE_JSON__', $faceJs).Replace('__BUILT_JSON__', $builtJs)
+$out = $tpl.Replace('__SNAPSHOT_JSON__', $snapJs).Replace('__FACE_JSON__', $faceJs).Replace('__BUILT_JSON__', $builtJs).Replace('__PREV_JSON__', $prevJs).Replace('__HIST_JSON__', $histJs)
 
 if ($out.IndexOf('__SNAPSHOT_JSON__') -ge 0) { Fail 'placeholder __SNAPSHOT_JSON__ still present after build' }
 if ($out.Length -lt 4000) { Fail ('output suspiciously small: ' + $out.Length + ' bytes') }
@@ -136,5 +212,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' built=' + $built + ' path=' + $OutPath)
 exit 0

@@ -6,10 +6,11 @@
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 
 ## 我现在在干什么
-r667 毕（FULL-ROUND 产品轮·triggers=c2 交互窗在飞件 7 件零接触+c4 传棒失配）：**主产出=城市面板件自动化**——`world-public/city-panel.html` 此前由 r665 手工构建一次即固化（内嵌 snapshot+三行实况，快照每 10 分钟变而 HTML 不变，约 7.5 小时即成过期城市）；本轮把 `Tools/devloop/build-city-panel.ps1` 接进 tick 步 2.55（snapshot export 后、statusface gate 前），fail-soft：构建失败只记 `panel: build exit=N (last-good kept, round health unchanged)` 不回灌退出码，builder 自身 .new+读回断言+Move 原子写不毁上一版。实证=单轮 tick `panel: PANEL OK bytes=12825 zones=3 events=50`+`gate: PASS`（logs/tick-20261020.log 02:53:30）+无头 Edge 截图 qa/city-panel-r667.png 五面全有数零占位符、新鲜度徽标绿。r666 已收口的 perceptor 感知链（scan 27 探针 OK/verify PASS）本轮持续在跑。
+r668 毕（FULL-ROUND 产品轮·triggers=c2 交互窗在飞件 7 件零接触+c3/c4/c7 三账变动）：**主产出=城市面板信息密度升级**——模板新增「事件分布」卡（按分区/按类型两族柱条，只统计快照窗口内 50 条，不推断窗外）+事件尾流分区筛选 chips（全部/各分区带计数，点击过滤并把标题计数改为 N/50）。实证=重建 `PANEL OK bytes=16308`、内联脚本 `node --check` 退出 0、无头 Edge 截图 qa/city-panel-r668.png 复核柱条与 chips 全就位零占位符、Node 桩 DOM 机械测试 `logs/devloop-r668-panel-filter-test.js` 11/11 PASS（含点击 gaming 后计数=行数）。builder 契约与 tick 2.55 接入未变，下一轮 tick 自动带走新模板。
 
 ## 我现在在干什么（历史）
-r666 收口（FULL-ROUND 修红轮·triggers=3：c1=statusface stale 面〔r665 已自愈〕+c2=交互窗在飞件族 7 件零接触+c4=tech_sha12 失配）：**主产出=perceptor 感知链断供 95 轮修复**——病面=tick 日志连串 `backoff: perceptor stack dirty`（10-19 18:49 起 62+33 轮=近 8 小时 scan+verify 全跳过·城事件流/门禁/健康三面零更新）；根因=上一窗把 BigStream 城桥探针 `probes/bigstream_city_events.ps1` 与 TECH 登记行落盘但未 commit→tick.ps1 步 0 脏树判据恒真→退避结构性自锁；修法=探针八律契约复审→scan+verify 双绿实证（27 探针全 OK·events +226·quarantined=0·verify PASS）→探针+登记行落 commit；登记行位勘正=原行误落「§十 溯源」且反引号转义损坏→正身移入 §九（r666 行）+§十 原件移除。探针真发射实证=outbox 两行消费（cursor `bscev:15f685fccd022b40`/`bscev:c439e3b4b9df881f`）+live stream 三条 MEDIA_OUTPUT（ts_utc=2026-10-19T18:42:11Z）。
+r667 收口（FULL-ROUND 产品轮·triggers=c2+c4）：**城市面板件自动化**——`build-city-panel.ps1` 接入 tick 步 2.55（snapshot export 后、statusface gate 前），fail-soft 不回灌退出码；实证 `panel: PANEL OK bytes=12825`+`gate: PASS`+无头 Edge 截图五面全有数。此后快照每 5 分钟变而面板每轮自动重建，不再固化过期。
+r666 收口（FULL-ROUND 修红轮·triggers=3）：**perceptor 感知链断供 95 轮修复**——病面=tick 连串 `backoff: perceptor stack dirty`（近 8 小时 scan+verify 全跳过）；根因=上一窗探针件落盘未 commit→步 0 脏树判据恒真（P-11 结构性自锁）；修法=探针契约复审+scan/verify 双绿+同窗 commit；判「感知健康」看 `scan:` 行存在性不看 gate=0。
 
 ## 下一步（队列头）
 1. 轮首跑 Tools\devloop\check-fastpath.ps1：FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate 读序施工。r666 收尾=tech_sha12 传棒 KEEP（§九 open 面：main#1〔10-24〕+main#2/#3〔10-18〕+main#10〔10-24〕+main#8〔10-19 城市线附卷〕+**queue #289=第 285 绪首选**）→下轮④查 mismatch=全轮续领 r95 律。

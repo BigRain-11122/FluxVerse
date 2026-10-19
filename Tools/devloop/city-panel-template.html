@@ -36,6 +36,18 @@
   .t{color:var(--dim);font-variant-numeric:tabular-nums;font-size:12px;min-width:118px}
   .tag{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:6px;padding:0 6px}
   .scroller{max-height:260px;overflow:auto}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .chip{cursor:pointer;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);
+        color:var(--dim);background:#0e141c;user-select:none}
+  .chip.on{color:#0b0e13;background:var(--accent);border-color:var(--accent);font-weight:600}
+  .barrow{display:flex;gap:10px;align-items:center;padding:6px 0;font-size:13px}
+  .barname{min-width:112px}
+  .barwrap{flex:1;height:6px;border-radius:3px;background:#0e141c;overflow:hidden}
+  .bar{height:6px;border-radius:3px;background:var(--accent);min-width:2px}
+  .bar.zone-gaming{background:#4cc9f0}.bar.zone-quant{background:#ffb703}
+  .bar.zone-media{background:#f72585}.bar.zone-governance{background:#9aa7b8}
+  .barval{min-width:40px;text-align:right;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
+  .muted{color:var(--dim);font-size:12px}
   footer{margin-top:22px;color:#a9b8c9;font-size:12.5px;line-height:1.9;border-top:1px solid var(--line);padding-top:12px}
   code{color:#b9c8da;background:#0e141c;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
 </style>
@@ -77,7 +89,14 @@
   </div>
 
   <div class="card" style="margin-top:14px">
+    <h2>事件分布（快照窗口内 <span class="tag" id="dist-total">0</span> 条）</h2>
+    <div id="dist-zones"></div>
+    <div id="dist-types" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
     <h2>事件尾流 <span class="tag" id="ev-count">0</span> <span class="tag">可滚动</span></h2>
+    <div class="chips" id="ev-chips"></div>
     <div class="scroller"><div id="events"></div></div>
   </div>
 
@@ -159,14 +178,64 @@ function fmtAge(h){
     '<span class="t">activity ' + esc(z.activity ?? 0) + '</span></div>'
   ).join('') : '<div class="rowline"><span class="t">无分区数据</span></div>';
 
-  const evs = (snap.events_tail || []).slice().reverse();
-  $('ev-count').textContent = evs.length;
-  $('events').innerHTML = evs.length ? evs.map(e =>
-    '<div class="rowline"><span class="dot zone-' + esc(e.zone || 'governance') + '"></span>' +
-    '<span class="t">' + esc((e.ts_utc || '').replace('T',' ').replace('Z','')) + '</span>' +
-    '<span style="min-width:130px">' + esc(e.type || '') + '</span>' +
-    '<span class="tag">' + esc(e.zone || '') + '</span></div>'
-  ).join('') : '<div class="rowline"><span class="t">无事件</span></div>';
+  const tail = (snap.events_tail || []).slice();
+  const evs = tail.slice().reverse();
+
+  // 事件分布：只统计快照自带窗口，不推断窗口外
+  const cntBy = (key) => {
+    const m = {};
+    tail.forEach(e => { const k = e[key] || 'unknown'; m[k] = (m[k] || 0) + 1; });
+    return m;
+  };
+  const zoneCnt = cntBy('zone');
+  const typeCnt = cntBy('type');
+  $('dist-total').textContent = tail.length;
+
+  const barRow = (name, val, max, cls) =>
+    '<div class="barrow"><span class="barname">' + esc(name) + '</span>' +
+    '<span class="barwrap"><span class="bar ' + cls + '" style="display:block;width:' +
+    Math.max(2, Math.round(val / max * 100)) + '%"></span></span>' +
+    '<span class="barval">' + val + '</span></div>';
+
+  const zoneKeys = Object.keys(zoneCnt).sort((a,b) => zoneCnt[b] - zoneCnt[a]);
+  $('dist-zones').innerHTML = zoneKeys.length
+    ? zoneKeys.map(k => barRow(k, zoneCnt[k], zoneCnt[zoneKeys[0]], 'zone-' + k)).join('')
+    : '<div class="muted">无数据</div>';
+
+  const typeKeys = Object.keys(typeCnt).sort((a,b) => typeCnt[b] - typeCnt[a]).slice(0, 8);
+  $('dist-types').innerHTML = '<div class="muted" style="margin-bottom:4px">按类型（前 8）</div>' +
+    (typeKeys.length
+      ? typeKeys.map(k => barRow(k, typeCnt[k], typeCnt[typeKeys[0]], '')).join('')
+      : '<div class="muted">无数据</div>');
+
+  // 分区筛选：只筛事件尾流，分布卡保持全窗口径
+  let evFilter = '*';
+  const renderEv = () => {
+    const list = evFilter === '*' ? evs : evs.filter(e => (e.zone || 'unknown') === evFilter);
+    $('ev-count').textContent = list.length + (evFilter === '*' ? '' : ' / ' + evs.length);
+    $('events').innerHTML = list.length ? list.map(e =>
+      '<div class="rowline"><span class="dot zone-' + esc(e.zone || 'governance') + '"></span>' +
+      '<span class="t">' + esc((e.ts_utc || '').replace('T',' ').replace('Z','')) + '</span>' +
+      '<span style="min-width:130px">' + esc(e.type || '') + '</span>' +
+      '<span class="tag">' + esc(e.zone || '') + '</span></div>'
+    ).join('') : '<div class="rowline"><span class="t">该分区无事件</span></div>';
+  };
+
+  const chips = [['*', '全部 ' + tail.length]].concat(zoneKeys.map(z => [z, z + ' ' + zoneCnt[z]]));
+  $('ev-chips').innerHTML = chips.map(c =>
+    '<span class="chip' + (c[0] === evFilter ? ' on' : '') + '" data-z="' + esc(c[0]) + '">' +
+    esc(c[1]) + '</span>'
+  ).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#ev-chips .chip'), el => {
+    el.addEventListener('click', () => {
+      evFilter = el.getAttribute('data-z');
+      Array.prototype.forEach.call(document.querySelectorAll('#ev-chips .chip'), x => {
+        x.className = 'chip' + (x.getAttribute('data-z') === evFilter ? ' on' : '');
+      });
+      renderEv();
+    });
+  });
+  renderEv();
 })();
 </script>
 </body>

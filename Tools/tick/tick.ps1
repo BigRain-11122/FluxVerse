@@ -125,6 +125,19 @@ try {
     foreach ($l in $expOut) { $lines += ('  pub: ' + ([string]$l)) }
   } catch { $lines += ('  pub: export crashed (fail-soft): ' + ($_.Exception.Message -replace "[\r\n]", ' ')) }
 
+  # 2.55 public city panel rebuild (r667): the single-file HTML face embeds the
+  #      snapshot + DevLoop face, so it only stays usable if it is rebuilt after
+  #      every export. Before this step it was built by hand (r665) and went
+  #      stale within hours - a panel that shows yesterday's city is worse than
+  #      no panel. Fail-soft: a builder FAIL logs a panel: line and leaves the
+  #      previous good HTML untouched (builder writes .new then moves).
+  try {
+    $pnOut = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'Tools\devloop\build-city-panel.ps1') 2>&1
+    $pnExit = $LASTEXITCODE
+    foreach ($l in $pnOut) { $lines += ('  panel: ' + ([string]$l)) }
+    if ($pnExit -ne 0) { $lines += ('  panel: build exit=' + $pnExit + ' (last-good kept, round health unchanged)') }
+  } catch { $lines += ('  panel: build crashed (fail-soft): ' + ($_.Exception.Message -replace "[\r\n]", ' ')) }
+
   # 2.6 status-face freshness gate (v1.7, r240): DevLoop-lane liveness line.
   #     The stale line carries 'gate: FAIL' so the c1 red-scan counts it at
   #     the next round start; the fresh line is a quiet health trace. The

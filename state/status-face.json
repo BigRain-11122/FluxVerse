@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-19T18:44:26Z",
-    "current_activity":  "r666 修红轮：perceptor 感知链断供 95 轮根治——tick 自 10-19 18:49 起因未提交的在飞探针件触发脏树退避，scan+verify 每 10 分钟静默跳过近 8 小时；本轮探针八律复审+scan/verify 双绿实证+落 commit，脏树自锁解除，城事件流/门禁/健康三面恢复更新。",
-    "artifact":  "world/world-events.jsonl",
-    "artifact_utc":  "2026-10-19T18:42:11Z",
-    "milestone":  "下一里程碑=explore#12 第 285 绪 JR/T 0025.12 现行层正身件收口（非接触支付应用技术·cfstc 检索滚出法探 bzId）+main#8 城市线附卷（D-20261017-03 派单承接）",
+    "updated_utc":  "2026-10-19T18:55:02Z",
+    "current_activity":  "r667 产品轮：城市面板件自动化——world-public/city-panel.html 自 r665 手工构建后即随快照停走而陈旧（面板内嵌快照与三行实况，手工件必然过期）；本轮把 build-city-panel.ps1 接入 tick 2.55 步（每次快照导出后重建，fail-soft 保留上一版，构建失败不改轮次健康），单轮实跑验证 panel: PANEL OK bytes=12825 + gate PASS，无头 Edge 截图复核页面零占位符、新鲜度徽标转绿。",
+    "artifact":  "world-public/city-panel.html",
+    "artifact_utc":  "2026-10-19T18:54:00Z",
+    "milestone":  "下一里程碑=explore#12 第 285 绪 JR/T 0025.12 现行层正身窗（bzId 待探）+ main#8 城市线附卷（D-20261017-03 派单承接）",
     "milestone_eta_utc":  "2026-10-20T14:00:00Z"
 }

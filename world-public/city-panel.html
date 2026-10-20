@@ -57,6 +57,10 @@
   .rcol.zero .rbar{background:#1b2430}
   .rlab{font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums}
   .muted{color:var(--dim);font-size:12px}
+  .te-wrap svg{width:100%;height:auto;display:block}
+  .te-lab{font-size:10px;fill:#8b9aad;font-variant-numeric:tabular-nums}
+  .te-axis{stroke:#1e2733;stroke-width:1}
+  .te-gap{stroke:#ff6b6b;stroke-width:1;stroke-dasharray:3 3;opacity:.75}
   .chk{display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
   .chk:last-child{border-bottom:0}
   .chk .st{font-size:11px;padding:0 7px;border-radius:6px;border:1px solid var(--line);min-width:46px;text-align:center}
@@ -113,6 +117,13 @@
   </div>
 
   <div class="card" style="margin-top:14px">
+    <h2>24 小时趋势 <span class="tag" id="tr-span">—</span> <span class="tag">三条线各自量纲</span></h2>
+    <div class="rhint" id="tr-hint">—</div>
+    <div class="te-wrap"><svg id="tr-chart" viewBox="0 0 620 228" role="img" aria-label="24h trend"></svg></div>
+    <div id="tr-legend" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
     <h2>数据自检 <span class="tag" id="sc-sum">—</span></h2>
     <div class="rhint">九项全部由本页数据与今日 tick 日志推导（含跨轮摘要、轨迹与循环覆盖），异常以「注意」如实露出，不隐藏。</div>
     <div id="selfcheck"></div>
@@ -146,19 +157,21 @@
 </div>
 
 <script>
-const SNAP = {"protocol":"fluxverse-public/0.1","ts_utc":"2026-10-19T23:11:03Z","zones":[{"id":"gaming","name":"FLUX Gaming","status":"active","activity":1},{"id":"quant","name":"FLUX Quant","status":"active","activity":1},{"id":"media","name":"FLUX Media","status":"active","activity":1}],"flows":[{"id":"data","zone":"gaming"},{"id":"capital","zone":"quant"},{"id":"traffic","zone":"media"}],"city":{"fleet_online":1,"games_total":33,"games_active":13,"renders_total":101,"last_render_utc":"2026-10-19T21:11:42Z","commits_total":28929},"reality_public":{"city_day_phase":"dawn","weather_kind":"cloud","weather_temp_c":"22.9","weekday":"2","beijing_hhmm":"07:11","season":"autumn"},"events_tail":[{"ts_utc":"2026-10-19T22:06:03Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T22:06:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T22:06:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:06:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:11:03Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T22:11:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T22:11:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:11:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:16:03Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T22:16:03Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T22:16:03Z","type":"COMMIT","zone":"governance"},{"ts_utc":"2026-10-19T22:16:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T22:16:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:16:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:21:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T22:21:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T22:21:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T22:21:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:21:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:26:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T22:26:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:26:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:31:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T22:31:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T22:31:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:31:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:36:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:36:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:41:03Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-19T22:41:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:41:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:46:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:46:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:51:02Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T22:51:02Z","type":"GITHUB_EVENT","zone":"media"},{"ts_utc":"2026-10-19T22:51:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:51:02Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:56:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T22:56:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-19T22:56:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T22:56:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T22:56:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T23:01:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T23:01:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T23:01:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T23:06:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-19T23:06:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T23:06:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T23:11:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-19T23:11:03Z","type":"GAME_STAGE","zone":"gaming"}],"status_face":{"updated_utc":"2026-10-19T21:57:16Z","current_activity":"r672 产品轮：城市面板「城市变化」卡新增「跨轮轨迹」子块——近 12 条快照逐条明细（提交数+与上一条的增量徽标）与区间汇总（近 N 条/约 M 分钟/提交 +Δ/渲染 +Δ/末条事件窗口），数据源是本地历史日志末端切片；数据自检加第八项「轨迹一致」（末条须=本快照且时间严格递增）；同日清账逾期 2 日的 benchmarks v1.3 刷新（WFC 前沿两新支/城市孪生开源三件/团结引擎 1.9.0-1.10.0 版本面·摘要级如实标待证）。","artifact":"world-public/city-panel.html + qa/city-panel-r672.png","artifact_utc":"2026-10-19T21:57:16Z","milestone":"下个里程碑：面板「跨轮轨迹」扩成 24 小时趋势曲线（候历史日志累计 ≥24 条·约 3 小时后到点）+ 自检第九项「tick 覆盖」（缺档自检）","milestone_eta_utc":"2026-10-20T15:00:00Z"}};
-const FACE = {"updated_utc":"2026-10-19T23:12:34Z","current_activity":"r673 产品件：城市面板自检第九项「tick 覆盖」——构建器只读今日 tick 日志注入 TICK（存在/大小/龄/scan 行/轮数/可读），页内判定缺档、不可读、龄\u003e15 分钟停走或正常并给出「N 分钟前 · scan X 行 · Y 轮」；自检卡说明句改为九项；旧五套面板桩 DOM 测试改为标准推导式并全绿（新测 11/11）","artifact":"world-public/city-panel.html + qa/city-panel-r673.png","artifact_utc":"2026-10-19T23:12:34Z","milestone":"面板「跨轮轨迹」扩成 24 小时趋势曲线（待 history 累计 ≥24 条，约 25 分钟后到点）","milestone_eta_utc":"2026-10-20T04:00:00Z"};
-const BUILT = "2026-10-20 07:13:00 (+08:00)";
+const SNAP = {"protocol":"fluxverse-public/0.1","ts_utc":"2026-10-20T00:21:03Z","zones":[{"id":"gaming","name":"FLUX Gaming","status":"active","activity":1},{"id":"quant","name":"FLUX Quant","status":"active","activity":1},{"id":"media","name":"FLUX Media","status":"active","activity":1}],"flows":[{"id":"data","zone":"gaming"},{"id":"capital","zone":"quant"},{"id":"traffic","zone":"media"}],"city":{"fleet_online":1,"games_total":33,"games_active":13,"renders_total":102,"last_render_utc":"2026-10-19T23:27:34Z","commits_total":28986},"reality_public":{"city_day_phase":"day","weather_kind":"cloud","weather_temp_c":"23.9","weekday":"2","beijing_hhmm":"08:21","season":"autumn"},"events_tail":[{"ts_utc":"2026-10-20T00:01:03Z","type":"GITHUB_EVENT","zone":"media"},{"ts_utc":"2026-10-20T00:01:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-20T00:01:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-20T00:01:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-20T00:06:03Z","type":"COMMIT","zone":"media"},{"ts_utc":"2026-10-20T00:06:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-20T00:06:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"COMMIT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-20T00:11:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-20T00:11:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-20T00:16:03Z","type":"COMMIT","zone":"gaming"},{"ts_utc":"2026-10-20T00:16:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-20T00:16:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-20T00:16:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-20T00:16:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-20T00:16:03Z","type":"GITHUB_EVENT","zone":"governance"},{"ts_utc":"2026-10-20T00:16:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-20T00:16:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-20T00:21:03Z","type":"GITHUB_EVENT","zone":"quant"},{"ts_utc":"2026-10-20T00:21:03Z","type":"GAME_STAGE","zone":"gaming"},{"ts_utc":"2026-10-20T00:21:03Z","type":"GAME_STAGE","zone":"gaming"}],"status_face":{"updated_utc":"2026-10-19T23:12:34Z","current_activity":"r673 产品件：城市面板自检第九项「tick 覆盖」——构建器只读今日 tick 日志注入 TICK（存在/大小/龄/scan 行/轮数/可读），页内判定缺档、不可读、龄\u003e15 分钟停走或正常并给出「N 分钟前 · scan X 行 · Y 轮」；自检卡说明句改为九项；旧五套面板桩 DOM 测试改为标准推导式并全绿（新测 11/11）","artifact":"world-public/city-panel.html + qa/city-panel-r673.png","artifact_utc":"2026-10-19T23:12:34Z","milestone":"面板「跨轮轨迹」扩成 24 小时趋势曲线（待 history 累计 ≥24 条，约 25 分钟后到点）","milestone_eta_utc":"2026-10-20T04:00:00Z"}};
+const FACE = {"updated_utc":"2026-10-20T00:22:50Z","current_activity":"r674 产品件：城市面板「24 小时趋势」折线卡——构建器按快照时刻回看 24 小时注入 TREND，提交/渲染/事件三线各自量纲独立成带（左轴=各带最小/最大值、底部 UTC 起止与跨度、恒定量居中平线），相邻点间隔 \u003e15 分钟判断档并红虚线标注，覆盖不足 24 小时如实写「记录不足」；新桩 DOM 测试 27/27 逐点对账","artifact":"qa/city-panel-r674.png（趋势卡三线+轴标签实证）","artifact_utc":"2026-10-20T00:22:50Z","milestone":"面板自检第十项「趋势末点一致」（TREND 末条=本快照且计数一致，错位即标注意）","milestone_eta_utc":"2026-10-20T10:00:00Z"};
+const BUILT = "2026-10-20 08:23:02 (+08:00)";
 // PREV = previous DISTINCT snapshot digest (null when this is the first one),
 // HIST = {n, max, ok, first_utc} local cross-round log meta (gitignored).
-const PREV = {"ts":"2026-10-19T23:06:03Z","c":28929,"r":101,"g":13,"f":1,"e":50};
-const HIST = {"n":20,"max":288,"ok":true,"first_utc":"2026-10-19T21:36:02Z"};
+const PREV = {"ts":"2026-10-20T00:16:03Z","c":28986,"r":102,"g":13,"f":1,"e":50};
+const HIST = {"n":34,"max":288,"ok":true,"first_utc":"2026-10-19T21:36:02Z"};
 // SERIES = tail slice of the local cross-round log (newest last, <=12 records).
-const SERIES = [{"ts":"2026-10-19T22:16:03Z","c":28928,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:21:03Z","c":28928,"r":101,"g":13,"f":0,"e":50},{"ts":"2026-10-19T22:26:03Z","c":28928,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:31:03Z","c":28928,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:36:03Z","c":28928,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:41:03Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:46:03Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:51:02Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:56:03Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:01:03Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:06:03Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:11:03Z","c":28929,"r":101,"g":13,"f":1,"e":50}];
+const SERIES = [{"ts":"2026-10-19T23:26:03Z","c":28931,"r":102,"g":13,"f":0,"e":50},{"ts":"2026-10-19T23:31:03Z","c":28931,"r":102,"g":13,"f":0,"e":50},{"ts":"2026-10-19T23:36:03Z","c":28932,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:41:03Z","c":28952,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:46:03Z","c":28953,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:51:03Z","c":28953,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:56:03Z","c":28953,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-20T00:01:03Z","c":28955,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-20T00:06:03Z","c":28956,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-20T00:11:03Z","c":28985,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-20T00:16:03Z","c":28986,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-20T00:21:03Z","c":28986,"r":102,"g":13,"f":1,"e":50}];
+// TREND = the whole local cross-round log inside a 24h window (newest last).
+const TREND = [{"ts":"2026-10-19T21:36:02Z","c":28908,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T21:41:03Z","c":28909,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T21:46:03Z","c":28910,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T21:51:02Z","c":28914,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T21:56:03Z","c":28914,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:01:03Z","c":28915,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:06:03Z","c":28924,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:11:03Z","c":28925,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:16:03Z","c":28928,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:21:03Z","c":28928,"r":101,"g":13,"f":0,"e":50},{"ts":"2026-10-19T22:26:03Z","c":28928,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:31:03Z","c":28928,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:36:03Z","c":28928,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:41:03Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:46:03Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:51:02Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T22:56:03Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:01:03Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:06:03Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:11:03Z","c":28929,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:16:02Z","c":28931,"r":101,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:21:03Z","c":28931,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:26:03Z","c":28931,"r":102,"g":13,"f":0,"e":50},{"ts":"2026-10-19T23:31:03Z","c":28931,"r":102,"g":13,"f":0,"e":50},{"ts":"2026-10-19T23:36:03Z","c":28932,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:41:03Z","c":28952,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:46:03Z","c":28953,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:51:03Z","c":28953,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-19T23:56:03Z","c":28953,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-20T00:01:03Z","c":28955,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-20T00:06:03Z","c":28956,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-20T00:11:03Z","c":28985,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-20T00:16:03Z","c":28986,"r":102,"g":13,"f":1,"e":50},{"ts":"2026-10-20T00:21:03Z","c":28986,"r":102,"g":13,"f":1,"e":50}];
 // TICK = today's tick log probe ({exists,file,size,age_min,scan_lines,rounds,
 // read_ok}) - the panel is built BY that tick, so this is the only honest way
 // to tell whether the 10-minute loop actually ran.
-const TICK = {"exists":true,"file":"tick-20261020.log","size":102829,"age_min":1,"scan_lines":1485,"rounds":88,"read_ok":true};
+const TICK = {"exists":true,"file":"tick-20261020.log","size":125370,"age_min":1,"scan_lines":1863,"rounds":102,"read_ok":true};
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -327,6 +340,88 @@ function fmtAge(h){
   } else {
     $('cv-trend-sum').textContent = '轨迹记录不足（当前 ' + series.length + ' 条，至少 2 条才显示跨轮轨迹）';
     $('cv-trend').innerHTML = '';
+  }
+
+  // 24 小时趋势：全量窗口（builder 注入），三条线各自量纲独立成带——
+  // 提交量级 ~10^4、渲染 ~10^2、事件窗口 ~10^1，共轴会被压平。
+  // 缺档（相邻点间隔 >15 分钟 = 至少跳过 2 个 tick）用红虚线如实标出。
+  const trend = (Array.isArray(TREND) ? TREND : [])
+    .map(r => ({ rec: r, t: Date.parse(r.ts) }))
+    .filter(p => !isNaN(p.t));
+  const trSpanEl = $('tr-span'), trHint = $('tr-hint'), trSvg = $('tr-chart'), trLegend = $('tr-legend');
+  if (trend.length < 2) {
+    trSpanEl.textContent = '记录不足';
+    trHint.textContent = '记录不足：可用 ' + trend.length + ' 条（至少 2 条才绘制趋势曲线）';
+    trSvg.innerHTML = '';
+    trLegend.innerHTML = '';
+  } else {
+    const TW = 620, TH = 228, TPL = 62, TPR = 14, TPT = 10, TPB = 26;
+    const tPw = TW - TPL - TPR;
+    const tGapPx = 8;
+    const tBandH = (TH - TPT - TPB - 2 * tGapPx) / 3;
+    const tt0 = trend[0].t, ttN = trend[trend.length - 1].t;
+    const tSpan = Math.max(1, ttN - tt0);
+    const tX = (t) => TPL + ((t - tt0) / tSpan) * tPw;
+    const fmtHM = (t) => {
+      const d = new Date(t);
+      return String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
+    };
+    let tSvg = '';
+    let tGaps = 0;
+    const tDefs = [['c', '提交', '#4cc9f0'], ['r', '渲染', '#ffb703'], ['e', '事件', '#f72585']];
+    tDefs.forEach((d, di) => {
+      const vals = trend.map(p => Number(p.rec[d[0]]) || 0);
+      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+      const flat = mx === mn;
+      const rng = flat ? 1 : (mx - mn);
+      const top = TPT + di * (tBandH + tGapPx);
+      // 恒定序列（如事件窗口恒 50 条）画一条居中的平线，不贴底边
+      const yOf = (v) => flat ? top + 3 + (tBandH - 6) / 2
+                              : top + 3 + (tBandH - 6) * (1 - (v - mn) / rng);
+      const pts = trend.map((p, i) => tX(p.t).toFixed(1) + ',' + yOf(vals[i]).toFixed(1)).join(' ');
+      tSvg += '<line class="te-axis" x1="' + TPL + '" y1="' + (top + tBandH) + '" x2="' + (TW - TPR) + '" y2="' + (top + tBandH) + '"/>';
+      if (d[0] === 'c') {
+        for (let i = 1; i < trend.length; i++) {
+          const dtMin = (trend[i].t - trend[i - 1].t) / 60000;
+          if (dtMin > 15) {
+            tGaps++;
+            tSvg += '<line class="te-gap" x1="' + tX(trend[i].t).toFixed(1) + '" y1="' + (top + 3) +
+              '" x2="' + tX(trend[i].t).toFixed(1) + '" y2="' + (top + tBandH - 3) + '"/>';
+          }
+        }
+      }
+      tSvg += '<text class="te-lab" x="4" y="' + (top + 10) + '" fill="' + d[2] + '">' + d[1] + '</text>';
+      if (flat) {
+        tSvg += '<text class="te-lab" x="' + (TPL - 6) + '" y="' + (top + tBandH / 2 + 3) + '" text-anchor="end">' + mx + '</text>';
+      } else {
+        tSvg += '<text class="te-lab" x="' + (TPL - 6) + '" y="' + (top + 10) + '" text-anchor="end">' + mx + '</text>';
+        tSvg += '<text class="te-lab" x="' + (TPL - 6) + '" y="' + (top + tBandH) + '" text-anchor="end">' + mn + '</text>';
+      }
+      tSvg += '<polyline data-k="' + d[0] + '" fill="none" stroke="' + d[2] + '" stroke-width="1.6" ' +
+        'stroke-linejoin="round" stroke-linecap="round" points="' + pts + '"/>';
+      const pA = pts.split(' ')[0].split(',');
+      const pB = pts.split(' ')[pts.split(' ').length - 1].split(',');
+      tSvg += '<circle cx="' + pA[0] + '" cy="' + pA[1] + '" r="2" fill="' + d[2] + '"/>';
+      tSvg += '<circle cx="' + pB[0] + '" cy="' + pB[1] + '" r="2" fill="' + d[2] + '"/>';
+    });
+    tSvg += '<text class="te-lab" x="' + TPL + '" y="' + (TH - 8) + '">' + fmtHM(tt0) + ' UTC</text>';
+    tSvg += '<text class="te-lab" x="' + (TW - TPR) + '" y="' + (TH - 8) + '" text-anchor="end">' + fmtHM(ttN) + ' UTC</text>';
+    tSvg += '<text class="te-lab" x="' + (TPL + tPw / 2) + '" y="' + (TH - 8) + '" text-anchor="middle">跨度 ' +
+      (tSpan / 3600000).toFixed(1) + ' 小时 · ' + trend.length + ' 条</text>';
+    trSvg.innerHTML = tSvg;
+    trSpanEl.textContent = trend.length + ' 条';
+    const tHours = tSpan / 3600000;
+    trHint.textContent = '数据源 logs/panel-history.jsonl（每次 tick 一条）。' +
+      (tHours < 23.5
+        ? '记录不足 24 小时：当前覆盖 ' + tHours.toFixed(1) + ' 小时（' + trend.length + ' 条）'
+        : '覆盖近 24 小时：' + trend.length + ' 条') +
+      (tGaps ? ' · 断档 ' + tGaps + ' 处（相邻间隔 >15 分钟，红虚线标注）' : ' · 无断档');
+    trLegend.innerHTML = tDefs.map(d => {
+      const vals = trend.map(p => Number(p.rec[d[0]]) || 0);
+      return '<span class="tag" style="margin-right:8px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' +
+        d[2] + ';margin-right:5px"></span>' + d[1] + ' ' + Math.min.apply(null, vals) + ' → ' +
+        Math.max.apply(null, vals) + '</span>';
+    }).join('') + '<span class="tag">左轴=各带最小/最大值</span>';
   }
 
   // 活动节律：近 12 小时逐时计数，锚=快照 ts_utc（不用浏览器时钟，

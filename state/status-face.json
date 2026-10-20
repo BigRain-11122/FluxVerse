@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-19T23:12:34Z",
-    "current_activity":  "r673 产品件：城市面板自检第九项「tick 覆盖」——构建器只读今日 tick 日志注入 TICK（存在/大小/龄/scan 行/轮数/可读），页内判定缺档、不可读、龄\u003e15 分钟停走或正常并给出「N 分钟前 · scan X 行 · Y 轮」；自检卡说明句改为九项；旧五套面板桩 DOM 测试改为标准推导式并全绿（新测 11/11）",
-    "artifact":  "world-public/city-panel.html + qa/city-panel-r673.png",
-    "artifact_utc":  "2026-10-19T23:12:34Z",
-    "milestone":  "面板「跨轮轨迹」扩成 24 小时趋势曲线（待 history 累计 ≥24 条，约 25 分钟后到点）",
-    "milestone_eta_utc":  "2026-10-20T04:00:00Z"
+    "updated_utc":  "2026-10-20T01:50:54Z",
+    "current_activity":  "r675 产品轮·城市面板自检第十项「趋势末点」：TREND 末条必须与本快照同刻且提交/渲染等于页头累计，错位/漂移/空趋势一律标「注意」并写出差异；顺手把 r670~r673 四套旧测试的硬编码项数断言改为按模板推导（新测 15/15·八套面板测试 114 项全绿）",
+    "artifact":  "qa/city-panel-r675.png（面板截图·十项自检全通过）",
+    "artifact_utc":  "2026-10-20T01:50:54Z",
+    "milestone":  "下一件=面板 24h 趋势卡「末值标注」（main#14）或第 285 绪调研窗（今日 16:3x 承）",
+    "milestone_eta_utc":  "2026-10-20T12:00:00Z"
 }

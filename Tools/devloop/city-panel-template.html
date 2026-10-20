@@ -125,7 +125,7 @@
 
   <div class="card" style="margin-top:14px">
     <h2>数据自检 <span class="tag" id="sc-sum">—</span></h2>
-    <div class="rhint">九项全部由本页数据与今日 tick 日志推导（含跨轮摘要、轨迹与循环覆盖），异常以「注意」如实露出，不隐藏。</div>
+    <div class="rhint">十项全部由本页数据与今日 tick 日志推导（含跨轮摘要、轨迹、循环覆盖与趋势末点），异常以「注意」如实露出，不隐藏。</div>
     <div id="selfcheck"></div>
   </div>
 
@@ -539,6 +539,29 @@ function fmtAge(h){
         (dup ? ' · ' + dup + ' 条重复' : '') + (back ? ' · ' + back + ' 条逆序' : '') };
   }
   selfcheck.push({ ok: tr.ok, nm: '轨迹一致', vd: tr.vd });
+
+  // 趋势末点一致：24 小时趋势的末条必须就是本快照，且提交/渲染与页头累计相符
+  // （末条错位或数值不符 = 历史日志被并发写坏、或快照回退/来源切换）
+  let te = { ok: true, vd: '—' };
+  if (trend.length === 0) {
+    te = { ok: false, vd: '趋势记录为空（无法校验末点）' };
+  } else {
+    const lastT = trend[trend.length - 1];
+    const sameT = String(lastT.rec.ts) === String(snap.ts_utc);
+    const mismatch = [];
+    if (lastT.rec.c != null && city.commits_total != null &&
+        Number(lastT.rec.c) !== Number(city.commits_total)) {
+      mismatch.push('提交 ' + lastT.rec.c + '≠' + city.commits_total);
+    }
+    if (lastT.rec.r != null && city.renders_total != null &&
+        Number(lastT.rec.r) !== Number(city.renders_total)) {
+      mismatch.push('渲染 ' + lastT.rec.r + '≠' + city.renders_total);
+    }
+    te = { ok: sameT && mismatch.length === 0,
+      vd: (sameT ? '末条=本快照' : '末条与本快照不同刻') + ' · ' + trend.length + ' 条' +
+        (mismatch.length ? ' · ' + mismatch.join(' / ') : ' · 提交/渲染与页头一致') };
+  }
+  selfcheck.push({ ok: te.ok, nm: '趋势末点', vd: te.vd });
 
   const warnN = selfcheck.filter(c => !c.ok).length;
   $('sc-sum').textContent = warnN ? (warnN + ' 项注意') : (selfcheck.length + ' 项通过');

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-26T07:53:58Z",
-    "current_activity":  "r678 产品轮（FASTPATH 七静改道→队列取活）：城市面板自检第十一项「面部新鲜度」——页内直读 status-face 龄，\u003e24 小时标注意并写「面部陈旧 N 小时」，把「车道静默」从 tick 日志搬到面板可见面；新测 12/12、十一套面板测试合计 172 项全绿；顺手根治 r675 硬编码行数断言。",
-    "artifact":  "qa/city-panel-r678.png（自检 11 项通过·面部 2.9 小时前）+ qa/city-panel-r678-fixture-stale-face.png（30h 夹具=1 项注意「面部陈旧 30.0 小时」）",
-    "artifact_utc":  "2026-10-26T07:53:58Z",
-    "milestone":  "下一件=main#5 R2 判据帧链首跑（r678 三判转真解锁）：库内 R2 六帧→qa/smoke 判据帧+六段式收据，30fps 浸泡属本件范围；其后 main#1 月度归档/main#10 benchmarks 深潜核验",
-    "milestone_eta_utc":  "2026-10-26T08:20:00Z"
+    "updated_utc":  "2026-10-26T09:01:25Z",
+    "current_activity":  "r679 产品轮：R2 判据帧链首跑收口（main#5/main#6 双销行）——库内帧消费径，三帧字节等同入 qa/，六段式收据钉死「哪张图判哪条 charter」；多模态 9/8/8 全过；30fps 浸泡未跑如实记 N/A。",
+    "artifact":  "qa/smoke-r679-bm-a.md（六段式收据）+ qa/smoke-r679-bm-a.log（取证）+ qa/smoke-r679-bm-a-{L0,L1,L2}.png（三帧 SHA256 与库内同源）",
+    "artifact_utc":  "2026-10-26T09:00:00Z",
+    "milestone":  "下一件=main#5 R2 30fps 浸泡探针首测（batchmode play-mode 10min 采样，看门狗 20min；fallback 代理档须标「代理」）；其后时窗件 main#1 月度归档/main#10 benchmarks 深潜/main#8 逾期附卷。",
+    "milestone_eta_utc":  "2026-10-26T18:00:00Z"
 }

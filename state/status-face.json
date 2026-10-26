@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-26T04:56:54Z",
-    "current_activity":  "r677 产品轮·城市面板趋势卡「末值标注自适应」：右侧留白按最长末值位数动态计算（≤5 位沿用 44px，画面像素级不变；6/7 位自动加宽），六位以上大数不再贴右缘（新测 28/28·十套面板测试 160 项全绿）；并修复状态面部陈旧 143 小时的面板告警",
-    "artifact":  "qa/city-panel-r677.png（面板截图）+ qa/city-panel-r677-fixture7d.png（七位末值夹具·标注 1234567 完整落在框内）",
-    "artifact_utc":  "2026-10-26T04:56:54Z",
-    "milestone":  "下一步：main#1 §九 月度归档窗（10-24 已到期）或 main#10 benchmarks 深潜核验（10-24 到期），或第 285 绪调研窗",
-    "milestone_eta_utc":  "2026-10-26T07:30:00Z"
+    "updated_utc":  "2026-10-26T07:53:58Z",
+    "current_activity":  "r678 产品轮（FASTPATH 七静改道→队列取活）：城市面板自检第十一项「面部新鲜度」——页内直读 status-face 龄，\u003e24 小时标注意并写「面部陈旧 N 小时」，把「车道静默」从 tick 日志搬到面板可见面；新测 12/12、十一套面板测试合计 172 项全绿；顺手根治 r675 硬编码行数断言。",
+    "artifact":  "qa/city-panel-r678.png（自检 11 项通过·面部 2.9 小时前）+ qa/city-panel-r678-fixture-stale-face.png（30h 夹具=1 项注意「面部陈旧 30.0 小时」）",
+    "artifact_utc":  "2026-10-26T07:53:58Z",
+    "milestone":  "下一件=main#5 R2 判据帧链首跑（r678 三判转真解锁）：库内 R2 六帧→qa/smoke 判据帧+六段式收据，30fps 浸泡属本件范围；其后 main#1 月度归档/main#10 benchmarks 深潜核验",
+    "milestone_eta_utc":  "2026-10-26T08:20:00Z"
 }

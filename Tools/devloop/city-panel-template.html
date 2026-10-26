@@ -125,7 +125,7 @@
 
   <div class="card" style="margin-top:14px">
     <h2>数据自检 <span class="tag" id="sc-sum">—</span></h2>
-    <div class="rhint">十项全部由本页数据与今日 tick 日志推导（含跨轮摘要、轨迹、循环覆盖与趋势末点），异常以「注意」如实露出，不隐藏。</div>
+    <div class="rhint">各项全部由本页数据、今日 tick 日志与面部时间推导（含跨轮摘要、轨迹、循环覆盖、趋势末点与面部新鲜度），异常以「注意」如实露出，不隐藏。</div>
     <div id="selfcheck"></div>
   </div>
 
@@ -468,7 +468,7 @@ function fmtAge(h){
       '<span class="rlab">' + hh + '</span></div>';
   }).join('') : '';
 
-  // 数据自检：六项全部由页内数据推导（不引入新数据源），异常如实标注意
+  // 数据自检：各项全部由页内数据推导（不引入新数据源），异常如实标注意
   const selfcheck = [];
   const secOk = !!(Array.isArray(snap.zones) && snap.city && snap.reality_public && Array.isArray(snap.events_tail));
   selfcheck.push({ ok: secOk, nm: '必备节',
@@ -576,6 +576,22 @@ function fmtAge(h){
         (mismatch.length ? ' · ' + mismatch.join(' / ') : ' · 提交/渲染与页头一致') };
   }
   selfcheck.push({ ok: te.ok, nm: '趋势末点', vd: te.vd });
+
+  // 面部新鲜度：status-face 是本司执行体手写面，停写时页头三行会一直显示旧内容，
+  // 而快照照新、页面照出——这是「车道静默」唯一不上页的故障面，故在页面自检里直读龄。
+  // 阈值 24 小时（面部由每轮收尾重写，正常远短于此）。
+  const fh = ago(face.updated_utc);
+  let fa;
+  if (fh == null) {
+    fa = { ok: false, vd: '面部时间缺失或不可解析（' + (face.updated_utc || '—') + '）' };
+  } else if (fh < -0.1) {
+    fa = { ok: false, vd: '面部时间在未来 ' + Math.abs(fh).toFixed(1) + ' 小时（时钟/写入异常）' };
+  } else if (fh > 24) {
+    fa = { ok: false, vd: '面部陈旧 ' + fh.toFixed(1) + ' 小时（阈值 24）' };
+  } else {
+    fa = { ok: true, vd: fmtAge(fh) + '（阈值 24 小时）' };
+  }
+  selfcheck.push({ ok: fa.ok, nm: '面部新鲜度', vd: fa.vd });
 
   const warnN = selfcheck.filter(c => !c.ok).length;
   $('sc-sum').textContent = warnN ? (warnN + ' 项注意') : (selfcheck.length + ' 项通过');

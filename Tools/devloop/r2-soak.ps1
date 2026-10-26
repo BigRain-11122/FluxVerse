@@ -7,7 +7,8 @@ param(
   [int]$RenderSec = 180,
   [int]$TimeoutMin = 20,
   [switch]$AllowGuiClose,
-  [switch]$WarmOnly
+  [switch]$WarmOnly,
+  [switch]$RestoreOnly
 )
 $ErrorActionPreference = 'Stop'
 
@@ -18,6 +19,30 @@ $qa   = Join-Path $root 'qa'
 $stg  = Join-Path $root 'City3D-staging'
 $log  = Join-Path $stg 'r2-soak.log'
 $done = Join-Path $stg 'r2-soak.done'
+$settings = Join-Path $proj 'ProjectSettings\EditorSettings.asset'
+
+# Play-mode option residue guard (main#18). The probe temporarily sets
+# enterPlayModeOptionsEnabled=1 / options=DisableDomainReload so play mode keeps its statics, and
+# restores them on normal exit. A force-killed editor (watchdog kill, launcher teardown, external
+# taskkill) skips that restore and leaves the project with domain reload disabled for every later
+# session. This project's baseline is 0/3, so anything else is residue and is restored here.
+function Restore-PlayModeSettings {
+  param([string]$Path)
+  if (-not (Test-Path $Path)) { return 'MISSING' }
+  $orig = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
+  $next = [regex]::Replace($orig, 'm_EnterPlayModeOptionsEnabled:\s*\d+', 'm_EnterPlayModeOptionsEnabled: 0')
+  $next = [regex]::Replace($next, 'm_EnterPlayModeOptions:\s*\d+', 'm_EnterPlayModeOptions: 3')
+  if ($next -eq $orig) { return 'CLEAN' }
+  [System.IO.File]::WriteAllText($Path, $next, (New-Object System.Text.UTF8Encoding($false)))
+  return 'RESTORED'
+}
+
+if ($RestoreOnly) {
+  $r = Restore-PlayModeSettings -Path $settings
+  Write-Output ("SETTINGS_" + $r)
+  if ($r -eq 'MISSING') { exit 1 }
+  exit 0
+}
 
 if (-not (Test-Path $exe))  { Write-Output "SOAK_FAIL missing editor: $exe"; exit 1 }
 if (-not (Test-Path $proj)) { Write-Output "SOAK_FAIL missing project: $proj"; exit 1 }
@@ -54,6 +79,9 @@ $argList = @('-batchmode','-projectpath',$proj)
 if ($WarmOnly) { $argList += '-quit' } else { $argList += @('-executeMethod','R2SoakProbe.BatchEntry') }
 $argList += @('-logFile',$log)
 
+$preSettings = Restore-PlayModeSettings -Path $settings
+if ($preSettings -eq 'RESTORED') { Write-Output 'SOAK_PRE_SETTINGS_RESTORED' }
+
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 $runStart = Get-Date
 $proc = Start-Process -FilePath $exe -ArgumentList $argList -PassThru
@@ -64,6 +92,12 @@ if (-not $proc.WaitForExit($timeoutMs)) {
   $exitCode = -1
 } else { $exitCode = $proc.ExitCode }
 $sw.Stop()
+
+# Restore before reporting: this runs on the kill/timeout path too, which is exactly where the
+# probe's own restore never fires.
+$postSettings = Restore-PlayModeSettings -Path $settings
+if ($postSettings -eq 'RESTORED') { Write-Output 'SOAK_POST_SETTINGS_RESTORED' }
+else { Write-Output ("SOAK_SETTINGS_" + $postSettings) }
 
 $logDone = (Test-Path $log) -and (Select-String -Path $log -Pattern 'CITY3D_SOAK_DONE' -SimpleMatch -Quiet)
 $logFail = (Test-Path $log) -and (Select-String -Path $log -Pattern 'CITY3D_SOAK_FAIL' -SimpleMatch -Quiet)
@@ -90,6 +124,8 @@ $receipt = [ordered]@{
   log_done       = [bool]$logDone
   log_fail       = [bool]$logFail
   import_lines   = $importLines
+  settings_pre   = $preSettings
+  settings_post  = $postSettings
   json           = if ($json) { $json.FullName } else { $null }
   log            = $log
 }

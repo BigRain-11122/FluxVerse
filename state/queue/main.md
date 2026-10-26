@@ -15,5 +15,5 @@
 | 10 | global-benchmarks 30 天深潜到期核验位（P-56②·r79 首版戳「深潜 30 天=2026-10-24」）：读该件更新记录节判末次深潜行——>30 天=排深潜轮（≥1 对标域 30 天增量+更新记录行）；≤30 天=一行注记销项 | docs/global-benchmarks.md 更新记录节+TECH §九 r79 行（P-56） | r420 轮尾补条（#9 领走位补·证据包已 r420 前置交付=R-20261012-p3003-proposal-appendix.md·10-18 窗内只产深扫+提案正文）·与 main#1 归档窗（10-24）同窗可合跑 |
 | 8 | D-20261017-03 六线派单·城市线级附卷（死线 10-19 委员会窗）：问题追溯闭环律城市线切片=本仓问题登记/闭环链/复发计数三面附卷+十环节表城市线级映射（PROBLEM-REGISTRY 台账 PR-* 城市线条目盘点+已立法≠closed 对照+闸升格轨迹） | docs/decisions.md D-20261017-03 行+cph4/fleet/problem-registry 台账正身+governance §9 问题追溯闭环律六条 | r663 轮首捕获（c6/c7 触发消费·10-19 窗前落 cph4/council 案卷或 TECH §九 指针行·≤1 轮工作量）·**死线已过 1 日=在册逾期件未领** |
 | 17 | 浸泡探针复跑基线：City3D 新 commit 或 ≥48h 后复跑 10min 浸泡，对比 render avg/p95 漂移（>20% 即注意） | docs/qa-r2-frame-map.md §三.4+qa/smoke-r680-bm-a.md（基线 render avg=608.5fps/p95=2.147ms） | r680 首测立基线·漂移判据先立·launcher 强杀残留债并入本行核验面 |
-| 18 | r2-soak.ps1 看门狗强杀后 EditorSettings 回写复核（临时 DisableDomainReload 残留=工程设置污染） | Tools/devloop/r2-soak.ps1+City3D/ProjectSettings/EditorSettings.asset | r680 发现债（正常收尾已还原 0/3·仅强杀面残留·判据=资产文件两键回 0/3） |
+| 19 | 浸泡设置基线守卫升级：还原闸现硬编码 0/3——若基线被人为改动会被静默覆盖，须改「首读基线→收据落 baseline 键→偏离即 ABORT 不覆盖」 | Tools/devloop/r2-soak.ps1 Restore-PlayModeSettings + qa/smoke-r681-bm-a.md §②/§⑤ | r681 自评发现债·判据两问（①基线被改时 ABORT 不覆盖 ②收据带 baseline 键）·随 main#17 浸泡轮同窗可合跑 |
 

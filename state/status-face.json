@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-26T09:01:25Z",
-    "current_activity":  "r679 产品轮：R2 判据帧链首跑收口（main#5/main#6 双销行）——库内帧消费径，三帧字节等同入 qa/，六段式收据钉死「哪张图判哪条 charter」；多模态 9/8/8 全过；30fps 浸泡未跑如实记 N/A。",
-    "artifact":  "qa/smoke-r679-bm-a.md（六段式收据）+ qa/smoke-r679-bm-a.log（取证）+ qa/smoke-r679-bm-a-{L0,L1,L2}.png（三帧 SHA256 与库内同源）",
-    "artifact_utc":  "2026-10-26T09:00:00Z",
-    "milestone":  "下一件=main#5 R2 30fps 浸泡探针首测（batchmode play-mode 10min 采样，看门狗 20min；fallback 代理档须标「代理」）；其后时窗件 main#1 月度归档/main#10 benchmarks 深潜/main#8 逾期附卷。",
-    "milestone_eta_utc":  "2026-10-26T18:00:00Z"
+    "updated_utc":  "2026-10-26T10:35:56Z",
+    "current_activity":  "r680 产品轮：R2 30fps 浸泡探针首测收口（main#5 续）——10min batchmode play-mode 实测 render avg=608.5fps·p95=2.147ms·零错零异常，帧链五件套 5/5；根因修法=域重载清空静态订阅→临时 DisableDomainReload+收尾还原",
+    "artifact":  "qa/smoke-r680-bm-a.md（六段式收据·含机制根因）+ qa/smoke-r680-bm-a-soak.json（原始统计 636B）+ qa/smoke-r680-bm-a.log（取证摘录）",
+    "artifact_utc":  "2026-10-26T10:32:00Z",
+    "milestone":  "下一步 main#1 月度归档（10-24 已到期）、main#10 benchmarks 深潜核验（10-24 已到期）、main#8 城市线附卷（10-19 逾期）；随后 main#18 launcher 强杀设置回写复核、main#17 浸泡复跑基线",
+    "milestone_eta_utc":  "2026-10-27T10:00:00Z"
 }

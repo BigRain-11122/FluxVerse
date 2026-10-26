@@ -1,0 +1,62 @@
+R2 soak probe evidence excerpt (r680, bm-a)
+date: 2026-10-26 +08:00
+scene: Assets/Scenes/CityRebuild_R2.unity
+editor: Tuanjie 2022.3.62t15  (batchmode, graphics device initialized)
+probe: City3D/Assets/Editor/CityRebuild/R2SoakProbe.cs
+launcher: Tools/devloop/r2-soak.ps1
+
+--- launch (detached from CLI job object via WMI Win32_Process.Create) ---
+powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File Tools\devloop\r2-soak.ps1 -LogicSec 300 -RenderSec 300 -TimeoutMin 20
+editor pid 64360 started 2026-10-26 18:21:24 +08:00
+
+--- smoke pre-check (15s + 15s, validates the domain-reload fix) ---
+GUI_ALREADY_CLOSED
+SOAK_JSON r2-soak-20261026-102117.json
+SOAK_LOGIC frames=68713 fps_avg=4580.844 fps_min=709.421 p95_ms=0.348
+SOAK_RENDER frames=7067 fps_avg=471.054 fps_min=0.631 p95_ms=2.464
+SOAK_ERRORS errors=0 exceptions=0
+SOAK_OK exit=0 wall_s=74
+
+--- full run markers (City3D-staging/r2-soak.log) ---
+CITY3D_SOAK_START scene=Assets/Scenes/CityRebuild_R2.unity logic_sec=300 render_sec=300
+CITY3D_SOAK_TICK first t=0.616 playing=True
+CITY3D_SOAK_PLAY entered t=0.616
+CITY3D_SOAK_PHASE logic
+CITY3D_SOAK_PHASE render 1280x720
+CITY3D_SOAK_JSON D:\FluxGroup\gaming\FluxVerse\qa\r2-soak-20261026-103142.json
+CITY3D_SOAK_DONE logic_fps_avg=6317.248 render_fps_avg=608.536 errors=0 exceptions=0
+
+--- launcher receipt (City3D-staging/r2-soak.done) ---
+tier=tier1_batchmode_playmode  logic_sec=300  render_sec=300  timeout_min=20
+exit_code=0  wall_s=618  log_soak_start=true  log_done=true  log_fail=false  import_lines=0
+
+--- raw statistics (byte-copied to qa/smoke-r680-bm-a-soak.json) ---
+{
+  "probe": "R2SoakProbe",
+  "ts_utc": "2026-10-26T10:31:42Z",
+  "scene": "Assets/Scenes/CityRebuild_R2.unity",
+  "mode": "batchmode_playmode_uncapped",
+  "render_target": "1280x720",
+  "logic": {"frames": 1895175, "dt_avg_ms": 0.158, "dt_p50_ms": 0.135, "dt_p95_ms": 0.26, "dt_max_ms": 193.651, "dt_min_ms": 0.102, "fps_avg": 6317.248, "fps_min": 5.164, "fps_p95_slow": 3849.115},
+  "render": {"frames": 182561, "dt_avg_ms": 1.643, "dt_p50_ms": 1.573, "dt_p95_ms": 2.147, "dt_max_ms": 190.465, "dt_min_ms": 1.311, "fps_avg": 608.536, "fps_min": 5.25, "fps_p95_slow": 465.853},
+  "errors": 0,
+  "exceptions": 0,
+  "first_errors": []
+}
+
+--- interpretation (honest bounds) ---
+mode is uncapped (no vsync, no targetFrameRate): numbers are a throughput ceiling, not
+display-capped fps. Charter "avg >= 30fps" passes under any reading (render avg 608.5).
+fps_min 5.16/5.25 comes from exactly one ~190ms frame per phase (dt_max 193.7/190.5ms at
+phase transition / first render), all other frames p95 <= 2.147ms.
+
+--- root cause fixed this round ---
+First run (18:05) hung: play-mode entry performed a domain reload (project setting
+m_EnterPlayModeOptionsEnabled=0), wiping the static state and the EditorApplication.update
+subscription, so the probe never ticked again. Fix: temporarily set
+EditorSettings.enterPlayModeOptionsEnabled=true + DisableDomainReload in BatchEntry and
+restore the previous values in Finish/Fail. Post-run project settings verified back to
+m_EnterPlayModeOptionsEnabled=0 / m_EnterPlayModeOptions=3.
+
+Full editor log is gitignored (City3D-staging/r2-soak.log, 60KB+); this excerpt plus the
+raw JSON are the committed evidence.

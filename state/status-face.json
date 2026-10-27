@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-26T18:13:33Z",
-    "current_activity":  "r681 产品轮：浸泡 launcher 设置残留自愈闸（main#18 收口）—探针临时写 DisableDomainReload，强杀径会留「域重载关闭」污染工程；新增 -RestoreOnly 抢救开关+启动前/退出后双还原+收据 settings 两键，三径实证（CLEAN／污染 1/1→回 0/3／restore 后逐字节等同 HEAD）",
-    "artifact":  "qa/smoke-r681-bm-a.md（病面-改面-实证-判定-诚实边界-指针 六段）+ Tools/devloop/r2-soak.ps1（155 行·自愈闸三接线）",
-    "artifact_utc":  "2026-10-26T18:13:33Z",
-    "milestone":  "下一轮：main#1 月度归档（10-24 到期）、main#10 benchmarks 深潜核验（10-24 到期）、main#8 城市线附卷（10-19 逾期）；随后 main#17 浸泡复跑（\u003e48h 或 City3D 新 commit）+ main#19 基线守卫升级",
-    "milestone_eta_utc":  "2026-10-27T10:00:00Z"
+    "updated_utc":  "2026-10-27T05:53:56Z",
+    "current_activity":  "r682 产品轮：浸泡还原闸基线守卫升级（main#19 收口）— 闸逻辑抽成独立可测件 + 基线正典文件，漂移一律 ABORT 不覆盖（原硬编码 0/3 会静默吃掉合法改动）",
+    "artifact":  "qa/smoke-r682-bm-a.md（病面-改面-实证-判定-诚实边界-指针 六段）· Tools/devloop/playmode-settings-guard.ps1（新）· Tools/devloop/r2-soak-playmode-baseline.txt（新）· Tools/devloop/r2-soak.ps1（ABORT exit 2 三接线 + settings_base 键）",
+    "artifact_utc":  "2026-10-26T18:43:00Z",
+    "milestone":  "下一轮：main#1 月度归档（10-24 到期）、main#10 benchmarks 深潜核验（10-24 到期）、main#8 城市线附卷（10-19 逾期）；随后 main#17 浸泡复跑（≥48h 或 City3D 新 commit）+ main#20 ABORT 观察位",
+    "milestone_eta_utc":  "2026-10-27T12:00:00Z"
 }

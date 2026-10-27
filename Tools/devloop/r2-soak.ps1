@@ -21,26 +21,25 @@ $log  = Join-Path $stg 'r2-soak.log'
 $done = Join-Path $stg 'r2-soak.done'
 $settings = Join-Path $proj 'ProjectSettings\EditorSettings.asset'
 
-# Play-mode option residue guard (main#18). The probe temporarily sets
+# Play-mode option residue guard (main#18 -> main#19). The probe temporarily sets
 # enterPlayModeOptionsEnabled=1 / options=DisableDomainReload so play mode keeps its statics, and
 # restores them on normal exit. A force-killed editor (watchdog kill, launcher teardown, external
 # taskkill) skips that restore and leaves the project with domain reload disabled for every later
-# session. This project's baseline is 0/3, so anything else is residue and is restored here.
-function Restore-PlayModeSettings {
-  param([string]$Path)
-  if (-not (Test-Path $Path)) { return 'MISSING' }
-  $orig = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
-  $next = [regex]::Replace($orig, 'm_EnterPlayModeOptionsEnabled:\s*\d+', 'm_EnterPlayModeOptionsEnabled: 0')
-  $next = [regex]::Replace($next, 'm_EnterPlayModeOptions:\s*\d+', 'm_EnterPlayModeOptions: 3')
-  if ($next -eq $orig) { return 'CLEAN' }
-  [System.IO.File]::WriteAllText($Path, $next, (New-Object System.Text.UTF8Encoding($false)))
-  return 'RESTORED'
-}
+# session. Guard logic + baseline read live in playmode-settings-guard.ps1 (testable in isolation);
+# a state that is neither the baseline nor our own residue ABORTs instead of being overwritten.
+$baseline = Join-Path $PSScriptRoot 'r2-soak-playmode-baseline.txt'
+. (Join-Path $PSScriptRoot 'playmode-settings-guard.ps1')
+
+$baselineTag = 'MISSING'
+$bl = Get-PlayModeBaseline -Path $baseline
+if ($null -ne $bl) { $baselineTag = [string]$bl.Enabled + '/' + [string]$bl.Options }
 
 if ($RestoreOnly) {
-  $r = Restore-PlayModeSettings -Path $settings
+  $r = Restore-PlayModeSettings -Path $settings -BaselinePath $baseline
   Write-Output ("SETTINGS_" + $r)
-  if ($r -eq 'MISSING') { exit 1 }
+  $verdict = ($r -split ' ')[0]
+  if ($verdict -eq 'MISSING') { exit 1 }
+  if ($verdict -eq 'ABORT') { exit 2 }
   exit 0
 }
 
@@ -79,8 +78,13 @@ $argList = @('-batchmode','-projectpath',$proj)
 if ($WarmOnly) { $argList += '-quit' } else { $argList += @('-executeMethod','R2SoakProbe.BatchEntry') }
 $argList += @('-logFile',$log)
 
-$preSettings = Restore-PlayModeSettings -Path $settings
-if ($preSettings -eq 'RESTORED') { Write-Output 'SOAK_PRE_SETTINGS_RESTORED' }
+$preSettings = Restore-PlayModeSettings -Path $settings -BaselinePath $baseline
+$preVerdict = ($preSettings -split ' ')[0]
+if ($preVerdict -eq 'RESTORED') { Write-Output ('SOAK_PRE_SETTINGS_RESTORED ' + $preSettings) }
+if ($preVerdict -eq 'ABORT') {
+  Write-Output ('SOAK_ABORT_SETTINGS ' + $preSettings)
+  exit 2
+}
 
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 $runStart = Get-Date
@@ -95,8 +99,10 @@ $sw.Stop()
 
 # Restore before reporting: this runs on the kill/timeout path too, which is exactly where the
 # probe's own restore never fires.
-$postSettings = Restore-PlayModeSettings -Path $settings
-if ($postSettings -eq 'RESTORED') { Write-Output 'SOAK_POST_SETTINGS_RESTORED' }
+$postSettings = Restore-PlayModeSettings -Path $settings -BaselinePath $baseline
+$postVerdict = ($postSettings -split ' ')[0]
+if ($postVerdict -eq 'RESTORED') { Write-Output ('SOAK_POST_SETTINGS_RESTORED ' + $postSettings) }
+elseif ($postVerdict -eq 'ABORT') { Write-Output ('SOAK_POST_SETTINGS_ABORT ' + $postSettings) }
 else { Write-Output ("SOAK_SETTINGS_" + $postSettings) }
 
 $logDone = (Test-Path $log) -and (Select-String -Path $log -Pattern 'CITY3D_SOAK_DONE' -SimpleMatch -Quiet)
@@ -124,6 +130,7 @@ $receipt = [ordered]@{
   log_done       = [bool]$logDone
   log_fail       = [bool]$logFail
   import_lines   = $importLines
+  settings_base  = $baselineTag
   settings_pre   = $preSettings
   settings_post  = $postSettings
   json           = if ($json) { $json.FullName } else { $null }

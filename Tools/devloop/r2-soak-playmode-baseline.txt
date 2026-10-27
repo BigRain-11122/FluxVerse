@@ -1,0 +1,6 @@
+# Play-mode settings baseline for City3D (main#19). Read by playmode-settings-guard.ps1.
+# 0/3 = Unity default: enter-play-mode options off, options field left at DisableDomainReload|DisableSceneReload.
+# Only the probe's own residue (enabled=1 options=3) is auto-restored; any other deviation ABORTs
+# so a deliberately changed baseline is never silently overwritten.
+enabled=0
+options=3

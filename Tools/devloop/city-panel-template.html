@@ -23,6 +23,9 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:18px 0 8px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
   .card h2{font-size:12px;letter-spacing:.14em;color:var(--dim);margin:0 0 10px;font-weight:600}
+  /* 三行实况是本页唯一的「人话」面，文本长，塞在窄列里会挤成墙 ->
+     满宽单行（grid-column 全跨），读者才不会在读第一行时丢上下文。 */
+  .card.face{grid-column:1/-1}
   .face p{margin:0 0 10px}
   .face p:last-child{margin-bottom:0}
   .k{color:var(--dim);font-size:12px;display:block;letter-spacing:.08em;margin-bottom:2px}
@@ -316,6 +319,7 @@ function fmtAge(h){
   // 跨轮轨迹：历史日志的末端切片（builder 注入），只画已记录的部分；
   // 条数不足就如实写「记录不足」，不自造点。
   const series = Array.isArray(SERIES) ? SERIES.slice(-12) : [];
+  const flatStat = { shown: 0, folded: 0 };
   if (series.length >= 2) {
     const s0 = series[0], sN = series[series.length - 1];
     const t0 = Date.parse(s0.ts), tN = Date.parse(sN.ts);
@@ -326,17 +330,43 @@ function fmtAge(h){
       '近 ' + series.length + ' 条快照' + (spanMin != null ? '（约 ' + spanMin + ' 分钟）' : '') +
       '：提交 ' + (dC >= 0 ? '+' : '') + dC + ' · 渲染 ' + (dR >= 0 ? '+' : '') + dR +
       ' · 末条事件窗口 ' + (sN.e == null ? '—' : sN.e) + ' 条';
-    $('cv-trend').innerHTML = series.map((s, i) => {
+    // 折叠保真：时间轴本身已有 24h 趋势图，逐 tick 列表里「全指标持平」的
+    // 连续快照对读者零信息、只把页面拉长（r689 前 12 条里常有 8 条持平）。
+    // 故只列「有任一指变化」的点，连续持平的折叠成一行并标明起止与条数；
+    // 展示数 + 折叠数 = 注入条数（自检「轨迹折叠」逐轮核对，折叠不得吞点）。
+    const tsHHMM = (iso) => String(iso || '').replace('T', ' ').replace('Z', '').slice(11, 16);
+    let rows = [], flatN = 0, flatFrom = null, flatTo = null;
+    const flushFlat = () => {
+      if (!flatN) return;
+      rows.push('<div class="rowline"><span class="t">…</span>' +
+        '<span class="muted" style="flex:1">持平 ' + flatN + ' 条</span>' +
+        '<span class="tag">' + esc(tsHHMM(flatFrom)) + ' → ' + esc(tsHHMM(flatTo)) + ' UTC</span></div>');
+      flatN = 0; flatFrom = null; flatTo = null;
+    };
+    series.forEach((s, i) => {
       const p = i ? series[i - 1] : null;
+      const keys = ['c', 'r', 'g', 'f', 'e'];
+      const moved = !p || keys.some(k => Number(s[k] || 0) !== Number(p[k] || 0));
+      if (!moved) {
+        flatStat.folded++;
+        flatN++;
+        if (flatFrom == null) flatFrom = s.ts;
+        flatTo = s.ts;
+        return;
+      }
+      flushFlat();
+      flatStat.shown++;
       const dc = p ? (Number(s.c) - Number(p.c)) : null;
       const cls = dc == null ? '' : (dc > 0 ? 'ok' : (dc < 0 ? 'warn' : ''));
       const dtx = dc == null ? '起点' : (dc > 0 ? '+' + dc : (dc === 0 ? '持平' : String(dc)));
-      return '<div class="rowline"><span class="t">' +
+      rows.push('<div class="rowline"><span class="t">' +
         esc(String(s.ts || '').replace('T', ' ').replace('Z', '')) + '</span>' +
         '<span style="flex:1;font-variant-numeric:tabular-nums">提交 ' + esc(s.c == null ? '—' : s.c) + '</span>' +
         '<span class="tag ' + cls + '">' + esc(dtx) + '</span>' +
-        '<span class="tag">事件 ' + esc(s.e == null ? '—' : s.e) + '</span></div>';
-    }).join('');
+        '<span class="tag">事件 ' + esc(s.e == null ? '—' : s.e) + '</span></div>');
+    });
+    flushFlat();
+    $('cv-trend').innerHTML = rows.join('');
   } else {
     $('cv-trend-sum').textContent = '轨迹记录不足（当前 ' + series.length + ' 条，至少 2 条才显示跨轮轨迹）';
     $('cv-trend').innerHTML = '';
@@ -429,7 +459,8 @@ function fmtAge(h){
       (tHours < 23.5
         ? '记录不足 24 小时：当前覆盖 ' + tHours.toFixed(1) + ' 小时（' + trend.length + ' 条）'
         : '覆盖近 24 小时：' + trend.length + ' 条') +
-      (tGaps ? ' · 断档 ' + tGaps + ' 处（相邻间隔 >15 分钟，红虚线标注）' : ' · 无断档');
+      (tGaps ? ' · 断档 ' + tGaps + ' 处（相邻间隔 >15 分钟，红虚线标注）' : ' · 无断档') +
+      ((hm && hm.dropped) ? ' · 已剔除 ' + hm.dropped + ' 条计数缺失的坏记录（否则曲线会出现假的 0 谷）' : '');
     trLegend.innerHTML = tDefs.map(d => {
       const vals = trend.map(p => Number(p.rec[d[0]]) || 0);
       return '<span class="tag" style="margin-right:8px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' +
@@ -523,15 +554,29 @@ function fmtAge(h){
   }
   selfcheck.push({ ok: tOk, nm: 'tick 覆盖', vd: tVd });
 
-  // 跨轮单调：累计计数不得回落（回落=上游计数被重置或来源切换，须如实标注）
+  // 跨轮单调：累计计数不得回落（回落=上游计数被重置或来源切换，须如实标注）。
+  // 只比对「上一条 vs 本条」会漏掉窗口中间的凹坑——r689 前日志里就有一条
+  // 计数全 0 的坏记录躺在 4 小时前，逐条比对看不见，而它把 24h 曲线压出
+  // 一个假谷。故改为全窗口扫描（toolbar 已剔除坏记录，这里是残留兜底）。
   let mono = { ok: true, vd: '无上一条记录（本卡首条）' };
-  if (prev) {
-    const bad = [['commits', prev.c, city.commits_total], ['renders', prev.r, city.renders_total]]
-      .filter(p => p[1] != null && p[2] != null && Number(p[2]) < Number(p[1]))
-      .map(p => p[0] + ' ' + p[1] + '→' + p[2]);
-    mono = bad.length
-      ? { ok: false, vd: '计数回落 ' + bad.join(' / ') }
-      : { ok: true, vd: '提交/渲染未回落（对比 ' + String(prev.ts).slice(11, 19) + 'Z）' };
+  const monoSrc = trend.length >= 2
+    ? trend.map(p => p.rec)
+    : (prev ? [prev, { ts: snap.ts_utc, c: city.commits_total, r: city.renders_total }] : null);
+  if (monoSrc) {
+    const nmOf = { c: '提交', r: '渲染' };
+    const dips = [];
+    for (let i = 1; i < monoSrc.length; i++) {
+      ['c', 'r'].forEach(k => {
+        const x = Number(monoSrc[i - 1][k]), y = Number(monoSrc[i][k]);
+        if (!isNaN(x) && !isNaN(y) && y < x) {
+          dips.push(nmOf[k] + ' ' + x + '→' + y + ' @' + String(monoSrc[i].ts).slice(11, 16) + 'Z');
+        }
+      });
+    }
+    mono = dips.length
+      ? { ok: false, vd: '窗口内回落 ' + dips.length + ' 处：' + dips.slice(0, 2).join(' / ') + (dips.length > 2 ? ' …' : '') }
+      : { ok: true, vd: '提交/渲染全窗未回落（' + monoSrc.length + ' 点，末点 ' +
+          String(monoSrc[monoSrc.length - 1].ts).slice(11, 19) + 'Z）' };
   }
   selfcheck.push({ ok: mono.ok, nm: '跨轮单调', vd: mono.vd });
 
@@ -576,6 +621,15 @@ function fmtAge(h){
         (mismatch.length ? ' · ' + mismatch.join(' / ') : ' · 提交/渲染与页头一致') };
   }
   selfcheck.push({ ok: te.ok, nm: '趋势末点', vd: te.vd });
+
+  // 轨迹折叠保真：轨迹卡只列有变化的快照点，连续持平折叠成一行提示。
+  // 展示数 + 折叠数必须等于注入的轨迹条数——折叠逻辑吞点会让读者以为
+  // 「那段时间没数据」，这与「无断档」判读直接冲突。
+  const foldOk = series.length < 2 ? true : (flatStat.shown + flatStat.folded === series.length);
+  selfcheck.push({ ok: foldOk, nm: '轨迹折叠',
+    vd: series.length < 2
+      ? '记录不足 2 条，未折叠'
+      : '展示 ' + flatStat.shown + ' + 折叠 ' + flatStat.folded + ' ＝ ' + series.length + ' 条' });
 
   // 面部新鲜度：status-face 是本司执行体手写面，停写时页头三行会一直显示旧内容，
   // 而快照照新、页面照出——这是「车道静默」唯一不上页的故障面，故在页面自检里直读龄。

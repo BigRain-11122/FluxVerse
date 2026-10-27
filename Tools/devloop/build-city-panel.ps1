@@ -102,6 +102,13 @@ $HistoryMax = 288
 $prevRec = $null
 $histAll = @()
 $histOk = $true
+# A history record whose counters are missing (commits/renders = 0 while the
+# repo obviously has thousands) is not a data point, it is a bad write: drawn
+# as-is it turns the 24h curve into a fake 0 -> 31k cliff and it silently
+# poisons the page's "min/max" labels. Root fix = never append such a record
+# (validated below); tolerance fix = drop already-written ones at read time and
+# COUNT them, so the page can say so instead of hiding the loss.
+$histDropped = 0
 try {
     $rec = New-Object PSObject -Property ([ordered]@{
         ts = [string]$snap.ts_utc
@@ -118,14 +125,30 @@ try {
             if ([string]::IsNullOrWhiteSpace($line)) { continue }
             $o = $null
             try { $o = ConvertFrom-Json $line } catch { continue }
-            if ($null -ne $o -and $null -ne $o.ts) { $histAll += $o }
+            if ($null -eq $o -or $null -eq $o.ts) { continue }
+            # validity gate: counters must be present and positive (c>0), ts
+            # must parse. Anything else is a bad write -> drop + count.
+            $okRec = $false
+            try {
+                $cNum = [double]$o.c
+                $rNum = [double]$o.r
+                $tNum = [DateTimeOffset]::Parse([string]$o.ts, [Globalization.CultureInfo]::InvariantCulture)
+                if ($cNum -gt 0 -and $rNum -ge 0) { $okRec = $true }
+            } catch { $okRec = $false }
+            if ($okRec) { $histAll += $o } else { $histDropped++ }
         }
     }
 
     $last = $null
     if ($histAll.Count -gt 0) { $last = $histAll[$histAll.Count - 1] }
     $append = $true
-    if ($null -ne $last -and ([string]$last.ts -eq [string]$rec.ts)) {
+    if ([int]$rec.c -le 0) {
+        # write-side gate: a snapshot with no commits_total is a partial export,
+        # not a city state. Recording it is what produced the 0 -> 31k cliff.
+        $append = $false
+        $histDropped++
+        $prevRec = $last
+    } elseif ($null -ne $last -and ([string]$last.ts -eq [string]$rec.ts)) {
         # Same snapshot already recorded (panel rebuilt inside one tick window)
         $append = $false
         if ($histAll.Count -gt 1) { $prevRec = $histAll[$histAll.Count - 2] }
@@ -157,6 +180,7 @@ $histMeta = New-Object PSObject -Property ([ordered]@{
     n    = [int]$histAll.Count
     max  = [int]$HistoryMax
     ok   = [bool]$histOk
+    dropped = [int]$histDropped
 })
 if ($histAll.Count -gt 0) { $histMeta | Add-Member -NotePropertyName first_utc -NotePropertyValue ([string]$histAll[0].ts) }
 else { $histMeta | Add-Member -NotePropertyName first_utc -NotePropertyValue '' }

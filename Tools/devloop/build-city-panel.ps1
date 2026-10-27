@@ -93,6 +93,58 @@ function To-JsLiteral
 $snapJs = To-JsLiteral -Obj $snap -Label 'snapshot'
 $faceJs = To-JsLiteral -Obj $face -Label 'status-face'
 
+# --- artifact path resolution (queue main#28, r690) -------------------------
+# The face's "latest artifact" line is prose that names real files (panel html,
+# qa screenshots, edited scripts). The page must never guess a path: every
+# path-like token is resolved HERE (Test-Path + absolute file:// url) and the
+# verdict is shipped with the page. Missing tokens are shipped too, so the page
+# prints an honest "not found" instead of a dead link. Read-only and fail-soft:
+# a broken artifact line degrades to zero items, it never blocks the panel.
+$artPattern = '[A-Za-z0-9_\-./\\]+\.(?:html|htm|png|jpg|jpeg|svg|md|json|jsonl|ps1|js|log|txt|mp4|webm|csv|yaml|yml|asset|unity|cs)'
+$artItems = @()
+$artSeen = @{}
+$artMiss = @()
+$artPaths = 0
+$artRaw = ''
+try { $artRaw = [string]$face.artifact } catch { $artRaw = '' }
+if (-not [string]::IsNullOrWhiteSpace($artRaw)) {
+    $ms = [regex]::Matches($artRaw, $artPattern)
+    foreach ($m in $ms) {
+        $tok = $m.Value
+        if ([string]::IsNullOrWhiteSpace($tok)) { continue }
+        $norm = $tok.Replace('\', '/')
+        if ($norm -match '^[A-Za-z]:/' -or $norm.StartsWith('//')) { $abs = $norm }
+        else { $abs = Join-Path $repoDir $norm.Replace('/', '\') }
+        $exists = $false
+        try { $exists = Test-Path -LiteralPath $abs } catch { $exists = $false }
+        $url = ''
+        if ($exists) {
+            $full = $abs
+            try { $full = (Resolve-Path -LiteralPath $abs).ProviderPath } catch { $full = $abs }
+            $url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
+        }
+        $artItems += (New-Object PSObject -Property ([ordered]@{
+            text   = [string]$tok
+            rel    = [string]$norm
+            exists = [bool]$exists
+            url    = [string]$url
+        }))
+        if (-not $artSeen.ContainsKey($norm)) {
+            $artSeen[$norm] = $true
+            $artPaths++
+            if (-not $exists) { $artMiss += $norm }
+        }
+        if ($artItems.Count -ge 24) { break }
+    }
+}
+$artMeta = New-Object PSObject -Property ([ordered]@{
+    paths      = [int]$artPaths
+    missing    = [int]$artMiss.Count
+    miss_names = @($artMiss)
+    items      = @($artItems)
+})
+$artJs = To-JsLiteral -Obj $artMeta -Label 'artifact-paths'
+
 # --- cross-round history (best effort; never breaks the panel) ---------------
 # One compact record per DISTINCT snapshot ts, appended to a gitignored local
 # log, so the panel can show "what changed since the previous tick" instead of
@@ -269,12 +321,12 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__ART_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
 # String.Replace (not regex) => JSON '$' chars stay literal.
-$out = $tpl.Replace('__SNAPSHOT_JSON__', $snapJs).Replace('__FACE_JSON__', $faceJs).Replace('__BUILT_JSON__', $builtJs).Replace('__PREV_JSON__', $prevJs).Replace('__HIST_JSON__', $histJs).Replace('__SERIES_JSON__', $seriesJs).Replace('__TREND_JSON__', $trendJs).Replace('__TICK_JSON__', $tickJs)
+$out = $tpl.Replace('__SNAPSHOT_JSON__', $snapJs).Replace('__FACE_JSON__', $faceJs).Replace('__BUILT_JSON__', $builtJs).Replace('__PREV_JSON__', $prevJs).Replace('__HIST_JSON__', $histJs).Replace('__SERIES_JSON__', $seriesJs).Replace('__TREND_JSON__', $trendJs).Replace('__TICK_JSON__', $tickJs).Replace('__ART_JSON__', $artJs)
 
 if ($out.IndexOf('__SNAPSHOT_JSON__') -ge 0) { Fail 'placeholder __SNAPSHOT_JSON__ still present after build' }
 if ($out.Length -lt 4000) { Fail ('output suspiciously small: ' + $out.Length + ' bytes') }
@@ -307,5 +359,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' built=' + $built + ' path=' + $OutPath)
 exit 0

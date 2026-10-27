@@ -19,5 +19,6 @@
 | 23 | T-FV-134 司级 7 天基准刷新（**10-27 到期·r687 记逾期 5 日**）：三向检索（WFC 前沿/城市孪生开源/引擎侧）+待证两源全文复核 | docs/global-benchmarks.md ④更新记录末行=2026-10-27 注记 | 产品面硬下限（D-20261020-05）下研究件让位·轮尾预算余量领；判据=④表新增一行+③表源分级如实标 |
 | 26 | ~~路径普查接进轮内巡检~~ **r688 已销**：`verify.ps1` §2b 进程内 `& probe-path-census.ps1`，恒打 `VERIFY HEALTH: probe-path-census: rows/dead/dynamic/gate` 一行；dead>0 翻 `VERIFY WARN` 并逐行点名（WARN 不失败闸，同 r685 立场）；测试钩 `FLUXVERSE_CENSUS_PROBE_DIR`；沙盒 `test-verify-path-census.ps1` 15/15（含首跑抓出的 `$script:fails` 假绿坑与 WARN 文案含 FAIL 词根→红扫自伤坑） | TECH §九 r688 行 | 已收口 |
 | 27 | ~~面板品质三手术（24h 假 0 谷根治/持平折叠/三行满宽）~~ **r689 已销**（写侧 `c<=0` 不 append + 读侧剔除计 `HIST.dropped` + 单调全窗扫描 + 自检第 11 项折叠保真；`PANEL OK bytes=60305 hist=287`·node --check 零错·DOM 12/12·截图 `qa/city-panel-r689-bm-a.png`） | TECH §九 r689 行 | 已收口 |
-| 28 | 面板「实物可点」位：把三行实况里的 artifact 路径解析成仓库相对路径并渲染为可点击链接（`file://` 直接打开），路径缺失时如实标「未找到」 | `Tools/devloop/city-panel-template.html` + `build-city-panel.ps1`（须在 builder 里做存在性核验，勿让页面猜路径） | r689 轮尾补条·产品可读性面·下轮产品优先时领 |
+| 28 | ~~面板「实物可点」位~~ **r690 已销**（builder 构建时解析 artifact 路径 token 并 Test-Path+file:// URL，页面只做替换渲染；命中可点、缺失标「未找到」、页面不猜路径；自检第 13 项「实况路径」；沙盒 `logs/devloop-r690-panel-artifact-test.js` 15/15＋旧 10 套 187 断言零回归；截图 `qa/city-panel-r690-bm-a.png`） | TECH §九 r690 行 | 已收口·**复跑判据**=改模板/builder 后跑 `node logs/devloop-r690-panel-artifact-test.js` |
+| 29 | 「当前活／下个里程碑」两行套用同一 ART 渲染（复用 r690 机制，让三行全部可点） | `Tools/devloop/city-panel-template.html` renderArtifact + builder `$artPattern`（须分别解析 `current_activity`/`milestone` 两键，勿合并成一个 map 混淆归属） | r690 轮尾补条·产品可读性续·判据=DOM 断言三行各自含 artlink 且缺失标「未找到」 |
 

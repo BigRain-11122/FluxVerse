@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-27T22:55:28Z",
-    "current_activity":  "r689 收口（main#27 销项）：CEO 可直接打开的面板 world-public/city-panel.html 做了三处品质手术。①24 小时趋势曲线上的假 0 谷根治：历史日志里躺着一条计数全 0 的坏记录（快照缺计数时仍被记账），把提交带画成 0→31483 的断崖、图例最小值撒谎；而页面自检「跨轮单调」只比「上一条 vs 本条」，4 小时前的凹陷结构性看不见（12/12 全绿却在曲线上带假谷＝假绿实证）。修法双面：写侧计数 c\u003c=0 不再记账，读侧把已写坏的行剔除并计数（页面如实写「已剔除 1 条计数缺失的坏记录（否则曲线会出现假的 0 谷）」），单调检查升格为全窗口扫描（实测 287 点未回落）。②轨迹卡持平折叠：只列有变化的快照点，连续全指标持平折叠成一行并标起止 UTC，新增自检第 11 项断言「展示＋折叠＝注入条数」（折叠不得吞点，实测 10+2=12）。③本司实况三行改满宽，不再挤在窄列里读成墙。实证：PANEL OK bytes=60305 hist=287＋node --check 零错＋浏览器 DOM 断言 12/12 通过＋全页截图 qa/city-panel-r689-bm-a.png（图例 30958→31483，无 0）。",
-    "artifact":  "world-public/city-panel.html（重建 2026-10-28 06:54 +08:00·12 项自检全绿·file:// 可直接打开）｜Tools/devloop/build-city-panel.ps1（写侧 c\u003c=0 记账闸＋读侧坏记录剔除计数 HIST.dropped）｜Tools/devloop/city-panel-template.html（假谷修复文案·跨轮单调全窗扫描·持平折叠与自检第 11 项·三行满宽）｜qa/city-panel-r689-bm-a.png（全页取证截图）｜state/queue/main.md 行 27 销项＋行 28 新产品条",
-    "artifact_utc":  "2026-10-27T22:54:06Z",
-    "milestone":  "队列头＝main#23 T-FV-134 司级 7 天基准刷新（10-27 到期·逾期 1 日，轮尾预算余量领）→ main#8 城市线附卷（10-19 逾期·≤1 轮工作量）→ main#17 浸泡复跑（10-28 18:36 后窗口或 City3D 新 commit）→ main#20 ABORT 观察位；产品面下一件＝main#28 面板「实物可点」（artifact 路径解析成可点链接，builder 侧核验存在性）；面板本身由 tick 每 10 分钟自动重建，CEO 随时 file:// 打开即最新",
+    "updated_utc":  "2026-10-27T23:03:00Z",
+    "current_activity":  "r690 收口（main#28 销项）：面板「最近实物」从一坨散文变成可点实物——builder 在构建时把 artifact 里的每个路径 token 逐个 Test-Path 核过盘面并算好 file:// 绝对 URL，页面只做替换渲染（命中即可点开，缺失如实标「未找到」，页面永不猜路径）；新增自检第 13 项「实况路径」对账（N 条全部命中=绿，有缺失或零路径=注意），实测 5 条路径全命中、自检 13/13 绿；新沙盒 logs/devloop-r690-panel-artifact-test.js 15/15，旧 10 套面板测试 187 断言全绿，node --check 零错，全页截图 qa/city-panel-r690-bm-a.png（最近实物行 5 个文件名已高亮可点）。",
+    "artifact":  "world-public/city-panel.html（重建 2026-10-28 07:01 +08:00·13 项自检全绿·file:// 直接打开）；Tools/devloop/build-city-panel.ps1（新增 artifact 路径解析：正则取 token + Test-Path + file:// URL·art=5 art_missing=0）；Tools/devloop/city-panel-template.html（renderArtifact 替换渲染·artlink/artmiss 样式·自检第 13 项「实况路径」）；qa/city-panel-r690-bm-a.png（1400×3400 全页取证截图）；logs/devloop-r690-panel-artifact-test.js（沙盒 15/15）；state/queue/main.md（#28 销项）",
+    "artifact_utc":  "2026-10-27T23:03:00Z",
+    "milestone":  "队列头：main#23 T-FV-134 司级 7 天基准刷新（10-27 到期·逾期 2 日·轮尾预算余量领）→ main#8 城市线附卷（10-19 逾期·≤1 轮工作量）→ main#17 浸泡复跑（窗口=10-28 18:36 后或 City3D 新 commit）→ main#20 ABORT 观察位。产品面下一件=面板「分区/事件尾流」可读性续（事件行可按分区点筛已具备，下一步给事件行加来源链接）；本页由 tick 每 10 分钟自动重建，CEO 随时 file:// 打开即最新。",
     "milestone_eta_utc":  "2026-10-29T12:00:00Z"
 }

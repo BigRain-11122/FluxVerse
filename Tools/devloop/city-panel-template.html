@@ -28,6 +28,10 @@
   .card.face{grid-column:1/-1}
   .face p{margin:0 0 10px}
   .face p:last-child{margin-bottom:0}
+  .face a.artlink{color:#7fd1ff;text-decoration:none;border-bottom:1px dashed #2f5f7f}
+  .face a.artlink:hover{color:#bfe9ff;border-bottom-color:#7fd1ff}
+  .face .artmiss{color:var(--dim);border-bottom:1px dotted #4a2020}
+  .face .artmiss em{margin-left:5px;color:var(--warn);font-style:normal;font-size:11.5px;border:1px solid #4a2020;border-radius:4px;padding:0 4px}
   .k{color:var(--dim);font-size:12px;display:block;letter-spacing:.08em;margin-bottom:2px}
   .v{font-size:13.5px;word-break:break-word}
   .num{font-size:26px;font-weight:600;color:var(--accent);line-height:1.2}
@@ -128,7 +132,7 @@
 
   <div class="card" style="margin-top:14px">
     <h2>数据自检 <span class="tag" id="sc-sum">—</span></h2>
-    <div class="rhint">各项全部由本页数据、今日 tick 日志与面部时间推导（含跨轮摘要、轨迹、循环覆盖、趋势末点与面部新鲜度），异常以「注意」如实露出，不隐藏。</div>
+    <div class="rhint">各项全部由本页数据、今日 tick 日志与面部时间推导（含跨轮摘要、轨迹、循环覆盖、趋势末点、实况路径与面部新鲜度），异常以「注意」如实露出，不隐藏。</div>
     <div id="selfcheck"></div>
   </div>
 
@@ -153,6 +157,7 @@
   <footer>
     数据源：<code>world-public/city-snapshot.json</code>（tick 每 5 分钟导出）+ <code>state/status-face.json</code>（DevLoop 执法件写入）。<br>
     重建：<code>powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\build-city-panel.ps1</code><br>
+    「最近实物」里的文件名在构建时逐个核过盘面（存在性 + file:// 绝对路径），命中即可点开，缺失如实标「未找到」。<br>
     构建时刻（本地）：<span id="built">—</span> · 自包含单文件，零服务器零外链。<br>
     本页每 60 秒自动重载一次，跟随 tick 重建拿到新快照；时间轴一律 UTC，本地读取以 <code>built</code> 行为准。<br>
     跨轮摘要：<code>logs/panel-history.jsonl</code>（本地日志不入库·每次 tick 记一条·上限 288 条≈24 小时）。
@@ -162,6 +167,10 @@
 <script>
 const SNAP = __SNAPSHOT_JSON__;
 const FACE = __FACE_JSON__;
+// ART = builder-resolved path verdicts for the face's artifact line
+// ({paths, missing, miss_names, items[{text,rel,exists,url}]}). The page never
+// guesses a path: existence and the file:// url are decided on disk at build.
+const ART = __ART_JSON__;
 const BUILT = __BUILT_JSON__;
 // PREV = previous DISTINCT snapshot digest (null when this is the first one),
 // HIST = {n, max, ok, first_utc} local cross-round log meta (gitignored).
@@ -218,8 +227,43 @@ function fmtAge(h){
       el.appendChild(s);
     }
   };
+  // 最近实物：builder 已把 artifact 里的每个路径核过盘面（存在性 + file:// url），
+  // 这里只做替换渲染——页面不猜路径、不造死链。缺失的如实标「未找到」。
+  const renderArtifact = (el, text, ts) => {
+    const items = (ART && ART.items) || [];
+    const raw = String(text == null ? '' : text);
+    if (!raw) {
+      el.textContent = '—';
+    } else if (!items.length) {
+      el.textContent = raw;
+    } else {
+      let pos = 0, html = '';
+      items.forEach(it => {
+        const t = String(it.text || '');
+        if (!t) return;
+        const i = raw.indexOf(t, pos);
+        if (i < 0) return;
+        html += esc(raw.slice(pos, i));
+        if (it.exists) {
+          html += '<a class="artlink" href="' + esc(it.url) + '" target="_blank" rel="noreferrer">' + esc(t) + '</a>';
+        } else {
+          html += '<span class="artmiss">' + esc(t) + '<em>未找到</em></span>';
+        }
+        pos = i + t.length;
+      });
+      html += esc(raw.slice(pos));
+      el.innerHTML = html;
+    }
+    if (ts) {
+      const s = document.createElement('span');
+      s.className = 'tag';
+      s.style.marginLeft = '6px';
+      s.textContent = fmtAge(ago(ts));
+      el.appendChild(s);
+    }
+  };
   setKV('f-act', face.current_activity);
-  setKV('f-art', face.artifact, face.artifact_utc);
+  renderArtifact($('f-art'), face.artifact, face.artifact_utc);
   setKV('f-mile', face.milestone);
 
   const city = snap.city || {};
@@ -646,6 +690,24 @@ function fmtAge(h){
     fa = { ok: true, vd: fmtAge(fh) + '（阈值 24 小时）' };
   }
   selfcheck.push({ ok: fa.ok, nm: '面部新鲜度', vd: fa.vd });
+
+  // 实况路径：三行里的「最近实物」是最该好用的面。builder 已逐个 Test-Path，
+  // 这里只对账——既然承诺「可点」，文件就必须真在盘上；连一条路径都没有也如实
+  // 标注意，否则「可点」只是页面里的一句话而不是产品事实。
+  const art = ART || {};
+  const artPaths = Number(art.paths || 0);
+  const artMiss = Number(art.missing || 0);
+  const artMissNames = Array.isArray(art.miss_names) ? art.miss_names : [];
+  let ap;
+  if (!artPaths) {
+    ap = { ok: false, vd: '三行实况未含可核路径（artifact 里没有文件名）' };
+  } else if (artMiss > 0) {
+    ap = { ok: false, vd: artPaths + ' 条路径 · ' + artMiss + ' 条未找到：' +
+      artMissNames.slice(0, 2).join(' / ') + (artMissNames.length > 2 ? ' …' : '') };
+  } else {
+    ap = { ok: true, vd: artPaths + ' 条路径全部命中盘面 · 页上可直接点开' };
+  }
+  selfcheck.push({ ok: ap.ok, nm: '实况路径', vd: ap.vd });
 
   const warnN = selfcheck.filter(c => !c.ok).length;
   $('sc-sum').textContent = warnN ? (warnN + ' 项注意') : (selfcheck.length + ' 项通过');

@@ -169,6 +169,15 @@ $ctx = @{ root = $root.Path; now = $now; cursor = $cursor; worldDir = $worldDir;
 $stateParts = @{}
 $newCur = @{}
 $probeFiles = @(Get-ChildItem (Join-Path $PSScriptRoot 'probes') -Filter *.ps1 | Sort-Object Name)
+# Silent-zero-read self-check (main#22, r685). A probe that finds nothing used to
+# still print "OK": a $null degrade return, an empty state, or a zero-row match all
+# looked identical to a healthy read. That is how the r684 pair (orders_hq regex
+# matched nothing; ctx.root emptied) hid for days. Now those forms print
+# "WARN <reason>" and are counted; the round's health stays the verify gate, so a
+# WARN never fails the scan (same fail-soft contract as before).
+# Probes may also declare a floor: return @{ ...; matched = <rows seen>; expect_min_rows = <floor> }
+$probeWarns = 0
+$probeWarnList = @()
 foreach ($pf in $probeFiles) {
   if ($pf.Name -like '_*') { continue }
   . $pf.FullName
@@ -177,9 +186,27 @@ foreach ($pf in $probeFiles) {
     $res = & $fn $ctx
     if ($res -and $res.state) { foreach ($k in $res.state.Keys) { $stateParts[$k] = $res.state[$k] } }
     if ($res -and $res.newcur) { foreach ($k in $res.newcur.Keys) { $newCur[$k] = $res.newcur[$k] } }
-    $debug += ('probe ' + $pf.BaseName + ': OK')
+    $warn = ''
+    if ($null -eq $res) {
+      $warn = 'null-result (probe degraded, no state returned)'
+    } elseif (-not $res.state) {
+      $warn = 'no-state'
+    } elseif (@($res.state.Keys).Count -eq 0) {
+      $warn = 'empty-state (0 keys)'
+    } else {
+      $exp = 0
+      $m = -1
+      if ($res -is [System.Collections.IDictionary]) {
+        if ($res.Contains('expect_min_rows')) { $exp = [int]$res['expect_min_rows'] }
+        if ($res.Contains('matched')) { $m = [int]$res['matched'] }
+      }
+      if ($exp -gt 0 -and $m -lt $exp) { $warn = 'zero-read matched=' + $m + ' < expect_min_rows=' + $exp }
+    }
+    if ($warn -ne '') { $probeWarns++; $probeWarnList += ($pf.BaseName + '=' + $warn); $debug += ('probe ' + $pf.BaseName + ': WARN ' + $warn) }
+    else { $debug += ('probe ' + $pf.BaseName + ': OK') }
   } catch { $debug += ('probe ' + $pf.BaseName + ': FAIL ' + $_.Exception.Message) }
 }
+$stateParts['probe_warn_count'] = $probeWarns
 
 # ---------- F3: derive product status from live repo activity (never hardcode) ----------
 function Get-ProductStatus([string]$dir) {
@@ -346,6 +373,7 @@ $state = [ordered]@{
     ceo_orders_hq_rows = $hqRows
     decisions_total = $decTotal
     decisions_open = $decOpen
+    probe_warn_count = $probeWarns
     evolution = @{ next_tick = 'SUN 09:17'; open_proposals = $evOpen; total = $evTotal; applied = $evApplied }
   }
   history = @{ commits_total = $total; last_commit_ts = $lastC }
@@ -458,4 +486,7 @@ try {
   if ($ownLockPid -eq ([string]$PID)) { Remove-Item $lockFile -Force -ErrorAction SilentlyContinue }
 } catch {}
 Write-Output ('perceptor v0.7 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
+if ($probeWarns -gt 0) {
+  Write-Output ('perceptor WARN: ' + $probeWarns + ' probe(s) zero-read/degraded -> ' + ($probeWarnList -join '; '))
+}
 $debug | ForEach-Object { Write-Output ('  ' + $_) }

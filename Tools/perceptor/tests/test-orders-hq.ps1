@@ -97,10 +97,28 @@ if ((Test-Path $realOrders) -and (Test-Path $realCursorFile)) {
   $after = $h3.ctx.cursor.Keys.Count
   $emitted = $h3.bag.Count
   $todayRows = @(Get-Content $realOrders -Encoding UTF8 | Where-Object { $_ -match ('^\|\s*(?:' + [regex]::Escape($todayYmd) + '|' + [regex]::Escape($todayMd) + '\s*~)') }).Count
-  Write-Host ('  info real ledger: cursor ' + $before + ' -> ' + $after + ', emitted ' + $emitted + ', today rows ' + $todayRows + ', pending ' + $st3.state.ceo_orders_hq_rows)
+  # r685: the live cursor is written by every tick, so today's rows are usually
+  # ALREADY cursored by the time this test runs (measured 2026-10-28: 5 ledger
+  # rows dated today, 5 matching cursor keys -> emitted 0 is correct, not a bug).
+  # The invariant is therefore "unseen today rows emit", not "all today rows emit".
+  $unseenToday = 0
+  foreach ($ln in (Get-Content $realOrders -Encoding UTF8)) {
+    if ($ln -notmatch '^\|\s*(?:(?:\d{2}-\d{2}\s*~)|(?:20\d{2}-\d{2}-\d{2}\s+\d{2}:[\dx]{2}))') { continue }
+    $c = $ln -split '\|'
+    if ($c.Count -lt 4) { continue }
+    $t = ($c[1].Trim() -replace '^~\s*', '')
+    $ymd = ''
+    if ($t -match '^(20\d{2}-\d{2}-\d{2})') { $ymd = $Matches[1] }
+    elseif ($t -match '^(\d{2})-(\d{2})') { $ymd = $now.ToString('yyyy') + '-' + $Matches[1] + '-' + $Matches[2] }
+    if ($ymd -ne $todayYmd) { continue }
+    $q = $c[2].Trim() -replace '=', ''
+    if ($q.Length -gt 30) { $q = $q.Substring(0,30) }
+    if (-not $realCursor.ContainsKey('hqorder:' + $t + '/' + $q)) { $unseenToday++ }
+  }
+  Write-Host ('  info real ledger: cursor ' + $before + ' -> ' + $after + ', emitted ' + $emitted + ', today rows ' + $todayRows + ', unseen-today ' + $unseenToday + ', pending ' + $st3.state.ceo_orders_hq_rows)
   Assert ($null -ne $st3) 'T3 real-ledger run returns state'
   Assert ($after -ge $before) 'T3 real-ledger run never shrinks the cursor'
-  Assert ($emitted -eq $todayRows) ('T3 emitted count equals today-dated rows (got ' + $emitted + ', want ' + $todayRows + ')')
+  Assert ($emitted -eq $unseenToday) ('T3 emitted count equals unseen today-dated rows (got ' + $emitted + ', want ' + $unseenToday + ' of ' + $todayRows + ' today rows)')
   Assert ($after -gt $before) 'T3 real ledger rows are now cursored (blind spot closed)'
 } else {
   Write-Host '  skip T3 (real ledger or cursor not found)'

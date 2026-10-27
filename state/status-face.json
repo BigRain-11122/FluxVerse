@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-27T20:31:54Z",
-    "current_activity":  "r684 收口：CEO 直令感知盲区根治——orders_hq 探针双格式正则（旧 MM-DD ~／新 2026-MM-DD HH:Mx）+ 日期闸（旧日静默播种、今日才发事件），并拔出 scan 组根赋值让 $ctx.root 变空串的断链（组级探针此前静默零读却报 OK）",
-    "artifact":  "Tools/perceptor/probes/orders_hq.ps1（双格式+日期闸）+ Tools/perceptor/tests/test-orders-hq.ps1（沙盒 18/18，含真台账真游标副本 T3）+ Tools/perceptor/scan.ps1（Resolve-Path 修根 + governance.ceo_orders_hq_rows 接线）；实证 scan 探针全 OK events +16 quarantined=0、verify PASS、hqorder 游标 301→547、状态面 ceo_orders_hq_rows=20",
-    "artifact_utc":  "2026-10-27T20:31:45Z",
-    "milestone":  "队列头=T-FV-134 司级 7 天基准刷新（10-27 到期·已逾期 2 日·main#23）→ main#22 探针静默零读自检 → main#8 城市线附卷（10-19 逾期）→ main#17 浸泡复跑（10-28 18:36 后窗）",
+    "updated_utc":  "2026-10-27T21:06:31Z",
+    "current_activity":  "r685 收口：main#22 销项——scan 探针循环从「无条件 OK」改为四态判读（null-result／no-state／empty-state／zero-read matched\u003cexpect_min_rows），加汇总行与 governance.probe_warn_count；orders_hq 首件声明行数下限。WARN 不失败，轮健康仍归 verify",
+    "artifact":  "Tools/perceptor/scan.ps1（四态自检+汇总行+状态字段）+ Tools/perceptor/probes/orders_hq.ps1（matched/expect_min_rows）+ Tools/perceptor/tests/test-scan-probe-warn.ps1（沙盒 8/8）+ test-orders-hq.ps1（18/18，T3 断言改为 unseen-today）；真机 scan events +5 quarantined=0、verify PASS、自检首跑即抓出 snapshot/orders_bg 两枚探针读退役路径（main#24）",
+    "artifact_utc":  "2026-10-27T21:06:31Z",
+    "milestone":  "队列头=main#24 探针退役路径修复（snapshot/orders_bg 长期空读 + inbox/transfers/ticklog 合法静默改 quiet=$true）→ main#23 T-FV-134 基准刷新（10-27 到期·逾期 3 日）→ main#8 城市线附卷 → main#17 浸泡复跑（10-28 18:36 后窗）",
     "milestone_eta_utc":  "2026-10-29T12:00:00Z"
 }

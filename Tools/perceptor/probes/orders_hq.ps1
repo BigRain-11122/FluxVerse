@@ -98,7 +98,15 @@ function Probe-orders_hq {
         & $ctx.AddEvent 'CEO_ORDER' 'CEO' 'fluxgroup' $zone $summary
       }
     }
-    return @{ state = @{ ceo_orders_hq_rows = $pending } }
+    return @{
+      state = @{ ceo_orders_hq_rows = $pending }
+      # Silent-zero-read floor (main#22, r685): the live ledger always holds dozens of
+      # order rows. If the table is rewritten into a third format this probe would
+      # match 0 rows and still report OK - that is exactly how the r684 blind spot
+      # lived. Reporting the match count + a floor makes scan.ps1 print a WARN.
+      matched = $rows.Count
+      expect_min_rows = 20
+    }
   } catch {
     # contract: fail-soft (never take the whole city scan down)
     return $null

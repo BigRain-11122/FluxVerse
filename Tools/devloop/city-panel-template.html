@@ -227,10 +227,14 @@ function fmtAge(h){
       el.appendChild(s);
     }
   };
-  // 最近实物：builder 已把 artifact 里的每个路径核过盘面（存在性 + file:// url），
-  // 这里只做替换渲染——页面不猜路径、不造死链。缺失的如实标「未找到」。
-  const renderArtifact = (el, text, ts) => {
-    const items = (ART && ART.items) || [];
+  // 三行实况：builder 已把每行里出现的路径逐个核过盘面（存在性 + file:// url），
+  // 这里只做替换渲染——页面不猜路径、不造死链。每行只用自己那组 item（ART.by[k]），
+  // 跨行共用一张表会把 A 行的文件名错配到 B 行的文本上。缺失的如实标「未找到」。
+  const renderArtifact = (el, text, ts, key) => {
+    const by = (ART && ART.by) || null;
+    const items = (by && by[key] && Array.isArray(by[key].items))
+      ? by[key].items
+      : ((ART && ART.items) || []);
     const raw = String(text == null ? '' : text);
     if (!raw) {
       el.textContent = '—';
@@ -262,9 +266,9 @@ function fmtAge(h){
       el.appendChild(s);
     }
   };
-  setKV('f-act', face.current_activity);
-  renderArtifact($('f-art'), face.artifact, face.artifact_utc);
-  setKV('f-mile', face.milestone);
+  renderArtifact($('f-act'), face.current_activity, null, 'act');
+  renderArtifact($('f-art'), face.artifact, face.artifact_utc, 'art');
+  renderArtifact($('f-mile'), face.milestone, null, 'mile');
 
   const city = snap.city || {};
   $('c-commits').innerHTML = esc(city.commits_total || 0) + '<small>commits</small>';
@@ -691,21 +695,27 @@ function fmtAge(h){
   }
   selfcheck.push({ ok: fa.ok, nm: '面部新鲜度', vd: fa.vd });
 
-  // 实况路径：三行里的「最近实物」是最该好用的面。builder 已逐个 Test-Path，
-  // 这里只对账——既然承诺「可点」，文件就必须真在盘上；连一条路径都没有也如实
-  // 标注意，否则「可点」只是页面里的一句话而不是产品事实。
+  // 实况路径：三行（当前活／最近实物／下个里程碑）都承诺「可点」。builder 已逐个
+  // Test-Path，这里只对账——既然承诺「可点」，文件就必须真在盘上；一条路径都没有
+  // 也如实标注意，否则「可点」只是页面里的一句话而不是产品事实。
   const art = ART || {};
   const artPaths = Number(art.paths || 0);
   const artMiss = Number(art.missing || 0);
   const artMissNames = Array.isArray(art.miss_names) ? art.miss_names : [];
+  const artBy = art.by || {};
+  const lineStat = ['act', 'art', 'mile']
+    .map(k => [k, Number((artBy[k] || {}).paths || 0)])
+    .filter(p => p[1] > 0)
+    .map(p => ({ act: '当前活', art: '最近实物', mile: '里程碑' }[p[0]] + ' ' + p[1]));
   let ap;
   if (!artPaths) {
-    ap = { ok: false, vd: '三行实况未含可核路径（artifact 里没有文件名）' };
+    ap = { ok: false, vd: '三行实况未含可核路径（当前活／实物／里程碑都没有文件名）' };
   } else if (artMiss > 0) {
     ap = { ok: false, vd: artPaths + ' 条路径 · ' + artMiss + ' 条未找到：' +
       artMissNames.slice(0, 2).join(' / ') + (artMissNames.length > 2 ? ' …' : '') };
   } else {
-    ap = { ok: true, vd: artPaths + ' 条路径全部命中盘面 · 页上可直接点开' };
+    ap = { ok: true, vd: artPaths + ' 条路径全部命中盘面' +
+      (lineStat.length ? '（' + lineStat.join('／') + '）' : '') + ' · 页上可直接点开' };
   }
   selfcheck.push({ ok: ap.ok, nm: '实况路径', vd: ap.vd });
 

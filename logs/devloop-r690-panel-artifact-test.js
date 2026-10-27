@@ -78,6 +78,21 @@ victim.exists = false;
 victim.url = '';
 broken.missing = 1;
 broken.miss_names = [victim.rel];
+// r691 shape: the page renders per-line sets (ART.by[k].items), so a fixture
+// that only breaks the aggregate list no longer reaches the DOM. Mirror the
+// same miss into every per-line item with the same rel.
+if (broken.by) {
+  Object.keys(broken.by).forEach(k => {
+    const set = broken.by[k] || {};
+    (set.items || []).forEach(it => {
+      if (it.rel === victim.rel) { it.exists = false; it.url = ''; }
+    });
+    if ((set.items || []).some(it => it.rel === victim.rel)) {
+      set.missing = Number(set.missing || 0) + 1;
+      set.miss_names = (set.miss_names || []).concat([victim.rel]);
+    }
+  });
+}
 const miss = runPanelHtml(withArt(realHtml, broken), 'fixture-missing');
 const missRow = rowByLabel(miss, '实况路径');
 const missHtml = miss.get('f-art').innerHTML;

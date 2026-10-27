@@ -100,15 +100,26 @@ $faceJs = To-JsLiteral -Obj $face -Label 'status-face'
 # verdict is shipped with the page. Missing tokens are shipped too, so the page
 # prints an honest "not found" instead of a dead link. Read-only and fail-soft:
 # a broken artifact line degrades to zero items, it never blocks the panel.
+# All three face lines ("current activity", "latest artifact", "next milestone")
+# name real files, so all three get the same treatment (queue main#29). Each line
+# keeps its OWN item list -- merging them into one list would let a token from
+# one line link up text in another line, and the page could not tell which line
+# a miss belongs to.
 $artPattern = '[A-Za-z0-9_\-./\\]+\.(?:html|htm|png|jpg|jpeg|svg|md|json|jsonl|ps1|js|log|txt|mp4|webm|csv|yaml|yml|asset|unity|cs)'
-$artItems = @()
-$artSeen = @{}
-$artMiss = @()
-$artPaths = 0
-$artRaw = ''
-try { $artRaw = [string]$face.artifact } catch { $artRaw = '' }
-if (-not [string]::IsNullOrWhiteSpace($artRaw)) {
-    $ms = [regex]::Matches($artRaw, $artPattern)
+
+function Resolve-ArtItems
+{
+    param([string]$Raw, [int]$Max = 24)
+    $items = @()
+    $seen = @{}
+    $miss = @()
+    $paths = 0
+    if ([string]::IsNullOrWhiteSpace($Raw)) {
+        return (New-Object PSObject -Property ([ordered]@{
+            paths = 0; missing = 0; miss_names = @(); items = @()
+        }))
+    }
+    $ms = [regex]::Matches($Raw, $artPattern)
     foreach ($m in $ms) {
         $tok = $m.Value
         if ([string]::IsNullOrWhiteSpace($tok)) { continue }
@@ -123,25 +134,55 @@ if (-not [string]::IsNullOrWhiteSpace($artRaw)) {
             try { $full = (Resolve-Path -LiteralPath $abs).ProviderPath } catch { $full = $abs }
             $url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
         }
-        $artItems += (New-Object PSObject -Property ([ordered]@{
+        $items += (New-Object PSObject -Property ([ordered]@{
             text   = [string]$tok
             rel    = [string]$norm
             exists = [bool]$exists
             url    = [string]$url
         }))
-        if (-not $artSeen.ContainsKey($norm)) {
-            $artSeen[$norm] = $true
-            $artPaths++
-            if (-not $exists) { $artMiss += $norm }
+        if (-not $seen.ContainsKey($norm)) {
+            $seen[$norm] = $true
+            $paths++
+            if (-not $exists) { $miss += $norm }
         }
-        if ($artItems.Count -ge 24) { break }
+        if ($items.Count -ge $Max) { break }
     }
+    return (New-Object PSObject -Property ([ordered]@{
+        paths = [int]$paths; missing = [int]$miss.Count; miss_names = @($miss); items = @($items)
+    }))
+}
+
+$faceKeyMap = [ordered]@{ act = 'current_activity'; art = 'artifact'; mile = 'milestone' }
+$artBy = [ordered]@{}
+$artItems = @()
+$artMiss = @()
+$artPaths = 0
+foreach ($k in $faceKeyMap.Keys) {
+    $raw = ''
+    try { $raw = [string]$face.($faceKeyMap[$k]) } catch { $raw = '' }
+    $one = Resolve-ArtItems -Raw $raw
+    # tag every item with its line so the page can never cross-link two lines
+    $tagged = @()
+    foreach ($it in @($one.items)) {
+        $tagged += (New-Object PSObject -Property ([ordered]@{
+            text = [string]$it.text; rel = [string]$it.rel
+            exists = [bool]$it.exists; url = [string]$it.url; k = [string]$k
+        }))
+    }
+    $artBy[$k] = (New-Object PSObject -Property ([ordered]@{
+        paths = [int]$one.paths; missing = [int]$one.missing
+        miss_names = @($one.miss_names); items = @($tagged)
+    }))
+    $artItems += $tagged
+    $artPaths += [int]$one.paths
+    $artMiss += @($one.miss_names)
 }
 $artMeta = New-Object PSObject -Property ([ordered]@{
     paths      = [int]$artPaths
     missing    = [int]$artMiss.Count
     miss_names = @($artMiss)
     items      = @($artItems)
+    by         = $artBy
 })
 $artJs = To-JsLiteral -Obj $artMeta -Label 'artifact-paths'
 

@@ -17,5 +17,5 @@
 | 22 | ~~探针静默零读自检~~ **r685 已销**（scan 三形态 WARN+汇总行+`governance.probe_warn_count`+探针声明式 `matched/expect_min_rows`；沙盒 8/8+orders_hq 18/18） | TECH §九 r685 行 | 已收口 |
 | 25 | ~~探针路径存活普查~~ **r687 已销**（`Tools/devloop/probe-path-census.ps1` 静态重放路径代数+只读 Test-Path；26 探针／55 条路径／52 存在／0 未解释死路径／2 dynamic／1 GATE；沙盒 `test-probe-path-census.ps1` 6/6；表=qa/probe-path-census-bm-a.md） | TECH §九 r687 行 | 已收口·**复跑判据**=目录重组后或新探针入列时跑一次 `-FailOnDead`（exit 2=有死路径） |
 | 23 | T-FV-134 司级 7 天基准刷新（**10-27 到期·r687 记逾期 5 日**）：三向检索（WFC 前沿/城市孪生开源/引擎侧）+待证两源全文复核 | docs/global-benchmarks.md ④更新记录末行=2026-10-27 注记 | 产品面硬下限（D-20261020-05）下研究件让位·轮尾预算余量领；判据=④表新增一行+③表源分级如实标 |
-| 26 | 路径普查接进轮内巡检（r687 立）：把 `probe-path-census.ps1 -FailOnDead` 的输出摘要（DEAD/GATE/dynamic 三数）挂到 scan 或 verify 的健康行，使「目录重组把探针打瘸」在当轮暴露而非下次数周后 | Tools/perceptor/verify.ps1 或 tick 日志形 | 判据=①健康行含三数 ②沙盒注入一条死路径时该行翻红/告警 ③真机零 DEAD 时不产生噪声；边界=不执行探针（保静态重放语义） |
+| 26 | ~~路径普查接进轮内巡检~~ **r688 已销**：`verify.ps1` §2b 进程内 `& probe-path-census.ps1`，恒打 `VERIFY HEALTH: probe-path-census: rows/dead/dynamic/gate` 一行；dead>0 翻 `VERIFY WARN` 并逐行点名（WARN 不失败闸，同 r685 立场）；测试钩 `FLUXVERSE_CENSUS_PROBE_DIR`；沙盒 `test-verify-path-census.ps1` 15/15（含首跑抓出的 `$script:fails` 假绿坑与 WARN 文案含 FAIL 词根→红扫自伤坑） | TECH §九 r688 行 | 已收口 |
 

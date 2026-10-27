@@ -140,6 +140,43 @@ if ((Test-Path $eventsFile) -and $known.Count -gt 0) {
   [System.IO.File]::WriteAllText($verifyState, ('events_verified=' + $clean.Count + "`n"), $utf8)
 }
 
+# ---------- 2b. probe path census (main#26, r688) ----------
+# Static and read-only: replays each probe's own path algebra, then Test-Path's
+# the result. No probe is executed, so this cannot perturb the read chain.
+# Why (r684~r687): three probe read paths had been pointing at retired locations
+# for weeks while still reporting OK. A directory reshuffle should surface in
+# the same tick as a WARN, not weeks later as a silent zero read.
+# WARN, not FAIL - same stance as the r685 scan floors: a stale path is an
+# observation. The gate stays green until a human retires or repoints it.
+$censusScript = Join-Path $repoRoot 'Tools\devloop\probe-path-census.ps1'
+if (Test-Path -LiteralPath $censusScript) {
+  $censusArgs = @{}
+  if ($env:FLUXVERSE_CENSUS_PROBE_DIR) { $censusArgs['ProbeDirOverride'] = $env:FLUXVERSE_CENSUS_PROBE_DIR }
+  $censusLines = @()
+  try { $censusLines = @(& $censusScript @censusArgs 2>&1 | ForEach-Object { [string]$_ }) }
+  catch { $censusLines = @() }
+  $summary = @($censusLines | Where-Object { $_ -like 'probe-path-census:*' }) | Select-Object -First 1
+  if ($summary) {
+    $mRows = [regex]::Match($summary, 'rows=(\d+)')
+    $mDead = [regex]::Match($summary, 'DEAD=(\d+)')
+    $mDyn = [regex]::Match($summary, 'dynamic=(\d+)')
+    $gateRows = @($censusLines | Where-Object { $_ -match '^\s{2}\S+ -> ' })
+    $deadRows = @($censusLines | Where-Object { $_ -match '^\s{2}\S+:\d+ -> ' })
+    $line = 'probe-path-census: rows=' + $mRows.Groups[1].Value + ' dead=' + $mDead.Groups[1].Value +
+            ' dynamic=' + $mDyn.Groups[1].Value + ' gate=' + $gateRows.Count
+    if ($mDead.Success -and [int]$mDead.Groups[1].Value -gt 0) {
+      # No 'FAIL' token here: the tick red-scan (fastpath c1) keys on that word.
+      # The census tool's own dead-path gate lives in its usage block.
+      Write-Output ('VERIFY WARN: ' + $line + ' - a probe read path no longer exists; repoint or retire it, then re-run the census')
+      foreach ($d in $deadRows) { Write-Output ('VERIFY WARN: census ' + $d.Trim()) }
+    } else {
+      Write-Output ('VERIFY HEALTH: ' + $line)
+    }
+  } else {
+    Write-Output 'VERIFY WARN: probe-path-census produced no summary line'
+  }
+}
+
 # ---------- verdict ----------
 if ($fail.Count -gt 0) {
   $fail | ForEach-Object { Write-Output ('VERIFY FAIL: ' + $_) }

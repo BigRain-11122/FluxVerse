@@ -275,6 +275,19 @@ function fmtAge(h){
   // 该行不属三行承诺（缺日志由自检第 9 项「tick 覆盖」判），故缺失不污染实况路径行。
   const tickRow = (ART && ART.by && ART.by.tick && ART.by.tick.items && ART.by.tick.items[0]) || null;
   renderArtifact($('f-tick'), tickRow ? tickRow.rel : '', null, 'tick');
+  // 内联摘要（queue main#31）：文件名之后直接给「多久前 · scan 行数 · 轮数」，
+  // 读者不必滚到自检第 9 项才知道 tick 停没停走。TICK 是 builder 构建时读盘所得，
+  // 缺档（exists=false）或年龄不可解析时不追加——宁缺不造假数字。
+  (function () {
+    const tk = TICK || {};
+    if (!tk.exists || typeof tk.age_min !== 'number' || tk.age_min < 0) return;
+    const s = document.createElement('span');
+    s.className = 'tag' + (tk.age_min > 15 ? ' warn' : '');
+    s.style.marginLeft = '6px';
+    s.textContent = tk.age_min + ' 分钟前 · scan ' + (tk.scan_lines || 0) + ' 行 · ' +
+      (tk.rounds || 0) + ' 轮';
+    $('f-tick').appendChild(s);
+  })();
 
   const city = snap.city || {};
   $('c-commits').innerHTML = esc(city.commits_total || 0) + '<small>commits</small>';

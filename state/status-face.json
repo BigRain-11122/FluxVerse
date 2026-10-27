@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-27T21:25:03Z",
-    "current_activity":  "r686 收口：main#24 销项——两枚长期空读探针修好（snapshot 路径被 Join-Path 拼了两次、orders_bg 读 10-04 MiniGame GLOBAL 重组前的退役路径）；同时把「设计性空闲」与「读不到」显式分开——inbox/transfers/ticklog 三枚事件面探针返回 quiet=$true，scan 打 OK (quiet)、单列 quiet 汇总行、计 governance.probe_quiet_count，WARN 从此只意味着没读到。真机 26 枚探针零 WARN、verify PASS。",
-    "artifact":  "Tools/perceptor/probes/{snapshot,orders_bg,inbox,transfers,ticklog}.ps1 + Tools/perceptor/scan.ps1（quiet 第三形态 + quiet 汇总行 + governance.orders_bg_rows／probe_quiet_count）+ Tools/perceptor/tests/test-scan-probe-warn.ps1（沙盒 14/14）；实证 scan 零 WARN／verify PASS（warn=0 quiet=3 bgRows=363），修复首跑零历史回放（events +5，非 59 条令回照）。",
-    "artifact_utc":  "2026-10-27T21:25:03Z",
-    "milestone":  "队列头=main#23 T-FV-134 司级 7 天基准刷新（10-27 到期·已逾期 4 日）→ main#25 探针路径存活普查（把 r684~r686 三连死路径的教训做成一张表）→ main#8 城市线附卷 → main#17 浸泡复跑（10-28 18:36 后窗口）",
+    "updated_utc":  "2026-10-27T21:50:11Z",
+    "current_activity":  "r687 收口（main#25 销项）：26 枚探针的「路径能读」首次被系统性验证——新件 Tools/devloop/probe-path-census.ps1 静态重放每个探针自己的路径代数（Join-Path 链／$ctx.root 等三锚／Split-Path -Parent／探针内局部变量），再只读 Test-Path，全程不执行探针因此不扰动感知链；判读分 exact／prefix（末段是运行时文件名→只验基目录）／dynamic／GATE（inbox-live.flag 缺失=观察窗设计）。实测 26 探针／55 条路径表达式／52 存在／0 未解释死路径／2 dynamic／1 GATE——r684~r686 修完三条后，感知链已全部指向活盘面。沙盒 6/6，且首跑抓出本件自身三坑（[string] 参数把 null 绑成空串丢哨兵／PS 变量名大小写不敏感使覆盖参数被子句自吞／汇总行文件数-1 假设模板在）。健康=scan events +6 quarantined=0 零 WARN＋quiet=3，verify PASS。诚实边界：只证路径存在不证内容可解析，运行时组装变量仍由 main#22 的 WARN 下限兜；本轮无新增 CEO 可见网页。T-FV-134 基准刷新仍未承载=逾期 5 日如实记。",
+    "artifact":  "Tools/devloop/probe-path-census.ps1（静态路径代数重放+四类判读+? 哨兵+GATE 段+ -FailOnDead 退出码）+ Tools/devloop/test-probe-path-census.ps1（沙盒 6/6）+ qa/probe-path-census-bm-a.md（26 探针×55 条路径全表·52 存在／0 死／2 dynamic／1 GATE）+ TECH §九 r687 行；实证 scan events +6 quarantined=0 quiet=3、verify PASS",
+    "artifact_utc":  "2026-10-27T21:50:11Z",
+    "milestone":  "队列头=main#26 把普查 DEAD/GATE/dynamic 三数接进轮内巡检（目录重组打瘸探针要在当轮暴露）→ main#23 T-FV-134 司级 7 天基准刷新（10-27 到期·逾期 5 日）→ main#8 城市线附卷（10-19 逾期）→ main#17 浸泡复跑（10-28 18:36 后窗口）",
     "milestone_eta_utc":  "2026-10-29T12:00:00Z"
 }

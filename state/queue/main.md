@@ -15,6 +15,7 @@
 | 17 | 浸泡探针复跑基线：City3D 新 commit 或 ≥48h 后复跑 10min 浸泡，对比 render avg/p95 漂移（>20% 即注意） | docs/qa-r2-frame-map.md §三.4+qa/smoke-r680-bm-a.md（基线 render avg=608.5fps/p95=2.147ms） | r680 首测立基线·漂移判据先立·launcher 强杀残留债并入本行核验面 |
 | 20 | 浸泡闸 ABORT 事件观察位（被动·零施工）：收据 `settings_pre/post` 或 launcher 输出出现 `ABORT`／`SOAK_ABORT_SETTINGS` = 有人改动了 PlayMode 基线或出现未知残留——处置=先查 `City3D/ProjectSettings/EditorSettings.asset` 实况与改动来源，再决定「更新基线正典」或「回退改动」，禁直接改基线抹平 | Tools/devloop/r2-soak-playmode-baseline.txt+qa/smoke-r682-bm-a.md §③/§⑤ | r682 落地承件·真 ABORT 零次=健康态（每浸泡轮扫一次收据两键即算巡过） |
 | 22 | ~~探针静默零读自检~~ **r685 已销**（scan 三形态 WARN+汇总行+`governance.probe_warn_count`+探针声明式 `matched/expect_min_rows`；沙盒 8/8+orders_hq 18/18） | TECH §九 r685 行 | 已收口 |
-| 25 | 探针路径存活普查（r686 立）：26 枚探针逐枚核其目标路径在活盘面是否真存在（含组根跳层 root 解析），产出一张「探针×目标路径×存在性×最近实读」表，死路径即修 | Tools/perceptor/probes/*.ps1+scan 输出 | 判据=①表覆盖全部探针 ②每条路径给出存在性判定 ③死路径 0 条或全部修完；动机=r684~r686 连抓三条死路径（ctx.root 空串／snapshot 双 join／orders_bg 重组前径）说明「路径能读」从未被系统性验过 |
-| 23 | T-FV-134 司级 7 天基准刷新（**10-27 到期·r686 记逾期 4 日**）：三向检索（WFC 前沿/城市孪生开源/引擎侧）+待证两源全文复核 | docs/global-benchmarks.md ④更新记录末行=2026-10-27 注记 | 产品面硬下限（D-20261020-05）下研究件让位·轮尾预算余量领；判据=④表新增一行+③表源分级如实标 |
+| 25 | ~~探针路径存活普查~~ **r687 已销**（`Tools/devloop/probe-path-census.ps1` 静态重放路径代数+只读 Test-Path；26 探针／55 条路径／52 存在／0 未解释死路径／2 dynamic／1 GATE；沙盒 `test-probe-path-census.ps1` 6/6；表=qa/probe-path-census-bm-a.md） | TECH §九 r687 行 | 已收口·**复跑判据**=目录重组后或新探针入列时跑一次 `-FailOnDead`（exit 2=有死路径） |
+| 23 | T-FV-134 司级 7 天基准刷新（**10-27 到期·r687 记逾期 5 日**）：三向检索（WFC 前沿/城市孪生开源/引擎侧）+待证两源全文复核 | docs/global-benchmarks.md ④更新记录末行=2026-10-27 注记 | 产品面硬下限（D-20261020-05）下研究件让位·轮尾预算余量领；判据=④表新增一行+③表源分级如实标 |
+| 26 | 路径普查接进轮内巡检（r687 立）：把 `probe-path-census.ps1 -FailOnDead` 的输出摘要（DEAD/GATE/dynamic 三数）挂到 scan 或 verify 的健康行，使「目录重组把探针打瘸」在当轮暴露而非下次数周后 | Tools/perceptor/verify.ps1 或 tick 日志形 | 判据=①健康行含三数 ②沙盒注入一条死路径时该行翻红/告警 ③真机零 DEAD 时不产生噪声；边界=不执行探针（保静态重放语义） |
 

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-27T05:53:56Z",
-    "current_activity":  "r682 产品轮：浸泡还原闸基线守卫升级（main#19 收口）— 闸逻辑抽成独立可测件 + 基线正典文件，漂移一律 ABORT 不覆盖（原硬编码 0/3 会静默吃掉合法改动）",
-    "artifact":  "qa/smoke-r682-bm-a.md（病面-改面-实证-判定-诚实边界-指针 六段）· Tools/devloop/playmode-settings-guard.ps1（新）· Tools/devloop/r2-soak-playmode-baseline.txt（新）· Tools/devloop/r2-soak.ps1（ABORT exit 2 三接线 + settings_base 键）",
-    "artifact_utc":  "2026-10-26T18:43:00Z",
-    "milestone":  "下一轮：main#1 月度归档（10-24 到期）、main#10 benchmarks 深潜核验（10-24 到期）、main#8 城市线附卷（10-19 逾期）；随后 main#17 浸泡复跑（≥48h 或 City3D 新 commit）+ main#20 ABORT 观察位",
-    "milestone_eta_utc":  "2026-10-27T12:00:00Z"
+    "updated_utc":  "2026-10-27T06:07:22Z",
+    "current_activity":  "r683 —— T-FV-139 月档窗实跑（main#1 收口）：181 行龄满行迁入 202609.md，TECH 瘦身 21.8%（2.35MB→1.83MB），四门 g1-g4 全绿 + 双账门 PASS；副产出 main#10 销项",
+    "artifact":  "docs/archive/tech-section9/202609.md（513,253B·181 行·09-23..09-26 月档）+ TECH.md（1,833,283B·总行 1028）+ tasks/TASKS.md 窗口执行注记",
+    "artifact_utc":  "2026-10-27T06:07:22Z",
+    "milestone":  "下步：main#8 城市线附卷（10-19 逾期·六线派单城市线切片）→ main#17 浸泡复跑窗（首测 10-26 18:36 起 ≥48h，即 10-28 18:36 后）+ main#20 ABORT 观察位",
+    "milestone_eta_utc":  "2026-10-29T12:00:00Z"
 }

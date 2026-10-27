@@ -99,6 +99,18 @@ if ([string]::IsNullOrEmpty($TickPath)) {
 if ([string]::IsNullOrEmpty($HeartbeatPath)) { $HeartbeatPath = Join-Path $Root 'logs\devloop-heartbeat.txt' }
 if ([string]::IsNullOrEmpty($TechPath)) { $TechPath = Join-Path $Root 'TECH.md' }
 $upTwo = Split-Path -Parent (Split-Path -Parent $Root)
+# --- governance root resolution (r683) ---
+# The repo can be reached through a stale mirror path (e.g. D:\FluxGroup\gaming\FluxVerse)
+# while the LIVE governance tree (cph4/, docs/) sits under the other mirror of the same
+# group (e.g. %USERPROFILE%\Desktop\FluxGroup). Reading the stale copy yields a permanent
+# fake c3/c6/c7 trigger every round (r682 path trap, measured r683: ledger 10-20 vs live
+# 10-27). Shared resolver = Tools\devloop\resolve-group-root.ps1 (scan.ps1 uses it too).
+$groupResolver = Join-Path $PSScriptRoot 'resolve-group-root.ps1'
+if (Test-Path -LiteralPath $groupResolver) {
+    . $groupResolver
+    $groupRoot = Resolve-GroupRoot -RepoRoot $Root -LegacyRoot $upTwo
+} else { $groupRoot = $upTwo }
+if ($groupRoot -ne $upTwo) { $c0Note = 'c0-group: ' + $groupRoot + ' (live ledger newer)'; $upTwo = $groupRoot }
 if ([string]::IsNullOrEmpty($LedgerPath)) { $LedgerPath = Join-Path $upTwo 'cph4\evolution-ledger.md' }
 if ([string]::IsNullOrEmpty($DecPath)) { $DecPath = Join-Path $upTwo 'docs\decisions.md' }
 if ([string]::IsNullOrEmpty($OrdersPath)) { $OrdersPath = Join-Path $upTwo 'docs\orders.md' }
@@ -248,6 +260,7 @@ if (-not (Test-Path -LiteralPath $HeartbeatPath)) {
         if ($hbStreak -ge 2) { $c1Trig = $true; $c1d = $c1d + ' hb-bad-streak=' + $hbStreak }
     }
 }
+if ($c0Note) { Write-Output $c0Note }
 if ($c1Trig) { $script:trig.Add('c1-red') }
 if ($c1Trig) { Write-Output ('c1-red: TRIGGER' + $c1d + $scanNote) }
 else { Write-Output ('c1-red: QUIET fails=' + $fails + ' qmax=' + $qmax + ' hb_streak=' + $hbStreak + $scanNote) }

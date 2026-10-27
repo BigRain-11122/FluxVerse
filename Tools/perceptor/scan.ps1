@@ -39,7 +39,21 @@
 # Usage: powershell -ExecutionPolicy Bypass -File scan.ps1
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')   # -> gaming/FluxVerse
-$root = Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..') # -> FluxGroup root
+$root = Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..') # -> FluxGroup root (legacy ..-hop answer)
+# r683: the ..-hop answer can land on a STALE mirror of the group tree (measured:
+# D:\FluxGroup\cph4 ledger mtime 10-20 vs live 10-27) - every group-level probe then
+# feeds the city week-old orders/decisions while reporting OK. Shared resolver picks
+# the mirror whose cph4\evolution-ledger.md is newest; single-mirror machines are
+# unchanged (legacy answer returned as-is).
+$groupResolver = Join-Path (Join-Path $PSScriptRoot '..\devloop') 'resolve-group-root.ps1'
+if (Test-Path -LiteralPath $groupResolver) {
+    . $groupResolver
+    $rootResolved = Resolve-GroupRoot -RepoRoot $repoRoot.Path -LegacyRoot $root.Path
+    if ($rootResolved -ne $root.Path) {
+        Write-Output ('scan:   root: resolved ' + $rootResolved + ' (live ledger newer than ' + $root.Path + ')')
+        $root = Get-Item -LiteralPath $rootResolved
+    }
+}
 $worldDir = Join-Path $repoRoot 'world'
 if (-not (Test-Path $worldDir)) { New-Item -ItemType Directory -Path $worldDir | Out-Null }
 $cursorFile = Join-Path $worldDir 'perceptor-state.txt'

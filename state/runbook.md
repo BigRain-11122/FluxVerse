@@ -3,12 +3,12 @@
 ## 我是谁
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建·其在飞件禁碰）。
 ## 我现在在干什么
-r683 毕（FULL-ROUND·triggers=4）：主产出=**main#1 收口：T-FV-139 月档窗（达窗 10-24）实跑**。181 行龄满行（09-23..09-26·512,260B）迁入 `docs/archive/tech-section9/202609.md`，TECH.md 2,345,543→1,833,283B（-21.8%·总行 1209→1028）；四门全绿 g1/g2/g3（214 个 F- 行 rNN 引用全解析可达）/g4；tasks-board-check PASS。副产出=**main#10 销项**（benchmarks 末次更新 2026-10-20，7 天 ≤30 天判据）。**诚实边界**=本轮无新 CEO 可见实物（台账代际迁移=过程面 1 分）；未动 City3D、未跑浸泡（main#17 两触发未达标）。
+r683 毕（FULL-ROUND·triggers=4）：主产出=**main#1 收口：T-FV-139 月档窗（达窗 10-24）实跑**。181 行龄满行（09-23..09-26·512,260B）迁入 `docs/archive/tech-section9/202609.md`，TECH.md 2,345,543→1,833,283B（-21.8%·总行 1209→1028）；四门全绿 g1/g2/g3（214 个 F- 行 rNN 引用全解析可达）/g4；tasks-board-check PASS。副产出=**main#10 销项**（benchmarks 末次更新 2026-10-20，7 天 ≤30 天判据）。**诚实边界**=本轮无新 CEO 可见实物（台账代际迁移=过程面 1 分）；未动 City3D、未跑浸泡（main#17 两触发未达标）。**同窗第二步 r683b（缺陷根治）**=镜像陈旧根因根治：新建 `Tools/devloop/resolve-group-root.ps1`（取 cph4 台账 mtime 最新的组根），接线 check-fastpath.ps1（假触发 c3/c6/c7 清零：triggers 4→2）与 `Tools/perceptor/scan.ps1`（组级探针此前喂城市一周旧世界，实测 ledger 10-20/235行 vs 活树 10-27/373行）；scan 补账 +113 事件、verify PASS；新债 main#21=orders_hq 正则只吃旧格式行。
 ## 我现在在干什么（历史）
 r682 收口：浸泡还原闸基线守卫升级（闸抽成 playmode-settings-guard.ps1 四态+基线正典+ABORT exit 2 拒跑·沙盒 8/8·诚实边界=launcher exit-2 未端到端）；r681 收口：浸泡 launcher 设置残留自愈闸（三强杀径全跳过探针自身还原→预还原+后还原+独立开关三面）；r680 收口：R2 30fps 浸泡探针首测（main#5 续·帧链 5/5·render avg 608.5fps·零错零异常）；r679 收口：R2 判据帧链首跑（main#5/main#6 双销行·4/5 过）；r678 收口：面板自检第十一项「面部新鲜度」（main#16·172 项）+main#6 三判转真。
 ## 下一步（队列头）
 1. 轮首跑 Tools\devloop\check-fastpath.ps1：FASTPATH=队列取活（state/queue/{main,tech,explore}.md）→提案轨→一行声明；FULL-ROUND=按 mandate 读序施工。r683 收尾=tech_sha12 传棒 KEEP（§九 open 可领面：main#8/main#17/main#20/main#3→下轮 c4 失配即续领），ledger/dec/orders 刷现值。
-2. **队列头=T-FV-134 司级 7 天基准刷新（2026-10-27 已到期·下轮首位）** → main#8 城市线附卷（10-19 逾期·六线派单城市线切片，≤1 轮工作量）→ main#17 浸泡复跑（窗口 = 首测 10-26 18:36 起 ≥48h 即 10-28 18:36 后，或 City3D 新 commit；漂移 >20% 注意）→ main#20 ABORT 观察位（出现即查改动来源，禁改基线抹平）。
+2. **队列头=T-FV-134 司级 7 天基准刷新（2026-10-27 已到期·下轮首位）** → main#21 orders_hq 行格式盲区（先演练增量再改正则）→ main#8 城市线附卷（10-19 逾期·六线派单城市线切片，≤1 轮工作量）→ main#17 浸泡复跑（窗口 = 首测 10-26 18:36 起 ≥48h 即 10-28 18:36 后，或 City3D 新 commit；漂移 >20% 注意）→ main#20 ABORT 观察位（出现即查改动来源，禁改基线抹平）。
 3. **explore#12 第 285 绪窗**：首选 JR/T 0025.12 现行层正身窗（queue #289·0025.x 族第三件）；备选②=0025.2018 第 12 部分③=0025.3 现行层④=GB/T 16649 族⑤=GB/T 18336 族。防重扫：0025.8/0090/0089.x/0098.x/0095/0097/0092 已闭卷。重笔轮防截杀律：产物落盘即 commit 产物壳·板面注记后补。
 4. **新律承接（r666）·P-11 面**：跨轮写探针/改 schema 必须同窗内 commit 或先移出 Tools/perceptor+schema——否则 tick 每 10 分钟静默跳过 scan+verify 且不报红；巡检判「感知健康」看 scan: 行存在性。
 5. main#7 charter 四锚仍缓判（后续里程碑面）；main#3 T-FV-141 提案位下窗 2026-10-18 已过；main#4 P3-002 每轮行检；真无活时一行声明合法（禁造活凑数）。

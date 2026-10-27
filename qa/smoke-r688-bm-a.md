@@ -32,6 +32,19 @@ RESULT: PASS
 runtime-composed name); the dead one must be reported and named, the dynamic tail must not be
 mistaken for a dead file.
 
+## 1b. End-to-end: the live 10-minute tick actually prints it (06:31:17 local)
+
+```
+gate: VERIFY PASS
+gate: VERIFY HEALTH: probe-path-census: rows=55 dead=0 dynamic=2 gate=1
+gate: VERIFY PASS
+```
+
+Note the tick had been logging `backoff: perceptor stack dirty (in-flight dev edits) - scan+verify
+skipped this round` while the edit was uncommitted (r666 P-11 law working as designed). Only after the
+commit and a clean tree did the real tick run verify and emit the census line — this is the difference
+between "the sandbox says so" and "the production loop says so".
+
 ## 2. Real machine — verify
 
 ```

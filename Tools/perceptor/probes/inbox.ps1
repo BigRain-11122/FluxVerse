@@ -90,7 +90,10 @@ function Probe-inbox {
         }
       }
     }
-    if ($batches -eq 0 -and $files -eq 0 -and $replay -eq 0) { return @{ state = @{} } }
+    # r686 (main#24): no inbox/ dir in any repo = this face is legitimately idle,
+    # not a failed read. Return quiet so scan prints "OK (quiet)" instead of the
+    # empty-state WARN that used to be indistinguishable from a broken path.
+    if ($batches -eq 0 -and $files -eq 0 -and $replay -eq 0) { return @{ state = @{ }; quiet = $true } }
     $st = @{ inbox_mode = 'live'; inbox_batches = $batches; inbox_files = $files
              inbox_lines = $lines; inbox_events = $routed; inbox_bad_lines = $bad
              inbox_replayed = $replay }

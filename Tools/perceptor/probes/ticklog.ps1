@@ -39,7 +39,13 @@ function Probe-ticklog {
     $logsDir = Join-Path $repoRoot 'logs'
     $today = (Get-Date).ToString('yyyyMMdd')
     $logFile = Join-Path $logsDir ('tick-' + $today + '.log')
-    if (-not (Test-Path $logFile)) { return @{ state = @{ } } }
+    # r686 (main#24): this probe is event-only by design - its whole output is the
+    # OS_TICK/GATE event stream, so an empty state is the HEALTHY steady state.
+    # Declare quiet so scan prints "OK (quiet)" instead of an empty-state WARN.
+    # Liveness has its own faces: the GATE events themselves, and the city panel's
+    # "tick coverage" self-check item (r673) which reads this very log for
+    # existence/freshness - so a dead tick stays visible without this probe's warn.
+    if (-not (Test-Path $logFile)) { return @{ state = @{ }; quiet = $true } }
     $curKey = 'ticklog:' + $today
     $lastStamp = ''
     if ($ctx.cursor.ContainsKey($curKey)) { $lastStamp = [string]$ctx.cursor[$curKey] }
@@ -117,6 +123,6 @@ function Probe-ticklog {
       $newLast = $b.stamp
     }
     if ($newLast -ne $lastStamp) { $ctx.cursor[$curKey] = $newLast }
-    return @{ state = @{ } }
+    return @{ state = @{ }; quiet = $true }
   } catch { return $null }
 }

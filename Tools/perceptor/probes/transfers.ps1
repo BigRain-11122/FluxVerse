@@ -41,9 +41,13 @@ function Probe-transfers {
   param($ctx)
   try {
     $dir = Join-Path $ctx.root 'quant\bigmoney\fleet\transfers'
-    if (-not (Test-Path $dir)) { return @{ state = @{ } } }
+    # r686 (main#24): this probe is event-only by design - it never fills a state
+    # key, so an empty state here is the HEALTHY steady state (all manifests
+    # cursor-sealed, or the face not yet built). Declare quiet so scan prints
+    # "OK (quiet)" instead of an empty-state WARN that looked like a dead read.
+    if (-not (Test-Path $dir)) { return @{ state = @{ }; quiet = $true } }
     $files = @(Get-ChildItem $dir -Filter *.json | Sort-Object Name)
-    if ($files.Count -eq 0) { return @{ state = @{ } } }
+    if ($files.Count -eq 0) { return @{ state = @{ }; quiet = $true } }
 
     # fresh-run = no transfer:* cursor key at all (decisions family law)
     $fresh = $true
@@ -112,6 +116,6 @@ function Probe-transfers {
       }
       $ctx.cursor[$curKey] = $fp
     }
-    return @{ state = @{ } }
+    return @{ state = @{ }; quiet = $true }
   } catch { return $null }
 }

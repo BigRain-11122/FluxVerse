@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-27T21:06:31Z",
-    "current_activity":  "r685 收口：main#22 销项——scan 探针循环从「无条件 OK」改为四态判读（null-result／no-state／empty-state／zero-read matched\u003cexpect_min_rows），加汇总行与 governance.probe_warn_count；orders_hq 首件声明行数下限。WARN 不失败，轮健康仍归 verify",
-    "artifact":  "Tools/perceptor/scan.ps1（四态自检+汇总行+状态字段）+ Tools/perceptor/probes/orders_hq.ps1（matched/expect_min_rows）+ Tools/perceptor/tests/test-scan-probe-warn.ps1（沙盒 8/8）+ test-orders-hq.ps1（18/18，T3 断言改为 unseen-today）；真机 scan events +5 quarantined=0、verify PASS、自检首跑即抓出 snapshot/orders_bg 两枚探针读退役路径（main#24）",
-    "artifact_utc":  "2026-10-27T21:06:31Z",
-    "milestone":  "队列头=main#24 探针退役路径修复（snapshot/orders_bg 长期空读 + inbox/transfers/ticklog 合法静默改 quiet=$true）→ main#23 T-FV-134 基准刷新（10-27 到期·逾期 3 日）→ main#8 城市线附卷 → main#17 浸泡复跑（10-28 18:36 后窗）",
+    "updated_utc":  "2026-10-27T21:25:03Z",
+    "current_activity":  "r686 收口：main#24 销项——两枚长期空读探针修好（snapshot 路径被 Join-Path 拼了两次、orders_bg 读 10-04 MiniGame GLOBAL 重组前的退役路径）；同时把「设计性空闲」与「读不到」显式分开——inbox/transfers/ticklog 三枚事件面探针返回 quiet=$true，scan 打 OK (quiet)、单列 quiet 汇总行、计 governance.probe_quiet_count，WARN 从此只意味着没读到。真机 26 枚探针零 WARN、verify PASS。",
+    "artifact":  "Tools/perceptor/probes/{snapshot,orders_bg,inbox,transfers,ticklog}.ps1 + Tools/perceptor/scan.ps1（quiet 第三形态 + quiet 汇总行 + governance.orders_bg_rows／probe_quiet_count）+ Tools/perceptor/tests/test-scan-probe-warn.ps1（沙盒 14/14）；实证 scan 零 WARN／verify PASS（warn=0 quiet=3 bgRows=363），修复首跑零历史回放（events +5，非 59 条令回照）。",
+    "artifact_utc":  "2026-10-27T21:25:03Z",
+    "milestone":  "队列头=main#23 T-FV-134 司级 7 天基准刷新（10-27 到期·已逾期 4 日）→ main#25 探针路径存活普查（把 r684~r686 三连死路径的教训做成一张表）→ main#8 城市线附卷 → main#17 浸泡复跑（10-28 18:36 后窗口）",
     "milestone_eta_utc":  "2026-10-29T12:00:00Z"
 }

@@ -63,6 +63,36 @@ Remove-Item -LiteralPath $orders -Force
 $o3 = Run-Scan
 Assert 'missing-file-warns' ($o3 -match 'probe orders_hq: WARN empty-state') 'missing ledger surfaces as WARN, not OK'
 
+# --- fixture 4 (r686/main#24): probe declares itself idle -> OK (quiet) ---
+# A face that is legitimately idle (event-only probe, no batch dir yet) must not
+# be indistinguishable from a broken read: quiet=$true -> "OK (quiet)" and kept
+# OUT of the WARN summary, while the count still reaches the state face.
+$stub = @'
+function Probe-zzquiet {
+  param($ctx)
+  return @{ state = @{ }; quiet = $true }
+}
+'@
+$stubPath = Join-Path $repo 'Tools\perceptor\probes\zzquiet.ps1'
+[System.IO.File]::WriteAllText($stubPath, $stub + "`n", (New-Object System.Text.UTF8Encoding($false)))
+$o4 = Run-Scan
+Assert 'quiet-prints-ok' ($o4 -match 'probe zzquiet: OK \(quiet\)') 'declared-idle probe prints OK (quiet)'
+Assert 'quiet-not-in-warn' (-not ($o4 -match 'zzquiet=')) 'declared-idle probe never enters the WARN summary'
+Assert 'quiet-summary' ($o4 -match 'perceptor quiet: [0-9]+ probe\(s\) idle by design -> .*zzquiet') 'quiet probes get their own summary line'
+$st = $null
+try { $st = [System.IO.File]::ReadAllText((Join-Path $repo 'world\world-state.json.new')) | ConvertFrom-Json } catch { }
+Assert 'quiet-count-in-state' ([bool]($st -and $st.governance.probe_quiet_count -ge 1)) 'governance.probe_quiet_count carries the count'
+# Disjointness: a quiet probe must never be counted in the warn list. (The
+# sandbox has no MiniGame/quant faces, so OTHER probes legitimately warn here -
+# the point is that the two lists never overlap.)
+$warnNames = @(); $quietNames = @()
+if ($o4 -match 'perceptor WARN: [^\n]*-> ([^\n]+)') { $warnNames = @($Matches[1] -split '; ' | ForEach-Object { ($_ -split '=')[0] }) }
+if ($o4 -match 'perceptor quiet: [^\n]*-> ([^\n]+)') { $quietNames = @($Matches[1] -split ', ') }
+$overlap = @($quietNames | Where-Object { $warnNames -contains $_ })
+Assert 'quiet-not-counted-as-warn' ($overlap.Count -eq 0) ('quiet and warn lists are disjoint (quiet=' + ($quietNames -join ',') + ' warn=' + ($warnNames -join ',') + ')')
+Assert 'quiet-count-excludes-warn' ([bool]($st -and $st.governance.probe_quiet_count -eq $quietNames.Count)) ('probe_quiet_count matches the quiet list (' + $quietNames.Count + ')')
+Remove-Item -LiteralPath $stubPath -Force
+
 Remove-Item -LiteralPath $sand -Recurse -Force -ErrorAction SilentlyContinue
 if ($fail -eq 0) { Write-Output 'ALL PASS'; exit 0 }
 Write-Output ('FAILED ' + $fail); exit 1

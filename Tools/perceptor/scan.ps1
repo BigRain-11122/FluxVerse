@@ -178,6 +178,13 @@ $probeFiles = @(Get-ChildItem (Join-Path $PSScriptRoot 'probes') -Filter *.ps1 |
 # Probes may also declare a floor: return @{ ...; matched = <rows seen>; expect_min_rows = <floor> }
 $probeWarns = 0
 $probeWarnList = @()
+# r686 (main#24): third form on top of the four read shapes - a probe may return
+# @{ state = @{}; quiet = $true } to say "this face is legitimately idle" (event-
+# only probes never fill state; an inbox dir that does not exist is not a failed
+# read). Those print "OK (quiet)" and are counted apart, so the WARN list keeps
+# meaning "something did not read", not "this face has nothing to say today".
+$probeQuiets = 0
+$probeQuietList = @()
 foreach ($pf in $probeFiles) {
   if ($pf.Name -like '_*') { continue }
   . $pf.FullName
@@ -187,8 +194,11 @@ foreach ($pf in $probeFiles) {
     if ($res -and $res.state) { foreach ($k in $res.state.Keys) { $stateParts[$k] = $res.state[$k] } }
     if ($res -and $res.newcur) { foreach ($k in $res.newcur.Keys) { $newCur[$k] = $res.newcur[$k] } }
     $warn = ''
+    $isQuiet = ($null -ne $res -and $res.quiet -eq $true)
     if ($null -eq $res) {
       $warn = 'null-result (probe degraded, no state returned)'
+    } elseif ($isQuiet) {
+      $probeQuiets++; $probeQuietList += $pf.BaseName
     } elseif (-not $res.state) {
       $warn = 'no-state'
     } elseif (@($res.state.Keys).Count -eq 0) {
@@ -202,11 +212,13 @@ foreach ($pf in $probeFiles) {
       }
       if ($exp -gt 0 -and $m -lt $exp) { $warn = 'zero-read matched=' + $m + ' < expect_min_rows=' + $exp }
     }
-    if ($warn -ne '') { $probeWarns++; $probeWarnList += ($pf.BaseName + '=' + $warn); $debug += ('probe ' + $pf.BaseName + ': WARN ' + $warn) }
+    if ($isQuiet) { $debug += ('probe ' + $pf.BaseName + ': OK (quiet)') }
+    elseif ($warn -ne '') { $probeWarns++; $probeWarnList += ($pf.BaseName + '=' + $warn); $debug += ('probe ' + $pf.BaseName + ': WARN ' + $warn) }
     else { $debug += ('probe ' + $pf.BaseName + ': OK') }
   } catch { $debug += ('probe ' + $pf.BaseName + ': FAIL ' + $_.Exception.Message) }
 }
 $stateParts['probe_warn_count'] = $probeWarns
+$stateParts['probe_quiet_count'] = $probeQuiets
 
 # ---------- F3: derive product status from live repo activity (never hardcode) ----------
 function Get-ProductStatus([string]$dir) {
@@ -245,6 +257,9 @@ $decOpen = 0; if ($stateParts.ContainsKey('decisions_open')) { $decOpen = [int]$
 # r684: CEO direct-order rows in the group ledger that are still marked executing
 # (probe orders_hq). Separate from ceo_orders_pending (O- ids from the orders dir).
 $hqRows = 0; if ($stateParts.ContainsKey('ceo_orders_hq_rows')) { $hqRows = [int]$stateParts.ceo_orders_hq_rows }
+# r686 (main#24): Biggame U-order ledger rows actually read this round (probe
+# orders_bg). 0 = the ledger path went dead again; the probe's row floor guards it.
+$bgRows = 0; if ($stateParts.ContainsKey('bgorder_rows')) { $bgRows = [int]$stateParts.bgorder_rows }
 $fleet = @(); if ($stateParts.ContainsKey('fleet')) { $fleet = $stateParts.fleet }
 if ($stateParts.ContainsKey('fleet_biggame')) { $fleet += $stateParts.fleet_biggame }   # F2: biggame machines join the city
 $tasks = @(); if ($stateParts.ContainsKey('tasks')) { $tasks = $stateParts.tasks }
@@ -371,9 +386,11 @@ $state = [ordered]@{
     ceo_orders_pending = $ordersPending
     hq_feedback_open = $hqfbOpen
     ceo_orders_hq_rows = $hqRows
+    orders_bg_rows = $bgRows
     decisions_total = $decTotal
     decisions_open = $decOpen
     probe_warn_count = $probeWarns
+    probe_quiet_count = $probeQuiets
     evolution = @{ next_tick = 'SUN 09:17'; open_proposals = $evOpen; total = $evTotal; applied = $evApplied }
   }
   history = @{ commits_total = $total; last_commit_ts = $lastC }
@@ -488,5 +505,8 @@ try {
 Write-Output ('perceptor v0.7 done: events +' + $goodEvents.Count + ' quarantined=' + $blocked + ' fleet=' + $fleet.Count + ' tasks=' + $tasks.Count)
 if ($probeWarns -gt 0) {
   Write-Output ('perceptor WARN: ' + $probeWarns + ' probe(s) zero-read/degraded -> ' + ($probeWarnList -join '; '))
+}
+if ($probeQuiets -gt 0) {
+  Write-Output ('perceptor quiet: ' + $probeQuiets + ' probe(s) idle by design -> ' + ($probeQuietList -join ', '))
 }
 $debug | ForEach-Object { Write-Output ('  ' + $_) }

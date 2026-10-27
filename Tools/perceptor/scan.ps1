@@ -51,7 +51,9 @@ if (Test-Path -LiteralPath $groupResolver) {
     $rootResolved = Resolve-GroupRoot -RepoRoot $repoRoot.Path -LegacyRoot $root.Path
     if ($rootResolved -ne $root.Path) {
         Write-Output ('scan:   root: resolved ' + $rootResolved + ' (live ledger newer than ' + $root.Path + ')')
-        $root = Get-Item -LiteralPath $rootResolved
+        # DirectoryInfo has no .Path (silent '' -> every group-rooted probe read nothing).
+      # Resolve-Path keeps the PathInfo shape the rest of this script expects.
+      $root = Resolve-Path -LiteralPath $rootResolved
     }
 }
 $worldDir = Join-Path $repoRoot 'world'
@@ -213,6 +215,9 @@ $evApplied = 0; if ($stateParts.ContainsKey('proposals_applied')) { $evApplied =
 $hqfbOpen = 0; if ($stateParts.ContainsKey('hq_feedback_open')) { $hqfbOpen = [int]$stateParts.hq_feedback_open }   # r46: HQ feedback face (probe hq_feedback)
 $decTotal = 0; if ($stateParts.ContainsKey('decisions_total')) { $decTotal = [int]$stateParts.decisions_total }   # r64: group decision ledger face (probe decisions)
 $decOpen = 0; if ($stateParts.ContainsKey('decisions_open')) { $decOpen = [int]$stateParts.decisions_open }
+# r684: CEO direct-order rows in the group ledger that are still marked executing
+# (probe orders_hq). Separate from ceo_orders_pending (O- ids from the orders dir).
+$hqRows = 0; if ($stateParts.ContainsKey('ceo_orders_hq_rows')) { $hqRows = [int]$stateParts.ceo_orders_hq_rows }
 $fleet = @(); if ($stateParts.ContainsKey('fleet')) { $fleet = $stateParts.fleet }
 if ($stateParts.ContainsKey('fleet_biggame')) { $fleet += $stateParts.fleet_biggame }   # F2: biggame machines join the city
 $tasks = @(); if ($stateParts.ContainsKey('tasks')) { $tasks = $stateParts.tasks }
@@ -338,6 +343,7 @@ $state = [ordered]@{
   governance = @{
     ceo_orders_pending = $ordersPending
     hq_feedback_open = $hqfbOpen
+    ceo_orders_hq_rows = $hqRows
     decisions_total = $decTotal
     decisions_open = $decOpen
     evolution = @{ next_tick = 'SUN 09:17'; open_proposals = $evOpen; total = $evTotal; applied = $evApplied }

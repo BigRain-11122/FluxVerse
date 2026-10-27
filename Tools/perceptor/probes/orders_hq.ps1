@@ -14,6 +14,19 @@
 # already-pulsed rows stay silent, so re-migration after a cursor wipe also
 # self-limits. Rows from PAST dates seed silently (no old-history replay).
 # Note: '=' is stripped from the key material - it is the cursor line delimiter.
+#
+# Row-format lesson (main#21, r684): the ledger table was rewritten to a
+#   | YYYY-MM-DD HH:MM | CEO order | owner | status |
+# form (first seen 2026-10-16) while this probe still matched only the legacy
+#   | MM-DD ~HH:MM | ...
+# rows. After the ledger surgery the table held ZERO legacy rows -> the probe
+# matched nothing and CEO direct orders vanished from the perception face.
+# Both forms are matched now, and the time text keeps its 'x' wildcard minutes
+# (e.g. "00:0x") which a strict \d{2} gate would have dropped.
+#
+# Date gate: a row is only ALLOWED TO EMIT when its own date is today. Any
+# older row (never cursored before) is seeded silently. Without this gate the
+# first run after a format change would replay the whole table in one burst.
 
 function Probe-orders_hq {
   param($ctx)
@@ -21,9 +34,12 @@ function Probe-orders_hq {
     $pending = 0
     $f = Join-Path $ctx.root 'docs\orders.md'
     if (-not (Test-Path $f)) { return @{ state = @{ } } }
+    $now = Get-Date
+    $todayYmd = $now.ToString('yyyy-MM-dd')
     $rows = @()
     foreach ($ln in (Get-Content $f -Encoding UTF8)) {
-      if ($ln -match '^\|\s*\d{2}-\d{2}\s*~') { $rows += $ln }
+      # legacy: | 09-27 ~08:0x | ...   current: | 2026-10-21 12:29 | ... (minutes may read "0x")
+      if ($ln -match '^\|\s*(?:(?:\d{2}-\d{2}\s*~)|(?:20\d{2}-\d{2}-\d{2}\s+\d{2}:[\dx]{2}))') { $rows += $ln }
     }
     $fresh = @($ctx.cursor.Keys | Where-Object { $_ -like 'hqorder:*' }).Count -eq 0
     # migration only: today's ledger events already fired (dedup authority)
@@ -41,16 +57,30 @@ function Probe-orders_hq {
       }
       if ($ctx.cursor.ContainsKey('ledger_rows')) { $ctx.cursor.Remove('ledger_rows') }  # retire the position cursor
     }
-    $today = (Get-Date).ToString('MM-dd')
     foreach ($r in $rows) {
       $c = $r -split '\|'
       if ($c.Count -lt 4) { continue }
-      $time = $c[1].Trim()
+      $time = ($c[1].Trim() -replace '^~\s*', '')
       $quote = $c[2].Trim()
       $dest = $c[3].Trim()
       $status = ''
       if ($c.Count -ge 5) { $status = $c[4].Trim() }
       if ($status -match 'executing') { $pending++ }
+
+      # row date -> yyyy-MM-dd (legacy MM-DD rows assume this year unless that lands in the future)
+      $rowYmd = ''
+      if ($time -match '^(20\d{2}-\d{2}-\d{2})') {
+        $rowYmd = $Matches[1]
+      } elseif ($time -match '^(\d{2})-(\d{2})') {
+        $rowYmd = $now.ToString('yyyy') + '-' + $Matches[1] + '-' + $Matches[2]
+        $dtProbe = [datetime]::MinValue
+        if ([datetime]::TryParseExact($rowYmd, 'yyyy-MM-dd', $null, 0, [ref]$dtProbe) -and $dtProbe.Date -gt $now.Date) {
+          $rowYmd = $now.AddYears(-1).ToString('yyyy') + '-' + $Matches[1] + '-' + $Matches[2]
+        }
+      }
+      if ($rowYmd -eq '') { continue }   # no parsable date = not a ledger row we can age
+      $isToday = ($rowYmd -eq $todayYmd)
+
       $zone = 'governance'
       if ($dest -match 'BigMoney|fleet|quant') { $zone = 'quant' }
       elseif ($dest -match 'BigStream|media') { $zone = 'media' }
@@ -63,13 +93,14 @@ function Probe-orders_hq {
       if ($quote60.Length -gt 60) { $quote60 = $quote60.Substring(0,60) + ([string][char]46 + [string][char]46 + [string][char]46) }
       $summary = 'ledger ' + $time + ' ' + $quote60
       $ctx.cursor[$key] = '1'
-      if (-not $fresh) {
-        & $ctx.AddEvent 'CEO_ORDER' 'CEO' 'fluxgroup' $zone $summary
-      } elseif ($time.StartsWith($today) -and -not $fired.ContainsKey($summary)) {
-        # migration: today's row that never pulsed -> backfill the missed event once
+      # past-dated rows seed silently (no history replay); today's rows pulse once
+      if ($isToday -and -not $fired.ContainsKey($summary)) {
         & $ctx.AddEvent 'CEO_ORDER' 'CEO' 'fluxgroup' $zone $summary
       }
     }
     return @{ state = @{ ceo_orders_hq_rows = $pending } }
-  } catch { return $null }
+  } catch {
+    # contract: fail-soft (never take the whole city scan down)
+    return $null
+  }
 }

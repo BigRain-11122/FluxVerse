@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-27T06:17:15Z",
-    "current_activity":  "r683b —— 镜像陈旧根因根治：新建 resolve-group-root.ps1（取 cph4 台账 mtime 最新的组根），接线判读面（假触发 c3/c6/c7 清零，triggers 4→2）与感知面 scan.ps1（组级探针此前喂城市一周旧世界）",
-    "artifact":  "Tools/devloop/resolve-group-root.ps1（新·单一权威件）+ Tools/devloop/check-fastpath.ps1（c0-group 行）+ Tools/perceptor/scan.ps1（root 解析接线·补账 113 事件·verify PASS）+ TECH.md §九 r683b 行 + queue main#21 新债",
-    "artifact_utc":  "2026-10-27T06:17:15Z",
-    "milestone":  "下步：T-FV-134 司级 7 天基准刷新（今日到期）→ main#21 orders_hq 行格式盲区（先演练再改正则）→ main#8 城市线附卷（10-19 逾期）→ main#17 浸泡复跑窗（10-28 18:36 后）",
+    "updated_utc":  "2026-10-27T20:31:54Z",
+    "current_activity":  "r684 收口：CEO 直令感知盲区根治——orders_hq 探针双格式正则（旧 MM-DD ~／新 2026-MM-DD HH:Mx）+ 日期闸（旧日静默播种、今日才发事件），并拔出 scan 组根赋值让 $ctx.root 变空串的断链（组级探针此前静默零读却报 OK）",
+    "artifact":  "Tools/perceptor/probes/orders_hq.ps1（双格式+日期闸）+ Tools/perceptor/tests/test-orders-hq.ps1（沙盒 18/18，含真台账真游标副本 T3）+ Tools/perceptor/scan.ps1（Resolve-Path 修根 + governance.ceo_orders_hq_rows 接线）；实证 scan 探针全 OK events +16 quarantined=0、verify PASS、hqorder 游标 301→547、状态面 ceo_orders_hq_rows=20",
+    "artifact_utc":  "2026-10-27T20:31:45Z",
+    "milestone":  "队列头=T-FV-134 司级 7 天基准刷新（10-27 到期·已逾期 2 日·main#23）→ main#22 探针静默零读自检 → main#8 城市线附卷（10-19 逾期）→ main#17 浸泡复跑（10-28 18:36 后窗）",
     "milestone_eta_utc":  "2026-10-29T12:00:00Z"
 }

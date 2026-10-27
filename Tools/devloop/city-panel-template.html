@@ -89,10 +89,11 @@
 
   <div class="grid">
     <div class="card face">
-      <h2>本司实况（三行）</h2>
+      <h2>本司实况（三行＋今日日志）</h2>
       <p><span class="k">当前活</span><span class="v" id="f-act">—</span></p>
       <p><span class="k">最近实物</span><span class="v" id="f-art">—</span></p>
       <p><span class="k">下个里程碑</span><span class="v" id="f-mile">—</span></p>
+      <p><span class="k">今日日志</span><span class="v" id="f-tick">—</span></p>
     </div>
     <div class="card">
       <h2>城市规模</h2>
@@ -269,6 +270,11 @@ function fmtAge(h){
   renderArtifact($('f-act'), face.current_activity, null, 'act');
   renderArtifact($('f-art'), face.artifact, face.artifact_utc, 'art');
   renderArtifact($('f-mile'), face.milestone, null, 'mile');
+  // 第四行（queue main#30）：今日 tick 日志。行文本就是盘上相对路径，builder 已在
+  // 构建时核过存在性与 file:// url；这里照同样规则渲染（命中有链接、缺失标「未找到」）。
+  // 该行不属三行承诺（缺日志由自检第 9 项「tick 覆盖」判），故缺失不污染实况路径行。
+  const tickRow = (ART && ART.by && ART.by.tick && ART.by.tick.items && ART.by.tick.items[0]) || null;
+  renderArtifact($('f-tick'), tickRow ? tickRow.rel : '', null, 'tick');
 
   const city = snap.city || {};
   $('c-commits').innerHTML = esc(city.commits_total || 0) + '<small>commits</small>';
@@ -703,10 +709,15 @@ function fmtAge(h){
   const artMiss = Number(art.missing || 0);
   const artMissNames = Array.isArray(art.miss_names) ? art.miss_names : [];
   const artBy = art.by || {};
-  const lineStat = ['act', 'art', 'mile']
+  // 第四行（今日 tick 日志）单独报账：它不是三行承诺的一部分（缺日志由第 9 项
+  // 「tick 覆盖」判），但读者必须在这一行明细里看见它到底在不在盘上。
+  const tickItem = (artBy.tick && Array.isArray(artBy.tick.items) && artBy.tick.items[0]) || null;
+  const tickFace = !tickItem ? '今日日志行未注入'
+    : (tickItem.exists ? '今日日志在盘' : '今日日志未在盘');
+  const lineStat = ['act', 'art', 'mile', 'tick']
     .map(k => [k, Number((artBy[k] || {}).paths || 0)])
     .filter(p => p[1] > 0)
-    .map(p => ({ act: '当前活', art: '最近实物', mile: '里程碑' }[p[0]] + ' ' + p[1]));
+    .map(p => ({ act: '当前活', art: '最近实物', mile: '里程碑', tick: '今日日志' }[p[0]] + ' ' + p[1]));
   let ap;
   if (!artPaths) {
     ap = { ok: false, vd: '三行实况未含可核路径（当前活／实物／里程碑都没有文件名）' };
@@ -717,6 +728,7 @@ function fmtAge(h){
     ap = { ok: true, vd: artPaths + ' 条路径全部命中盘面' +
       (lineStat.length ? '（' + lineStat.join('／') + '）' : '') + ' · 页上可直接点开' };
   }
+  ap.vd = ap.vd + ' · ' + tickFace;
   selfcheck.push({ ok: ap.ok, nm: '实况路径', vd: ap.vd });
 
   const warnN = selfcheck.filter(c => !c.ok).length;

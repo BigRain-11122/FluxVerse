@@ -177,6 +177,35 @@ foreach ($k in $faceKeyMap.Keys) {
     $artPaths += [int]$one.paths
     $artMiss += @($one.miss_names)
 }
+# --- 4th row: today's tick log as a clickable anchor (queue main#30) ---------
+# The CEO should be able to open TODAY's tick log from the panel in one click.
+# Same law as the face lines: the builder decides existence and the file:// url
+# on disk, the page only renders. This row is deliberately kept OUT of the
+# three-line aggregate (paths/missing): "three lines are clickable" is the face
+# promise, while a missing tick log is already covered by self-check #9
+# ("tick coverage"), so it must not turn the path row red at a midnight first
+# run. A miss is still drawn honestly as "not found".
+$tickRel = [string]$TickLogPath
+if ($tickRel.StartsWith($repoDir, [StringComparison]::OrdinalIgnoreCase)) {
+    $tickRel = $tickRel.Substring($repoDir.Length).TrimStart('\', '/').Replace('\', '/')
+} else {
+    $tickRel = $tickRel.Replace('\', '/')
+}
+$tickOne = Resolve-ArtItems -Raw $tickRel -Max 1
+$tickTagged = @()
+foreach ($it in @($tickOne.items)) {
+    $tickTagged += (New-Object PSObject -Property ([ordered]@{
+        text = [string]$it.text; rel = [string]$it.rel
+        exists = [bool]$it.exists; url = [string]$it.url; k = 'tick'
+    }))
+}
+$artBy['tick'] = (New-Object PSObject -Property ([ordered]@{
+    paths      = [int]$tickOne.paths
+    missing    = [int]$tickOne.missing
+    miss_names = @($tickOne.miss_names)
+    items      = @($tickTagged)
+}))
+
 $artMeta = New-Object PSObject -Property ([ordered]@{
     paths      = [int]$artPaths
     missing    = [int]$artMiss.Count
@@ -400,5 +429,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' built=' + $built + ' path=' + $OutPath)
 exit 0

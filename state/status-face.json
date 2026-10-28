@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-28T03:16:20Z",
-    "current_activity":  "r706 收口（产品面轮）：取景卡不再收「页面证据件」＝main#46。此前 r702 立的面板「不许拍自己」只按文件名含 panel 排除，名字一改就失效——r705 实测一张 390 宽窄屏截图被当成城市帧内联，页面 157KB→533KB。改为按形状判：宽 \u003c421 或 高/宽 \u003e2.0 一律是页面证据件（手机截图、整页长条），候选先排序再逐个过闸取满三张，被拒的长条不再白吃卡位；构建行新增 shots_skipped 计数，闸门是否真在工作可直接读出。源=Tools/devloop/build-city-panel.ps1",
-    "artifact":  "world-public/city-panel.html（本页，file:// 直接打开）；源=Tools/devloop/build-city-panel.ps1（Resolve-CityShots 形状闸）＋Tools/devloop/city-panel-template.html；沙盒=Tools/devloop/test-city-shot-shape.ps1（11/11：真帧 2 保留·长条与手机条 2 跳过·panel 自拍按名排除·被拒件零泄漏）；套件=Tools/devloop/run-panel-suites.ps1（26 套 ALL PASS）；收口=state/queue/main.md #46 销行，新发现债 #47",
-    "artifact_utc":  "2026-10-28T03:16:20Z",
-    "milestone":  "取景卡现在只收真城市帧；真实注意项仍是取景帧陈旧（最新=10-10 smoke-r679，已 18 天，City3D 抓帧属交互窗在飞面，本司不动）。队列头 next＝main#23 司级 7 天基准刷新（10-27 到期·已逾期 3 日，对照 docs/global-benchmarks.md），其后=main#40 冻结 fixture 重建化／main#47 取景闸的 qa/ 命名普查接 verify／main#8 城市线附卷（10-19 逾期）／main#33 状态档写入硬化。",
+    "updated_utc":  "2026-10-28T03:31:26Z",
+    "current_activity":  "r707 收口（FULL-ROUND·产品面优先轮）：取景闸从 builder 私有升级为「一处定义、两面共用」——新建 Tools/devloop/city-shot-shape.ps1（面板名/家族注册/形状三闸），Tools/devloop/build-city-panel.ps1 与 Tools/perceptor/verify.ps1 的 §2c 同时 dot-source 它；verify 每 10 分钟把 qa/ 过同一套闸，能过形状闸却不属注册家族的图（例：1000×1800 半页截图）直接点名 WARN，不再只能靠人眼发现。沙盒 18/18、r706 形状沙盒 11/11 零回归；真机 verify 一行：city-shot-census images=48 inlinable=3 panel=45 unregistered=0。",
+    "artifact":  "world-public/city-panel.html（本页，file:// 直接打开；源码=Tools/devloop/build-city-panel.ps1；共用闸定义=Tools/devloop/city-shot-shape.ps1；沙盒=Tools/devloop/test-city-shot-census.ps1 18/18 ＋ Tools/devloop/test-city-shot-shape.ps1 11/11；全 26 套 ALL PASS；验收截图=qa/city-panel-r707-bm-a.png 与 qa/city-panel-r707-narrow-bm-a.png）",
+    "artifact_utc":  "2026-10-28T03:31:26Z",
+    "milestone":  "取景卡仍是 10-10 的 smoke 帧（17 天前，自检第 14 项唯一红标，City3D 抓帧归交互窗在飞面）。队列 next=main#23 司级 7 天基准刷新（10-27 到期·逾期 3 日，落 docs/global-benchmarks.md）→ main#40 冻结 fixture 重建化 → main#8 城市线附卷（10-19 逾期）→ main#33 状态档写入硬化 → main#17 浸泡复跑。",
     "milestone_eta_utc":  "2026-10-29T00:00:00Z"
 }

@@ -177,6 +177,46 @@ if (Test-Path -LiteralPath $censusScript) {
   }
 }
 
+# ---------- 2c. city shot census (main#47, r707) ----------
+# The public panel inlines the newest qa/ images as its "city view" card. The
+# builder drops page evidence via three guards (panel name / family registry /
+# shape) that live in Tools\devloop\city-shot-shape.ps1. This census runs the
+# SAME definition so a file that would slip between the guards is reported in
+# the same tick instead of on the CEO's screen; it also names every qa/ image
+# that passes the shape gate but belongs to no registered frame family - the
+# one case where the pixels cannot prove what the picture is.
+# WARN, not FAIL - same stance as 2b: an observation, not a broken city.
+$shotModule = Join-Path $repoRoot 'Tools\devloop\city-shot-shape.ps1'
+if (Test-Path -LiteralPath $shotModule) {
+  $shotDir = Join-Path $repoRoot 'qa'
+  if ($env:FLUXVERSE_SHOT_DIR) { $shotDir = $env:FLUXVERSE_SHOT_DIR }
+  $loaded = $true
+  try { . $shotModule } catch { $loaded = $false }
+  if ($loaded -and (Get-Command Get-CityShotAudit -ErrorAction SilentlyContinue)) {
+    $shotRows = @(Get-CityShotAudit -Dir $shotDir)
+    if ($shotRows.Count -eq 0 -and -not (Test-Path -LiteralPath $shotDir)) {
+      Write-Output ('VERIFY WARN: city-shot-census: shot dir missing: ' + $shotDir)
+    } else {
+      $panelRows = @($shotRows | Where-Object { $_.panel })
+      $shapeRows = @($shotRows | Where-Object { (-not $_.panel) -and ($_.reason -eq 'shape') })
+      $badRows   = @($shotRows | Where-Object { (-not $_.panel) -and ($_.reason -eq 'unreadable') })
+      $unregRows = @($shotRows | Where-Object { $_.reason -eq 'unnamed' -and $_.shape_ok })
+      $keepRows  = @($shotRows | Where-Object { $_.keep })
+      $line = 'city-shot-census: images=' + $shotRows.Count + ' inlinable=' + $keepRows.Count +
+              ' panel=' + $panelRows.Count + ' shape_skipped=' + $shapeRows.Count +
+              ' unreadable=' + $badRows.Count + ' unregistered=' + $unregRows.Count
+      if ($unregRows.Count -gt 0) {
+        Write-Output ('VERIFY WARN: ' + $line + ' - an image passes the shape gate but belongs to no registered frame family, so the panel skips it; rename into a registered family or retire it')
+        foreach ($u in $unregRows) { Write-Output ('VERIFY WARN: city-shot ' + $u.name + ' ' + $u.w + 'x' + $u.h) }
+      } else {
+        Write-Output ('VERIFY HEALTH: ' + $line)
+      }
+    }
+  } else {
+    Write-Output 'VERIFY WARN: city-shot-shape.ps1 did not provide Get-CityShotAudit'
+  }
+}
+
 # ---------- verdict ----------
 if ($fail.Count -gt 0) {
   $fail | ForEach-Object { Write-Output ('VERIFY FAIL: ' + $_) }

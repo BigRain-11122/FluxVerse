@@ -94,6 +94,29 @@
   .chk .vd{flex:1;font-variant-numeric:tabular-nums}
   footer{margin-top:22px;color:#a9b8c9;font-size:12.5px;line-height:1.9;border-top:1px solid var(--line);padding-top:12px}
   code{color:#b9c8da;background:#0e141c;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+  /* 行内固定宽度集中到这五个类——它们必须能被媒体查询改写，而行内
+     style 的优先级高于样式表，写死在模板里就永远收不窄。 */
+  .zname{min-width:120px}
+  .rowline .nm{min-width:104px;color:var(--dim)}
+  .evtype{min-width:130px}
+  /* 窄屏（手机 390×844·main#45）：事件尾流原先靠 .scroller 横向裁切收场，
+     读者只看到「gami…」「gove…」——标签被切掉不是排版问题，是信息丢失。
+     窄屏下放开全部固定宽、允许换行，宁可多一行也不吞字。 */
+  @media (max-width:520px){
+    .wrap{padding:16px 12px 40px}
+    h1{font-size:17px}
+    header{gap:8px 10px;margin-bottom:10px}
+    .badge{font-size:11px;padding:3px 8px}
+    .rowline{flex-wrap:wrap;gap:6px 8px}
+    .t{min-width:0}
+    .zname,.rowline .nm,.evtype{min-width:0}
+    .evtype{flex:1 1 auto;word-break:break-word}
+    .chk{flex-wrap:wrap;gap:6px 8px}
+    .chk .nm{min-width:0}
+    .chk .vd{flex:1 1 100%}
+    .barname{min-width:84px}
+    .face .artmiss em{margin-left:0}
+  }
 </style>
 </head>
 <body>
@@ -530,7 +553,7 @@ function artTitle(it){
   const zones = snap.zones || [];
   $('zones').innerHTML = zones.length ? zones.map(z =>
     '<div class="rowline"><span class="dot zone-' + esc(z.id) + '"></span>' +
-    '<span style="min-width:120px">' + esc(z.name || z.id) + '</span>' +
+    '<span class="zname">' + esc(z.name || z.id) + '</span>' +
     '<span class="tag">' + esc(z.status || '') + '</span>' +
     '<span class="t">activity ' + esc(z.activity ?? 0) + '</span></div>'
   ).join('') : '<div class="rowline"><span class="t">无分区数据</span></div>';
@@ -576,7 +599,7 @@ function artTitle(it){
     const d = okNum ? (Number(cur) - Number(pr)) : null;
     const cls = d == null ? '' : (d > 0 ? 'ok' : (d < 0 ? 'warn' : ''));
     const txt = d == null ? '—' : (d === 0 ? '持平' : (d > 0 ? '+' + d : String(d)));
-    return '<div class="rowline"><span class="nm" style="min-width:104px;color:var(--dim)">' + esc(nm) + '</span>' +
+    return '<div class="rowline"><span class="nm">' + esc(nm) + '</span>' +
       '<span style="flex:1;font-variant-numeric:tabular-nums">' + esc(cur == null ? '—' : cur) +
       (unit ? ' <span class="muted">' + esc(unit) + '</span>' : '') + '</span>' +
       '<span class="tag ' + cls + '">' + esc(txt) + '</span></div>';
@@ -1052,7 +1075,7 @@ function artTitle(it){
       const st = stampLocal(e.ts_utc);
       return '<div class="rowline"><span class="dot zone-' + esc(e.zone || 'governance') + '"></span>' +
         '<span class="t"' + ariaClock(st) + liftTitle(st) + '>' + esc(st.text) + '</span>' +
-        '<span style="min-width:130px">' + esc(e.type || '') + '</span>' +
+        '<span class="evtype">' + esc(e.type || '') + '</span>' +
         '<span class="tag">' + esc(e.zone || '') + '</span></div>';
     }).join('') : '<div class="rowline"><span class="t">该分区无事件</span></div>';
   };

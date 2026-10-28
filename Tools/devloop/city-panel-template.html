@@ -980,6 +980,28 @@ function artTitle(it){
   ap.vd = ap.vd + ' · ' + tickFace;
   selfcheck.push({ ok: ap.ok, nm: '实况路径', vd: ap.vd });
 
+  // 取景帧（queue main#43）：r702 把城市取景卡做出来后，帧数与帧龄只在卡片徽标上
+  // 露出，自检区读不到——而取景卡是全页唯一「城市长什么样」的实物面，它空了或全
+  // 旧了，自检就不该说全绿。三项判据：一帧都没有=注意；最新帧超 7 天=注意并写明
+  // 几天（旧帧是事实，不因为不好看而藏，同 r702 立场）；其余=通过给出帧数与帧龄。
+  const shotList = (SHOTS && Array.isArray(SHOTS.items)) ? SHOTS.items : [];
+  const shotInlined = shotList.filter(s => s && s.data).length;
+  const shotNewest = shotList.length ? ago(shotList[0].shot_utc) : null;
+  let sh;
+  if (!shotList.length) {
+    sh = { ok: false, vd: 'qa/ 还没有 City3D 证据帧，取景卡为空' };
+  } else if (shotNewest == null) {
+    sh = { ok: false, vd: shotList.length + ' 帧，但最新帧时间缺失或不可解析' };
+  } else if (shotNewest > 24 * 7) {
+    sh = { ok: false, vd: shotList.length + ' 帧（内联 ' + shotInlined + '），最新一帧已是 ' +
+      Math.floor(shotNewest / 24) + ' 天前（阈值 7 天）——City3D 出帧后自动跟上' };
+  } else {
+    sh = { ok: true, vd: shotList.length + ' 帧（内联 ' + shotInlined + '），最新 ' +
+      fmtAge(shotNewest) + '（阈值 7 天）' };
+  }
+  sh.title = shotList.length ? absClock(shotList[0].shot_utc) : undefined;
+  selfcheck.push({ ok: sh.ok, nm: '取景帧', vd: sh.vd, title: sh.title });
+
   const warnN = selfcheck.filter(c => !c.ok).length;
   $('sc-sum').textContent = warnN ? (warnN + ' 项注意') : (selfcheck.length + ' 项通过');
   // 自检行也可挂 title（queue main#34）：凡是写着「N 分钟前」的行，

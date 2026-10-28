@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-28T00:49:19Z",
-    "current_activity":  "r699 收口（main#38 销项）：面板轴上的钟统一成本地钟——同一页原本两套钟，24h 曲线两端写 UTC、逐时节奏柱写 UTC 小时，而页内其余时戳一律给本地钟；UTC 那端左值还比右值大，读者先以为轴画反了。做法：曲线两端改印本地 HH:MM，UTC 降为轴端 `\u003ctitle\u003e` 悬停；节奏柱标签印本地小时、悬停同时给本地与 UTC；卡头改「近 12 小时 · 本地钟」，页脚与趋势说明同步改口径。本地钟取打开这一页的机器时区（不硬编码 +08:00）。实证：PANEL OK bytes=73338、读回自检 13/13、新增沙盒 20/20（含 +05:30 时区平移沙盒与 +08:45 偏移）、全 21 套面板测试 345 断言零回归、截图 qa/city-panel-r699-bm-a.png。",
-    "artifact":  "world-public/city-panel.html（本行右侧时间戳=面部写入时刻·页面由每 10 分钟 tick 自动重建·file:// 直接打开·本轮=轴钟本地化）；实源=Tools/devloop/city-panel-template.html（新增 hmLocal/hmUtc 单一 helper，曲线两端与节奏柱两处落点，页脚/卡头文案同步）；沙盒=logs/devloop-r699-panel-axclock-test.js（20 断言·含时区平移证明本地≠UTC）；取证截图=qa/city-panel-r699-bm-a.png（1400×4900）；队列=state/queue/main.md #39",
-    "artifact_utc":  "2026-10-28T00:49:19Z",
-    "milestone":  "队列头 main#23 司级 7 天基准刷新（10-27 到期·逾期 1 日·判据=docs/global-benchmarks.md ④更新记录末行+③表源分级如实标）→ main#8 城市线附卷（10-19 逾期）→ main#39 跨轮轨迹列表行钟点统一（r699 轮尾补条）→ main#33 状态档写入硬化（sha 对 live root 校验）→ main#17 浸泡复跑（10-28 18:36 后或 City3D 新 commit）。面板由每 10 分钟 tick 自动重建，CEO 随时 file:// 打开即可看到实况。",
+    "updated_utc":  "2026-10-28T01:08:55Z",
+    "current_activity":  "r700 收口（产品面轮）：面板上最后三处「UTC 原始串」全部改成本地钟——r699 只治了图（曲线轴/节奏柱），表与流还是 UTC：跨轮轨迹行印 `2026-10-28 00:11:03`、折叠行「持平 N 条」的起止、卡头「对比 2026-10-28 00:56:01（5 分钟前）」、事件流每行 `2026-10-28 01:01:01`。读者在卡头看 00:56、往下两行变 08:56，仍得自己认出是同一时刻的两种口径。做法=单一 helper `stampLocal(iso)` 给「本地 MM-DD HH:MM + 绝对钟点 title」（时区取打开这一页的机器，不硬编码），title 拼装提为顶层 `liftTitle()` 单点，空值不写空 title；对比锚三态收口；坏时戳原样回显不崩。",
+    "artifact":  "world-public/city-panel.html（面板最新构建时刻=面部写入时刻；每 10 分钟随 tick 自动重建，file:// 直接打开）；源=Tools/devloop/city-panel-template.html（新增 stampLocal/liftTitle 两个单一 helper）；沙盒=logs/devloop-r700-panel-trendclock-test.js（30 条断言，含 Date 子类强推 +05:30 的时区平移证明：轨迹行/折叠起止/对比锚/事件流四处全跟本地走）；取证截图=qa/city-panel-r700-bm-a.png（1400×5200）+ 裁带 qa/city-panel-r700-crop-trend.png（卡头 08:56、轨迹 08:06→09:01、折叠 08:21→08:21）；收口=state/queue/main.md #39 销行。",
+    "artifact_utc":  "2026-10-28T01:08:55Z",
+    "milestone":  "队列头 main#23 司级 7 天基准刷新（10-27 到期·已逾期 2 日·判据=docs/global-benchmarks.md ④更新记录末行+③表源分级如实标）；次位 main#40 冻结 fixture 重建化（r700 新发现：10-20 快照测的是旧代码，用 builder 的 -SnapPath/-HistoryPath 重生成后 r671 场景回到当前代码）→ main#8 城市线附卷（10-19 逾期）→ main#33 状态档写入硬化。CEO 随时 file:// 打开 world-public/city-panel.html 即可看实况。",
     "milestone_eta_utc":  "2026-10-29T00:00:00Z"
 }

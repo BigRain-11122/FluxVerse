@@ -160,7 +160,7 @@
     重建：<code>powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\build-city-panel.ps1</code><br>
     「最近实物」里的文件名在构建时逐个核过盘面（存在性 + file:// 绝对路径），命中即可点开，缺失如实标「未找到」。<br>
     构建时刻（本地）：<span id="built">—</span><span id="builtage" class="tag"></span> · 自包含单文件，零服务器零外链。<br>
-    本页每 60 秒自动重载一次，跟随 tick 重建拿到新快照；图表轴上的钟点是本地钟（悬停看 UTC），本地读取以 <code>built</code> 行为准。<br>
+    本页每 60 秒自动重载一次，跟随 tick 重建拿到新快照；图表轴与跨轮轨迹行的钟点都是本地钟（悬停看 UTC），本地读取以 <code>built</code> 行为准。<br>
     跨轮摘要：<code>logs/panel-history.jsonl</code>（本地日志不入库·每次 tick 记一条·上限 288 条≈24 小时）。
   </footer>
 </div>
@@ -236,6 +236,24 @@ function hmUtc(t){
   const d = new Date(t);
   const p2 = (n) => (n < 10 ? '0' + n : String(n));
   return p2(d.getUTCHours()) + ':' + p2(d.getUTCMinutes());
+}
+
+// 轨迹行钟点（queue main#39）：跨轮轨迹列表与「持平」行原先直接印 ISO 原始串
+// （UTC），和刚改成本地钟的曲线/节奏轴并排=同一张卡里两套钟。这里统一走本地
+// 钟：正文给 MM-DD HH:MM，完整绝对钟点与原始 ISO 退到 title（口径不丢，不换算）。
+function stampLocal(iso){
+  const t = Date.parse(iso);
+  if (isNaN(t)) return { text: String(iso == null ? '' : iso), title: '' };
+  const d = new Date(t);
+  const p2 = (n) => (n < 10 ? '0' + n : String(n));
+  const text = p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
+    ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+  return { text: text, title: absClock(iso) || '' };
+}
+
+// 把「绝对钟点」拼成 title 属性；空值不写 title（宁缺不造假）。
+function liftTitle(d){
+  return (d && d.title) ? ' title="' + esc(d.title) + '"' : '';
 }
 
 // 实物链接的悬停信息（queue main#36）：只有 href 的链接看不出这件东西是刚出的
@@ -474,9 +492,17 @@ function artTitle(it){
     const gap = Math.round((curAnchor - Date.parse(prev.ts)) / 60000);
     gapTxt = '（' + gap + ' 分钟前）';
   }
-  $('cv-prev').textContent = (prev && prev.ts)
-    ? '对比 ' + String(prev.ts).replace('T', ' ').replace('Z', '') + gapTxt
-    : '无上一条快照';
+  // 对比锚也走本地钟（queue main#39 同病）：原先印 ISO 原始串（UTC），而正下方
+  // 轨迹行已是本地钟——同一张卡里两套钟。正文给「MM-DD HH:MM」，完整钟点进 title。
+  const pvEl = $('cv-prev');
+  if (prev && prev.ts) {
+    const pvT = stampLocal(prev.ts);
+    pvEl.textContent = '对比 ' + pvT.text + gapTxt;
+    if (pvT.title) pvEl.title = pvT.title; else pvEl.title = '';
+  } else {
+    pvEl.textContent = '无上一条快照';
+    pvEl.title = '';
+  }
 
   const nHist = (hm && typeof hm.n === 'number') ? hm.n : 0;
   const histSpanMin = (hm && hm.first_utc && !isNaN(curAnchor) && !isNaN(Date.parse(hm.first_utc)))
@@ -508,13 +534,15 @@ function artTitle(it){
     // 连续快照对读者零信息、只把页面拉长（r689 前 12 条里常有 8 条持平）。
     // 故只列「有任一指变化」的点，连续持平的折叠成一行并标明起止与条数；
     // 展示数 + 折叠数 = 注入条数（自检「轨迹折叠」逐轮核对，折叠不得吞点）。
-    const tsHHMM = (iso) => String(iso || '').replace('T', ' ').replace('Z', '').slice(11, 16);
     let rows = [], flatN = 0, flatFrom = null, flatTo = null;
     const flushFlat = () => {
       if (!flatN) return;
+      const a = stampLocal(flatFrom), b = stampLocal(flatTo);
+      const spanTitle = a.title ? (a.title + ' → ' + b.title) : b.title;
       rows.push('<div class="rowline"><span class="t">…</span>' +
         '<span class="muted" style="flex:1">持平 ' + flatN + ' 条</span>' +
-        '<span class="tag">' + esc(tsHHMM(flatFrom)) + ' → ' + esc(tsHHMM(flatTo)) + ' UTC</span></div>');
+        '<span class="tag"' + liftTitle({ title: spanTitle }) + '>' +
+        esc(a.text) + ' → ' + esc(b.text) + '</span></div>');
       flatN = 0; flatFrom = null; flatTo = null;
     };
     series.forEach((s, i) => {
@@ -533,8 +561,9 @@ function artTitle(it){
       const dc = p ? (Number(s.c) - Number(p.c)) : null;
       const cls = dc == null ? '' : (dc > 0 ? 'ok' : (dc < 0 ? 'warn' : ''));
       const dtx = dc == null ? '起点' : (dc > 0 ? '+' + dc : (dc === 0 ? '持平' : String(dc)));
-      rows.push('<div class="rowline"><span class="t">' +
-        esc(String(s.ts || '').replace('T', ' ').replace('Z', '')) + '</span>' +
+      const st = stampLocal(s.ts);
+      rows.push('<div class="rowline"><span class="t"' + liftTitle(st) + '>' +
+        esc(st.text) + '</span>' +
         '<span style="flex:1;font-variant-numeric:tabular-nums">提交 ' + esc(s.c == null ? '—' : s.c) + '</span>' +
         '<span class="tag ' + cls + '">' + esc(dtx) + '</span>' +
         '<span class="tag">事件 ' + esc(s.e == null ? '—' : s.e) + '</span></div>');
@@ -870,12 +899,15 @@ function artTitle(it){
   const renderEv = () => {
     const list = evFilter === '*' ? evs : evs.filter(e => (e.zone || 'unknown') === evFilter);
     $('ev-count').textContent = list.length + (evFilter === '*' ? '' : ' / ' + evs.length);
-    $('events').innerHTML = list.length ? list.map(e =>
-      '<div class="rowline"><span class="dot zone-' + esc(e.zone || 'governance') + '"></span>' +
-      '<span class="t">' + esc((e.ts_utc || '').replace('T',' ').replace('Z','')) + '</span>' +
-      '<span style="min-width:130px">' + esc(e.type || '') + '</span>' +
-      '<span class="tag">' + esc(e.zone || '') + '</span></div>'
-    ).join('') : '<div class="rowline"><span class="t">该分区无事件</span></div>';
+    // 事件流的时刻同病（queue main#39）：原先印 ISO 原始串（UTC），与页内
+    // 其余本地钟并存。正文给本地 MM-DD HH:MM，绝对钟点与原始 ISO 进 title。
+    $('events').innerHTML = list.length ? list.map(e => {
+      const st = stampLocal(e.ts_utc);
+      return '<div class="rowline"><span class="dot zone-' + esc(e.zone || 'governance') + '"></span>' +
+        '<span class="t"' + liftTitle(st) + '>' + esc(st.text) + '</span>' +
+        '<span style="min-width:130px">' + esc(e.type || '') + '</span>' +
+        '<span class="tag">' + esc(e.zone || '') + '</span></div>';
+    }).join('') : '<div class="rowline"><span class="t">该分区无事件</span></div>';
   };
 
   const chips = [['*', '全部 ' + tail.length]].concat(zoneKeys.map(z => [z, z + ' ' + zoneCnt[z]]));

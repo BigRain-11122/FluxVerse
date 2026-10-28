@@ -202,6 +202,24 @@ function fmtAge(h){
   return h.toFixed(1) + ' 小时前';
 }
 
+// 绝对钟点（queue main#34）：相对年龄（「N 分钟前」）冻结在构建时刻，面板放旧了
+// 读数就会骗人——凡带绝对时戳的 tag 都挂 title＝本地钟点（ISO），读者可自行换算。
+// 时戳缺失/不可解析返回 null，调用方不加 title（宁缺不造假，同 r694 立场）。
+function absClock(iso){
+  const t = Date.parse(iso);
+  if (isNaN(t)) return null;
+  const d = new Date(t);
+  const p2 = (n) => (n < 10 ? '0' + n : String(n));
+  return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
+    ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()) + '（' + iso + '）';
+}
+// 给元素挂「绝对钟点」title；无时戳/不可解析时原样返回，不写空 title。
+function ageTitle(el, iso){
+  const s = absClock(iso);
+  if (el && s) el.title = s;
+  return el;
+}
+
 (function render(){
   const snap = SNAP || {};
   const face = FACE || {};
@@ -215,6 +233,7 @@ function fmtAge(h){
   const stale = (h != null && h > 2);
   badge.className = 'badge ' + (stale ? 'stale' : 'fresh');
   badge.textContent = '快照 ' + fmtAge(h) + (stale ? '（scan 停走）' : '');
+  ageTitle(badge, snap.ts_utc);
 
   // 三行实况
   const setKV = (id, main, ts) => {
@@ -225,6 +244,7 @@ function fmtAge(h){
       s.className = 'tag';
       s.style.marginLeft = '6px';
       s.textContent = fmtAge(ago(ts));
+      ageTitle(s, ts);
       el.appendChild(s);
     }
   };
@@ -264,6 +284,7 @@ function fmtAge(h){
       s.className = 'tag';
       s.style.marginLeft = '6px';
       s.textContent = fmtAge(ago(ts));
+      ageTitle(s, ts);
       el.appendChild(s);
     }
   };
@@ -291,14 +312,8 @@ function fmtAge(h){
     // mtime/尺寸缺失只丢自己那一段，宁缺不造假（与自检第 9 项同立场）。
     (function () {
       const parts = [];
-      const mt = Date.parse(tk.mtime_utc);
-      if (!isNaN(mt)) {
-        const d = new Date(mt);
-        const p2 = (n) => (n < 10 ? '0' + n : String(n));
-        parts.push('最后写入 ' + d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' +
-          p2(d.getDate()) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()) +
-          '（' + tk.mtime_utc + '）');
-      }
+      const clk = absClock(tk.mtime_utc);
+      if (clk) parts.push('最后写入 ' + clk);
       if (typeof tk.size === 'number' && tk.size >= 0) parts.push('日志 ' + tk.size + ' 字节');
       if (parts.length) s.title = parts.join(' · ');
     })();
@@ -309,6 +324,7 @@ function fmtAge(h){
   $('c-commits').innerHTML = esc(city.commits_total || 0) + '<small>commits</small>';
   $('c-games').textContent = '游戏 ' + (city.games_active ?? 0) + ' / ' + (city.games_total ?? 0) + ' 在跑';
   $('c-renders').textContent = '渲染累计 ' + (city.renders_total ?? 0) + '（最近 ' + fmtAge(ago(city.last_render_utc)) + '）';
+  ageTitle($('c-renders'), city.last_render_utc);
   $('c-fleet').textContent = '机队在线 ' + (city.fleet_online ?? 0) + ' 台';
 
   const rp = snap.reality_public || {};
@@ -616,7 +632,7 @@ function fmtAge(h){
       : (futureN === 0 ? '无（阈值 快照 +5 分钟）' : futureN + ' 条晚于快照') });
 
   selfcheck.push({ ok: !(h != null && h > 2), nm: '快照龄',
-    vd: fmtAge(h) + (h != null && h > 2 ? '（scan 停走）' : '') });
+    vd: fmtAge(h) + (h != null && h > 2 ? '（scan 停走）' : ''), title: absClock(snap.ts_utc) });
 
   // tick 覆盖：本页由 tick 自身产出，日志缺档/停走是唯一能静默的故障面
   // （页面照出、数据照旧，只是循环不再跑）。阈值 15 分钟 = 10 分钟轮 + 余量。
@@ -728,7 +744,7 @@ function fmtAge(h){
   } else {
     fa = { ok: true, vd: fmtAge(fh) + '（阈值 24 小时）' };
   }
-  selfcheck.push({ ok: fa.ok, nm: '面部新鲜度', vd: fa.vd });
+  selfcheck.push({ ok: fa.ok, nm: '面部新鲜度', vd: fa.vd, title: absClock(face.updated_utc) });
 
   // 实况路径：三行（当前活／最近实物／下个里程碑）都承诺「可点」。builder 已逐个
   // Test-Path，这里只对账——既然承诺「可点」，文件就必须真在盘上；一条路径都没有
@@ -762,9 +778,12 @@ function fmtAge(h){
 
   const warnN = selfcheck.filter(c => !c.ok).length;
   $('sc-sum').textContent = warnN ? (warnN + ' 项注意') : (selfcheck.length + ' 项通过');
+  // 自检行也可挂 title（queue main#34）：凡是写着「N 分钟前」的行，
+  // 悬停即给绝对钟点；无时戳的行不加属性（宁缺不造假）。
   $('selfcheck').innerHTML = selfcheck.map(c =>
     '<div class="chk"><span class="st ' + (c.ok ? 'ok' : 'warn') + '">' + (c.ok ? '通过' : '注意') + '</span>' +
-    '<span class="nm">' + esc(c.nm) + '</span><span class="vd">' + esc(c.vd) + '</span></div>'
+    '<span class="nm">' + esc(c.nm) + '</span><span class="vd"' +
+    (c.title ? ' title="' + esc(c.title) + '"' : '') + '>' + esc(c.vd) + '</span></div>'
   ).join('');
 
   // 分区筛选：只筛事件尾流，分布卡保持全窗口径

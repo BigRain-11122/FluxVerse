@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-28T00:02:12Z",
-    "current_activity":  "r694 收口（main#32 销项）：面板第四行「今日日志」的摘要现在能悬停看准点——鼠标停在「N 分钟前 · scan M 行 · K 轮」上，会给出「最后写入 2026-10-28 07:56（2026-10-27T23:56:11Z）· 日志 157037 字节」，因为 N 分钟前是构建那一刻算的，面板放旧了就不准，绝对钟点才对得上账。做法：builder 补注入 TICK.mtime_utc（LastWriteTimeUtc ISO），页面把本地钟点+ISO+字节数拼进 title；缺时间只给字节、缺字节只给时间、两者都缺就不加 title（宁缺不造假）。实证：PANEL OK bytes=68911 tick=4min scan=2492 rounds=96；自检 13/13；新增沙盒 logs/devloop-r694-panel-ticktitle-test.js 14/14；旧 15 套面板测试 230 断言零回归；vm.Script 编译零错；全页截图 qa/city-panel-r694-bm-a.png。",
-    "artifact":  "world-public/city-panel.html（重建 2026-10-28 08:02 +08:00，file:// 直接打开；第四行「今日日志」摘要可悬停看绝对时刻与字节数）。改造件=Tools/devloop/build-city-panel.ps1（tickMeta 增 mtime_utc）+Tools/devloop/city-panel-template.html（摘要 span 加 title）。沙盒=logs/devloop-r694-panel-ticktitle-test.js（14 断言）。取证截图=qa/city-panel-r694-bm-a.png（1400×3600）。队列项=state/queue/main.md #32",
-    "artifact_utc":  "2026-10-28T00:02:12Z",
-    "milestone":  "队列头：main#23 司级 7 天基准刷新（10-27 到期、逾期在册，正身=docs/global-benchmarks.md ④更新记录末行；判据=④表新增一行+③表源分级如实标）→ main#8 城市线附卷（10-19 逾期）→ main#33 状态档写入硬化（sha 对 live root 校验）→ main#17 浸泡复跑（10-28 18:36 后或 City3D 新 commit）→ main#20 ABORT 观察位。面板每 10 分钟随 tick 自动重建，CEO 随时 file:// 打开即可看最新实况。",
+    "updated_utc":  "2026-10-28T00:09:05Z",
+    "current_activity":  "r695 收口（main#34 销项）：面板上凡是写「N 分钟前」的地方，鼠标一停就给出本地钟点＋ISO——页头快照徽标、最近实物的年龄 tag、渲染累计、自检的「快照龄／面部新鲜度」两行全部挂上 title；无时戳的行一律不加（宁缺不造假）。相对年龄是构建那一刻算的，面板放旧了就骗人，绝对钟点才对得上账。实证：PANEL OK bytes=70142、读回自检 13/13、新增沙盒 logs/devloop-r695-panel-agetitle-test.js 18/18、全 17 套面板测试 276 断言零回归、截图 qa/city-panel-r695-bm-a.png。",
+    "artifact":  "world-public/city-panel.html（本行右侧时间戳=面部写入时刻·页面由每 10 分钟 tick 自动重建·file:// 直接打开·本轮=相对年龄悬停补全）；实现=Tools/devloop/city-panel-template.html（absClock/ageTitle 单一 helper）；沙盒=logs/devloop-r695-panel-agetitle-test.js（18 断言）；取证截图=qa/city-panel-r695-bm-a.png（1400×3600）；队列=state/queue/main.md #34",
+    "artifact_utc":  "2026-10-28T00:09:05Z",
+    "milestone":  "队列头 main#23 司级 7 天基准刷新（10-27 到期·逾期 1 日·判据=docs/global-benchmarks.md ④更新记录末行+③表源分级如实标）→ main#8 城市线附卷（10-19 逾期）→ main#33 状态档写入硬化（sha 对 live root 校验）→ main#35 页脚生成龄与陈旧提示 → main#17 浸泡复跑（10-28 18:36 后或 City3D 新 commit）→ main#20 ABORT 观察位。面板由每 10 分钟 tick 自动重建，CEO 随时 file:// 打开即可看到实况。",
     "milestone_eta_utc":  "2026-10-29T12:00:00Z"
 }

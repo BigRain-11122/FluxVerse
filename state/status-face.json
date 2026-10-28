@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-28T00:13:05Z",
-    "current_activity":  "r696 收口（main#35 销项）：页脚现在自报「这页几岁了」——页脚只有构建时刻的绝对串，读者看不出 html 在盘上放了多久；新增一枚「N 分钟前」徽标，超过 30 分钟转黄并提示「按 F5 取最新」，悬停给出绝对钟点。做法=构建时刻只取一次，人类可读本地串与可回溯 ISO 戳同源注入（两串永不会对不上），戳空或不可解析则零数字零崩溃。实证：PANEL OK bytes=70384、读回自检 13/13、新增沙盒 logs/devloop-r696-panel-builtage-test.js 18/18、全 18 套面板测试 294 断言零回归、截图 qa/city-panel-r696-bm-a.png（1400×4300·首拍 3600 高把页脚裁掉了，重拍才见徽标）。",
-    "artifact":  "world-public/city-panel.html（本行右侧时间戳=面部写入时刻·页面由每 10 分钟 tick 自动重建·file:// 直接打开·本轮=页脚年龄徽标）；实现=Tools/devloop/city-panel-template.html＋Tools/devloop/build-city-panel.ps1（BUILT/BUILT_UTC 同源注入·新增一枚构建时刻的 ISO 占位符）；沙盒=logs/devloop-r696-panel-builtage-test.js（18 断言）；取证截图=qa/city-panel-r696-bm-a.png（1400×4300）；队列=state/queue/main.md #35",
-    "artifact_utc":  "2026-10-28T00:13:05Z",
-    "milestone":  "队列头 main#23 司级 7 天基准刷新（10-27 到期·逾期 1 日·判据=docs/global-benchmarks.md ④更新记录末行+③表源分级如实标）→ main#8 城市线附卷（10-19 逾期）→ main#36 实物链接悬停给字节数与修改时刻（r696 轮尾补条）→ main#33 状态档写入硬化（sha 对 live root 校验）→ main#17 浸泡复跑（10-28 18:36 后或 City3D 新 commit）→ main#20 ABORT 观察位。面板由每 10 分钟 tick 自动重建，CEO 随时 file:// 打开即可看到实况。",
+    "updated_utc":  "2026-10-28T00:20:43Z",
+    "current_activity":  "r697 收口（main#36 销项）：三行实况的每个文件链接，鼠标悬停就能看到「多大、什么时候写的」——过去链接只可点，读者分不清这件东西是刚出的还是三天前的。做法=builder 解析路径时顺手取盘上 Length 与 LastWriteTimeUtc（目录/读失败降级为 -1 与空串），页面用 r695 的绝对钟点 helper 拼成「N 字节 · 本地钟点（ISO）」；缺一半只给一半，两半都缺就完全不写 title（不造假）。实证：PANEL OK、读回自检 13/13、新增沙盒 logs/devloop-r697-panel-arttitle-test.js 13/13、全 19 套面板测试 309 断言零回归、截图 qa/city-panel-r697-bm-a.png。",
+    "artifact":  "world-public/city-panel.html（本行右侧时间戳=面部写入时刻·页面由每 10 分钟 tick 自动重建·file:// 直接打开·本轮=实物链接悬停给字节数与写入时刻）；实现=Tools/devloop/build-city-panel.ps1（Resolve-ArtItems 就地取 size/mtime_utc）＋Tools/devloop/city-panel-template.html（artTitle 单一 helper）；沙盒=logs/devloop-r697-panel-arttitle-test.js（13 断言·含缺一半/两半皆缺/缺件不造 title 三态）；取证截图=qa/city-panel-r697-bm-a.png；队列=state/queue/main.md #36",
+    "artifact_utc":  "2026-10-28T00:20:43Z",
+    "milestone":  "队列头 main#23 司级 7 天基准刷新（10-27 到期·逾期 1 日·判据=docs/global-benchmarks.md ④更新记录末行+③表源分级如实标）→ main#8 城市线附卷（10-19 逾期）→ main#37 里程碑行补「距 ETA 还有 N」徽标（r697 轮尾补条）→ main#33 状态档写入硬化（sha 对 live root 校验）→ main#17 浸泡复跑（10-28 18:36 后或 City3D 新 commit）→ main#20 ABORT 观察位。面板由每 10 分钟 tick 自动重建，CEO 随时 file:// 打开即可看到实况。",
     "milestone_eta_utc":  "2026-10-29T12:00:00Z"
 }

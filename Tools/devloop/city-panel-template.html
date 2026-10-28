@@ -224,6 +224,17 @@ function ageTitle(el, iso){
   return el;
 }
 
+// 实物链接的悬停信息（queue main#36）：只有 href 的链接看不出这件东西是刚出的
+// 还是三天前的。builder 已把盘上 Length / LastWriteTimeUtc 送过来，这里拼成
+// 「N 字节 · 本地钟点（ISO）」；缺一半只给另一半，两半都缺就不写 title（不造假）。
+function artTitle(it){
+  const parts = [];
+  if (it && typeof it.size === 'number' && it.size >= 0) parts.push(it.size + ' 字节');
+  const c = it && absClock(it.mtime_utc);
+  if (c) parts.push(c);
+  return parts.join(' · ');
+}
+
 (function render(){
   const snap = SNAP || {};
   const face = FACE || {};
@@ -288,7 +299,9 @@ function ageTitle(el, iso){
         if (i < 0) return;
         html += esc(raw.slice(pos, i));
         if (it.exists) {
-          html += '<a class="artlink" href="' + esc(it.url) + '" target="_blank" rel="noreferrer">' + esc(t) + '</a>';
+          const ttl = artTitle(it);
+          html += '<a class="artlink" href="' + esc(it.url) + '" target="_blank" rel="noreferrer"' +
+            (ttl ? ' title="' + esc(ttl) + '"' : '') + '>' + esc(t) + '</a>';
         } else {
           html += '<span class="artmiss">' + esc(t) + '<em>未找到</em></span>';
         }

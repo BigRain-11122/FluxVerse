@@ -129,16 +129,32 @@ function Resolve-ArtItems
         $exists = $false
         try { $exists = Test-Path -LiteralPath $abs } catch { $exists = $false }
         $url = ''
+        # Size + last-write stamp of the real file (queue main#36): a link alone
+        # tells the reader nothing about whether the thing is fresh or three days
+        # old. Both are best effort -- a directory or an unreadable file simply
+        # ships size=-1 / mtime='' and the page omits that half of the title.
+        $size = -1
+        $mtimeUtc = ''
         if ($exists) {
             $full = $abs
             try { $full = (Resolve-Path -LiteralPath $abs).ProviderPath } catch { $full = $abs }
             $url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
+            try {
+                $fi = Get-Item -LiteralPath $full -ErrorAction Stop
+                if ($fi -and -not $fi.PSIsContainer) {
+                    $size = [int64]$fi.Length
+                    $mtimeUtc = $fi.LastWriteTimeUtc.ToString('yyyy-MM-ddTHH:mm:ssZ',
+                        [Globalization.CultureInfo]::InvariantCulture)
+                }
+            } catch { $size = -1; $mtimeUtc = '' }
         }
         $items += (New-Object PSObject -Property ([ordered]@{
-            text   = [string]$tok
-            rel    = [string]$norm
-            exists = [bool]$exists
-            url    = [string]$url
+            text      = [string]$tok
+            rel       = [string]$norm
+            exists    = [bool]$exists
+            url       = [string]$url
+            size      = [int64]$size
+            mtime_utc = [string]$mtimeUtc
         }))
         if (-not $seen.ContainsKey($norm)) {
             $seen[$norm] = $true
@@ -167,6 +183,7 @@ foreach ($k in $faceKeyMap.Keys) {
         $tagged += (New-Object PSObject -Property ([ordered]@{
             text = [string]$it.text; rel = [string]$it.rel
             exists = [bool]$it.exists; url = [string]$it.url; k = [string]$k
+            size = [int64]$it.size; mtime_utc = [string]$it.mtime_utc
         }))
     }
     $artBy[$k] = (New-Object PSObject -Property ([ordered]@{
@@ -197,6 +214,7 @@ foreach ($it in @($tickOne.items)) {
     $tickTagged += (New-Object PSObject -Property ([ordered]@{
         text = [string]$it.text; rel = [string]$it.rel
         exists = [bool]$it.exists; url = [string]$it.url; k = 'tick'
+        size = [int64]$it.size; mtime_utc = [string]$it.mtime_utc
     }))
 }
 $artBy['tick'] = (New-Object PSObject -Property ([ordered]@{

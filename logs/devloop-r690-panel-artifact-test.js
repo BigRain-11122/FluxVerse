@@ -73,7 +73,11 @@ chk('real.md5-hit', !!realRow && realRow.vd.indexOf('全部命中盘面') >= 0,
 const art = artOf(realHtml);
 chk('fixture.has-items', Array.isArray(art.items) && art.items.length > 0, 'no items to patch');
 const broken = JSON.parse(JSON.stringify(art));
-const victim = broken.items[0];
+// r702: the aggregate list is built line by line (act -> art -> mile), so
+// items[0] belongs to whichever line happens to carry the first resolvable path
+// -- it is NOT necessarily a token of the row this scenario measures. Pick the
+// first item from the artifact line (k==='art'), falling back to items[0].
+const victim = (broken.items || []).filter(it => it.k === 'art')[0] || broken.items[0];
 victim.exists = false;
 victim.url = '';
 broken.missing = 1;

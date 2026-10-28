@@ -58,6 +58,18 @@
   .tag.ok{color:var(--ok);border-color:#1f4a3a;background:#0e1f19}
   .tag.warn{color:var(--warn);border-color:#4a2020;background:#1f0e0e}
   .rhint{color:var(--dim);font-size:12px;margin-bottom:8px}
+  .shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+  .shot{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#0e141c}
+  /* Fixed thumbnail height: raw frames come in every aspect ratio (portrait
+     panel shots next to landscape captures), and <img width:100%> alone lets a
+     tall one stretch the whole grid row and leave big empty gaps (seen r702).
+     Crop to a uniform band instead - the caption links to the original. */
+  .shot img{width:100%;height:180px;object-fit:cover;display:block}
+  .shot .cap{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 9px;font-size:11.5px;color:var(--dim)}
+  .shot .cap .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .shot .cap a{color:#7fd1ff;text-decoration:none;border-bottom:1px dashed #2f5f7f}
+  .shot .cap a:hover{color:#bfe9ff;border-bottom-color:#7fd1ff}
+  .shot .none{padding:16px;color:var(--dim);font-size:12.5px;text-align:center;height:180px;display:flex;align-items:center;justify-content:center}
   .rhythm{display:flex;gap:5px;align-items:flex-end;height:96px}
   .rcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;align-items:center;gap:5px}
   .rbar{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#4cc9f0,#2a6b82);min-height:2px}
@@ -114,6 +126,12 @@
   <div class="card">
     <h2>分区</h2>
     <div id="zones"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>城市取景 <span class="tag" id="shot-sum">—</span> <span class="tag">City3D 证据帧</span></h2>
+    <div class="rhint" id="shot-hint">—</div>
+    <div class="shots" id="shots"></div>
   </div>
 
   <div class="card" style="margin-top:14px">
@@ -189,6 +207,12 @@ const TREND = __TREND_JSON__;
 // rounds,read_ok}) - the panel is built BY that tick, so this is the only honest
 // way to tell whether the 10-minute loop actually ran.
 const TICK = __TICK_JSON__;
+// SHOTS = builder-resolved City3D evidence frames from qa/ ({items:[{name,rel,
+// url,shot_utc,size,data,w,h,bytes}]}). `data` is a downscaled, inlined JPEG
+// data URI -- the page stays a single self-contained file with zero external
+// refs. An item whose encode failed ships data='' and the page falls back to a
+// plain link instead of pretending there is a picture.
+const SHOTS = __SHOTS_JSON__;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -429,6 +453,59 @@ function artTitle(it){
       if (parts.length) s.title = parts.join(' · ');
     })();
     $('f-tick').appendChild(s);
+  })();
+
+  // 城市取景（queue main#42）：这一页此前全是数字与文字——规模、分区、事件、曲线，
+  // 但没有「城市长什么样」。builder 把 qa/ 目录里最新的 City3D 证据帧缩到卡片宽、
+  // 内联成 data URI 送进来，页面仍是自包含单文件（零外链、零服务器）。帧龄超过 7
+  // 天如实标「陈旧」红标——取景放旧本身就是事实，不因为不好看而藏；编码失败的帧
+  // 退成普通链接，一件也没有就明说没有（宁缺不造假，同 r694~r701 立场）。
+  (function () {
+    const box = $('shots');
+    const sum = $('shot-sum');
+    const hint = $('shot-hint');
+    if (!box) return;
+    const list = (SHOTS && Array.isArray(SHOTS.items)) ? SHOTS.items : [];
+    const imgs = list.filter(s => s && s.data).length;
+    const newest = list.length ? ago(list[0].shot_utc) : null;
+    if (sum) {
+      sum.className = 'tag' + ((list.length && !imgs) || newest > 24 * 7 ? ' warn' : '');
+      sum.textContent = list.length ? (imgs + ' / ' + list.length + ' 帧') : '暂无';
+    }
+    if (hint) {
+      let txt = list.length
+        ? '取自 qa/ 目录最新的 City3D 证据帧（构建时缩图内联；点文件名可开原件）。'
+        : 'qa/ 里还没有 City3D 证据帧——取景为空本身就是实况。';
+      // 取景放旧是要露出来的事实：整个卡都是旧帧时说清楚有多旧，别让「有图」
+      // 冒充「新鲜」。新帧落到 qa/ 后本卡自动跟上，不需要人改页。
+      if (list.length && newest != null && newest > 24 * 7) {
+        txt += ' 最新一帧已是 ' + Math.floor(newest / 24) + ' 天前——City3D 出新抓帧后本卡自动跟上。';
+      }
+      hint.textContent = txt;
+    }
+    if (!list.length) {
+      box.innerHTML = '<div class="shot"><div class="none">暂无取景帧</div></div>';
+      return;
+    }
+    box.innerHTML = list.map(s => {
+      const h = ago(s.shot_utc);
+      const stale = (h != null && h > 24 * 7);
+      let ageTxt;
+      if (h == null) ageTxt = '时间未知';
+      else if (h < 1) ageTxt = Math.max(0, Math.round(h * 60)) + ' 分钟前';
+      else if (h < 48) ageTxt = Math.round(h) + ' 小时前';
+      else ageTxt = Math.floor(h / 24) + ' 天前';
+      const ttl = absClock(s.shot_utc) || '';
+      const nm = '<a href="' + esc(s.url) + '" target="_blank" rel="noreferrer"' +
+        (ttl ? ' title="' + esc(ttl) + '"' : '') + '>' + esc(s.name) + '</a>';
+      const tag = '<span class="tag' + (stale ? ' warn' : '') + '"' +
+        ariaClock({ clock: clockLocal(s.shot_utc) }) + '>' + esc(ageTxt) + '</span>';
+      const body = s.data
+        ? '<img src="' + esc(s.data) + '" alt="' + esc(s.name) + '" loading="lazy">'
+        : '<div class="none">缩图不可用，点文件名看原件</div>';
+      return '<div class="shot">' + body +
+        '<div class="cap"><span class="nm">' + nm + '</span>' + tag + '</div></div>';
+    }).join('');
   })();
 
   const city = snap.city || {};

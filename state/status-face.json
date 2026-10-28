@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-28T01:19:00Z",
-    "current_activity":  "r701 收口（产品面轮）：修「绝对钟点只在悬停里」。轨迹行与事件流的正文仍是单一本地钟（r699/r700 口径不变），新增 aria-label 携带完整本地钟点（含年份，此前页内根本没印过）；触屏、键盘、读屏用户没有悬停也能读出绝对时刻。源=Tools/devloop/city-panel-template.html（新 helper clockLocal/ariaClock，正文零改动）。",
-    "artifact":  "world-public/city-panel.html（本页，file:// 直接打开）；源=Tools/devloop/city-panel-template.html；沙盒=logs/devloop-r700-panel-trendclock-test.js（39 条断言，含 Date 子类强推 +05:30 的时区平移证明：aria 钟点跟着本地走且≠主机时区）；取证截图=qa/city-panel-r701-bm-a.png；收口=state/queue/main.md #41 销行。",
-    "artifact_utc":  "2026-10-28T01:19:00Z",
-    "milestone":  "队列头 main#23 司级 7 天基准刷新（10-27 到期·逾期 3 日·判据=docs/global-benchmarks.md ④更新记录末行）；次位 main#40 冻结 fixture 重建化（logs/panel-fixture-prev.html 用当前模板重生成，r671 恢复实义断言）→ main#8 城市线附卷（10-19 逾期）→ main#33 状态档写入硬化。CEO 随时 file:// 打开 world-public/city-panel.html 看实况。",
+    "updated_utc":  "2026-10-28T01:39:44Z",
+    "current_activity":  "r702 收口（产品面轮）：面板新增「城市取景」卡——此前整页只有数字与文字，看不到城市长什么样。构建时取 qa/ 里最新的 3 张 City3D 证据帧，缩到 620 宽内联成 data URI（仍是自包含单文件·零外链）；帧龄 \u003e7 天标红并写明「最新一帧已是 N 天前」，名字含 panel 的一律排除（面板不许拍自己）。源=Tools/devloop/city-panel-template.html + Tools/devloop/build-city-panel.ps1。",
+    "artifact":  "world-public/city-panel.html（本页，file:// 直接打开）；取证截图=qa/city-panel-r702-bm-a.png；沙盒=logs/devloop-r702-panel-shots-test.js（28 条断言：空态／编码失败退化成链接／陈旧红标／文件名转义／含年份本地钟 aria／自拍排除）；收口=state/queue/main.md #42 销行。",
+    "artifact_utc":  "2026-10-28T01:39:44Z",
+    "milestone":  "队列头 main#23 司级 7 天基准刷新（10-27 到期·逾期 3 日）→ main#40 冻结 fixture 重建化 → main#8 城市线附卷。取景卡已做成「新帧落 qa/ 自动跟上」：City3D 侧出新抓帧后无需改页即更新。CEO 随时 file:// 打开 world-public/city-panel.html 看实况。",
     "milestone_eta_utc":  "2026-10-29T00:00:00Z"
 }

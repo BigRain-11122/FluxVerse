@@ -344,7 +344,7 @@ else { $seriesJs = To-JsLiteral -Obj @($seriesArr) -Label 'series' }
 # --- 24h trend: whole local log inside a 24h window (newest last) -----------
 # The trajectory card above shows at most 12 ticks, which hides a multi-hour
 # gap. The trend curve needs the whole day, so it gets its own injection.
-# Same fail-soft contract: no usable history => empty array => "记录不足".
+# Same fail-soft contract: no usable history => empty array => "no history" state.
 $TrendHours = 24
 $trendArr = @()
 $anchorTs = [DateTimeOffset]::UtcNow
@@ -403,6 +403,122 @@ $tickMeta = New-Object PSObject -Property ([ordered]@{
 })
 $tickJs = To-JsLiteral -Obj $tickMeta -Label 'tick-meta'
 
+# --- city framing card (queue main#42) --------------------------------------
+# The panel is all numbers and prose - the CEO cannot see what the city looks
+# like. qa/ holds the real City3D evidence frames (whitebox captures). Pick the
+# newest few, shrink them to card width and inline them as JPEG data URIs so the
+# page stays ONE self-contained file (zero external refs, zero server).
+# Fail-soft everywhere: no frames => empty list and the page says so; a resize
+# or encode failure keeps the item with its file:// url but data='' and the page
+# falls back to a plain link. Never invent a picture, never drop a real one.
+$shotDir = 'qa'
+$shotMax = 3
+$shotWidth = 620
+$shotQuality = 76
+
+function Get-ShotDataUri
+{
+    param([string]$Path, [int]$Width = 620, [long]$Quality = 76)
+    $img = $null; $bmp = $null; $g = $null; $ms = $null; $ps = $null; $codec = $null
+    $res = New-Object PSObject -Property ([ordered]@{ ok = $false; uri = ''; w = 0; h = 0; bytes = [int64]0 })
+    try {
+        Add-Type -AssemblyName System.Drawing -ErrorAction Stop
+        $img = [System.Drawing.Image]::FromFile($Path)
+        $w = [int]$img.Width
+        $h = [int]$img.Height
+        if ($w -lt 1 -or $h -lt 1) { return $res }
+        if ($w -gt $Width) {
+            $h = [int][Math]::Round(($h * $Width) / $w)
+            $w = $Width
+        }
+        if ($h -lt 1) { return $res }
+        foreach ($ci in [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders()) {
+            if ($ci.MimeType -eq 'image/jpeg') { $codec = $ci; break }
+        }
+        if ($null -eq $codec) { return $res }
+        $bmp = New-Object System.Drawing.Bitmap($w, $h)
+        $g = [System.Drawing.Graphics]::FromImage($bmp)
+        $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+        $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+        $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+        $g.DrawImage($img, 0, 0, $w, $h)
+        $ms = New-Object System.IO.MemoryStream
+        $ps = New-Object System.Drawing.Imaging.EncoderParameters(1)
+        $ps.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter(
+            [System.Drawing.Imaging.Encoder]::Quality, [long]$Quality)
+        $bmp.Save($ms, $codec, $ps)
+        $bytes = $ms.ToArray()
+        if ($null -eq $bytes -or $bytes.Length -lt 256) { return $res }
+        $res.ok = $true
+        $res.uri = 'data:image/jpeg;base64,' + [Convert]::ToBase64String($bytes)
+        $res.w = [int]$w
+        $res.h = [int]$h
+        $res.bytes = [int64]$bytes.Length
+    } catch {
+        $res.ok = $false; $res.uri = ''; $res.w = 0; $res.h = 0; $res.bytes = [int64]0
+    } finally {
+        if ($ps)  { try { $ps.Dispose() }  catch { } }
+        if ($ms)  { try { $ms.Dispose() }  catch { } }
+        if ($g)   { try { $g.Dispose() }   catch { } }
+        if ($bmp) { try { $bmp.Dispose() } catch { } }
+        if ($img) { try { $img.Dispose() } catch { } }
+    }
+    return $res
+}
+
+function Resolve-CityShots
+{
+    param([string]$Dir, [int]$Max = 3, [int]$Width = 620, [long]$Quality = 76)
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Dir)) { return @() }
+    if (-not (Test-Path -LiteralPath $Dir)) { return @() }
+    $cands = @()
+    try {
+        # The panel's own screenshots are DevLoop evidence of THIS page, not city
+        # frames - including them would let the page photograph itself (caught in
+        # r702: r665-city-panel-v4.png out-ranked every real frame, so the newest
+        # "city view" was a shot of an old panel). Match "panel" anywhere in the
+        # name. Newest first, fixed cap so the page weight stays bounded.
+        $cands = @(Get-ChildItem -LiteralPath $Dir -File -ErrorAction Stop | Where-Object {
+            ($_.Extension -match '^\.(png|jpg|jpeg)$') -and ($_.BaseName -notmatch 'panel')
+        } | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First $Max)
+    } catch { return @() }
+    foreach ($c in $cands) {
+        $enc = Get-ShotDataUri -Path $c.FullName -Width $Width -Quality $Quality
+        $full = $c.FullName
+        $rel = $full
+        if ($rel.StartsWith($repoDir, [StringComparison]::OrdinalIgnoreCase)) {
+            $rel = $rel.Substring($repoDir.Length)
+        }
+        $rel = $rel.TrimStart('\', '/').Replace('\', '/')
+        $url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
+        $out += (New-Object PSObject -Property ([ordered]@{
+            name     = [string]$c.Name
+            rel      = [string]$rel
+            url      = [string]$url
+            shot_utc = $c.LastWriteTimeUtc.ToString('yyyy-MM-ddTHH:mm:ssZ',
+                [Globalization.CultureInfo]::InvariantCulture)
+            size     = [int64]$c.Length
+            data     = [string]$enc.uri
+            w        = [int]$enc.w
+            h        = [int]$enc.h
+            bytes    = [int64]$enc.bytes
+        }))
+    }
+    return @($out)
+}
+
+# Wrapped in an object: a bare one-element array would lose its brackets in
+# ConvertTo-Json (PS5.1) and the page would mis-read it as a single frame.
+$shots = @(Resolve-CityShots -Dir (Join-Path $repoDir $shotDir) -Max $shotMax -Width $shotWidth -Quality $shotQuality)
+$shotsInlined = 0
+$shotsBytes = [int64]0
+foreach ($s in $shots) {
+    if ($s.data) { $shotsInlined++ }
+    $shotsBytes += [int64]$s.bytes
+}
+$shotsJs = To-JsLiteral -Obj ([ordered]@{ items = @($shots) }) -Label 'shots'
+
 # Built moment captured ONCE so the human-readable local string and the
 # machine-readable ISO stamp can never disagree (queue main#35).
 $builtAt = [DateTimeOffset]::Now
@@ -423,7 +539,7 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__ART_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__ART_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
@@ -444,9 +560,10 @@ $phMap = @{
     '__SERIES_JSON__'   = $seriesJs
     '__TREND_JSON__'    = $trendJs
     '__TICK_JSON__'     = $tickJs
+    '__SHOTS_JSON__'    = $shotsJs
     '__ART_JSON__'      = $artJs
 }
-$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|ART)_JSON__')
+$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|ART)_JSON__')
 $evaluator = [System.Text.RegularExpressions.MatchEvaluator]{
     param($m)
     if (-not $phMap.ContainsKey($m.Value)) { return $m.Value }
@@ -490,5 +607,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' built=' + $built + ' path=' + $OutPath)
 exit 0

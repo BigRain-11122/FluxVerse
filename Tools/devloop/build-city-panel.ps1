@@ -31,7 +31,8 @@ param(
     [string]$TemplatePath = '',
     [string]$OutPath = '',
     [string]$HistoryPath = '',
-    [string]$TickLogPath = ''
+    [string]$TickLogPath = '',
+    [string]$ShotDir = 'qa'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -411,7 +412,7 @@ $tickJs = To-JsLiteral -Obj $tickMeta -Label 'tick-meta'
 # Fail-soft everywhere: no frames => empty list and the page says so; a resize
 # or encode failure keeps the item with its file:// url but data='' and the page
 # falls back to a plain link. Never invent a picture, never drop a real one.
-$shotDir = 'qa'
+$shotDir = $ShotDir
 $shotMax = 3
 $shotWidth = 620
 $shotQuality = 76
@@ -466,9 +467,46 @@ function Get-ShotDataUri
     return $res
 }
 
+# Header-only size probe: Image.FromFile reads the header, it does not decode
+# pixels, so this is cheap enough to run over every candidate before inlining.
+function Get-ShotSize
+{
+    param([string]$Path)
+    $img = $null
+    $res = New-Object PSObject -Property ([ordered]@{ ok = $false; w = 0; h = 0 })
+    try {
+        Add-Type -AssemblyName System.Drawing -ErrorAction Stop
+        $img = [System.Drawing.Image]::FromFile($Path)
+        $res.w = [int]$img.Width
+        $res.h = [int]$img.Height
+        $res.ok = (($res.w -ge 1) -and ($res.h -ge 1))
+    } catch {
+        $res.ok = $false; $res.w = 0; $res.h = 0
+    } finally {
+        if ($img) { try { $img.Dispose() } catch { } }
+    }
+    return $res
+}
+
+# Shape filter (queue main#46): a city frame is a landscape/portrait view of the
+# scene. Phone-viewport captures (width <= 420) and long strips (aspect taller
+# than 2:1, e.g. 1400x4600 full-page shots) are PAGE evidence, not city frames -
+# inlining one turned a 157KB panel into 533KB in r705 while showing the panel
+# its own narrow render. Filename matching alone was too brittle, so the shape
+# test is the primary guard and the name test stays as a cheap first cut.
+function Test-CityShotShape
+{
+    param([int]$W, [int]$H, [int]$MinWidth = 421, [double]$MaxAspect = 2.0)
+    if ($W -lt $MinWidth) { return $false }
+    if ($H -le 0) { return $false }
+    if (($H / [double]$W) -gt $MaxAspect) { return $false }
+    return $true
+}
+
 function Resolve-CityShots
 {
     param([string]$Dir, [int]$Max = 3, [int]$Width = 620, [long]$Quality = 76)
+    $script:shotsSkipped = 0
     $out = @()
     if ([string]::IsNullOrWhiteSpace($Dir)) { return @() }
     if (-not (Test-Path -LiteralPath $Dir)) { return @() }
@@ -478,12 +516,17 @@ function Resolve-CityShots
         # frames - including them would let the page photograph itself (caught in
         # r702: r665-city-panel-v4.png out-ranked every real frame, so the newest
         # "city view" was a shot of an old panel). Match "panel" anywhere in the
-        # name. Newest first, fixed cap so the page weight stays bounded.
+        # name. Newest first; the cap is applied AFTER the shape filter so
+        # rejected strips do not eat one of the three card slots.
         $cands = @(Get-ChildItem -LiteralPath $Dir -File -ErrorAction Stop | Where-Object {
             ($_.Extension -match '^\.(png|jpg|jpeg)$') -and ($_.BaseName -notmatch 'panel')
-        } | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First $Max)
+        } | Sort-Object LastWriteTimeUtc -Descending)
     } catch { return @() }
     foreach ($c in $cands) {
+        if ($out.Count -ge $Max) { break }
+        $shape = Get-ShotSize -Path $c.FullName
+        if (-not $shape.ok) { $script:shotsSkipped++; continue }
+        if (-not (Test-CityShotShape -W $shape.w -H $shape.h)) { $script:shotsSkipped++; continue }
         $enc = Get-ShotDataUri -Path $c.FullName -Width $Width -Quality $Quality
         $full = $c.FullName
         $rel = $full
@@ -510,7 +553,7 @@ function Resolve-CityShots
 
 # Wrapped in an object: a bare one-element array would lose its brackets in
 # ConvertTo-Json (PS5.1) and the page would mis-read it as a single frame.
-$shots = @(Resolve-CityShots -Dir (Join-Path $repoDir $shotDir) -Max $shotMax -Width $shotWidth -Quality $shotQuality)
+$shots = @(Resolve-CityShots -Dir $(if ([System.IO.Path]::IsPathRooted($shotDir)) { $shotDir } else { Join-Path $repoDir $shotDir }) -Max $shotMax -Width $shotWidth -Quality $shotQuality)
 $shotsInlined = 0
 $shotsBytes = [int64]0
 foreach ($s in $shots) {
@@ -607,5 +650,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' built=' + $built + ' path=' + $OutPath)
 exit 0

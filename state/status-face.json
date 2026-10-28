@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-28T03:04:43Z",
-    "current_activity":  "r705 收口（产品面轮）：面板窄屏可用＝main#45。此前面板只有桌面口径——事件尾流/分区/轮对比四处写死宽度，390 手机上一行超宽，被滚动区裁掉后只剩「gami…」「gove…」，分区名整个看不见。现在窄屏放开固定宽、允许换行：时间+类型一行、分区标签落到下一行右侧，自检行改成「项名在上、取值在下」。390/360/1400 三档量测溢出归零。源=Tools/devloop/city-panel-template.html",
-    "artifact":  "world-public/city-panel.html（本页，file:// 直接打开）；源=Tools/devloop/city-panel-template.html；窄屏量测与出图=Tools/devloop/narrow-shot.js（CDP 真 390 视口）；沙盒=logs/devloop-r705-panel-narrow-test.js（行宽改类不许回潮·媒体查询五条·渲染无行内宽度）；套件跑法=Tools/devloop/run-panel-suites.ps1（26 套 ALL PASS）；收口=state/queue/main.md #45 销行，新发现债 #46",
-    "artifact_utc":  "2026-10-28T03:04:43Z",
-    "milestone":  "面板现在桌面/手机两档都能读；当前真实注意项仍是取景帧 17 天前（qa/ 最新=10-11 smoke-r679，City3D 抓帧属交互窗在飞面，本司不动）。队列头 next＝main#46 取景解析器加长条/窄图过滤（r705 实测一张 390×5455 窄屏图混进城市帧，页面 157KB→533KB），对照件=state/queue/main.md；其后=main#23 司级 7 天基准刷新（10-27 到期·逾期·对照 docs/global-benchmarks.md）／main#40 冻结 fixture 重建化／main#8 城市线附卷（10-19 逾期）。",
+    "updated_utc":  "2026-10-28T03:16:20Z",
+    "current_activity":  "r706 收口（产品面轮）：取景卡不再收「页面证据件」＝main#46。此前 r702 立的面板「不许拍自己」只按文件名含 panel 排除，名字一改就失效——r705 实测一张 390 宽窄屏截图被当成城市帧内联，页面 157KB→533KB。改为按形状判：宽 \u003c421 或 高/宽 \u003e2.0 一律是页面证据件（手机截图、整页长条），候选先排序再逐个过闸取满三张，被拒的长条不再白吃卡位；构建行新增 shots_skipped 计数，闸门是否真在工作可直接读出。源=Tools/devloop/build-city-panel.ps1",
+    "artifact":  "world-public/city-panel.html（本页，file:// 直接打开）；源=Tools/devloop/build-city-panel.ps1（Resolve-CityShots 形状闸）＋Tools/devloop/city-panel-template.html；沙盒=Tools/devloop/test-city-shot-shape.ps1（11/11：真帧 2 保留·长条与手机条 2 跳过·panel 自拍按名排除·被拒件零泄漏）；套件=Tools/devloop/run-panel-suites.ps1（26 套 ALL PASS）；收口=state/queue/main.md #46 销行，新发现债 #47",
+    "artifact_utc":  "2026-10-28T03:16:20Z",
+    "milestone":  "取景卡现在只收真城市帧；真实注意项仍是取景帧陈旧（最新=10-10 smoke-r679，已 18 天，City3D 抓帧属交互窗在飞面，本司不动）。队列头 next＝main#23 司级 7 天基准刷新（10-27 到期·已逾期 3 日，对照 docs/global-benchmarks.md），其后=main#40 冻结 fixture 重建化／main#47 取景闸的 qa/ 命名普查接 verify／main#8 城市线附卷（10-19 逾期）／main#33 状态档写入硬化。",
     "milestone_eta_utc":  "2026-10-29T00:00:00Z"
 }

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-28T04:01:38Z",
-    "current_activity":  "r708 收口（FULL-ROUND·产品面优先轮）：城市取景卡升级为「取景＋建造/测试证据」——面板此前能看城市长什么样（r702 取景卡），但「建出来了吗、测得怎样、代码多旧」只能自己去翻 City3D-staging 与 qa/。做法=builder 新增 Resolve-CityProof 只读解析三件已有证据（City3D-staging/r2-ignite.done 批建收据：exit/帧数/时刻；qa/smoke-r680-bm-a-soak.json 10 分钟浸泡收据：render fps/错误；git 只读取 City3D/ 最近提交短 sha），以 PROOF 注入并在取景卡下渲染三行；缺件/不可解析如实标红（exists=false 与「在盘但不可解析」两种事实分开，不合并）；自检新增第 15 项「城市证据」：批建 exit≠0、浸泡有错误、或浸泡超过 48 小时复跑窗（main#17 判据）一律注意。沙盒 17/17（builder 三夹具）＋30/30（页面渲染与自检六态）；全 27 套面板沙盒 ALL PASS。",
-    "artifact":  "world-public/city-panel.html（面板·file:// 直接打开；取证截图=qa/city-panel-r708-bm-a.png 与 qa/city-panel-r708-narrow-bm-a.png）·源码=Tools/devloop/build-city-panel.ps1 与 Tools/devloop/city-panel-template.html·沙盒=Tools/devloop/test-city-panel-proof.ps1 17/17 与 logs/devloop-r708-panel-proof-test.js 30/30",
-    "artifact_utc":  "2026-10-28T04:01:38Z",
-    "milestone":  "下一步=main#17 浸泡复跑窗（City3D 最近提交 10-26 18:36＋48 小时=今日 18:36 到期；到窗随浸泡轮用 Tools/devloop/r2-soak.ps1 抓新真帧落 qa/ 注册家族名，取景卡自动跟上、自检第 14 项转绿）；随后 main#23 司级 7 天基准刷新（10-27 到期·逾期·docs/global-benchmarks.md）、main#40 冻结 fixture 重建化（logs/panel-fixture-prev.html）、main#8 城市线附卷。",
+    "updated_utc":  "2026-10-28T05:13:45Z",
+    "current_activity":  "r709 收口（FULL-ROUND·c6 决策轮 12:00 批触发·产品面优先轮）：面板新增「本司应办令」卡——集团每班决策轮把点名本司的活儿写进 docs/decisions.md 表格行，此前只能人工 grep 才知道「集团刚派了什么、什么时候到期」。做法=builder 新增 Resolve-Duty 只读解析活树决策面（走共享 resolve-group-root 选活根，D-20261028-04 口径），只取「决策列或状态列点名本司」且状态仍为 dispatched/open 的行，按到期时点排序，逾期红标；到期时点三种写法都认（M-D HH:mm、10-25 24:00 的日终写法、回访 2026-10-23 的日期式、以及 24h 相对窗按行日期锚定）。诚实边界两处：决策面缺档写「缺失」而非「无待办」；时点解析不出写「时点不可解析」且绝不计逾期。首跑实锚=扫描 102 行·点名本司 16 行·待办 7 项·逾期 3 项（D-20261020-05 回访 10-23、D-20261024-13 日终 10-25、D-20261026-20 的 24h 窗）。",
+    "artifact":  "world-public/city-panel.html（面板·file:// 直接打开；取证截图=qa/city-panel-r709-bm-a.png 与 qa/city-panel-r709-narrow-bm-a.png）·源码=Tools/devloop/build-city-panel.ps1 与 Tools/devloop/city-panel-template.html·业主词表=Tools/devloop/duty-owners.json（中文词表走 UTF-8 数据件，脚本仍 ASCII）·沙盒=Tools/devloop/test-city-duty.ps1 18/18 与 logs/devloop-r709-panel-duty-test.js 18/18",
+    "artifact_utc":  "2026-10-28T05:13:45Z",
+    "milestone":  "下一步=main#17 浸泡复跑窗（City3D 最近提交 10-26 18:36＋48 小时=今日 18:36 到期；到窗随浸泡轮用 Tools/devloop/r2-soak.ps1 抓新真帧落 qa/ 注册家族名，取景卡自动跟上、自检第 14 项转绿）；随后 main#23 司级 7 天基准刷新（10-27 到期·逾期·docs/global-benchmarks.md）、main#40 冻结 fixture 重建化（logs/panel-fixture-prev.html）、main#8 城市线附卷。集团侧 10-31 00:00 有三项点名本司（D-20261028-04/11/13）。",
     "milestone_eta_utc":  "2026-10-28T10:36:00Z"
 }

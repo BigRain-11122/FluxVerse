@@ -81,6 +81,7 @@
   .proof{margin-top:10px;display:grid;gap:6px;font-size:12px}
   .proof .prow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .proof .prow .pv{color:#c8d6e5;font-variant-numeric:tabular-nums}
+.proof .prow .pv.warn{color:var(--warn)}
   .proof .prow a{color:#7fd1ff;text-decoration:none;border-bottom:1px dashed #2f5f7f}
   .proof .prow a:hover{color:#bfe9ff;border-bottom-color:#7fd1ff}
   .rhythm{display:flex;gap:5px;align-items:flex-end;height:96px}
@@ -173,6 +174,12 @@
   </div>
 
   <div class="card" style="margin-top:14px">
+    <h2>本司应办令 <span class="tag" id="duty-sum">—</span> <span class="tag">集团决策轮 × 本司</span></h2>
+    <div class="rhint" id="duty-hint">—</div>
+    <div class="proof" id="duty"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
     <h2>城市变化（跨轮对比） <span class="tag" id="cv-prev">—</span></h2>
     <div id="chg"></div>
     <div class="muted" id="cv-note" style="margin-top:8px">—</div>
@@ -257,6 +264,12 @@ const SHOTS = __SHOTS_JSON__;
 // {exists,sha,ts_utc}}). Two facts stay distinct on purpose: exists=false means
 // the receipt is absent; exists=true with -1 numbers means it is unreadable.
 const PROOF = __PROOF_JSON__;
+// DUTY = the group decision rounds' open rows that name this company, as parsed
+// read-only at build time ({exists, path_rel, url, as_of_utc, scanned, matched,
+// open, late, rows:[{id,subject,status,due_txt,due_utc,action}]}). PS5.1
+// ConvertTo-Json flattens empty/single-element arrays, so the page normalises
+// rows through Array.isArray before trusting it.
+const DUTY = __DUTY_JSON__;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -598,6 +611,64 @@ function artTitle(it){
       push('城市代码', c.sha + ' · ' + fmtAge(ago(c.ts_utc)), true, c.ts_utc, '', '');
     }
     box.innerHTML = out.join('');
+  })();
+
+  // 本司应办令（queue main#50）：集团每班决策轮会把「点名本司」的活儿写进
+  // docs/decisions.md 的表格行（决策号 + 状态 + 到期时点）。过去要人工 grep 才
+  // 知道集团刚给本司派了什么、什么时候到期；这里逐行现出，并按到期时点排序。
+  // 口径三条：①只算状态仍为 dispatched/open 的行（executed 不是活儿）；
+  // ②到期时点解析不出来就写「未解析」且绝不计逾期（未知≠按时）；
+  // ③决策面缺档写「缺失」而红标，不装成「本司无待办」。
+  (function () {
+    const box = $('duty');
+    if (!box) return;
+    const D = DUTY || {};
+    const rows = Array.isArray(D.rows) ? D.rows : (D.rows ? [D.rows] : []);
+    const sum = $('duty-sum');
+    const hint = $('duty-hint');
+    if (hint) {
+      const asOf = absClock(D.as_of_utc);
+      hint.textContent = '只列集团决策轮表格行里点名本司、且状态仍为 dispatched/open 的条目'
+        + (D.exists ? '（决议面 ' + (D.scanned || 0) + ' 行扫描 · ' + (D.matched || 0) + ' 行点名本司'
+            + (asOf ? ' · 文件 ' + asOf : '') + '）' : '') + '。';
+    }
+    if (!D.exists) {
+      if (sum) sum.textContent = '缺失';
+      box.innerHTML = '<div class="prow"><span class="tag warn">决策面</span>' +
+        '<span class="pv">集团 docs/decisions.md 不在盘或不可读，无法列出应办令</span></div>';
+      return;
+    }
+    if (!rows.length) {
+      if (sum) sum.textContent = '无待办';
+      box.innerHTML = '<div class="prow"><span class="tag">—</span>' +
+        '<span class="pv">集团决策面无点名本司的待办令（扫描 ' + (D.scanned || 0) + ' 行）</span></div>';
+      return;
+    }
+    const lateN = rows.filter(r => {
+      const a = ago(r.due_utc);
+      return a != null && a > 0;
+    }).length;
+    if (sum) {
+      sum.textContent = rows.length + ' 项待办' + (lateN ? ' · ' + lateN + ' 项逾期' : '');
+      if (lateN) sum.className = 'tag warn';
+    }
+    box.innerHTML = rows.map(r => {
+      const late = (() => { const a = ago(r.due_utc); return a != null && a > 0; })();
+      let due;
+      if (!r.due_utc) {
+        due = r.due_txt ? (r.due_txt + '（时点不可解析）') : '未写到期';
+      } else {
+        const st = stampLocal(r.due_utc);
+        due = (late ? '已逾期 · 截止 ' : '截止 ') + st.text + (late ? '（' + fmtAge(ago(r.due_utc)) + '）' : '');
+      }
+      const ttl = [r.action, absClock(r.due_utc)].filter(Boolean).join(' · ');
+      return '<div class="prow">' +
+        '<span class="tag' + (late ? ' warn' : '') + '">' + esc(r.id || '无号') + '</span>' +
+        '<span class="tag">' + esc(r.status || '') + '</span>' +
+        '<span class="pv"' + (ttl ? ' title="' + esc(ttl) + '"' : '') + '>' + esc(r.subject || '') + '</span>' +
+        '<span class="pv' + (late ? ' warn' : '') + '">' + esc(due) + '</span>' +
+        '</div>';
+    }).join('');
   })();
 
   const city = snap.city || {};
@@ -1127,6 +1198,28 @@ function artTitle(it){
   }
   cd.title = pfs.exists ? absClock(pfs.ts_utc) : undefined;
   selfcheck.push({ ok: cd.ok, nm: '城市证据', vd: cd.vd, title: cd.title });
+
+  // 应办令（queue main#50）：本司应办令卡一旦有逾期项，页头还算「全绿」就是又
+  // 一次漂亮但失真。决策面缺档同样标注意——那意味着这张卡当前是瞎的，不等于
+  // 「无待办」。
+  const df = DUTY || {};
+  const dfRows = Array.isArray(df.rows) ? df.rows : (df.rows ? [df.rows] : []);
+  const dfLate = dfRows.filter(r => { const a = ago(r.due_utc); return a != null && a > 0; });
+  let dt;
+  if (!df.exists) {
+    dt = { ok: false, vd: '决策面缺失（docs/decisions.md 不在盘或不可读），应办令未知' };
+  } else if (!dfRows.length) {
+    dt = { ok: true, vd: '扫描 ' + (df.scanned || 0) + ' 行，无点名本司的待办令' };
+  } else if (dfLate.length) {
+    dt = { ok: false, vd: dfRows.length + ' 项待办，其中 ' + dfLate.length + ' 项逾期（' +
+      dfLate.map(r => r.id || '无号').join('、') + '）' };
+  } else {
+    const next = dfRows.find(r => r.due_utc);
+    dt = { ok: true, vd: dfRows.length + ' 项待办，无逾期' +
+      (next ? '（最近到期 ' + stampLocal(next.due_utc).text + '）' : '') };
+  }
+  dt.title = df.exists ? absClock(df.as_of_utc) : undefined;
+  selfcheck.push({ ok: dt.ok, nm: '应办令', vd: dt.vd, title: dt.title });
 
   const warnN = selfcheck.filter(c => !c.ok).length;
   $('sc-sum').textContent = warnN ? (warnN + ' 项注意') : (selfcheck.length + ' 项通过');

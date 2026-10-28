@@ -1,0 +1,8 @@
+{
+  "_why": "Owner tokens the panel builder treats as 'this row is our work'. Only the decision cell (who is told to act) and the status cell (who the dispatch was addressed to) are searched. Chinese tokens live here because the PS script body is ASCII-only (PS5.1 GBK law).",
+  "_note": "FluxVerse = explicit naming. Si-si = a batch dispatched to the four companies, which includes this one.",
+  "tokens": [
+    "FluxVerse",
+    "四司"
+  ]
+}

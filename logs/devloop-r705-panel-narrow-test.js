@@ -84,6 +84,11 @@ const FIXTURE = {
     build: { exists: true, exit_code: 0, ts_utc: nowIso(400), wall_s: 23, shots_present: 5, shots_expected: 5, rel: 'City3D-staging/r2-ignite.done', url: 'file:///D:/f/r2-ignite.done', report_rel: '', report_url: '' },
     soak: { exists: true, fps_avg: 608.5, errors: 0, exceptions: 0, ts_utc: nowIso(41), rel: 'qa/smoke-r680-bm-a-soak.json', url: 'file:///D:/f/soak.json' },
     code: { exists: true, sha: '5a7ae301', ts_utc: nowIso(41) }
+  },
+  // r709 added the duty card; this suite measures layout, so keep it calm.
+  DUTY: {
+    exists: true, path_rel: 'docs/decisions.md', url: 'file:///D:/g/docs/decisions.md',
+    as_of_utc: nowIso(1), scanned: 12, matched: 0, open: 0, late: 0, rows: []
   }
 };
 

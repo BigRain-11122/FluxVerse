@@ -33,7 +33,8 @@ param(
     [string]$HistoryPath = '',
     [string]$TickLogPath = '',
     [string]$ShotDir = 'qa',
-    [string]$ProofRoot = ''
+    [string]$ProofRoot = '',
+    [string]$DecisionsPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -65,6 +66,23 @@ if ([string]::IsNullOrEmpty($TickLogPath))  {
     $TickLogPath = Join-Path $repoDir ('logs\tick-' + (Get-Date).ToString('yyyyMMdd') + '.log')
 }
 if ([string]::IsNullOrEmpty($ProofRoot))    { $ProofRoot    = $repoDir }
+
+# --- live group root (shared resolver, D-20261028-04) ----------------------
+# Two consumers need it: the duty card (group decisions.md) and artifact links
+# (the face legitimately names group-level files such as docs/decisions.md,
+# which do not live inside this repo). Counting "..\.." hops lands on the stale
+# mirror and silently reads week-old bytes, so it is resolved ONCE here.
+$groupRoot = ''
+$groupResolver = Join-Path $PSScriptRoot 'resolve-group-root.ps1'
+if (Test-Path -LiteralPath $groupResolver) {
+    . $groupResolver
+    try {
+        $groupRoot = Resolve-GroupRoot -RepoRoot $repoDir -LegacyRoot (Join-Path $repoDir '..\..')
+    } catch { $groupRoot = '' }
+}
+if ([string]::IsNullOrEmpty($groupRoot)) {
+    $groupRoot = [IO.Path]::GetFullPath((Join-Path $repoDir '..\..'))
+}
 
 foreach ($p in @($SnapPath, $FacePath, $TemplatePath)) {
     if (-not (Test-Path -LiteralPath $p)) { Fail ('input missing: ' + $p) }
@@ -140,6 +158,14 @@ function Resolve-ArtItems
         else { $abs = Join-Path $repoDir $norm.Replace('/', '\') }
         $exists = $false
         try { $exists = Test-Path -LiteralPath $abs } catch { $exists = $false }
+        # Second home: the group tree. The face prose is allowed to name group
+        # files (docs/decisions.md, cph4/evolution-ledger.md); testing them only
+        # against the repo painted a red "not found" on a file that exists one
+        # level up (r709, art_missing=1 on a live path).
+        if (-not $exists -and $norm -notmatch '^[A-Za-z]:/' -and -not $norm.StartsWith('//')) {
+            $groupAbs = Join-Path $groupRoot $norm.Replace('/', '\')
+            try { if (Test-Path -LiteralPath $groupAbs) { $abs = $groupAbs; $exists = $true } } catch { }
+        }
         $url = ''
         # Size + last-write stamp of the real file (queue main#36): a link alone
         # tells the reader nothing about whether the thing is fresh or three days
@@ -645,6 +671,216 @@ function Resolve-CityProof
     return [ordered]@{ build = $build; soak = $soak; code = $code }
 }
 
+# ---------------------------------------------------------------------------
+# Duty orders (queue main#50): the group's decision rounds name this company in
+# table rows such as "| 2026-10-28 | D-20261028-13 ... | ... | dispatched（...10-31
+# 00:00...）|". Until now that duty list was readable only by grepping
+# docs\decisions.md, so "what did the group ask of us and when is it due" was
+# invisible on the one page a human actually opens.
+#
+# Read-only, fail-soft, honest:
+#  - the file is located through the SHARED live-root resolver (D-20261028-04):
+#    counting "..\.." hops silently lands on the stale mirror.
+#  - only table rows that (a) mention this repo by name and (b) are still open
+#    (status cell carries dispatched/open) become duty rows; executed rows are
+#    not work.
+#  - a due stamp that cannot be parsed ships due_utc='' and is never counted
+#    late - an unreadable deadline is "unknown", not "on time".
+#  - missing file => exists=false, never a silent empty list pretending zero duty.
+function Resolve-Duty
+{
+    param([string]$Path)
+
+    $r = [ordered]@{
+        exists = $false; path_rel = ''; url = ''; as_of_utc = ''
+        scanned = 0; matched = 0; open = 0; late = 0; rows = @()
+    }
+    if ([string]::IsNullOrEmpty($Path)) { return $r }
+    if (-not (Test-Path -LiteralPath $Path)) { return $r }
+
+    $raw = ''
+    try { $raw = [IO.File]::ReadAllText($Path, [Text.Encoding]::UTF8) }
+    catch { return $r }
+    $r.exists = $true
+
+    try {
+        $di = Get-Item -LiteralPath $Path -ErrorAction Stop
+        $r.as_of_utc = $di.LastWriteTimeUtc.ToString('yyyy-MM-ddTHH:mm:ssZ',
+            [Globalization.CultureInfo]::InvariantCulture)
+    } catch { }
+    $full = [IO.Path]::GetFullPath($Path)
+    $rel = $full
+    if ($rel.StartsWith($repoDir, [StringComparison]::OrdinalIgnoreCase)) {
+        $rel = $rel.Substring($repoDir.Length)
+    }
+    $r.path_rel = $rel.TrimStart('\', '/').Replace('\', '/')
+    $r.url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
+
+    # Only the tail matters (the newest batches live at the end) and a 400KB file
+    # split into objects per row would cost more than the panel is worth.
+    $lines = $raw -split "`r?`n"
+    if ($lines.Count -gt 600) { $lines = $lines[($lines.Count - 600)..($lines.Count - 1)] }
+
+    # Owner tokens live in a UTF-8 data file (ASCII-only law: the script must not
+    # carry CJK). "FluxVerse" alone is not enough - a batch dispatched to "四司"
+    # names no company explicitly, and that row is still our work.
+    $tokens = @('FluxVerse')
+    $tokPath = Join-Path $PSScriptRoot 'duty-owners.json'
+    if (Test-Path -LiteralPath $tokPath) {
+        try {
+            $tj = ConvertFrom-Json ([IO.File]::ReadAllText($tokPath, [Text.Encoding]::UTF8))
+            $extra = @($tj.tokens | Where-Object { $_ -ne $null -and [string]$_ -ne '' })
+            if ($extra.Count -gt 0) { $tokens = @($extra) }
+        } catch { }
+    }
+
+    # Pre-pass: a later row can park an earlier decision ("suspended（候复产口令）"
+# naming D-....). The parked row keeps saying "dispatched" on its own line, so
+# without this pass the card bills an order the ledger already suspended - the
+# first live build showed D-20261020-05 as 133 hours overdue although D-20261024-07
+# had explicitly parked it (r709). Only suspension counts as a closer: an
+# "executed" batch row that merely mentions an id is usually evidence, not a
+# closure (D-20261028-14 mentions D-20261028-04 as still open).
+    $suspended = @{}
+    foreach ($pl in $lines) {
+        $ps = $pl.Trim()
+        if (-not $ps.StartsWith('| 2026-')) { continue }
+        $pc = $ps.Trim('|').Split('|')
+        if ($pc.Count -lt 6) { continue }
+        if (([string]$pc[$pc.Count - 1]).Trim() -notmatch '(?i)\bsuspended\b') { continue }
+        foreach ($mm in [regex]::Matches($ps, 'D-20\d{6}-\d{2}')) { $suspended[$mm.Value] = $true }
+    }
+
+    $now = [DateTimeOffset]::Now
+    $out = New-Object System.Collections.ArrayList
+    $scanned = 0
+    $matched = 0
+    foreach ($ln in $lines) {
+        $s = $ln.Trim()
+        if (-not $s.StartsWith('| 2026-')) { continue }
+        $cells = $s.Trim('|').Split('|')
+        if ($cells.Count -lt 6) { continue }
+        $scanned++
+
+        # Columns: date | problem | source | basis | decision | grade | status.
+        # Only the DECISION cell (who is told to act) and the STATUS cell (who the
+        # dispatch was addressed to) may name us. A mention inside problem/source/
+        # basis is evidence ABOUT us, not an order TO us - the first draft matched
+        # the whole row and shipped four rows of other companies' work (r709).
+        $actIdx = $cells.Count - 3
+        if ($actIdx -lt 0) { $actIdx = 0 }
+        $action = ([string]$cells[$actIdx]).Trim()
+        $status = ([string]$cells[$cells.Count - 1]).Trim()
+
+        $ownerHit = $false
+        foreach ($tk in $tokens) {
+            if ($action.IndexOf($tk, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or
+                $status.IndexOf($tk, [StringComparison]::OrdinalIgnoreCase) -ge 0) { $ownerHit = $true; break }
+        }
+        if (-not $ownerHit) { continue }
+        $matched++
+        if ($status -notmatch '(?i)\b(dispatched|open)\b') { continue }
+
+        $id = ''
+        $mId = [regex]::Match($s, 'D-20\d{6}-\d{2}')
+        if ($mId.Success) { $id = $mId.Value }
+        if ($id -ne '' -and $suspended.ContainsKey($id)) { continue }
+
+        $subject = ([string]$cells[1]).Trim()
+        if ($id -ne '') { $subject = $subject.Replace($id, '').Trim() }
+        if ($subject.Length -gt 96) { $subject = $subject.Substring(0, 96) + '...' }
+        if ($action.Length -gt 300) { $action = $action.Substring(0, 300) + '...' }
+
+        # Due stamp: ONLY from the status cell - scanning the whole row turned a
+        # timestamp quoted in the basis into a bogus deadline (r709: a row's
+        # "10-20 21:44" reference made a 10-26 order look a week overdue).
+        # Forms seen: "dispatched（四司／10-31 00:00／...）" and "dispatched（@X 24h）".
+        $dueTxt = ''
+        $dueUtc = ''
+        $mDue = [regex]::Match($status, '(?<!\d)(\d{1,2})-(\d{2})\s+(\d{1,2}):(\d{2})(?!\d)')
+        if ($mDue.Success) {
+            $dueTxt = $mDue.Groups[1].Value + '-' + $mDue.Groups[2].Value + ' ' +
+                $mDue.Groups[3].Value + ':' + $mDue.Groups[4].Value
+            try {
+                $mo = [int]$mDue.Groups[1].Value
+                $dy = [int]$mDue.Groups[2].Value
+                $hh = [int]$mDue.Groups[3].Value
+                $mi = [int]$mDue.Groups[4].Value
+                if ($mo -ge 1 -and $mo -le 12 -and $dy -ge 1 -and $dy -le 31 -and
+                    $hh -ge 0 -and $hh -le 24 -and $mi -ge 0 -and $mi -le 59 -and
+                    -not ($hh -eq 24 -and $mi -ne 0)) {
+                    $dt = New-Object DateTime($now.Year, $mo, $dy, 0, 0, 0, [DateTimeKind]::Local)
+                    # "10-25 24:00" is a real deadline idiom (end of day) - the
+                    # next midnight, not an invalid hour. Rejecting it silently
+                    # made an overdue order look undated (r709).
+                    $dt = $dt.AddHours($hh).AddMinutes($mi)
+                    if ($dt -lt $now.LocalDateTime.AddDays(-200)) {
+                        $dt = $dt.AddYears(1)
+                    }
+                    $dueUtc = $dt.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ',
+                        [Globalization.CultureInfo]::InvariantCulture)
+                }
+            } catch { $dueUtc = '' }
+        } elseif ($status -match '(?<!\d)(\d{4})-(\d{2})-(\d{2})(?!\d)') {
+            # Date-only window ("回访 2026-10-23 治理窗"): the day itself is the
+            # deadline, so midnight local. Left unparsed this order showed as
+            # "no deadline" although it was a week overdue (r709).
+            $dueTxt = $Matches[1] + '-' + $Matches[2] + '-' + $Matches[3]
+            try {
+                $dt = New-Object DateTime([int]$Matches[1], [int]$Matches[2],
+                    [int]$Matches[3], 0, 0, 0, [DateTimeKind]::Local)
+                $dueUtc = $dt.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ',
+                    [Globalization.CultureInfo]::InvariantCulture)
+            } catch { $dueUtc = '' }
+        } elseif ($status -match '(?<!\d)(\d{1,2})h(?!\w)') {
+            # Relative window ("24h"): anchored on the row date, never on "now" -
+            # a relative deadline must not slide forward every time the panel
+            # rebuilds, or an overdue item would never look overdue.
+            $hrs = [int]$Matches[1]
+            $rowDate = ([string]$cells[0]).Trim()
+            if ($rowDate -match '^(\d{4})-(\d{2})-(\d{2})$') {
+                try {
+                    $dt = New-Object DateTime([int]$Matches[1], [int]$Matches[2],
+                        [int]$Matches[3], 0, 0, 0, [DateTimeKind]::Local)
+                    $dt = $dt.AddHours($hrs)
+                    $dueTxt = $rowDate + ' + ' + $hrs + 'h'
+                    $dueUtc = $dt.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ',
+                        [Globalization.CultureInfo]::InvariantCulture)
+                } catch { $dueUtc = '' }
+            }
+        }
+
+        $st = 'dispatched'
+        if ($status -match '(?i)\bopen\b') { $st = 'open' }
+        if ($dueUtc -ne '' -and [DateTimeOffset]::Parse($dueUtc,
+                [Globalization.CultureInfo]::InvariantCulture) -lt $now) { $r.late++ }
+
+        [void]$out.Add([ordered]@{
+            id = $id; subject = $subject; status = $st
+            due_txt = $dueTxt; due_utc = $dueUtc; action = $action
+        })
+    }
+
+    # Most urgent first; rows without a parsable deadline sink to the bottom
+    # (they are "unknown", never "earliest").
+    $sorted = @($out | Sort-Object -Property @{ Expression = {
+                    $d = [string]$_.due_utc
+                    if ($d -eq '') { '9999-12-31' } else { $d } } }, @{ Expression = { [string]$_.id } })
+    if ($sorted.Count -gt 8) { $sorted = $sorted[0..7] }
+
+    $r.scanned = $scanned
+    $r.matched = $matched
+    $r.open = $sorted.Count
+    $r.rows = @($sorted)
+    return $r
+}
+
+if ([string]::IsNullOrEmpty($DecisionsPath)) {
+    $DecisionsPath = Join-Path $groupRoot 'docs\decisions.md'
+}
+$duty = Resolve-Duty -Path $DecisionsPath
+$dutyJs = To-JsLiteral -Obj $duty -Label 'duty'
+
 $proof = Resolve-CityProof -Root $ProofRoot
 $proofJs = To-JsLiteral -Obj $proof -Label 'proof'
 
@@ -679,7 +915,7 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__ART_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__DUTY_JSON__','__ART_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
@@ -702,9 +938,10 @@ $phMap = @{
     '__TICK_JSON__'     = $tickJs
     '__SHOTS_JSON__'    = $shotsJs
     '__PROOF_JSON__'    = $proofJs
+    '__DUTY_JSON__'     = $dutyJs
     '__ART_JSON__'      = $artJs
 }
-$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|ART)_JSON__')
+$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|DUTY|ART)_JSON__')
 $evaluator = [System.Text.RegularExpressions.MatchEvaluator]{
     param($m)
     if (-not $phMap.ContainsKey($m.Value)) { return $m.Value }
@@ -748,5 +985,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' built=' + $built + ' path=' + $OutPath)
 exit 0

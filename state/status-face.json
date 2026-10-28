@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-27T23:53:21Z",
-    "current_activity":  "r693 收口（main#31 销项）：面板第四行「今日日志」现在自带摘要——文件后面直接跟「N 分钟前 · scan M 行 · K 轮」，CEO 不用滚到自检才知道 10 分钟轮停没停走。做法：复用 builder 已注入的 TICK 元数据（构建时读盘所得 exists/age_min/scan_lines/rounds），渲染完第四行再追加一枚小标签；超过 15 分钟转红样式（与自检第 9 项同阈值），日志缺档或年龄读不出时不追加任何数字（宁缺不造假）。实证：PANEL OK bytes=68629 art=9 art_missing=0 tickrow=1 tick=4min scan=2436 rounds=94；自检 13/13；新增沙盒 logs/devloop-r693-panel-ticksummary-test.js 14/14；旧 14 套面板测试 230 断言零回归；编译零错；全页截图 qa/city-panel-r693-bm-a.png。",
-    "artifact":  "world-public/city-panel.html（重建 2026-10-28 07:51 +08:00，file:// 直接打开；第四行「今日日志」带内联摘要）。改造件=Tools/devloop/city-panel-template.html（f-tick 渲染后追加摘要 span）。沙盒=logs/devloop-r693-panel-ticksummary-test.js（14 断言）。取证截图=qa/city-panel-r693-bm-a.png（1400×3600）。队列项=state/queue/main.md #31",
-    "artifact_utc":  "2026-10-27T23:53:21Z",
-    "milestone":  "队列头：main#23 司级 7 天基准刷新（10-27 到期、逾期在册，正身=docs/global-benchmarks.md ④更新记录末行；判据=④表新增一行+③表源分级如实标）→ main#8 城市线附卷（10-19 逾期）→ main#32 摘要 hover 钟点（r693 轮尾补条）→ main#17 浸泡复跑（10-28 18:36 后或 City3D 新 commit）→ main#20 ABORT 观察位。面板每 10 分钟随 tick 自动重建，CEO 随时 file:// 打开即可看最新实况。",
+    "updated_utc":  "2026-10-28T00:02:12Z",
+    "current_activity":  "r694 收口（main#32 销项）：面板第四行「今日日志」的摘要现在能悬停看准点——鼠标停在「N 分钟前 · scan M 行 · K 轮」上，会给出「最后写入 2026-10-28 07:56（2026-10-27T23:56:11Z）· 日志 157037 字节」，因为 N 分钟前是构建那一刻算的，面板放旧了就不准，绝对钟点才对得上账。做法：builder 补注入 TICK.mtime_utc（LastWriteTimeUtc ISO），页面把本地钟点+ISO+字节数拼进 title；缺时间只给字节、缺字节只给时间、两者都缺就不加 title（宁缺不造假）。实证：PANEL OK bytes=68911 tick=4min scan=2492 rounds=96；自检 13/13；新增沙盒 logs/devloop-r694-panel-ticktitle-test.js 14/14；旧 15 套面板测试 230 断言零回归；vm.Script 编译零错；全页截图 qa/city-panel-r694-bm-a.png。",
+    "artifact":  "world-public/city-panel.html（重建 2026-10-28 08:02 +08:00，file:// 直接打开；第四行「今日日志」摘要可悬停看绝对时刻与字节数）。改造件=Tools/devloop/build-city-panel.ps1（tickMeta 增 mtime_utc）+Tools/devloop/city-panel-template.html（摘要 span 加 title）。沙盒=logs/devloop-r694-panel-ticktitle-test.js（14 断言）。取证截图=qa/city-panel-r694-bm-a.png（1400×3600）。队列项=state/queue/main.md #32",
+    "artifact_utc":  "2026-10-28T00:02:12Z",
+    "milestone":  "队列头：main#23 司级 7 天基准刷新（10-27 到期、逾期在册，正身=docs/global-benchmarks.md ④更新记录末行；判据=④表新增一行+③表源分级如实标）→ main#8 城市线附卷（10-19 逾期）→ main#33 状态档写入硬化（sha 对 live root 校验）→ main#17 浸泡复跑（10-28 18:36 后或 City3D 新 commit）→ main#20 ABORT 观察位。面板每 10 分钟随 tick 自动重建，CEO 随时 file:// 打开即可看最新实况。",
     "milestone_eta_utc":  "2026-10-29T12:00:00Z"
 }

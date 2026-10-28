@@ -348,6 +348,7 @@ else { $trendJs = To-JsLiteral -Obj @($trendArr) -Label 'trend' }
 $tickExists = $false
 $tickSize = 0
 $tickAgeMin = -1
+$tickMtime = ''
 $scanLines = 0
 $rounds = 0
 $readOk = $true
@@ -356,6 +357,11 @@ try {
         $tickExists = $true
         $tickItem = Get-Item -LiteralPath $TickLogPath
         $tickSize = [int]$tickItem.Length
+        # Absolute last-write stamp (queue main#32). age_min is frozen at build
+        # time, so a reader opening an old panel cannot recover the real moment;
+        # this lets the page show the clock time behind "N minutes ago".
+        $tickMtime = $tickItem.LastWriteTimeUtc.ToString('yyyy-MM-ddTHH:mm:ssZ',
+            [Globalization.CultureInfo]::InvariantCulture)
         $ageSec = ([DateTime]::UtcNow - $tickItem.LastWriteTimeUtc).TotalSeconds
         if ($ageSec -lt 0) { $ageSec = 0 }
         $tickAgeMin = [int][Math]::Floor($ageSec / 60)
@@ -371,6 +377,7 @@ $tickMeta = New-Object PSObject -Property ([ordered]@{
     exists     = [bool]$tickExists
     file       = [string](Split-Path -Leaf $TickLogPath)
     size       = [int]$tickSize
+    mtime_utc  = [string]$tickMtime
     age_min    = [int]$tickAgeMin
     scan_lines = [int]$scanLines
     rounds     = [int]$rounds

@@ -181,9 +181,9 @@ const HIST = __HIST_JSON__;
 const SERIES = __SERIES_JSON__;
 // TREND = the whole local cross-round log inside a 24h window (newest last).
 const TREND = __TREND_JSON__;
-// TICK = today's tick log probe ({exists,file,size,age_min,scan_lines,rounds,
-// read_ok}) - the panel is built BY that tick, so this is the only honest way
-// to tell whether the 10-minute loop actually ran.
+// TICK = today's tick log probe ({exists,file,size,mtime_utc,age_min,scan_lines,
+// rounds,read_ok}) - the panel is built BY that tick, so this is the only honest
+// way to tell whether the 10-minute loop actually ran.
 const TICK = __TICK_JSON__;
 
 const $ = (id) => document.getElementById(id);
@@ -286,6 +286,22 @@ function fmtAge(h){
     s.style.marginLeft = '6px';
     s.textContent = tk.age_min + ' 分钟前 · scan ' + (tk.scan_lines || 0) + ' 行 · ' +
       (tk.rounds || 0) + ' 轮';
+    // 悬停补绝对钟点（queue main#32）：age_min 冻结在构建时刻，此后再开面板
+    // 「N 分钟前」就不准了——title 给出最后的写入时刻与字节数，读者可自行换算。
+    // mtime/尺寸缺失只丢自己那一段，宁缺不造假（与自检第 9 项同立场）。
+    (function () {
+      const parts = [];
+      const mt = Date.parse(tk.mtime_utc);
+      if (!isNaN(mt)) {
+        const d = new Date(mt);
+        const p2 = (n) => (n < 10 ? '0' + n : String(n));
+        parts.push('最后写入 ' + d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' +
+          p2(d.getDate()) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()) +
+          '（' + tk.mtime_utc + '）');
+      }
+      if (typeof tk.size === 'number' && tk.size >= 0) parts.push('日志 ' + tk.size + ' 字节');
+      if (parts.length) s.title = parts.join(' · ');
+    })();
     $('f-tick').appendChild(s);
   })();
 

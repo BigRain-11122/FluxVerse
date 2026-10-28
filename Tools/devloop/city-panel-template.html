@@ -75,6 +75,14 @@
   .shot .cap a{color:#7fd1ff;text-decoration:none;border-bottom:1px dashed #2f5f7f}
   .shot .cap a:hover{color:#bfe9ff;border-bottom-color:#7fd1ff}
   .shot .none{padding:16px;color:var(--dim);font-size:12.5px;text-align:center;height:180px;display:flex;align-items:center;justify-content:center}
+  /* 建造/测试证据条（queue main#48）：取景卡下方三行小字，回答「建出来了吗、
+     测过吗、代码多旧」。用紧凑行而不是新卡片——页面已经十张卡，信息该贴着
+     它解释的画面走。 */
+  .proof{margin-top:10px;display:grid;gap:6px;font-size:12px}
+  .proof .prow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .proof .prow .pv{color:#c8d6e5;font-variant-numeric:tabular-nums}
+  .proof .prow a{color:#7fd1ff;text-decoration:none;border-bottom:1px dashed #2f5f7f}
+  .proof .prow a:hover{color:#bfe9ff;border-bottom-color:#7fd1ff}
   .rhythm{display:flex;gap:5px;align-items:flex-end;height:96px}
   .rcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;align-items:center;gap:5px}
   .rbar{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#4cc9f0,#2a6b82);min-height:2px}
@@ -161,6 +169,7 @@
     <h2>城市取景 <span class="tag" id="shot-sum">—</span> <span class="tag">City3D 证据帧</span></h2>
     <div class="rhint" id="shot-hint">—</div>
     <div class="shots" id="shots"></div>
+    <div class="proof" id="proof"></div>
   </div>
 
   <div class="card" style="margin-top:14px">
@@ -242,6 +251,12 @@ const TICK = __TICK_JSON__;
 // refs. An item whose encode failed ships data='' and the page falls back to a
 // plain link instead of pretending there is a picture.
 const SHOTS = __SHOTS_JSON__;
+// PROOF = City3D-side evidence the builder read at build time ({build:{exists,
+// exit_code,ts_utc,wall_s,shots_present,shots_expected,rel,url,report_rel,
+// report_url}, soak:{exists,fps_avg,errors,exceptions,ts_utc,rel,url}, code:
+// {exists,sha,ts_utc}}). Two facts stay distinct on purpose: exists=false means
+// the receipt is absent; exists=true with -1 numbers means it is unreadable.
+const PROOF = __PROOF_JSON__;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -535,6 +550,54 @@ function artTitle(it){
       return '<div class="shot">' + body +
         '<div class="cap"><span class="nm">' + nm + '</span>' + tag + '</div></div>';
     }).join('');
+  })();
+
+  // 建造/测试证据（queue main#48）：取景卡只回答「城市长什么样」，而「建出来了
+  // 吗、测得怎样、代码多旧」过去只能自己去翻 City3D-staging 与 qa/。builder 已
+  // 在构建时只读解析三件证据送进来，这里逐行渲染：批建收据（exit/帧数）、10 分钟
+  // 浸泡收据（render fps/错误）、最近一次 City3D 提交（短 sha）。缺件如实写
+  // 「缺失」并标红，不装通过也不隐去——与 r692~r703 的宁缺不造假同一立场。
+  (function () {
+    const box = $('proof');
+    if (!box) return;
+    const p = PROOF || {};
+    const out = [];
+    const push = (tag, vd, ok, ts, linkUrl, linkNm) => {
+      const ttl = absClock(ts) || '';
+      let html = '<span class="tag' + (ok ? '' : ' warn') + '">' + esc(tag) + '</span>' +
+        '<span class="pv"' + (ttl ? ' title="' + esc(ttl) + '"' : '') + '>' + esc(vd) + '</span>';
+      if (linkUrl) {
+        html += '<a href="' + esc(linkUrl) + '" target="_blank" rel="noreferrer"' +
+          (ttl ? ' title="' + esc(ttl) + '"' : '') + '>' + esc(linkNm || '原件') + '</a>';
+      }
+      out.push('<div class="prow">' + html + '</div>');
+    };
+    const b = p.build || {};
+    if (!b.exists) {
+      push('R2 批建', '收据缺失：City3D-staging/r2-ignite.done 不在盘', false, '', '', '');
+    } else if (b.exit_code < 0) {
+      push('R2 批建', '收据在盘但不可解析（exit 未知）', false, b.ts_utc, b.report_url, '报告');
+    } else {
+      push('R2 批建', 'exit ' + b.exit_code + ' · 帧 ' + b.shots_present + '/' + b.shots_expected +
+        ' · ' + fmtAge(ago(b.ts_utc)), b.exit_code === 0, b.ts_utc, b.report_url, '报告');
+    }
+    const s = p.soak || {};
+    if (!s.exists) {
+      push('10 分钟浸泡', '收据缺失：qa/smoke-r680-bm-a-soak.json 不在盘', false, '', '', '');
+    } else if (typeof s.fps_avg !== 'number' || s.fps_avg < 0 || s.errors < 0) {
+      push('10 分钟浸泡', '收据在盘但不可解析（fps/错误未知）', false, s.ts_utc, s.url, '收据');
+    } else {
+      push('10 分钟浸泡', 'render ' + Number(s.fps_avg).toFixed(1) + ' fps · 错误 ' +
+        s.errors + ' · ' + fmtAge(ago(s.ts_utc)),
+        (s.errors === 0 && s.exceptions === 0), s.ts_utc, s.url, '收据');
+    }
+    const c = p.code || {};
+    if (!c.exists) {
+      push('城市代码', '最近提交未知（git 只读查询失败或 City3D/ 无提交）', false, '', '', '');
+    } else {
+      push('城市代码', c.sha + ' · ' + fmtAge(ago(c.ts_utc)), true, c.ts_utc, '', '');
+    }
+    box.innerHTML = out.join('');
   })();
 
   const city = snap.city || {};
@@ -1030,6 +1093,40 @@ function artTitle(it){
   }
   sh.title = shotList.length ? absClock(shotList[0].shot_utc) : undefined;
   selfcheck.push({ ok: sh.ok, nm: '取景帧', vd: sh.vd, title: sh.title });
+
+  // 城市证据（queue main#48）：取景卡新挂的三条证据若缺收据、批建 exit≠0、浸泡
+  // 有错误，页头还显示全绿就又是一次「漂亮但失真」。浸泡超过 48 小时复跑窗
+  // （main#17 判据）同样标注意——那正是下一轮浸泡的欠账，不是可以藏的细节。
+  const pf = PROOF || {};
+  const pfb = pf.build || {}, pfs = pf.soak || {}, pfc = pf.code || {};
+  let cd;
+  if (!pfb.exists) {
+    cd = { ok: false, vd: 'R2 批建收据缺失（City3D-staging/r2-ignite.done）' };
+  } else if (pfb.exit_code < 0) {
+    cd = { ok: false, vd: 'R2 批建收据在盘但不可解析（exit 未知）' };
+  } else if (pfb.exit_code !== 0) {
+    cd = { ok: false, vd: 'R2 批建 exit ' + pfb.exit_code + '（非 0）· 帧 ' +
+      pfb.shots_present + '/' + pfb.shots_expected };
+  } else if (!pfs.exists) {
+    cd = { ok: false, vd: '浸泡收据缺失（qa/smoke-r680-bm-a-soak.json）' };
+  } else if (typeof pfs.fps_avg !== 'number' || pfs.fps_avg < 0 || pfs.errors < 0) {
+    cd = { ok: false, vd: '浸泡收据在盘但不可解析（fps/错误未知）' };
+  } else if (pfs.errors !== 0 || pfs.exceptions !== 0) {
+    cd = { ok: false, vd: '浸泡有错误 errors=' + pfs.errors + ' exceptions=' + pfs.exceptions };
+  } else {
+    const sow = ago(pfs.ts_utc);
+    const parts = ['批建 exit 0', '浸泡 ' + Number(pfs.fps_avg).toFixed(1) + 'fps/错误 0'];
+    if (sow != null) parts.push('收据 ' + fmtAge(sow));
+    if (pfc.exists) parts.push('代码 ' + pfc.sha);
+    if (sow != null && sow > 48) {
+      cd = { ok: false, vd: parts.join(' · ') + ' — 已过 48 小时复跑窗 ' +
+        Math.floor(sow - 48) + ' 小时（main#17 候浸泡轮）' };
+    } else {
+      cd = { ok: true, vd: parts.join(' · ') + '（复跑窗 48 小时）' };
+    }
+  }
+  cd.title = pfs.exists ? absClock(pfs.ts_utc) : undefined;
+  selfcheck.push({ ok: cd.ok, nm: '城市证据', vd: cd.vd, title: cd.title });
 
   const warnN = selfcheck.filter(c => !c.ok).length;
   $('sc-sum').textContent = warnN ? (warnN + ' 项注意') : (selfcheck.length + ' 项通过');

@@ -32,7 +32,8 @@ param(
     [string]$OutPath = '',
     [string]$HistoryPath = '',
     [string]$TickLogPath = '',
-    [string]$ShotDir = 'qa'
+    [string]$ShotDir = 'qa',
+    [string]$ProofRoot = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -63,6 +64,7 @@ if ([string]::IsNullOrEmpty($HistoryPath))  { $HistoryPath  = Join-Path $repoDir
 if ([string]::IsNullOrEmpty($TickLogPath))  {
     $TickLogPath = Join-Path $repoDir ('logs\tick-' + (Get-Date).ToString('yyyyMMdd') + '.log')
 }
+if ([string]::IsNullOrEmpty($ProofRoot))    { $ProofRoot    = $repoDir }
 
 foreach ($p in @($SnapPath, $FacePath, $TemplatePath)) {
     if (-not (Test-Path -LiteralPath $p)) { Fail ('input missing: ' + $p) }
@@ -533,6 +535,119 @@ function Resolve-CityShots
     return @($out)
 }
 
+# --- city proof rows (queue main#48) ----------------------------------------
+# The framing card answers "what does the city look like" but not "was it built,
+# was it measured, how old is the city code". That evidence already sits on disk
+# (City3D-staging build receipt + report, the 10-minute soak receipt, the last
+# City3D commit) and used to be reachable only by walking the tree. Parse it
+# read-only and ship it beside the frames. Two different facts must never merge:
+# "receipt absent" (exists=false) vs "receipt present but unreadable" (exists=true,
+# numbers -1). A missing file never blocks the panel; the page says so instead.
+function Convert-UtcIso
+{
+    param([string]$Raw)
+    if ([string]::IsNullOrWhiteSpace($Raw)) { return '' }
+    try {
+        $dto = [DateTimeOffset]::Parse($Raw, [Globalization.CultureInfo]::InvariantCulture)
+        return $dto.UtcDateTime.ToString('yyyy-MM-ddTHH:mm:ssZ',
+            [Globalization.CultureInfo]::InvariantCulture)
+    } catch { return '' }
+}
+
+function Get-ProofFileInfo
+{
+    param([string]$Path)
+    $r = New-Object PSObject -Property ([ordered]@{
+        exists = $false; rel = ''; url = ''; size = [int64]-1; mtime_utc = '' })
+    try {
+        if (-not (Test-Path -LiteralPath $Path)) { return $r }
+        $it = Get-Item -LiteralPath $Path -ErrorAction Stop
+        if ($it.PSIsContainer) { return $r }
+        $r.exists = $true
+        $r.size = [int64]$it.Length
+        $r.mtime_utc = $it.LastWriteTimeUtc.ToString('yyyy-MM-ddTHH:mm:ssZ',
+            [Globalization.CultureInfo]::InvariantCulture)
+        $full = $it.FullName
+        $rel = $full
+        if ($rel.StartsWith($repoDir, [StringComparison]::OrdinalIgnoreCase)) {
+            $rel = $rel.Substring($repoDir.Length)
+        }
+        $r.rel = $rel.TrimStart('\', '/').Replace('\', '/')
+        $r.url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
+    } catch { }
+    return $r
+}
+
+function Resolve-CityProof
+{
+    param([string]$Root)
+
+    $build = [ordered]@{
+        exists = $false; exit_code = -1; ts_utc = ''; wall_s = -1
+        shots_present = -1; shots_expected = -1; rel = ''; url = ''
+        report_rel = ''; report_url = ''
+    }
+    $soak = [ordered]@{
+        exists = $false; fps_avg = -1; errors = -1; exceptions = -1
+        ts_utc = ''; rel = ''; url = ''
+    }
+    $code = [ordered]@{ exists = $false; sha = ''; ts_utc = '' }
+
+    $donePath = Join-Path $Root 'City3D-staging\r2-ignite.done'
+    $doneInfo = Get-ProofFileInfo -Path $donePath
+    $repInfo  = Get-ProofFileInfo -Path (Join-Path $Root 'City3D-staging\r2-report.md')
+    if ($repInfo.exists) {
+        $build.report_rel = [string]$repInfo.rel
+        $build.report_url = [string]$repInfo.url
+    }
+    if ($doneInfo.exists) {
+        $build.exists = $true
+        $build.rel = [string]$doneInfo.rel
+        $build.url = [string]$doneInfo.url
+        try {
+            $dj = ConvertFrom-Json ([IO.File]::ReadAllText($donePath, [Text.Encoding]::UTF8))
+            $build.exit_code = [int]$dj.exit_code
+            $build.wall_s = [int]$dj.wall_s
+            $build.shots_present = [int]$dj.shots_present
+            $build.shots_expected = [int]$dj.shots_expected
+            $build.ts_utc = Convert-UtcIso -Raw ([string]$dj.ts)
+        } catch { $build.exit_code = -1 }
+    }
+
+    $soakPath = Join-Path $Root 'qa\smoke-r680-bm-a-soak.json'
+    $soakInfo = Get-ProofFileInfo -Path $soakPath
+    if ($soakInfo.exists) {
+        $soak.exists = $true
+        $soak.rel = [string]$soakInfo.rel
+        $soak.url = [string]$soakInfo.url
+        try {
+            $sj = ConvertFrom-Json ([IO.File]::ReadAllText($soakPath, [Text.Encoding]::UTF8))
+            $soak.ts_utc = Convert-UtcIso -Raw ([string]$sj.ts_utc)
+            $soak.errors = [int]$sj.errors
+            $soak.exceptions = [int]$sj.exceptions
+            if ($null -ne $sj.render) { $soak.fps_avg = [double]$sj.render.fps_avg }
+        } catch { $soak.fps_avg = -1 }
+    }
+
+    # Read-only git lookup: which commit last touched City3D/. A git-less machine
+    # (or a fixture root outside any repo) simply yields exists=false.
+    try {
+        $gitCmd = Get-Command git -ErrorAction Stop
+        $raw = & $gitCmd.Source -C $Root log -1 --format='%h|%aI' -- City3D/ 2>$null
+        $line = ([string]($raw | Select-Object -First 1)).Trim()
+        if ($line -match '^([0-9a-f]{4,40})\|(.+)$') {
+            $code.exists = $true
+            $code.sha = [string]$Matches[1]
+            $code.ts_utc = Convert-UtcIso -Raw ([string]$Matches[2])
+        }
+    } catch { }
+
+    return [ordered]@{ build = $build; soak = $soak; code = $code }
+}
+
+$proof = Resolve-CityProof -Root $ProofRoot
+$proofJs = To-JsLiteral -Obj $proof -Label 'proof'
+
 # Wrapped in an object: a bare one-element array would lose its brackets in
 # ConvertTo-Json (PS5.1) and the page would mis-read it as a single frame.
 $shots = @(Resolve-CityShots -Dir $(if ([System.IO.Path]::IsPathRooted($shotDir)) { $shotDir } else { Join-Path $repoDir $shotDir }) -Max $shotMax -Width $shotWidth -Quality $shotQuality)
@@ -564,7 +679,7 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__ART_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__ART_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
@@ -586,9 +701,10 @@ $phMap = @{
     '__TREND_JSON__'    = $trendJs
     '__TICK_JSON__'     = $tickJs
     '__SHOTS_JSON__'    = $shotsJs
+    '__PROOF_JSON__'    = $proofJs
     '__ART_JSON__'      = $artJs
 }
-$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|ART)_JSON__')
+$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|ART)_JSON__')
 $evaluator = [System.Text.RegularExpressions.MatchEvaluator]{
     param($m)
     if (-not $phMap.ContainsKey($m.Value)) { return $m.Value }
@@ -632,5 +748,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' built=' + $built + ' path=' + $OutPath)
 exit 0

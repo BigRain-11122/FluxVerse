@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-28T03:31:26Z",
-    "current_activity":  "r707 收口（FULL-ROUND·产品面优先轮）：取景闸从 builder 私有升级为「一处定义、两面共用」——新建 Tools/devloop/city-shot-shape.ps1（面板名/家族注册/形状三闸），Tools/devloop/build-city-panel.ps1 与 Tools/perceptor/verify.ps1 的 §2c 同时 dot-source 它；verify 每 10 分钟把 qa/ 过同一套闸，能过形状闸却不属注册家族的图（例：1000×1800 半页截图）直接点名 WARN，不再只能靠人眼发现。沙盒 18/18、r706 形状沙盒 11/11 零回归；真机 verify 一行：city-shot-census images=48 inlinable=3 panel=45 unregistered=0。",
-    "artifact":  "world-public/city-panel.html（本页，file:// 直接打开；源码=Tools/devloop/build-city-panel.ps1；共用闸定义=Tools/devloop/city-shot-shape.ps1；沙盒=Tools/devloop/test-city-shot-census.ps1 18/18 ＋ Tools/devloop/test-city-shot-shape.ps1 11/11；全 26 套 ALL PASS；验收截图=qa/city-panel-r707-bm-a.png 与 qa/city-panel-r707-narrow-bm-a.png）",
-    "artifact_utc":  "2026-10-28T03:31:26Z",
-    "milestone":  "取景卡仍是 10-10 的 smoke 帧（17 天前，自检第 14 项唯一红标，City3D 抓帧归交互窗在飞面）。队列 next=main#23 司级 7 天基准刷新（10-27 到期·逾期 3 日，落 docs/global-benchmarks.md）→ main#40 冻结 fixture 重建化 → main#8 城市线附卷（10-19 逾期）→ main#33 状态档写入硬化 → main#17 浸泡复跑。",
-    "milestone_eta_utc":  "2026-10-29T00:00:00Z"
+    "updated_utc":  "2026-10-28T04:01:38Z",
+    "current_activity":  "r708 收口（FULL-ROUND·产品面优先轮）：城市取景卡升级为「取景＋建造/测试证据」——面板此前能看城市长什么样（r702 取景卡），但「建出来了吗、测得怎样、代码多旧」只能自己去翻 City3D-staging 与 qa/。做法=builder 新增 Resolve-CityProof 只读解析三件已有证据（City3D-staging/r2-ignite.done 批建收据：exit/帧数/时刻；qa/smoke-r680-bm-a-soak.json 10 分钟浸泡收据：render fps/错误；git 只读取 City3D/ 最近提交短 sha），以 PROOF 注入并在取景卡下渲染三行；缺件/不可解析如实标红（exists=false 与「在盘但不可解析」两种事实分开，不合并）；自检新增第 15 项「城市证据」：批建 exit≠0、浸泡有错误、或浸泡超过 48 小时复跑窗（main#17 判据）一律注意。沙盒 17/17（builder 三夹具）＋30/30（页面渲染与自检六态）；全 27 套面板沙盒 ALL PASS。",
+    "artifact":  "world-public/city-panel.html（面板·file:// 直接打开；取证截图=qa/city-panel-r708-bm-a.png 与 qa/city-panel-r708-narrow-bm-a.png）·源码=Tools/devloop/build-city-panel.ps1 与 Tools/devloop/city-panel-template.html·沙盒=Tools/devloop/test-city-panel-proof.ps1 17/17 与 logs/devloop-r708-panel-proof-test.js 30/30",
+    "artifact_utc":  "2026-10-28T04:01:38Z",
+    "milestone":  "下一步=main#17 浸泡复跑窗（City3D 最近提交 10-26 18:36＋48 小时=今日 18:36 到期；到窗随浸泡轮用 Tools/devloop/r2-soak.ps1 抓新真帧落 qa/ 注册家族名，取景卡自动跟上、自检第 14 项转绿）；随后 main#23 司级 7 天基准刷新（10-27 到期·逾期·docs/global-benchmarks.md）、main#40 冻结 fixture 重建化（logs/panel-fixture-prev.html）、main#8 城市线附卷。",
+    "milestone_eta_utc":  "2026-10-28T10:36:00Z"
 }

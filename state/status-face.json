@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-28T02:12:57Z",
-    "current_activity":  "r703 收口（产品面轮）：把「城市取景」提进自检区＝第 14 项。r702 做出取景卡后，帧数与帧龄只在卡片徽标上露出，看自检区的人读不到；而取景卡是全页唯一「城市长什么样」的实物面，它空了或全旧了，自检就不该说全绿。新项三档：一帧都没有＝注意（写明取景卡为空）／最新帧 \u003e7 天＝注意并写明几天／帧新＝通过给出帧数与帧龄；悬停给最新帧绝对钟点。源=Tools/devloop/city-panel-template.html。",
-    "artifact":  "world-public/city-panel.html（本页，file:// 直接打开）；取证截图=qa/city-panel-r703-bm-a.png；沙盒=logs/devloop-r703-panel-shotscheck-test.js（真实构建行存在/行数=模板 14/陈旧如实标注意/空态不装绿/坏时间不装新/悬停给最新帧年份钟点）；收口=state/queue/main.md #43 销行。",
-    "artifact_utc":  "2026-10-28T02:12:57Z",
-    "milestone":  "取景帧断供是真事实：qa/ 里最新一帧仍是 10-11 的 smoke-r679（17 天前），City3D 新抓帧属交互窗在飞面，本司不动——新帧落 qa/ 后自检第 14 项与取景卡自动转绿。队列头 next＝main#23 司级 7 天基准刷新（10-27 到期·逾期），对照面=docs/global-benchmarks.md，队列=state/queue/main.md → main#40 冻结 fixture 重建化 → main#8 城市线附卷。",
+    "updated_utc":  "2026-10-28T02:37:25Z",
+    "current_activity":  "r704 收口（产品面轮）：自检结论提到页头＝main#44。此前页头只有一个「快照 N 分钟前」，自检若有一项注意，读者得一路滚到页尾才看得见。现在页头多一枚按钮徽标：有注意＝红标「自检 N 项注意」并写明项名（悬停），全绿＝「自检通过」；点它直接跳到自检卡。徽标只在自检算完后才写，不会出现尚未计算就先报通过的假绿。源=Tools/devloop/city-panel-template.html",
+    "artifact":  "world-public/city-panel.html（本页，file:// 直接打开）；源=Tools/devloop/city-panel-template.html；沙盒=logs/devloop-r704-panel-headselfcheck-test.js（模板与真实构建编译·标记里不带预制结论·真实构建计数=注意行数且项名进悬停·全绿夹具=自检通过·点击滚到自检卡·缺徽标元素不崩）；收口=state/queue/main.md #44 销行",
+    "artifact_utc":  "2026-10-28T02:37:25Z",
+    "milestone":  "页头自检已是「一眼可见」面；当前真实注意项仍是取景帧 17 天前（qa/ 最新=10-11 smoke-r679，City3D 抓帧属交互窗在飞面，本司不动）。队列头 next＝main#23 司级 7 天基准刷新（10-27 到期·逾期），对照件=docs/global-benchmarks.md；其后=main#40 冻结 fixture 重建化／main#8 城市线附卷（10-19 逾期）。",
     "milestone_eta_utc":  "2026-10-29T00:00:00Z"
 }

@@ -20,6 +20,11 @@
   .badge{margin-left:auto;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line)}
   .badge.fresh{color:var(--ok);border-color:#1f4a3a;background:#0e1f19}
   .badge.stale{color:var(--warn);border-color:#4a2020;background:#1f0e0e}
+  /* 页头自检徽标：只有它带 margin-left:0 + 手型，其余 badge 仍靠 auto 推到右端 */
+  button.badge.sc{margin-left:0;font:inherit;font-size:12px;cursor:pointer}
+  button.badge.sc:hover{border-color:#3d5a78;color:#cfe6ff}
+  button.badge.sc.ok{color:var(--ok);border-color:#1f4a3a;background:#0e1f19}
+  button.badge.sc.warn{color:var(--warn);border-color:#4a2020;background:#1f0e0e}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:18px 0 8px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
   .card h2{font-size:12px;letter-spacing:.14em;color:var(--dim);margin:0 0 10px;font-weight:600}
@@ -97,6 +102,7 @@
     <h1>FLUXVERSE 城市底座</h1>
     <span class="sub" id="proto">fluxverse-public</span>
     <span class="badge" id="age">—</span>
+    <button class="badge sc" id="sc-head" type="button">自检 —</button>
   </header>
 
   <div class="grid">
@@ -149,7 +155,7 @@
     <div id="tr-legend" style="margin-top:6px"></div>
   </div>
 
-  <div class="card" style="margin-top:14px">
+  <div class="card" id="selfcheck-card" style="margin-top:14px">
     <h2>数据自检 <span class="tag" id="sc-sum">—</span></h2>
     <div class="rhint">各项全部由本页数据、今日 tick 日志与面部时间推导（含跨轮摘要、轨迹、循环覆盖、趋势末点、实况路径与面部新鲜度），异常以「注意」如实露出，不隐藏。</div>
     <div id="selfcheck"></div>
@@ -1004,6 +1010,29 @@ function artTitle(it){
 
   const warnN = selfcheck.filter(c => !c.ok).length;
   $('sc-sum').textContent = warnN ? (warnN + ' 项注意') : (selfcheck.length + ' 项通过');
+
+  // 页头自检徽标（queue main#44）：页头原先只有「快照 N 分钟前」，自检有项注意
+  // 时读者得一路滚到页尾才知道。这里把结论提到页头：有注意=红标并写明数量与
+  // 项名（悬停），全绿=「自检通过」；点它直接跳到自检卡。徽标只在自检算完后
+  // 写入，因此不会出现「还没算就先显示通过」的假绿。
+  (function () {
+    const hb = $('sc-head');
+    if (!hb) return;
+    const bad = selfcheck.filter(c => !c.ok);
+    hb.className = 'badge sc ' + (warnN ? 'warn' : 'ok');
+    hb.textContent = warnN ? ('自检 ' + warnN + ' 项注意') : '自检通过';
+    hb.title = (warnN
+      ? '注意：' + bad.map(c => c.nm).join('、')
+      : selfcheck.length + ' 项全部通过') + ' · 点击跳到数据自检';
+    if (typeof hb.addEventListener === 'function') {
+      hb.addEventListener('click', function () {
+        const card = $('selfcheck-card');
+        if (card && typeof card.scrollIntoView === 'function') {
+          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    }
+  })();
   // 自检行也可挂 title（queue main#34）：凡是写着「N 分钟前」的行，
   // 悬停即给绝对钟点；无时戳的行不加属性（宁缺不造假）。
   $('selfcheck').innerHTML = selfcheck.map(c =>

@@ -160,7 +160,7 @@
     重建：<code>powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\build-city-panel.ps1</code><br>
     「最近实物」里的文件名在构建时逐个核过盘面（存在性 + file:// 绝对路径），命中即可点开，缺失如实标「未找到」。<br>
     构建时刻（本地）：<span id="built">—</span><span id="builtage" class="tag"></span> · 自包含单文件，零服务器零外链。<br>
-    本页每 60 秒自动重载一次，跟随 tick 重建拿到新快照；图表轴与跨轮轨迹行的钟点都是本地钟（悬停看 UTC），本地读取以 <code>built</code> 行为准。<br>
+    本页每 60 秒自动重载一次，跟随 tick 重建拿到新快照；图表轴与跨轮轨迹行的钟点都是本地钟（悬停看 UTC；触屏/读屏读出的是带年份的完整本地钟点），本地读取以 <code>built</code> 行为准。<br>
     跨轮摘要：<code>logs/panel-history.jsonl</code>（本地日志不入库·每次 tick 记一条·上限 288 条≈24 小时）。
   </footer>
 </div>
@@ -243,17 +243,35 @@ function hmUtc(t){
 // 钟：正文给 MM-DD HH:MM，完整绝对钟点与原始 ISO 退到 title（口径不丢，不换算）。
 function stampLocal(iso){
   const t = Date.parse(iso);
-  if (isNaN(t)) return { text: String(iso == null ? '' : iso), title: '' };
+  if (isNaN(t)) return { text: String(iso == null ? '' : iso), title: '', clock: '' };
   const d = new Date(t);
   const p2 = (n) => (n < 10 ? '0' + n : String(n));
   const text = p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
     ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
-  return { text: text, title: absClock(iso) || '' };
+  return { text: text, title: absClock(iso) || '', clock: clockLocal(iso) };
+}
+
+// 完整本地钟点（含年份）——行正文只给 MM-DD HH:MM，年份在页内看不到；这个串
+// 专供无障碍面（queue main#41）与机检，不改变正文的单一时钟口径。
+function clockLocal(iso){
+  const t = Date.parse(iso);
+  if (isNaN(t)) return '';
+  const d = new Date(t);
+  const p2 = (n) => (n < 10 ? '0' + n : String(n));
+  return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
+    ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
 }
 
 // 把「绝对钟点」拼成 title 属性；空值不写 title（宁缺不造假）。
 function liftTitle(d){
   return (d && d.title) ? ' title="' + esc(d.title) + '"' : '';
+}
+
+// 无障碍面（queue main#41）：绝对钟点原先只藏在悬停 title 里——触屏与键盘用户
+// 读不到，年份也根本没在正文出现过。正文仍是单一本地钟（r699/r700 口径不变），
+// 完整本地钟点同步进 aria-label：读屏与机检都能在「无悬停」下读出绝对时刻。
+function ariaClock(d){
+  return (d && d.clock) ? ' aria-label="' + esc(d.clock) + '"' : '';
 }
 
 // 实物链接的悬停信息（queue main#36）：只有 href 的链接看不出这件东西是刚出的
@@ -539,9 +557,10 @@ function artTitle(it){
       if (!flatN) return;
       const a = stampLocal(flatFrom), b = stampLocal(flatTo);
       const spanTitle = a.title ? (a.title + ' → ' + b.title) : b.title;
+      const spanClock = (a.clock && b.clock) ? (a.clock + ' → ' + b.clock) : (a.clock || b.clock);
       rows.push('<div class="rowline"><span class="t">…</span>' +
         '<span class="muted" style="flex:1">持平 ' + flatN + ' 条</span>' +
-        '<span class="tag"' + liftTitle({ title: spanTitle }) + '>' +
+        '<span class="tag"' + ariaClock({ clock: spanClock }) + liftTitle({ title: spanTitle }) + '>' +
         esc(a.text) + ' → ' + esc(b.text) + '</span></div>');
       flatN = 0; flatFrom = null; flatTo = null;
     };
@@ -562,7 +581,7 @@ function artTitle(it){
       const cls = dc == null ? '' : (dc > 0 ? 'ok' : (dc < 0 ? 'warn' : ''));
       const dtx = dc == null ? '起点' : (dc > 0 ? '+' + dc : (dc === 0 ? '持平' : String(dc)));
       const st = stampLocal(s.ts);
-      rows.push('<div class="rowline"><span class="t"' + liftTitle(st) + '>' +
+      rows.push('<div class="rowline"><span class="t"' + ariaClock(st) + liftTitle(st) + '>' +
         esc(st.text) + '</span>' +
         '<span style="flex:1;font-variant-numeric:tabular-nums">提交 ' + esc(s.c == null ? '—' : s.c) + '</span>' +
         '<span class="tag ' + cls + '">' + esc(dtx) + '</span>' +
@@ -904,7 +923,7 @@ function artTitle(it){
     $('events').innerHTML = list.length ? list.map(e => {
       const st = stampLocal(e.ts_utc);
       return '<div class="rowline"><span class="dot zone-' + esc(e.zone || 'governance') + '"></span>' +
-        '<span class="t"' + liftTitle(st) + '>' + esc(st.text) + '</span>' +
+        '<span class="t"' + ariaClock(st) + liftTitle(st) + '>' + esc(st.text) + '</span>' +
         '<span style="min-width:130px">' + esc(e.type || '') + '</span>' +
         '<span class="tag">' + esc(e.zone || '') + '</span></div>';
     }).join('') : '<div class="rowline"><span class="t">该分区无事件</span></div>';

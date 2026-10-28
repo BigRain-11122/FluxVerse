@@ -74,24 +74,39 @@ function visibleText(html) {
   return html.replace(/\s(title|class|style)="[^"]*"/g, '').replace(/<[^>]*>/g, '');
 }
 
-// Normal rows: <span class="t" title="...">MM-DD HH:MM</span>
+// Parse arbitrary attributes off a tag's attribute string (r701: spans now carry
+// aria-label as well as title, so a fixed "class then optional title" pattern
+// would silently stop matching every row).
+function attrsOf(s) {
+  const o = {};
+  const re = /([a-z][a-z-]*)="([^"]*)"/g;
+  let g;
+  while ((g = re.exec(s)) !== null) o[g[1]] = g[2];
+  return o;
+}
+
+// Normal rows: <span class="t" aria-label=".." title="..">MM-DD HH:MM</span>
 function normalRows(html) {
   const out = [];
-  const re = /<span class="t"(?: title="([^"]*)")?>([^<]*)<\/span>/g;
+  const re = /<span class="t"([^>]*)>([^<]*)<\/span>/g;
   let g;
   while ((g = re.exec(html)) !== null) {
     if (g[2] === '…') continue;
-    out.push({ text: g[2], title: g[1] || '' });
+    const a = attrsOf(g[1]);
+    out.push({ text: g[2], title: a.title || '', aria: a['aria-label'] || '' });
   }
   return out;
 }
 
-// Flat fold rows: <span class="tag" title="...">MM-DD HH:MM → MM-DD HH:MM</span>
+// Flat fold rows: <span class="tag" aria-label=".." title="..">A → B</span>
 function flatRows(html) {
   const out = [];
-  const re = /<span class="tag"(?: title="([^"]*)")?>([^<]*→[^<]*)<\/span>/g;
+  const re = /<span class="tag"([^>]*)>([^<]*→[^<]*)<\/span>/g;
   let g;
-  while ((g = re.exec(html)) !== null) out.push({ text: g[2], title: g[1] || '' });
+  while ((g = re.exec(html)) !== null) {
+    const a = attrsOf(g[1]);
+    out.push({ text: g[2], title: a.title || '', aria: a['aria-label'] || '' });
+  }
   return out;
 }
 
@@ -233,6 +248,34 @@ chk('events.shift-follows-local', !!evLast && evShiftRows.length > 0 &&
   evShiftRows[0].text === wantLocal(evLast.ts_utc, shift),
   'text=' + (evShiftRows[0] && evShiftRows[0].text) +
   ' want=' + (evLast && wantLocal(evLast.ts_utc, shift)));
+
+// ---------- 6b) accessibility (queue main#41): absolute clock without hover ----
+// Visible text stays the single local clock; the FULL local clock (year included)
+// also goes into aria-label, so touch / keyboard / screen-reader users can read an
+// absolute time with no hover at all.
+chk('aria.trend.rows-present', rows.length >= 1 && rows.every(r => r.aria !== ''),
+  JSON.stringify(rows.slice(0, 3).map(r => r.aria)));
+chk('aria.trend.rows-full-clock', rows.length >= 1 && rows.every(r => /^\d{4}-\d\d-\d\d \d\d:\d\d$/.test(r.aria)),
+  JSON.stringify(rows.slice(0, 3).map(r => r.aria)));
+chk('aria.trend.first-matches', rows.length >= 1 && rows[0].aria === wantLocalFull(data[0].ts),
+  'aria=' + (rows[0] && rows[0].aria) + ' want=' + wantLocalFull(data[0].ts));
+chk('aria.trend.has-year-not-in-text', rows.length >= 1 &&
+  rows[0].aria.indexOf('-') >= 0 && rows[0].text.indexOf(rows[0].aria.slice(0, 4)) < 0,
+  'aria=' + (rows[0] && rows[0].aria) + ' text=' + (rows[0] && rows[0].text));
+chk('aria.events.present', evRows.length > 0 && evRows.every(r => /^\d{4}-\d\d-\d\d \d\d:\d\d$/.test(r.aria)),
+  JSON.stringify(evRows.slice(0, 3).map(r => r.aria)));
+chk('aria.events.first-matches', !!evLast && evRows.length > 0 &&
+  evRows[0].aria === wantLocalFull(evLast.ts_utc),
+  'aria=' + (evRows[0] && evRows[0].aria) + ' want=' + (evLast && wantLocalFull(evLast.ts_utc)));
+chk('aria.fold.span-both', fxFlats.length === 1 && fxFlats[0].aria !== '' &&
+  fxFlats[0].aria.indexOf(wantLocalFull('2026-10-20T00:10:00Z')) === 0 &&
+  fxFlats[0].aria.indexOf(wantLocalFull('2026-10-20T00:20:00Z')) > 0,
+  'aria=' + (fxFlats[0] && fxFlats[0].aria));
+const sAria = normalRows(sRun.get('cv-trend').innerHTML);
+chk('aria.shift-follows-local', sAria.length >= 1 &&
+  sAria[0].aria === wantLocalFull(data[0].ts, shift) && sAria[0].aria !== rows[0].aria,
+  'aria=' + (sAria[0] && sAria[0].aria) + ' host=' + (rows[0] && rows[0].aria));
+chk('aria.no-empty-attr', rowsHtml.indexOf('aria-label=""') < 0 && evHtml.indexOf('aria-label=""') < 0);
 
 // ---------- 7) bad stamp must not blow up or invent a clock ----------
 const badRun = runPanel(realHtml, 'fixture-bad', Date, [

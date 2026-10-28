@@ -322,6 +322,36 @@ function artTitle(it){
   renderArtifact($('f-act'), face.current_activity, null, 'act');
   renderArtifact($('f-art'), face.artifact, face.artifact_utc, 'art');
   renderArtifact($('f-mile'), face.milestone, null, 'mile');
+  // 里程碑倒计时徽标（queue main#37）：面部早有 milestone_eta_utc，但页面上谁都看不出
+  // 「下一步还剩多久」——里程碑行读起来像一段没有期限的计划。ETA 是绝对时戳，差值在
+  // **打开页面的这一刻**算（与「N 分钟前」那种构建时冻结的相对年龄不同：倒计时就该
+  // 随看随新）。未到期=绿标「还有 N 天/小时/分钟」，已过期=红标「逾期 N」并给出绝对
+  // 钟点 title；eta 缺失/不可解析=完全不挂徽标（宁缺不造假，同 r694/r695/r697 立场）。
+  (function () {
+    const raw = face.milestone_eta_utc;
+    const t = Date.parse(raw);
+    if (isNaN(t)) return;
+    const diffMin = Math.round((t - Date.now()) / 60000);
+    const overdue = diffMin < 0;
+    const m = Math.abs(diffMin);
+    let span;
+    if (m < 60) {
+      span = m + ' 分钟';
+    } else if (m < 1440) {
+      span = Math.floor(m / 60) + ' 小时';
+    } else {
+      const d = Math.floor(m / 1440);
+      const hh = Math.floor((m % 1440) / 60);
+      span = d + ' 天' + (hh ? ' ' + hh + ' 小时' : '');
+    }
+    const s = document.createElement('span');
+    s.id = 'mile-eta';
+    s.className = 'tag ' + (overdue ? 'warn' : 'ok');
+    s.style.marginLeft = '6px';
+    s.textContent = (overdue ? '逾期 ' : '还有 ') + span;
+    ageTitle(s, raw);
+    $('f-mile').appendChild(s);
+  })();
   // 第四行（queue main#30）：今日 tick 日志。行文本就是盘上相对路径，builder 已在
   // 构建时核过存在性与 file:// url；这里照同样规则渲染（命中有链接、缺失标「未找到」）。
   // 该行不属三行承诺（缺日志由自检第 9 项「tick 覆盖」判），故缺失不污染实况路径行。

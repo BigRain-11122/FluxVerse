@@ -98,7 +98,14 @@ const GREEN = {
   SERIES: [{ ts: TS, c: 10, r: 5, g: 1, f: 2, e: 2 }],
   TREND: [{ ts: T2, c: 9, r: 4, e: 1 }, { ts: TS, c: 10, r: 5, e: 2 }],
   TICK: { exists: true, read_ok: true, age_min: 3, scan_lines: 12, rounds: 2, file: 'tick.log' },
-  SHOTS: { items: [{ name: 'f.png', rel: 'qa/f.png', url: 'file:///D:/qa/f.png', shot_utc: nowIso(1), size: 1000, data: 'data:image/jpeg;base64,AAAA', w: 620, h: 349, bytes: 50000 }] }
+  SHOTS: { items: [{ name: 'f.png', rel: 'qa/f.png', url: 'file:///D:/qa/f.png', shot_utc: nowIso(1), size: 1000, data: 'data:image/jpeg;base64,AAAA', w: 620, h: 349, bytes: 50000 }] },
+  // r708 added the 城市证据 self-check row, which reads PROOF. A healthy page
+  // needs healthy proof numbers, otherwise the "green page" fixtures would warn.
+  PROOF: {
+    build: { exists: true, exit_code: 0, ts_utc: nowIso(400), wall_s: 23, shots_present: 5, shots_expected: 5, rel: 'City3D-staging/r2-ignite.done', url: 'file:///D:/f/r2-ignite.done', report_rel: 'City3D-staging/r2-report.md', report_url: 'file:///D:/f/r2-report.md' },
+    soak: { exists: true, fps_avg: 608.5, errors: 0, exceptions: 0, ts_utc: nowIso(41), rel: 'qa/smoke-r680-bm-a-soak.json', url: 'file:///D:/f/soak.json' },
+    code: { exists: true, sha: '5a7ae301', ts_utc: nowIso(41) }
+  }
 };
 
 let pass = 0, fail = 0;

@@ -77,7 +77,14 @@ const FIXTURE = {
   SERIES: [{ ts: TS, c: 10, r: 5, g: 1, f: 2, e: 1 }],
   TREND: [{ ts: TS, c: 10, r: 5, e: 1 }],
   TICK: { exists: true, read_ok: true, age_min: 3, scan_lines: 12, rounds: 2, file: 'tick.log' },
-  SHOTS: { items: [] }
+  SHOTS: { items: [] },
+  // r708 added the 城市证据 self-check row (reads PROOF); feed it healthy
+  // numbers so this layout suite keeps testing layout, not proof freshness.
+  PROOF: {
+    build: { exists: true, exit_code: 0, ts_utc: nowIso(400), wall_s: 23, shots_present: 5, shots_expected: 5, rel: 'City3D-staging/r2-ignite.done', url: 'file:///D:/f/r2-ignite.done', report_rel: '', report_url: '' },
+    soak: { exists: true, fps_avg: 608.5, errors: 0, exceptions: 0, ts_utc: nowIso(41), rel: 'qa/smoke-r680-bm-a-soak.json', url: 'file:///D:/f/soak.json' },
+    code: { exists: true, sha: '5a7ae301', ts_utc: nowIso(41) }
+  }
 };
 
 let pass = 0, fail = 0;

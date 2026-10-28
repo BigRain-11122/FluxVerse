@@ -91,7 +91,10 @@ const expectedChecks = (template.match(/selfcheck\.push\(/g) || []).length;
   chk('real.row-present', !!row, 'no 取景帧 row in self-check');
   const rows = (String(real.get('selfcheck').innerHTML || '').match(/<span class="nm">/g) || []).length;
   chk('real.rows=template', rows === expectedChecks, 'rows=' + rows + ' expected=' + expectedChecks);
-  chk('real.count-14', expectedChecks === 14, 'template self-check count=' + expectedChecks + ' (queue main#43 expects 14)');
+  // Lower bound, not an exact count: this suite guards the 取景帧 row (main#43),
+  // not the total. r708 added a 城市证据 row, so a fixed 14 would go red for
+  // reasons unrelated to framing (r675 lesson: derive, never hardcode).
+  chk('real.count>=14', expectedChecks >= 14, 'template self-check count=' + expectedChecks + ' (>=14 since main#43)');
   // Today qa/ only holds 10-11 frames: the row must say so, not show green.
   chk('real.stale-warn', !!row && row.warn, row ? 'row was green: ' + row.vd : 'no row');
   chk('real.stale-days', !!row && /\d+ 天前/.test(row.vd), row ? 'vd=' + row.vd : 'no row');

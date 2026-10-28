@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-28T00:09:05Z",
-    "current_activity":  "r695 收口（main#34 销项）：面板上凡是写「N 分钟前」的地方，鼠标一停就给出本地钟点＋ISO——页头快照徽标、最近实物的年龄 tag、渲染累计、自检的「快照龄／面部新鲜度」两行全部挂上 title；无时戳的行一律不加（宁缺不造假）。相对年龄是构建那一刻算的，面板放旧了就骗人，绝对钟点才对得上账。实证：PANEL OK bytes=70142、读回自检 13/13、新增沙盒 logs/devloop-r695-panel-agetitle-test.js 18/18、全 17 套面板测试 276 断言零回归、截图 qa/city-panel-r695-bm-a.png。",
-    "artifact":  "world-public/city-panel.html（本行右侧时间戳=面部写入时刻·页面由每 10 分钟 tick 自动重建·file:// 直接打开·本轮=相对年龄悬停补全）；实现=Tools/devloop/city-panel-template.html（absClock/ageTitle 单一 helper）；沙盒=logs/devloop-r695-panel-agetitle-test.js（18 断言）；取证截图=qa/city-panel-r695-bm-a.png（1400×3600）；队列=state/queue/main.md #34",
-    "artifact_utc":  "2026-10-28T00:09:05Z",
-    "milestone":  "队列头 main#23 司级 7 天基准刷新（10-27 到期·逾期 1 日·判据=docs/global-benchmarks.md ④更新记录末行+③表源分级如实标）→ main#8 城市线附卷（10-19 逾期）→ main#33 状态档写入硬化（sha 对 live root 校验）→ main#35 页脚生成龄与陈旧提示 → main#17 浸泡复跑（10-28 18:36 后或 City3D 新 commit）→ main#20 ABORT 观察位。面板由每 10 分钟 tick 自动重建，CEO 随时 file:// 打开即可看到实况。",
+    "updated_utc":  "2026-10-28T00:13:05Z",
+    "current_activity":  "r696 收口（main#35 销项）：页脚现在自报「这页几岁了」——页脚只有构建时刻的绝对串，读者看不出 html 在盘上放了多久；新增一枚「N 分钟前」徽标，超过 30 分钟转黄并提示「按 F5 取最新」，悬停给出绝对钟点。做法=构建时刻只取一次，人类可读本地串与可回溯 ISO 戳同源注入（两串永不会对不上），戳空或不可解析则零数字零崩溃。实证：PANEL OK bytes=70384、读回自检 13/13、新增沙盒 logs/devloop-r696-panel-builtage-test.js 18/18、全 18 套面板测试 294 断言零回归、截图 qa/city-panel-r696-bm-a.png（1400×4300·首拍 3600 高把页脚裁掉了，重拍才见徽标）。",
+    "artifact":  "world-public/city-panel.html（本行右侧时间戳=面部写入时刻·页面由每 10 分钟 tick 自动重建·file:// 直接打开·本轮=页脚年龄徽标）；实现=Tools/devloop/city-panel-template.html＋Tools/devloop/build-city-panel.ps1（BUILT/BUILT_UTC 同源注入·新增一枚构建时刻的 ISO 占位符）；沙盒=logs/devloop-r696-panel-builtage-test.js（18 断言）；取证截图=qa/city-panel-r696-bm-a.png（1400×4300）；队列=state/queue/main.md #35",
+    "artifact_utc":  "2026-10-28T00:13:05Z",
+    "milestone":  "队列头 main#23 司级 7 天基准刷新（10-27 到期·逾期 1 日·判据=docs/global-benchmarks.md ④更新记录末行+③表源分级如实标）→ main#8 城市线附卷（10-19 逾期）→ main#36 实物链接悬停给字节数与修改时刻（r696 轮尾补条）→ main#33 状态档写入硬化（sha 对 live root 校验）→ main#17 浸泡复跑（10-28 18:36 后或 City3D 新 commit）→ main#20 ABORT 观察位。面板由每 10 分钟 tick 自动重建，CEO 随时 file:// 打开即可看到实况。",
     "milestone_eta_utc":  "2026-10-29T12:00:00Z"
 }

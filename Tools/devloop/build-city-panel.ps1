@@ -385,8 +385,15 @@ $tickMeta = New-Object PSObject -Property ([ordered]@{
 })
 $tickJs = To-JsLiteral -Obj $tickMeta -Label 'tick-meta'
 
-$built = [DateTimeOffset]::Now.ToString('yyyy-MM-dd HH:mm:ss (zzz)',
+# Built moment captured ONCE so the human-readable local string and the
+# machine-readable ISO stamp can never disagree (queue main#35).
+$builtAt = [DateTimeOffset]::Now
+$built = $builtAt.ToString('yyyy-MM-dd HH:mm:ss (zzz)',
     [Globalization.CultureInfo]::InvariantCulture)
+# Round-trip ISO stamp for the page's own age computation. The pretty local
+# string above is NOT reliably parseable by Date.parse, so the footer age is
+# derived from this one and degrades to "no number" if it is missing.
+$builtIsoJs = '"' + $builtAt.ToString('o', [Globalization.CultureInfo]::InvariantCulture).Replace('\', '\\').Replace('"', '\"') + '"'
 # Inject the INNER text only: the template already supplies the surrounding
 # double quotes (const BUILT = /*__BUILT__*/"";). Adding quotes here once
 # produced "..."\"\" which is a hard JS syntax error - the whole panel then
@@ -398,14 +405,43 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__ART_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__ART_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
-# String.Replace (not regex) => JSON '$' chars stay literal.
-$out = $tpl.Replace('__SNAPSHOT_JSON__', $snapJs).Replace('__FACE_JSON__', $faceJs).Replace('__BUILT_JSON__', $builtJs).Replace('__PREV_JSON__', $prevJs).Replace('__HIST_JSON__', $histJs).Replace('__SERIES_JSON__', $seriesJs).Replace('__TREND_JSON__', $trendJs).Replace('__TICK_JSON__', $tickJs).Replace('__ART_JSON__', $artJs)
+# String.Replace (not regex) => JSON '$' chars stay literal. SINGLE PASS: the
+# template is scanned once and each placeholder is swapped for its already-built
+# value, so injected content is never re-scanned. A chained .Replace() re-scanned
+# earlier output and broke the page in r696: the face prose happened to contain
+# the literal token of a later placeholder, which then got replaced INSIDE an
+# already-embedded JSON string -> syntax error, empty panel. Same class as the
+# r665 duplicate-quote incident: injected content must never be re-interpreted.
+$phMap = @{
+    '__SNAPSHOT_JSON__' = $snapJs
+    '__FACE_JSON__'     = $faceJs
+    '__BUILT_JSON__'    = $builtJs
+    '__BUILTISO_JSON__' = $builtIsoJs
+    '__PREV_JSON__'     = $prevJs
+    '__HIST_JSON__'     = $histJs
+    '__SERIES_JSON__'   = $seriesJs
+    '__TREND_JSON__'    = $trendJs
+    '__TICK_JSON__'     = $tickJs
+    '__ART_JSON__'      = $artJs
+}
+$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|ART)_JSON__')
+$evaluator = [System.Text.RegularExpressions.MatchEvaluator]{
+    param($m)
+    if (-not $phMap.ContainsKey($m.Value)) { return $m.Value }
+    return [string]$phMap[$m.Value]
+}
+$out = $phRx.Replace($tpl, $evaluator)
 
-if ($out.IndexOf('__SNAPSHOT_JSON__') -ge 0) { Fail 'placeholder __SNAPSHOT_JSON__ still present after build' }
+# Fail loud on any placeholder-shaped token left in the output: an unrendered
+# placeholder in a shipped page is a silent lie (the page would print it).
+if ($phRx.IsMatch($out)) {
+    $left = ($phRx.Matches($out) | ForEach-Object { $_.Value } | Select-Object -Unique) -join ','
+    Fail ('placeholder still present after build: ' + $left)
+}
 if ($out.Length -lt 4000) { Fail ('output suspiciously small: ' + $out.Length + ' bytes') }
 
 # --- atomic write: .new, read-back assert, move (r98 pattern) ---

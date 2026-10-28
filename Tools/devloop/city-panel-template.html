@@ -159,7 +159,7 @@
     数据源：<code>world-public/city-snapshot.json</code>（tick 每 5 分钟导出）+ <code>state/status-face.json</code>（DevLoop 执法件写入）。<br>
     重建：<code>powershell -NoProfile -ExecutionPolicy Bypass -File Tools\devloop\build-city-panel.ps1</code><br>
     「最近实物」里的文件名在构建时逐个核过盘面（存在性 + file:// 绝对路径），命中即可点开，缺失如实标「未找到」。<br>
-    构建时刻（本地）：<span id="built">—</span> · 自包含单文件，零服务器零外链。<br>
+    构建时刻（本地）：<span id="built">—</span><span id="builtage" class="tag"></span> · 自包含单文件，零服务器零外链。<br>
     本页每 60 秒自动重载一次，跟随 tick 重建拿到新快照；时间轴一律 UTC，本地读取以 <code>built</code> 行为准。<br>
     跨轮摘要：<code>logs/panel-history.jsonl</code>（本地日志不入库·每次 tick 记一条·上限 288 条≈24 小时）。
   </footer>
@@ -173,6 +173,10 @@ const FACE = __FACE_JSON__;
 // guesses a path: existence and the file:// url are decided on disk at build.
 const ART = __ART_JSON__;
 const BUILT = __BUILT_JSON__;
+// BUILT_UTC = the same build moment as round-trip ISO (queue main#35). The pretty
+// local string next to it is not reliably parseable by Date.parse, so the footer
+// age is computed from this one; missing/empty => the page shows no number.
+const BUILT_UTC = __BUILTISO_JSON__;
 // PREV = previous DISTINCT snapshot digest (null when this is the first one),
 // HIST = {n, max, ok, first_utc} local cross-round log meta (gitignored).
 const PREV = __PREV_JSON__;
@@ -226,6 +230,20 @@ function ageTitle(el, iso){
 
   $('proto').textContent = snap.protocol || 'fluxverse-public';
   $('built').textContent = BUILT || '—';
+  // 页脚年龄（queue main#35）：页脚只有构建时刻的绝对串，读者看不出这页放了多久。
+  // BUILT_UTC＝构建那一刻的 ISO 戳；「N 分钟前」冻结在渲染时刻，超过 30 分钟转
+  // warn 并提示重载；戳缺失/不可解析＝不留数字也不抛错（宁缺不造假）。
+  (function () {
+    const el = $('builtage');
+    if (!el) return;
+    const t = Date.parse(BUILT_UTC);
+    if (isNaN(t)) return;
+    const mins = Math.max(0, Math.round((Date.now() - t) / 60000));
+    const old = mins > 30;
+    el.className = 'tag' + (old ? ' warn' : '');
+    el.textContent = mins + ' 分钟前' + (old ? ' · 按 F5 取最新' : '');
+    ageTitle(el, BUILT_UTC);
+  })();
 
   // 新鲜度：以快照 ts_utc 为准（scan 跳过时该值会停走，如实标红）
   const h = ago(snap.ts_utc);

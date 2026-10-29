@@ -640,7 +640,15 @@ function Resolve-CityProof
         } catch { $build.exit_code = -1 }
     }
 
-    $soakPath = Join-Path $Root 'qa\smoke-r680-bm-a-soak.json'
+    # Soak evidence = the newest probe output. r2-soak.ps1 writes qa\r2-soak-<stamp>.json;
+    # older ad-hoc runs wrote smoke-*-soak.json. Newest wins, so a fresh re-run replaces
+    # an old receipt instead of being silently ignored (main#17, r710).
+    $soakCands = @()
+    foreach ($soakPat in @('r2-soak-*.json', 'smoke-*-soak.json')) {
+        $soakCands += @(Get-ChildItem -LiteralPath (Join-Path $Root 'qa') -Filter $soakPat -File -ErrorAction SilentlyContinue)
+    }
+    $soakFile = $soakCands | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+    $soakPath = if ($soakFile) { $soakFile.FullName } else { Join-Path $Root 'qa\smoke-r680-bm-a-soak.json' }
     $soakInfo = Get-ProofFileInfo -Path $soakPath
     if ($soakInfo.exists) {
         $soak.exists = $true

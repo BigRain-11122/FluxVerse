@@ -1,0 +1,19 @@
+﻿{
+    "ts":  "2026-10-28T18:59:23+08:00",
+    "probe":  "R2SoakProbe",
+    "tier":  "tier1_batchmode_playmode",
+    "logic_sec":  180,
+    "render_sec":  180,
+    "timeout_min":  20,
+    "exit_code":  0,
+    "wall_s":  384,
+    "log_soak_start":  true,
+    "log_done":  true,
+    "log_fail":  false,
+    "import_lines":  0,
+    "settings_base":  "0/3",
+    "settings_pre":  "CLEAN base=0/3 cur=0/3",
+    "settings_post":  "CLEAN base=0/3 cur=0/3",
+    "json":  "D:\\FluxGroup\\gaming\\FluxVerse\\qa\\r2-soak-20261028-105922.json",
+    "log":  "D:\\FluxGroup\\gaming\\FluxVerse\\City3D-staging\\r2-soak.log"
+}

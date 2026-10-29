@@ -27,6 +27,53 @@ public static class CityRebuildR2
         catch (Exception e) { UnityEngine.Debug.LogError("CITY3D_R2_FAIL: " + e); EditorApplication.Exit(1); }
     }
 
+    // 取景刷新（main#17/main#49）：只打开已建好的 CityRebuild_R2 场景重拍判据帧，
+    // 不重建、不存盘、不动资产——帧陈旧 17 天的根因是「取景只能靠整城重建」，
+    // 服务于此的独立取证入口让面板取景卡可以按需刷新且不产生场景脏面。
+    public static void CaptureShots()
+    {
+        try { RunCapture(); }
+        catch (Exception e) { UnityEngine.Debug.LogError("CITY3D_SHOTS_FAIL: " + e); EditorApplication.Exit(1); }
+    }
+
+    static void RunCapture()
+    {
+        Directory.CreateDirectory(Shots);
+        var scene = EditorSceneManager.OpenScene("Assets/Scenes/CityRebuild_R2.unity", OpenSceneMode.Single);
+        var cam = Camera.main;
+        if (cam == null) throw new Exception("no main camera in CityRebuild_R2 scene");
+
+        var cityGame = FindDistrict("City_GAME");
+        if (cityGame == null) throw new Exception("City_GAME not found");
+        var r2root = cityGame.transform.Find("R2_AD-021_District");
+        if (r2root == null) throw new Exception("R2_AD-021_District not found (run BatchEntry first)");
+
+        var houses = new List<GameObject>();
+        GameObject showcase = null;
+        foreach (Transform t in r2root)
+        {
+            if (t.name.StartsWith("R2_AD-021_SM_Bld_House_Preset_")) houses.Add(t.gameObject);
+            else if (t.name == "R2_AD-021_ModularShowcase") showcase = t.gameObject;
+        }
+        houses.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+        if (houses.Count == 0) throw new Exception("no house presets under R2_AD-021_District");
+        if (showcase == null) throw new Exception("modular showcase not found");
+
+        Shot(cam, "R2_L0_overview.png", 50f, 320f, Vector3.zero);
+        Shot(cam, "R2_L1_gamedistrict.png", 55f, 110f, cityGame.transform.position);
+        Shot(cam, "R2_L2_street.png", 60f, 24f, houses[Math.Min(1, houses.Count - 1)].transform.position);
+        HouseFrontShot(cam, houses[0], "R2_house_front.png");
+        ShowcaseShots(cam, showcase);
+
+        var lines = new List<string> {
+            "capture_only=1 scene=" + scene.path,
+            "houses=" + houses.Count,
+            "shots=" + Report.Count
+        };
+        File.WriteAllLines(Path.Combine(Staging, "r2-shots.md"), lines.ToArray());
+        UnityEngine.Debug.Log("CITY3D_SHOTS_DONE shots=" + Report.Count);
+    }
+
     static void Run()
     {
         var sw = Stopwatch.StartNew();

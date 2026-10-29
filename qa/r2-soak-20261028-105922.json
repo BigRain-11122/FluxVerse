@@ -1,0 +1,12 @@
+{
+  "probe": "R2SoakProbe",
+  "ts_utc": "2026-10-28T10:59:22Z",
+  "scene": "Assets/Scenes/CityRebuild_R2.unity",
+  "mode": "batchmode_playmode_uncapped",
+  "render_target": "1280x720",
+  "logic": {"frames": 731857, "dt_avg_ms": 0.246, "dt_p50_ms": 0.248, "dt_p95_ms": 0.37, "dt_max_ms": 254.666, "dt_min_ms": 0.105, "fps_avg": 4065.868, "fps_min": 3.927, "fps_p95_slow": 2701.972},
+  "render": {"frames": 73771, "dt_avg_ms": 2.44, "dt_p50_ms": 2.307, "dt_p95_ms": 3.35, "dt_max_ms": 243.345, "dt_min_ms": 1.438, "fps_avg": 409.837, "fps_min": 4.109, "fps_p95_slow": 298.485},
+  "errors": 0,
+  "exceptions": 0,
+  "first_errors": []
+}

@@ -5,7 +5,7 @@
 // Acceptance:
 //   1. build compiles (vm.Script)
 //   2. real build: the '取景帧' row exists and row count == template pushes (14)
-//   3. real build: frames are stale today => the row warns and says how many days
+//   3. real build: the row's warn state matches the newest registered frame's age
 //   4. fresh frame => row passes and reports count + age
 //   5. no frames at all => row warns ('取景卡为空'), never silently green
 //   6. unparseable frame time => row warns instead of pretending it is fresh
@@ -95,9 +95,22 @@ const expectedChecks = (template.match(/selfcheck\.push\(/g) || []).length;
   // not the total. r708 added a 城市证据 row, so a fixed 14 would go red for
   // reasons unrelated to framing (r675 lesson: derive, never hardcode).
   chk('real.count>=14', expectedChecks >= 14, 'template self-check count=' + expectedChecks + ' (>=14 since main#43)');
-  // Today qa/ only holds 10-11 frames: the row must say so, not show green.
-  chk('real.stale-warn', !!row && row.warn, row ? 'row was green: ' + row.vd : 'no row');
-  chk('real.stale-days', !!row && /\d+ 天前/.test(row.vd), row ? 'vd=' + row.vd : 'no row');
+  // r710: frames are refreshable on demand (CityRebuildR2.CaptureShots +
+  // city3d-shots.ps1), so the row must follow the data on disk instead of being
+  // pinned to "stale". Derive the newest registered frame's age from qa/ and
+  // assert the row's warn state matches the 7-day threshold.
+  const FAM = /^(city-|city3d-|smoke-|frame-|soak-)/i;
+  const frames = fs.readdirSync('qa')
+    .filter((n) => /\.(png|jpe?g)$/i.test(n) && FAM.test(n))
+    .map((n) => ({ n, t: fs.statSync('qa/' + n).mtimeMs }))
+    .sort((a, b) => b.t - a.t);
+  const ageDays = frames.length ? (Date.now() - frames[0].t) / 86400000 : Infinity;
+  const expectWarn = !(ageDays <= 7);
+  chk('real.freshness-warn', !!row && row.warn === expectWarn,
+    (row ? 'vd=' + row.vd : 'no row') + ' ageDays=' + ageDays.toFixed(2) +
+    ' expect=' + expectWarn + ' newest=' + (frames[0] ? frames[0].n : 'none'));
+  chk('real.freshness-text', !!row && /\d+ (分钟|小时|天)前/.test(row.vd),
+    row ? 'vd=' + row.vd : 'no row');
 }
 
 // --- 4) fresh frames => pass with count + age ---

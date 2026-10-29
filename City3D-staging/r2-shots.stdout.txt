@@ -1,0 +1,7 @@
+SHOT city3d-shots-20261028-1902-bm-a-cutaway.jpg 1240x698 73032B
+SHOT city3d-shots-20261028-1902-bm-a-showcase.jpg 1240x698 62401B
+SHOT city3d-shots-20261028-1902-bm-a-housefront.jpg 1240x698 57271B
+SHOT city3d-shots-20261028-1902-bm-a-street.jpg 1240x698 34861B
+SHOT city3d-shots-20261028-1902-bm-a-gamedistrict.jpg 1240x698 59413B
+SHOT city3d-shots-20261028-1902-bm-a-overview.jpg 1240x698 72726B
+SHOTS_OK fresh_png=6 qa_jpg=6 rejected=0

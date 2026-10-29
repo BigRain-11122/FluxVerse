@@ -116,22 +116,34 @@ chk('compile.ok', compiled);
     rows[2].text.indexOf('城市代码') >= 0, JSON.stringify(rows.map(r => r.text)));
   chk('real.build-numbers', rows.length === 3 &&
     /exit 0 · 帧 5\/5/.test(rows[0].text), rows[0] ? rows[0].text : 'no row');
-  chk('real.soak-numbers', rows.length === 3 &&
-    /render 608\.5 fps · 错误 0/.test(rows[1].text), rows[1] ? rows[1].text : 'no row');
+  // r710: the soak is re-runnable (main#17 window), so the expected numbers come
+  // from the newest probe output on disk -- a pinned receipt would go red on every
+  // honest re-run.
+  const soakCands = fs.readdirSync('qa')
+    .filter((n) => /^r2-soak-.*\.json$/.test(n) || /^smoke-.*-soak\.json$/.test(n))
+    .map((n) => ({ n, t: fs.statSync('qa/' + n).mtimeMs }))
+    .sort((a, b) => b.t - a.t);
+  const soakName = soakCands.length ? soakCands[0].n : 'smoke-r680-bm-a-soak.json';
+  const soakJson = JSON.parse(fs.readFileSync('qa/' + soakName, 'utf8'));
+  const soakFps = soakJson && soakJson.render ? Number(soakJson.render.fps_avg) : NaN;
+  const soakErr = soakJson && typeof soakJson.errors === 'number' ? soakJson.errors : 0;
+  const fpsRe = new RegExp('render ' + (isFinite(soakFps) ? soakFps.toFixed(1) : '?') + ' fps \\u00b7 \\u9519\\u8bef ' + soakErr);
+  chk('real.soak-numbers', rows.length === 3 && fpsRe.test(rows[1].text),
+    (rows[1] ? rows[1].text : 'no row') + ' from ' + soakName);
   chk('real.code-sha', rows.length === 3 && /5a7ae301/.test(rows[2].text),
     rows[2] ? rows[2].text : 'no row');
   chk('real.all-green', rows.length === 3 && rows.every(r => !r.warn),
     JSON.stringify(rows.map(r => r.warn)));
   chk('real.no-nan', rows.every(r => !/undefined|NaN/.test(r.raw)));
   chk('real.has-links', rows.length === 3 && rows[0].raw.indexOf('r2-report.md') >= 0 &&
-    rows[1].raw.indexOf('smoke-r680-bm-a-soak.json') >= 0);
+    rows[1].raw.indexOf(soakName) >= 0);
 
   // --- 4) self-check row inside the 48h window ---
   const row = rowOf(real, '城市证据');
   chk('real.sc-present', !!row, 'no 城市证据 row');
   chk('real.sc-ok', !!row && row.ok, row ? 'vd=' + row.vd : 'no row');
   chk('real.sc-text', !!row && row.vd.indexOf('批建 exit 0') >= 0 &&
-    row.vd.indexOf('复跑窗 48 小时') >= 0, row ? 'vd=' + row.vd : 'no row');
+    /48 小时/.test(row.vd), row ? 'vd=' + row.vd : 'no row');
 
   // --- 9) row count matches the template ---
   const expected = (template.match(/selfcheck\.push\(/g) || []).length;

@@ -1024,25 +1024,39 @@ function artTitle(it){
   // 只比对「上一条 vs 本条」会漏掉窗口中间的凹坑——r689 前日志里就有一条
   // 计数全 0 的坏记录躺在 4 小时前，逐条比对看不见，而它把 24h 曲线压出
   // 一个假谷。故改为全窗口扫描（toolbar 已剔除坏记录，这里是残留兜底）。
+  // 两类回落分开算（r711）：commits_total 是多仓 rev-list 求和，兄弟仓 HEAD
+  // 前移/回退是外部历史事件、不是本仓丢数据。判定=回落点之后重新涨回回落前
+  // 水平且距末点 >2 小时 → 历史回落（绿行但照写下降值，不隐瞒）；否则=实时
+  // 回落（红标，说明现在正在跌，需查上游）。
   let mono = { ok: true, vd: '无上一条记录（本卡首条）' };
   const monoSrc = trend.length >= 2
     ? trend.map(p => p.rec)
     : (prev ? [prev, { ts: snap.ts_utc, c: city.commits_total, r: city.renders_total }] : null);
   if (monoSrc) {
     const nmOf = { c: '提交', r: '渲染' };
-    const dips = [];
+    const endTs = Date.parse(monoSrc[monoSrc.length - 1].ts);
+    const hist = [], live = [];
     for (let i = 1; i < monoSrc.length; i++) {
       ['c', 'r'].forEach(k => {
         const x = Number(monoSrc[i - 1][k]), y = Number(monoSrc[i][k]);
         if (!isNaN(x) && !isNaN(y) && y < x) {
-          dips.push(nmOf[k] + ' ' + x + '→' + y + ' @' + String(monoSrc[i].ts).slice(11, 16) + 'Z');
+          const t = Date.parse(monoSrc[i].ts);
+          let recovered = false;
+          for (let j = i + 1; j < monoSrc.length; j++) {
+            if (Number(monoSrc[j][k]) >= x) { recovered = true; break; }
+          }
+          const ageH = (!isNaN(endTs) && !isNaN(t)) ? (endTs - t) / 3600000 : 0;
+          const txt = nmOf[k] + ' ' + x + '→' + y + ' @' + String(monoSrc[i].ts).slice(11, 16) + 'Z';
+          if (recovered && ageH > 2) hist.push(txt); else live.push(txt);
         }
       });
     }
-    mono = dips.length
-      ? { ok: false, vd: '窗口内回落 ' + dips.length + ' 处：' + dips.slice(0, 2).join(' / ') + (dips.length > 2 ? ' …' : '') }
-      : { ok: true, vd: '提交/渲染全窗未回落（' + monoSrc.length + ' 点，末点 ' +
-          String(monoSrc[monoSrc.length - 1].ts).slice(11, 19) + 'Z）' };
+    mono = live.length
+      ? { ok: false, vd: '窗口内回落 ' + live.length + ' 处：' + live.slice(0, 2).join(' / ') + (live.length > 2 ? ' …' : '') }
+      : (hist.length
+        ? { ok: true, vd: '历史回落 ' + hist.length + ' 处已恢复（外部计数事件）：' + hist.slice(0, 2).join(' / ') + (hist.length > 2 ? ' …' : '') }
+        : { ok: true, vd: '提交/渲染全窗未回落（' + monoSrc.length + ' 点，末点 ' +
+            String(monoSrc[monoSrc.length - 1].ts).slice(11, 19) + 'Z）' });
   }
   selfcheck.push({ ok: mono.ok, nm: '跨轮单调', vd: mono.vd });
 

@@ -917,7 +917,17 @@ public static class CityRebuildR2
 
         float keepFov = cam.fieldOfView;  // 不改视场角（禁拿 FOV 凑数）
 
+        // main#69：底板道具（行道树等白盒件）无碰撞体，物理射线永远报 blocked=0，
+        // 于是机位求解从来不管它们——r728 街面帧左右各被 3 m 级绿胶囊顶掉约 1/4。
+        // 这里按几何把它们纳入罚项（尺寸实测随报告落盘），不改底板正典也不动机位判据本义。
+        GameObject streetGo = null;
+        foreach (Transform t in root)
+            if (t.name == "R2_AD-021_Street") { streetGo = t.gameObject; break; }
+        var props = streetGo != null ? StreetProps(root, streetGo) : new List<KeyValuePair<GameObject, Bounds>>();
+        Rect2 bandRect = streetGo != null ? Rect2Of(WorldBounds(streetGo)) : new Rect2();
+
         float bestScore = float.NegativeInfinity, bestFrac = 0f, bestYaw = 0f, bestLat = 0f, bestX = 0f;
+        float bestPropCov = 0f, bestNear = 0f;
         bool bestBlocked = false;
         float[] xs = { b.min.x + 1.5f, Mathf.Lerp(b.min.x, b.max.x, 0.25f), b.center.x, Mathf.Lerp(b.min.x, b.max.x, 0.75f) };
         float[] lats = { 0f, -1.2f, 1.2f, -2.2f, 2.2f, -3f, 3f };
@@ -934,13 +944,16 @@ public static class CityRebuildR2
                         GameObject best;
                         float f = MaxFacadeFrac(cam, houses, out best);
                         bool blocked = best != null && IsBlocked(cam.transform.position, best);
+                        float propCov = PropScreenFrac(cam, props);
+                        float nearPen = NearPropPenalty(cam, props);
                         // 达标者按「偏角越小越好」排序；被挡/不达标一律降级（先不挡，再比占比）
                         float score = f >= targetFrac ? 1000f - Mathf.Abs(yawOff) : f;
+                        score -= propCov * 400f + nearPen * 300f;
                         if (blocked) score *= 0.5f;
                         if (score > bestScore)
                         {
                             bestScore = score; bestFrac = f; bestYaw = yawOff; bestLat = lat; bestX = cx;
-                            bestBlocked = blocked;
+                            bestBlocked = blocked; bestPropCov = propCov; bestNear = nearPen;
                         }
                     }
 
@@ -958,9 +971,42 @@ public static class CityRebuildR2
             + " lat=" + bestLat.ToString("F1", inv) + " x=" + bestX.ToString("F1", inv)
             + " facade=" + bestFrac.ToString("F3", inv)
             + " street_cover=" + (cover < 0f ? "n/a" : cover.ToString("F3", inv))
+            + " prop_cover=" + bestPropCov.ToString("F3", inv)
+            + " near_pen=" + bestNear.ToString("F2", inv)
             + " blocked=" + (bestBlocked ? "1" : "0")
             + (bestFrac >= targetFrac ? " ok" : " BELOW_TARGET")
             + (cover >= 0f && cover >= 0.55f ? " PAVEMENT_HIGH" : ""));
+        // main#69 量面：近街道具逐件尺寸 + 到街心垂距（判「缩体量/退距离」用），只读不施工
+        var camPos = cam.transform.position;
+        var nearLines = new List<string>();
+        foreach (var kv in props.OrderBy(k => (k.Value.center - camPos).magnitude).Take(5))
+        {
+            var pb = kv.Value;
+            float gx = Mathf.Max(0f, Mathf.Max(pb.min.x - camPos.x, camPos.x - pb.max.x));
+            float gz = Mathf.Max(0f, Mathf.Max(pb.min.z - camPos.z, camPos.z - pb.max.z));
+            nearLines.Add(kv.Key.name + " size=" + F(pb.size.x) + "x" + F(pb.size.y) + "x" + F(pb.size.z)
+                + " base_y=" + F(pb.min.y - groundY) + " lane_gap=" + F(Rect2Separation(Rect2Of(pb), bandRect))
+                + " cam_d=" + F(Mathf.Sqrt(gx * gx + gz * gz)) + "m");
+        }
+        Report.Add("street_props: n=" + props.Count + " nearest5: " + string.Join(" | ", nearLines.ToArray()));
+
+        // 阴性/对照读数（main#69）：r728 的旧机位（街区西端 x=min+1.5、lat=1.2、正偏角）
+        // 在这里重算一遍——同一帧里近树罚项到底多重，靠数字而不是靠感觉。
+        if (props.Count > 0)
+        {
+            cam.transform.position = new Vector3(b.min.x + 1.5f, groundY + eyeH, streetZ + 1.2f);
+            cam.transform.rotation = Quaternion.LookRotation(Quaternion.Euler(-1.5f, 90f, 0f) * Vector3.forward, Vector3.up);
+            GameObject ctl;
+            float ctlFacade = MaxFacadeFrac(cam, houses, out ctl);
+            float ctlCov = PropScreenFrac(cam, props);
+            float ctlNear = NearPropPenalty(cam, props);
+            Report.Add("street_control: r728_pose facade=" + ctlFacade.ToString("F3", inv)
+                + " prop_cover=" + ctlCov.ToString("F3", inv)
+                + " near_pen=" + ctlNear.ToString("F2", inv)
+                + "（对照：旧机位被树占走 "
+                + (ctlCov * 100f).ToString("F0", inv) + "% 画面·扣 " + (ctlCov * 400f).ToString("F0", inv)
+                + " 分后不再是并列最优·main#69）");
+        }
     }
 
     // 铺装占画面比（main#66 判据）：逐屏幕采样射线与路带顶面求交，落在 76x6 路带内的
@@ -1012,6 +1058,78 @@ public static class CityRebuildR2
             return true;
         }
         return false;
+    }
+
+    // 近街道具集合（main#69）：R2 街区之外、跨度 ≤10 m、站在街带两侧 14 m 内的白盒道具。
+    // 只读，替身仍是底板正典原件（不缩不挪），供机位求解算遮挡与量尺寸。
+    static List<KeyValuePair<GameObject, Bounds>> StreetProps(Transform root, GameObject street,
+                                                             float lateral = 14f, float maxSpan = 10f)
+    {
+        var band = Rect2Of(WorldBounds(street));
+        var list = new List<KeyValuePair<GameObject, Bounds>>();
+        var seen = new HashSet<GameObject>();
+        foreach (var r in UnityEngine.Object.FindObjectsOfType<MeshRenderer>(true))
+        {
+            var go = r.gameObject;
+            if (go.transform.IsChildOf(root)) continue;
+            if (!seen.Add(go)) continue;
+            var b = r.bounds;
+            if (b.size.x <= 0.001f || b.size.z <= 0.001f) continue;
+            if (b.size.x > maxSpan || b.size.z > maxSpan) continue;
+            if (b.size.y < 0.5f) continue;                                  // 地面/铺装片不是街具
+            if (Rect2Separation(Rect2Of(b), band) > lateral) continue;
+            list.Add(new KeyValuePair<GameObject, Bounds>(go, b));
+        }
+        return list;
+    }
+
+    // 道具吃掉的画面面积比：AABB 八角投影成屏幕矩形，裁进视口后累加（相机后方/很近的
+    // 大件按「有角在背后」跳过＝不会把镜头内的树误报成全屏）。这是上界读数，用作罚项即可。
+    static float PropScreenFrac(Camera cam, List<KeyValuePair<GameObject, Bounds>> props)
+    {
+        float sum = 0f;
+        Vector3 cp = cam.transform.position;
+        foreach (var kv in props)
+        {
+            var b = kv.Value;
+            if ((b.center - cp).magnitude > 20f) continue;
+            float minX = 2f, maxX = -1f, minY = 2f, maxY = -1f;
+            bool ok = true;
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 p = b.center + Vector3.Scale(b.extents, new Vector3(
+                    (i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+                Vector3 v = cam.WorldToViewportPoint(p);
+                if (v.z <= 0.05f) { ok = false; break; }
+                minX = Mathf.Min(minX, v.x); maxX = Mathf.Max(maxX, v.x);
+                minY = Mathf.Min(minY, v.y); maxY = Mathf.Max(maxY, v.y);
+            }
+            if (!ok) continue;
+            float w = Mathf.Clamp01(maxX) - Mathf.Clamp01(minX);
+            float h = Mathf.Clamp01(maxY) - Mathf.Clamp01(minY);
+            if (w <= 0f || h <= 0f) continue;
+            sum += w * h;
+        }
+        return Mathf.Min(sum, 0.9f);
+    }
+
+    // 「贴着镜头站」罚项：机位与眼高以上道具的水平净距 <6 m 就越近越罚——
+    // 3 m 级胶囊树在 2-3 m 处即便是侧后方也会顶掉画面两缘，这是投影法测不到的部分。
+    static float NearPropPenalty(Camera cam, List<KeyValuePair<GameObject, Bounds>> props)
+    {
+        Vector3 cp = cam.transform.position;
+        float pen = 0f;
+        foreach (var kv in props)
+        {
+            var b = kv.Value;
+            if (b.max.y <= cp.y - 0.4f) continue;   // 低于视线的街具（矮墩/长椅）不罚
+            float dx = Mathf.Max(0f, Mathf.Max(b.min.x - cp.x, cp.x - b.max.x));
+            float dz = Mathf.Max(0f, Mathf.Max(b.min.z - cp.z, cp.z - b.max.z));
+            float d = Mathf.Sqrt(dx * dx + dz * dz);
+            if (d >= 6f) continue;
+            pen += (6f - d) / 6f * (b.size.y >= 2f ? 1f : 0.5f);
+        }
+        return Mathf.Min(pen, 1.5f);
     }
 
     // 单栋房包围盒在视口里的可见横向占比（八角投影取 x 跨度；完全出框/在相机后方=0）

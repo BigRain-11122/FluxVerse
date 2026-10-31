@@ -1,4 +1,4 @@
-﻿# ps-suites-tick.ps1 - let the tick run the sandbox families without anyone remembering (r750 main#88, r752 main#94)
+# ps-suites-tick.ps1 - let the tick run the sandbox families without anyone remembering (r750 main#88, r752 main#94)
 # ---------------------------------------------------------------------------
 # WHY: r748 gave the PowerShell sandboxes ONE entry (Tools\devloop\run-ps-suites.ps1)
 # but nothing ever runs it. The tick is the only thing that runs unattended
@@ -33,12 +33,22 @@
 # process. Those nested gate runs must not start another family run, so the
 # child is launched with FLUXVERSE_PS_SUITES_CHILD=1 and the caller skips.
 #
+# STICKY (main#91 r754): a content-addressed ticket cannot go green on its own
+# when the cause was the environment (temp dir full, AV lock) rather than the
+# code - only a human with -Force could clear it. Two fixes here:
+#   * every real run records WHICH suites failed (`reds=`), because a sticky red
+#     that cannot name its suite is a red nobody can act on (r754 found a live
+#     one: verify family red=1, re-run clean, name lost forever);
+#   * a NON-PASS ticket carries `tries`, and after AutoRetryAfter consecutive
+#     cached citations (default 3) it re-runs by itself once. A PASSING ticket
+#     is never auto-retried - "unchanged means no spawn" stays the main gain.
+# Fixtures under Tools\devloop\fixtures are now part of the fingerprint (glob
+# entry `Tools\devloop\fixtures\*\*` expands to an explicit file list), so a
+# suite that reads a fixture cannot rot while the hash stands still.
+#
 # Honest boundaries:
-#   - a red result is sticky until the guarded source set changes, even if the
-#     environment (not the code) was at fault; the WARN line carries the age
-#     and the one command that re-runs it.
-#   - suite fixture files are content, not a hash input: a suite that depends on
-#     a fixture outside this list can go red without the fingerprint moving.
+#   - auto-retry heals the environment case, not a real defect: a genuine red
+#     re-runs every N ticks (write 19 s, verify ~100 s) instead of every tick.
 #   - 45 s cap (write) / 180 s cap (verify): the write run measured 19.5 s, the
 #     verify family 101 s on a loaded box (r752 live run, 8 suites). A hit means
 #     the machine is loaded or a suite hangs; we report `timeout`, never a
@@ -72,7 +82,8 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\queue-due.ps1',
             'Tools\devloop\log-archive-duty.ps1',
             'Tools\devloop\archive-logs.ps1',
-            'Tools\perceptor\verify.ps1'
+            'Tools\perceptor\verify.ps1',
+            'Tools\devloop\fixtures\*\*'
         )
     }
     # Guarded sources: the five write-side suites plus everything whose change
@@ -88,8 +99,54 @@ function Get-PsSuitesTickDefaults {
         'Tools\devloop\build-city-panel.ps1',
         'Tools\devloop\face-path-lint.ps1',
         'Tools\devloop\write-status-face.ps1',
-        'Tools\devloop\write-fastpath-state.ps1'
+        'Tools\devloop\write-fastpath-state.ps1',
+        'Tools\devloop\fixtures\*\*'
     )
+}
+
+function Expand-PsSuitesSourceList {
+    # A literal entry is passed through; an entry carrying `*` or `?` expands to
+    # the sorted file list it matches, so fixture data hashes as content. An
+    # empty glob still contributes a marker entry - adding the first fixture
+    # must move the fingerprint, and an empty set that vanished silently would
+    # look exactly like "nothing to guard".
+    # NOTE: `A\*\*` is NOT a PowerShell recursive glob (Get-ChildItem -Path
+    # returns zero hits for it, r754). We walk the literal prefix and match the
+    # rest with -like, whose `*` also crosses directory separators.
+    param(
+        [Parameter(Mandatory=$true)][string]$RepoDir,
+        [string[]]$Paths = @()
+    )
+    $list = @()
+    foreach ($rel in @($Paths)) {
+        if ($rel -match '[\*\?]') {
+            $pattern = $rel.Replace('/', '\')
+            $segs = $pattern -split '\\'
+            $fixed = @()
+            foreach ($s in $segs) {
+                if ($s -match '[\*\?]') { break }
+                $fixed += $s
+            }
+            $baseRel = ($fixed -join '\')
+            $baseFull = $RepoDir
+            if ($baseRel -ne '') { $baseFull = Join-Path $RepoDir $baseRel }
+            $hits = @()
+            if (Test-Path -LiteralPath $baseFull) {
+                foreach ($f in @(Get-ChildItem -LiteralPath $baseFull -File -Recurse -ErrorAction SilentlyContinue | Sort-Object -Property FullName)) {
+                    $sub = $f.FullName
+                    if ($sub.StartsWith($RepoDir, [System.StringComparison]::OrdinalIgnoreCase)) {
+                        $sub = $sub.Substring($RepoDir.Length).TrimStart('\', '/')
+                    }
+                    if (($sub.Replace('/', '\')) -like $pattern) { $hits += $sub }
+                }
+            }
+            if ($hits.Count -eq 0) { $list += ($rel.Replace('\', '/') + '=NOFILES'); continue }
+            foreach ($h in $hits) { $list += $h }
+            continue
+        }
+        $list += $rel
+    }
+    return [string[]]$list
 }
 
 function Get-PsSuitesFingerprint {
@@ -98,6 +155,7 @@ function Get-PsSuitesFingerprint {
         [string[]]$Paths = @()
     )
     if ($null -eq $Paths -or $Paths.Count -eq 0) { $Paths = @(Get-PsSuitesTickDefaults) }
+    $Paths = @(Expand-PsSuitesSourceList -RepoDir $RepoDir -Paths $Paths)
     $parts = @()
     foreach ($rel in $Paths) {
         $full = Join-Path $RepoDir $rel
@@ -144,6 +202,8 @@ function Write-PsSuitesTicket {
         exit       = [int]$Result.exit
         ms         = [int]$Result.ms
         ts_utc     = [string]$Result.ts_utc
+        tries      = [int]$Result.tries
+        reds       = [string]$Result.reds
     }
     $dir = Split-Path -Parent $Path
     if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
@@ -178,6 +238,66 @@ function Get-PsSuitesFamilyTimeout {
     return 45
 }
 
+function Get-PsSuitesTicketTries {
+    # Consecutive cached citations since the last real run. Missing key (an
+    # older ticket) reads as 0 - it simply starts counting now.
+    param($Ticket)
+    if ($null -eq $Ticket) { return 0 }
+    if (-not $Ticket.PSObject.Properties['tries']) { return 0 }
+    $n = 0
+    if ([int]::TryParse([string]$Ticket.tries, [ref]$n) -and $n -ge 0) { return $n }
+    return 0
+}
+
+function Test-PsSuitesHealDue {
+    # Only a NON-PASS verdict may age out. A passing ticket stays cached for
+    # ever, which is the entire point of content addressing: unchanged code
+    # must not buy a child process.
+    param($Ticket, [int]$Tries = 0, [int]$AutoRetryAfter = 3)
+    if ($null -eq $Ticket) { return $false }
+    if ([string]$Ticket.status -eq 'pass') { return $false }
+    if ($AutoRetryAfter -le 0) { return $false }
+    return (($Tries + 1) -ge $AutoRetryAfter)
+}
+
+function Copy-PsSuitesTicketFields {
+    # Single place that copies a cached verdict onto the result envelope, so the
+    # CheckOnly path and the cached path can never disagree about what a ticket
+    # says.
+    param($Result, $Ticket)
+    $Result.status = [string]$Ticket.status
+    $Result.suites = [int]$Ticket.suites
+    $Result.assertions = [int]$Ticket.assertions
+    $Result.failing = [int]$Ticket.failing
+    $Result.parity = [string]$Ticket.parity
+    $Result.exit = [int]$Ticket.exit
+    $Result.ms = [int]$Ticket.ms
+    $Result.ts_utc = [string]$Ticket.ts_utc
+    $Result.tries = Get-PsSuitesTicketTries $Ticket
+    $Result.reds = ''
+    if ($Ticket.PSObject.Properties['reds']) { $Result.reds = [string]$Ticket.reds }
+    $Result.age_min = 0
+    try {
+        $when = [datetime]::Parse($Result.ts_utc, [System.Globalization.CultureInfo]::InvariantCulture,
+            [System.Globalization.DateTimeStyles]::AdjustToUniversal -bor [System.Globalization.DateTimeStyles]::AssumeUniversal)
+        $age = ([datetime]::UtcNow - $when).TotalMinutes
+        if ($age -ge 0) { $Result.age_min = [int][math]::Round($age) }
+    } catch { $Result.age_min = -1 }
+}
+
+function Get-PsSuitesRedNames {
+    # The runner prints one `FAIL  <name>  exit=N  <tail>` line per red suite and
+    # `WARN  <name>  timeout>Ns  no verdict` for a hang. Keep both: without the
+    # name a sticky red is undiagnosable, and r754 lost exactly that evidence on
+    # a live verify-family red that re-ran clean.
+    param([string]$Text)
+    $names = @()
+    if ([string]::IsNullOrEmpty($Text)) { return '' }
+    foreach ($m in [regex]::Matches($Text, '(?m)^FAIL\s+(\S+)')) { $names += $m.Groups[1].Value }
+    foreach ($m in [regex]::Matches($Text, '(?m)^WARN\s+(\S+)\s+timeout')) { $names += ($m.Groups[1].Value + ':timeout') }
+    return ($names -join ',')
+}
+
 function Invoke-PsSuitesTick {
     param(
         [Parameter(Mandatory=$true)][string]$RepoDir,
@@ -187,12 +307,25 @@ function Invoke-PsSuitesTick {
         [string]$RunnerPath = '',
         [string[]]$ExtraArgs = @(),
         [int]$TimeoutSec = 0,
+        [int]$AutoRetryAfter = 0,
         [switch]$Force,
         [switch]$CheckOnly
     )
     if ([string]::IsNullOrEmpty($TicketPath)) { $TicketPath = Join-Path $RepoDir (Get-PsSuitesFamilyTicketName -Family $Family) }
     if ([string]::IsNullOrEmpty($RunnerPath)) { $RunnerPath = Join-Path $RepoDir 'Tools\devloop\run-ps-suites.ps1' }
     if ($TimeoutSec -le 0) { $TimeoutSec = Get-PsSuitesFamilyTimeout -Family $Family }
+    # How many consecutive cached citations of a NON-PASS ticket are tolerated
+    # before re-running it once. 0 from the caller means "use the env knob or
+    # the default 3"; an explicit 0 via FLUXVERSE_PS_SUITES_AUTORETRY disables
+    # the retry (a sandbox needs that to pin the old sticky behaviour).
+    if ($AutoRetryAfter -le 0) {
+        $AutoRetryAfter = 3
+        $envRetry = $env:FLUXVERSE_PS_SUITES_AUTORETRY
+        $parsedRetry = 0
+        if (-not [string]::IsNullOrWhiteSpace($envRetry)) {
+            if ([int]::TryParse($envRetry, [ref]$parsedRetry) -and $parsedRetry -ge 0) { $AutoRetryAfter = $parsedRetry }
+        }
+    }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify') { $ExtraArgs = @('-Verify') }
     # Resolve the family's guarded source set here, not inside the fingerprint
     # helper (its no-path fallback is the write list, which silently made both
@@ -212,6 +345,9 @@ function Invoke-PsSuitesTick {
         age_min    = -1
         ran        = $false
         needs_run  = $false
+        tries      = 0
+        reds       = ''
+        heal       = $false
         note       = ''
         ts_utc     = ''
     }
@@ -226,6 +362,13 @@ function Invoke-PsSuitesTick {
         # Answers "would this family spawn?" without spawning, so a caller with
         # a wall-clock budget can defer instead of paying twice in one round.
         $res.needs_run = (-not $fresh) -or $Force
+        if ($fresh -and -not $res.needs_run) {
+            $cachedTries = Get-PsSuitesTicketTries $ticket
+            if (Test-PsSuitesHealDue -Ticket $ticket -Tries $cachedTries -AutoRetryAfter $AutoRetryAfter) {
+                $res.needs_run = $true
+                $res.note = 'retry due after ' + $cachedTries + ' cached citations'
+            }
+        }
         if (-not $runnerExists) {
             $res.status = 'missing'
             $res.note = 'runner not found: ' + $RunnerPath
@@ -233,24 +376,12 @@ function Invoke-PsSuitesTick {
             return [pscustomobject]$res
         }
         if (-not $res.needs_run) {
-            $res.status = [string]$ticket.status
-            $res.suites = [int]$ticket.suites
-            $res.assertions = [int]$ticket.assertions
-            $res.failing = [int]$ticket.failing
-            $res.parity = [string]$ticket.parity
-            $res.exit = [int]$ticket.exit
-            $res.ms = [int]$ticket.ms
-            $res.ts_utc = [string]$ticket.ts_utc
-            $res.age_min = 0
-            try {
-                $when = [datetime]::Parse($res.ts_utc, [System.Globalization.CultureInfo]::InvariantCulture,
-                    [System.Globalization.DateTimeStyles]::AdjustToUniversal -bor [System.Globalization.DateTimeStyles]::AssumeUniversal)
-                $age = ([datetime]::UtcNow - $when).TotalMinutes
-                if ($age -ge 0) { $res.age_min = [int][math]::Round($age) }
-            } catch { $res.age_min = -1 }
+            Copy-PsSuitesTicketFields -Result $res -Ticket $ticket
+            $res.needs_run = $false
+            return [pscustomobject]$res
         } else {
             $res.status = 'stale'
-            $res.note = 'fingerprint changed; a run is due'
+            if ($res.note -eq '') { $res.note = 'fingerprint changed; a run is due' }
         }
         return [pscustomobject]$res
     }
@@ -262,23 +393,26 @@ function Invoke-PsSuitesTick {
     }
 
     if ($fresh -and -not $Force) {
-        $res.status = [string]$ticket.status
-        $res.suites = [int]$ticket.suites
-        $res.assertions = [int]$ticket.assertions
-        $res.failing = [int]$ticket.failing
-        $res.parity = [string]$ticket.parity
-        $res.exit = [int]$ticket.exit
-        $res.ms = [int]$ticket.ms
-        $res.ts_utc = [string]$ticket.ts_utc
-        $res.age_min = 0
-        try {
-            $when = [datetime]::Parse($res.ts_utc, [System.Globalization.CultureInfo]::InvariantCulture,
-                [System.Globalization.DateTimeStyles]::AdjustToUniversal -bor [System.Globalization.DateTimeStyles]::AssumeUniversal)
-            $age = ([datetime]::UtcNow - $when).TotalMinutes
-            if ($age -ge 0) { $res.age_min = [int][math]::Round($age) }
-        } catch { $res.age_min = -1 }
-        $res.ran = $false
-        return [pscustomobject]$res
+        $cachedTries = Get-PsSuitesTicketTries $ticket
+        if (Test-PsSuitesHealDue -Ticket $ticket -Tries $cachedTries -AutoRetryAfter $AutoRetryAfter) {
+            # Fall through to a real run: a verdict that is not `pass` cannot
+            # prove the code is at fault, so it gets N chances to be re-measured.
+            $res.note = 'retry after ' + $cachedTries + ' cached citations of a ' + ([string]$ticket.status) + ' verdict'
+            $res.heal = $true
+        } else {
+            Copy-PsSuitesTicketFields -Result $res -Ticket $ticket
+            $res.tries = $cachedTries + 1
+            $res.ran = $false
+            # Only a non-pass verdict needs the counter persisted; a green ticket
+            # must stay byte-identical across ticks (case l6 asserts that a
+            # verify run leaves the write ticket untouched).
+            if ($res.status -ne 'pass') {
+                Write-PsSuitesTicket -Path $TicketPath -Result ([pscustomobject]$res)
+            } else {
+                $res.tries = 0
+            }
+            return [pscustomobject]$res
+        }
     }
 
     # ---------- run once, hard timeout ----------
@@ -331,6 +465,10 @@ function Invoke-PsSuitesTick {
         return [pscustomobject]$res
     }
 
+    # Name the culprits before judging the summary: a red we cannot attribute is
+    # only half a signal (main#91 r754).
+    $res.reds = Get-PsSuitesRedNames -Text $text
+
     $m = [regex]::Match($text, 'PS SUITES suites=(\d+)\s+assertions=(\d+)\s+counted=(\d+)\s+failing=(\d+)\s+parity=(\S+)')
     if (-not $m.Success) {
         if ($res.status -ne 'timeout') { $res.status = 'unreadable' }
@@ -339,6 +477,7 @@ function Invoke-PsSuitesTick {
         if ($errText -ne '') { $tail = $tail + ' / ' + (($errText -split "`r?`n") | Select-Object -Last 1) }
         $res.note = ($res.note + ' summary line not found; last output: ' + $tail).Trim()
         $res.ts_utc = [datetime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
+        $res.tries = 0
         Write-PsSuitesTicket -Path $TicketPath -Result ([pscustomobject]$res)
         return [pscustomobject]$res
     }
@@ -352,6 +491,7 @@ function Invoke-PsSuitesTick {
         if ($res.failing -gt 0 -or $res.exit -ne 0) { $res.status = 'red' } else { $res.status = 'pass' }
     }
     $res.ran = $true
+    $res.tries = 0
     $res.ts_utc = [datetime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
     $res.age_min = 0
     Write-PsSuitesTicket -Path $TicketPath -Result ([pscustomobject]$res)
@@ -375,6 +515,13 @@ function Format-PsSuitesLine {
         elseif ($Result.age_min -ge 0) { $head = $head + ' cached=' + $Result.age_min + 'm' }
         else { $head = $head + ' cached=age-unknown' }
     }
+    # A red that cannot name its suite is a red nobody can act on (r754: a live
+    # verify-family red re-ran clean and the identity was gone for good).
+    if ([string]$Result.reds -ne '' -and [string]$Result.status -ne 'pass') {
+        $head = $head + ' reds=' + [string]$Result.reds
+    }
+    if ([int]$Result.tries -gt 0) { $head = $head + ' tries=' + [int]$Result.tries }
+    if ($Result.heal -eq $true) { $head = $head + ' auto=1' }
     return $head
 }
 

@@ -354,11 +354,11 @@ $script:voff = $false
 # ---------- case r: family defaults + CheckOnly never spawn ---------------
 $wDefs = @(Get-PsSuitesTickDefaults -Family write)
 $vDefs = @(Get-PsSuitesTickDefaults -Family verify)
-Check 'r1 write family still guards its ten sources' ($wDefs.Count -eq 10) ('count=' + $wDefs.Count)
+Check 'r1 write family guards eleven entries incl. the fixture tree' ($wDefs.Count -eq 11) ('count=' + $wDefs.Count)
 Check 'r2 verify family guards the gate it proves' ($vDefs -contains 'Tools\perceptor\verify.ps1') (($vDefs -join ','))
 Check 'r3 verify family is wider than the write list' ($vDefs.Count -gt $wDefs.Count) ('verify=' + $vDefs.Count + ' write=' + $wDefs.Count)
 $overlap = @($wDefs | Where-Object { $vDefs -contains $_ })
-Check 'r4 the two source sets overlap only on the shared runner' ($overlap.Count -eq 1 -and $overlap[0] -eq 'Tools\devloop\run-ps-suites.ps1') (($overlap -join ','))
+Check 'r4 the two source sets overlap only on the runner and the fixture tree' ($overlap.Count -eq 2 -and ($overlap -contains 'Tools\devloop\run-ps-suites.ps1') -and ($overlap -contains 'Tools\devloop\fixtures\*\*')) (($overlap -join ','))
 $chkTicket = Join-Path $sandbox 'chk.json'
 $chk1 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen -CheckOnly
 Check 'r5 CheckOnly reports a due run without spawning' ($chk1.needs_run -eq $true -and $chk1.status -eq 'stale' -and -not (Test-Path -LiteralPath $chkTicket)) ([string]$chk1.status)
@@ -378,6 +378,80 @@ Check 's2 no ps-suites-verify line leaks the red token, any case' ($badV.Count -
 $nonAscii = 0
 foreach ($ln in $allV) { foreach ($ch in $ln.ToCharArray()) { if ([int][char]$ch -gt 127) { $nonAscii++ } } }
 Check 's3 ps-suites-verify lines are ascii-only' ($nonAscii -eq 0) ('non-ascii=' + $nonAscii)
+
+# ---------- case t: a red run records WHICH suites were red (main#91 r754) --
+# r754 found a live verify-family red (red=1) whose identity was gone: the tick
+# kept the summary line in the ticket but threw the runner output away, and the
+# re-run came back clean. A red nobody can attribute is only half a signal.
+$runnerRedNamed = New-Runner 'runner-red-named.ps1' @'
+Write-Output 'PASS  suite-a.ps1  exit=0  ALL PASS'
+Write-Output 'FAIL  suite-b.ps1  exit=2  some assertion'
+Write-Output 'WARN  suite-c.ps1  timeout>40s  no verdict'
+Write-Output 'PS SUITES suites=3 assertions=9 counted=2 failing=1 parity=ok'
+exit 2
+'@
+$tTicket = Join-Path $sandbox 't.json'
+$tr = Invoke-PsSuitesTick -RepoDir $root -TicketPath $tTicket -RunnerPath $runnerRedNamed -TimeoutSec 8
+Check 't1 red run names the red suite' ("$($tr.reds)" -match 'suite-b\.ps1') ("$($tr.reds)")
+Check 't2 a hung suite is named with :timeout' ("$($tr.reds)" -match 'suite-c\.ps1:timeout') ("$($tr.reds)")
+Check 't3 the ticket keeps the names for later ticks' ((Test-Path -LiteralPath $tTicket) -and ([System.IO.File]::ReadAllText($tTicket, [System.Text.Encoding]::UTF8) -match 'suite-b\.ps1')) $tTicket
+$tLine = Format-PsSuitesLine $tr
+Check 't4 the printed line carries reds=' ($tLine -match 'reds=suite-b\.ps1,suite-c\.ps1:timeout') $tLine
+$tg = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 't-green.json') -RunnerPath $runnerGreen -TimeoutSec 8
+Check 't5 a green run records no reds' ("$($tg.reds)" -eq '') ("$($tg.reds)")
+Check 't6 a green line does not carry reds=' ((Format-PsSuitesLine $tg) -notmatch 'reds=') (Format-PsSuitesLine $tg)
+
+# ---------- case u: a non-pass verdict ages out, a pass never does ----------
+# The r754 red was environmental (identical sources re-ran clean), yet the ticket
+# was content addressed: only a human with -Force could clear it. Now a non-pass
+# ticket re-runs itself after N cached citations.
+$uTicket = Join-Path $sandbox 'u.json'
+$u1 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
+Check 'u1 first call really runs the red runner' ($u1.ran -eq $true -and $u1.status -eq 'red') ([string]$u1.status)
+$u2 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
+Check 'u2 first cached citation keeps the verdict and counts' ($u2.ran -eq $false -and $u2.status -eq 'red' -and $u2.tries -eq 1) ([string]$u2.tries)
+$u3 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
+Check 'u3 second cached citation still counts' ($u3.ran -eq $false -and $u3.tries -eq 2) ([string]$u3.tries)
+$u4 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
+Check 'u4 third citation re-runs by itself' ($u4.ran -eq $true) ([string]$u4.ran)
+Check 'u5 the self-retry is marked on the result' ($u4.heal -eq $true) ([string]$u4.heal)
+Check 'u6 the counter resets after a real run' ($u4.tries -eq 0) ([string]$u4.tries)
+$u5 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerGreen -TimeoutSec 8 -AutoRetryAfter 3 -Force
+Check 'u7 a forced green run clears the red' ($u5.status -eq 'pass') ([string]$u5.status)
+$u6 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerGreen -TimeoutSec 8 -AutoRetryAfter 1
+$u7 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerGreen -TimeoutSec 8 -AutoRetryAfter 1
+Check 'u8 a passing ticket never ages out (no spawn even at N=1)' ($u6.ran -eq $false -and $u7.ran -eq $false -and $u7.status -eq 'pass') ([string]$u7.status)
+$uChk = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerGreen -AutoRetryAfter 1 -CheckOnly
+Check 'u9 CheckOnly agrees that nothing is due for a green ticket' ($uChk.needs_run -eq $false) ([string]$uChk.needs_run)
+
+# ---------- case w: fixtures are content, not a hash bystander -------------
+# The old honest boundary: a suite could read a fixture outside the guarded list
+# and rot while the fingerprint stood still. Fixtures now hash as an explicit
+# file list, and an empty glob still contributes a marker.
+$fxDir = Join-Path $sandbox 'fx'
+$fxSub = Join-Path $fxDir 'fxsub'
+New-Item -ItemType Directory -Path $fxSub -Force | Out-Null
+$w1 = Get-PsSuitesFingerprint -RepoDir $fxDir -Paths @('fxsub\**')
+Check 'w1 an empty fixture glob is recorded, not skipped' ($w1 -match '^[0-9a-f]{12}$') $w1
+[System.IO.File]::WriteAllText((Join-Path $fxSub 'a.txt'), 'one', $utf8)
+$w2 = Get-PsSuitesFingerprint -RepoDir $fxDir -Paths @('fxsub\**')
+Check 'w2 adding the first fixture moves the fingerprint' ($w1 -ne $w2) ($w1 + ' vs ' + $w2)
+[System.IO.File]::WriteAllText((Join-Path $fxSub 'a.txt'), 'two', $utf8)
+$w3 = Get-PsSuitesFingerprint -RepoDir $fxDir -Paths @('fxsub\**')
+Check 'w3 editing a fixture moves the fingerprint' ($w2 -ne $w3) ($w2 + ' vs ' + $w3)
+$w4 = Get-PsSuitesFingerprint -RepoDir $fxDir -Paths @('fxsub\**')
+Check 'w4 the fixture fingerprint is stable across reads' ($w3 -eq $w4) ($w3 + ' vs ' + $w4)
+Check 'w5 both families guard the fixture tree' ($wDefs -contains 'Tools\devloop\fixtures\*\*' -and $vDefs -contains 'Tools\devloop\fixtures\*\*') (($wDefs -join ',') + ' | ' + ($vDefs -join ','))
+# NOTE: $root is the Tools dir in this sandbox, so RepoDir must be its parent -
+# the first draft of w6 pointed at Tools and expanded to NOFILES (r754).
+$repo = Split-Path $root -Parent
+$wList = @(Expand-PsSuitesSourceList -RepoDir $repo -Paths @('Tools\devloop\fixtures\*\*'))
+Check 'w6 the live fixture glob expands to real files' ($wList.Count -ge 4 -and -not ($wList -match '=NOFILES')) ('files=' + $wList.Count)
+$wAll = Get-PsSuitesFingerprint -RepoDir $repo -Paths @('Tools\devloop\fixtures\*\*')
+Check 'w7 the live fixture fingerprint is a real hash' ($wAll -match '^[0-9a-f]{12}$') $wAll
+$wReal = @(Expand-PsSuitesSourceList -RepoDir $repo -Paths $wDefs)
+$wMissing = @($wReal | Where-Object { -not (Test-Path -LiteralPath (Join-Path $repo $_)) })
+Check 'w8 every guarded write-side source exists in the real tree' ($wMissing.Count -eq 0 -and $wReal.Count -ge 15) (($wMissing -join ',') + ' of ' + $wReal.Count)
 
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 

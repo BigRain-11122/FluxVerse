@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T18:53:59Z",
-    "current_activity":  "r753 收口（main#93 Tools/perceptor/verify.ps1 状态提升竞态缺确定性沙盒）：把「候选提升」从门里抽成单点模块 Tools/devloop/state-promote.ps1（四态 no-candidate／promoted／lost-race／failed＋Clear-StateCandidate），门自己不再自带 Move-Item；模块缺档即 FAIL exit 1。新沙盒 Tools/devloop/test-state-promote.ps1 30/30——竞态败者（搬失败且源已消失＝静默）与真故障（搬失败且源仍在＝必须红）两支都确定性复现，其中真故障一支不靠任何测试缝：对目标文件持独占锁，真 Move-Item 必失败且源原地不动。新套件已进 verify 侧家族（8→9 套），活跑 suites=9 assertions=237 failing=0 timeouts=0 ALL PASS；门本身回 VERIFY PASS。同轮修红三处：runner 沙盒的八件 fixture 副本随家族扩到九件而 17 红（补件＋改断言 53/53 复原）、新写两件被写入器带上 UTF-8 BOM（非 ASCII 3 字节，剥 BOM 归零）、我自己那条残留断言写错（e/f 两组的语义就是保住候选）。",
-    "artifact":  "Tools/devloop/state-promote.ps1, Tools/devloop/test-state-promote.ps1, Tools/devloop/run-ps-suites.ps1, Tools/devloop/ps-suites-tick.ps1, Tools/devloop/test-run-ps-suites.ps1, Tools/perceptor/verify.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
-    "artifact_utc":  "2026-10-31T18:53:59Z",
-    "milestone":  "下一轮：main#91（写侧票据粘性＋夹具不入指纹）→ main#95（FLUXVERSE_WORLD_DIR 注入钩，让门本身可端到端证 FAIL 丢候选／PASS 发布）→ main#96（verify 族 9 套后的新基线，180 s 余量未知），队列头 state/queue/main.md",
+    "updated_utc":  "2026-10-31T19:12:40Z",
+    "current_activity":  "r754 收口（main#91）：tick 里那张红票第一次能自己说出「谁红了」并且会自己痊愈——每次真跑把 FAIL/WARN 的套件名写进票据 (reds=) 并印上 VERIFY WARN 行；未过的票带 tries 计数，被引用 3 次后自动重跑一次（auto=1，FLUXVERSE_PS_SUITES_AUTORETRY 可调），pass 的票永不老化永不重写；Tools/devloop/fixtures 全树按显式文件清单并入指纹（空 glob 落 =NOFILES）。沙盒 Tools/devloop/test-verify-ps-suites.ps1 74→97/97，verify 族 suites=9 assertions=260 failing=0 timeouts=0。",
+    "artifact":  "Tools/devloop/ps-suites-tick.ps1, Tools/devloop/test-verify-ps-suites.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
+    "artifact_utc":  "2026-10-31T19:12:40Z",
+    "milestone":  "下一轮：main#95（FLUXVERSE_WORLD_DIR 注入钩，让门本身可端到端证：FAIL 丢候选／PASS 发布）→ main#97（票据 exit 恒假，Start-Process 取不到 ExitCode）→ main#96（verify 族基线 115.6 s＝180 s 上限 64%，余量告急），队列见 state/queue/main.md",
     "milestone_eta_utc":  "2026-11-02T06:00:00Z"
 }

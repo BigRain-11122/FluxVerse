@@ -8,14 +8,13 @@ param(
   [Parameter(Mandatory = $true)][string]$Out,
   [string]$BeforeLabel = 'BEFORE',
   [string]$AfterLabel  = 'AFTER',
-  [int]$CellWidth = 620
+  [int]$CellWidth = 620,
+  [string[]]$Slugs = @('overview', 'gamedistrict', 'street')
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $site = Join-Path $root 'qa'
 $siteDir = Join-Path $site 'site'
-
-$slugs = @('overview', 'gamedistrict', 'street')
 function Find-Frame {
   param([string]$Prefix, [string]$Slug)
   $p = Join-Path $site ($Prefix + '-' + $Slug + '.jpg')
@@ -26,7 +25,7 @@ function Find-Frame {
 }
 
 $frames = @()
-foreach ($s in $slugs) { $frames += ,@((Find-Frame -Prefix $BeforePrefix -Slug $s), (Find-Frame -Prefix $AfterPrefix -Slug $s)) }
+foreach ($s in $Slugs) { $frames += ,@((Find-Frame -Prefix $BeforePrefix -Slug $s), (Find-Frame -Prefix $AfterPrefix -Slug $s)) }
 
 Add-Type -AssemblyName System.Drawing
 $jpegCodec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() |
@@ -35,7 +34,7 @@ $jpegCodec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() |
 $first = [System.Drawing.Image]::FromFile($frames[0][0])
 try { $cellH = [int][Math]::Round($first.Height * ($CellWidth / $first.Width)) } finally { $first.Dispose() }
 $labelH = 26
-$W = $CellWidth * 3
+$W = $CellWidth * $Slugs.Count
 $H = ($cellH + $labelH) * 2
 $bmp = New-Object System.Drawing.Bitmap($W, $H)
 $g = [System.Drawing.Graphics]::FromImage($bmp)
@@ -47,7 +46,7 @@ try {
     $y = $row * ($cellH + $labelH)
     $label = if ($row -eq 0) { $BeforeLabel } else { $AfterLabel }
     $g.DrawString($label, $font, $brush, 8, $y + 4)
-    for ($col = 0; $col -lt 3; $col++) {
+    for ($col = 0; $col -lt $Slugs.Count; $col++) {
       $img = [System.Drawing.Image]::FromFile($frames[$col][$row])
       try {
         $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic

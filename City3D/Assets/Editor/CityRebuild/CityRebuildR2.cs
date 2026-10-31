@@ -77,6 +77,7 @@ public static class CityRebuildR2
             "houses=" + houses.Count,
             "shots=" + Report.Count
         };
+        lines.AddRange(Report); // 位姿实测（street_pose 的 facade 占比）必须落盘可审计
         File.WriteAllLines(Path.Combine(Staging, "r2-shots.md"), lines.ToArray());
         UnityEngine.Debug.Log("CITY3D_SHOTS_DONE shots=" + Report.Count);
     }
@@ -583,16 +584,113 @@ public static class CityRebuildR2
         RenderShot(cam, file);
     }
 
-    // 街面人视（r713）：沿两排宅基之间的路带低机位朝北看——原 60 度俯角拍的是
-    // 「一栋房的屋顶+大片空地」，读不出街。
+    // 街面人视（r724·main#62）：r713 的机位虽然降到了低角度，但眼睛仍在 4 m 以上
+    // （target 抬 1.4-3.2 m 再 +2.9 m），拍出来大半是铺装、房子只剩右缘——读不出「走在街上」。
+    // 判据（main#62）＝眼高 1.6-1.8 m · 沿街轴向取景 · 画面里至少一栋房立面占 1/4 宽。
+    // 做法＝不再硬编码一对眼睛位置：沿街轴扫一小片位姿（三个纵向站位 × 五个横移 × 0-60 度偏角），
+    // 用相机投影实测每栋房包围盒的可见横向占比，取「达标且最贴近街轴」的那个位姿；
+    // 全扫不达标＝取最优位姿并如实记 note（说明是街区进深问题，不靠改 FOV 凑数）。
     static void StreetShot(Camera cam, Transform root, string file)
     {
+        const float eyeH = 1.7f;          // 站立眼高
+        const float targetFrac = 0.25f;   // 至少一栋立面占画面 1/4 宽
         var b = WorldBounds(root.gameObject);
-        Vector3 target = new Vector3(b.center.x, b.min.y + Mathf.Clamp(b.size.y * 0.18f, 1.4f, 3.2f), b.center.z);
-        cam.transform.position = target + new Vector3(0f, 2.9f, -(b.size.z * 0.5f + 7f));
+        float groundY = b.min.y;
+        float streetZ = root.position.z;  // 路带 local z=0 → 街心线
+
+        var houses = new List<GameObject>();
+        foreach (Transform t in root)
+            if (t.name.StartsWith("R2_AD-021_SM_Bld_House_Preset_")) houses.Add(t.gameObject);
+        if (houses.Count == 0) throw new Exception("street shot: no house presets under " + root.name);
+
+        float keepFov = cam.fieldOfView;  // 不改视场角（禁拿 FOV 凑数）
+
+        float bestScore = float.NegativeInfinity, bestFrac = 0f, bestYaw = 0f, bestLat = 0f, bestX = 0f;
+        bool bestBlocked = false;
+        float[] xs = { b.min.x + 1.5f, Mathf.Lerp(b.min.x, b.max.x, 0.25f), b.center.x, Mathf.Lerp(b.min.x, b.max.x, 0.75f) };
+        float[] lats = { 0f, -1.2f, 1.2f, -2.2f, 2.2f, -3f, 3f };
+        foreach (float cx in xs)
+            foreach (float lat in lats)
+                for (int step = 0; step <= 75; step++)
+                    for (int sign = -1; sign <= 1; sign += 2)
+                    {
+                        if (step == 0 && sign > 0) continue; // 0 度只算一次
+                        float yawOff = step * sign;
+                        Vector3 dir = Quaternion.Euler(-1.5f, 90f + yawOff, 0f) * Vector3.forward;
+                        cam.transform.position = new Vector3(cx, groundY + eyeH, streetZ + lat);
+                        cam.transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
+                        GameObject best;
+                        float f = MaxFacadeFrac(cam, houses, out best);
+                        bool blocked = best != null && IsBlocked(cam.transform.position, best);
+                        // 达标者按「偏角越小越好」排序；被挡/不达标一律降级（先不挡，再比占比）
+                        float score = f >= targetFrac ? 1000f - Mathf.Abs(yawOff) : f;
+                        if (blocked) score *= 0.5f;
+                        if (score > bestScore)
+                        {
+                            bestScore = score; bestFrac = f; bestYaw = yawOff; bestLat = lat; bestX = cx;
+                            bestBlocked = blocked;
+                        }
+                    }
+
+        Vector3 bestDir = Quaternion.Euler(-1.5f, 90f + bestYaw, 0f) * Vector3.forward;
+        cam.fieldOfView = keepFov;
+        cam.transform.position = new Vector3(bestX, groundY + eyeH, streetZ + bestLat);
+        cam.transform.rotation = Quaternion.LookRotation(bestDir, Vector3.up);
         cam.farClipPlane = Mathf.Max(cam.farClipPlane, b.size.magnitude * 4f);
-        cam.transform.LookAt(target + Vector3.up * 0.5f);
         RenderShot(cam, file);
+
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        Report.Add("street_pose: eye=" + eyeH.ToString("F1", inv) + "m yaw_off=" + bestYaw.ToString("F1", inv)
+            + " lat=" + bestLat.ToString("F1", inv) + " x=" + bestX.ToString("F1", inv)
+            + " facade=" + bestFrac.ToString("F3", inv)
+            + " blocked=" + (bestBlocked ? "1" : "0")
+            + (bestFrac >= targetFrac ? " ok" : " BELOW_TARGET"));
+    }
+
+    // 视线遮挡：从相机往这栋房可见面中心打一条射线，命中「别的东西的渲染体」=看不清立
+    // （r724 实测：底板行道树正立在路带中线上，不排除的话最优位姿会选一张被树挡死的图）
+    static bool IsBlocked(Vector3 from, GameObject house)
+    {
+        var hb = WorldBounds(house);
+        Vector3 aim = new Vector3(hb.center.x, Mathf.Lerp(hb.min.y, hb.max.y, 0.55f), hb.center.z);
+        Vector3 d = aim - from;
+        float dist = d.magnitude;
+        if (dist < 1f) return false;
+        foreach (var hit in Physics.RaycastAll(from, d / dist, dist * 0.97f))
+        {
+            if (hit.collider == null) continue;
+            var t = hit.collider.transform;
+            if (t == house.transform || t.IsChildOf(house.transform)) continue;
+            if (hit.collider.GetComponent<MeshRenderer>() == null) continue;
+            return true;
+        }
+        return false;
+    }
+
+    // 单栋房包围盒在视口里的可见横向占比（八角投影取 x 跨度；完全出框/在相机后方=0）
+    static float MaxFacadeFrac(Camera cam, List<GameObject> houses, out GameObject widest)
+    {
+        widest = null;
+        float best = 0f;
+        foreach (var h in houses)
+        {
+            var hb = WorldBounds(h);
+            float minX = 2f, maxX = -1f;
+            bool inFront = true, inFrameY = false;
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 p = hb.center + Vector3.Scale(hb.extents, new Vector3(
+                    (i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+                Vector3 v = cam.WorldToViewportPoint(p);
+                if (v.z <= 0.05f) { inFront = false; break; }
+                minX = Mathf.Min(minX, v.x); maxX = Mathf.Max(maxX, v.x);
+                if (v.y > -0.1f && v.y < 1.1f) inFrameY = true;
+            }
+            if (!inFront || !inFrameY) continue;
+            float frac = Mathf.Clamp01(maxX) - Mathf.Clamp01(minX);
+            if (frac > best) { best = frac; widest = h; }
+        }
+        return best;
     }
 
     static void HouseFrontShot(Camera cam, GameObject house, string file)

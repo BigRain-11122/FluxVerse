@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T09:30:36Z",
-    "current_activity":  "r723 收口中：main#61 街区尺度复核已出同尺度三联对照图（只读实测，未动场景）——主矛盾是行距不是尺寸：两排中心距 52 m 里只用了 24.8 m（宅基台半深和 18.8 + 路带 6），27.2 m 是空地，前场进深 13.6–20.2 m，街面读不出「街」。A2 只压行距（资产/排位全不动）→ 71.1×47.8 m、用地 −40%、密度 21.2%→35.2%；A3 再加门面重排＋无路缘 → 67.5×43.8 m、−48%、密度 40.4%。顺带量到解剖展示房压进 P07 宅基台 0.55 m（同高共面 z-fighting 风险，另立 main#64）。工具：`Tools/devloop/r2-scale-study.py`",
-    "artifact":  "qa/site/r2-scale-20261031-1730-bm-a.png · qa/site/r2-scale-20261031-1730-bm-a.md · Tools/devloop/r2-scale-study.py",
-    "artifact_utc":  "2026-10-31T09:30:36Z",
-    "milestone":  "下一步：main#62 街面帧机位重定（人视 1.6-1.8 m·沿街轴向·至少一栋立面占 1/4 宽，前后各一帧对照存 qa/site/，取景器 Tools/devloop/city3d-shots.ps1）；随后 main#63 环境光基线入场景体检、main#64 展示房让位与 A2 布局同批落。",
+    "updated_utc":  "2026-10-31T09:40:24Z",
+    "current_activity":  "r724 收口中：main#62 街面帧机位重定——机位不再手调，改由判据解出：眼高钉 1.7 m，沿街轴扫候选位姿（4 站位×7 横移×0-75° 偏角），用相机投影实测每栋宅包围盒的可见横向占比，取「达标且最贴街轴」者；视场角不动。实测正沿街轴就达 30.6% ≥ 25% 判据。顺带发现底板行道树立在路带中线上（无碰撞体，射线查不出），已立 main#65。",
+    "artifact":  "qa/site/r2-streetcam-20261031-1738-bm-a.jpg ＋ qa/city3d-shots-20261031-1738-bm-a-street.jpg ＋ City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs",
+    "artifact_utc":  "2026-10-31T09:40:24Z",
+    "milestone":  "下一步：main#63 环境光基线入场景体检（verify 每 tick 读 m_AmbientMode 与三色，缺失即 WARN 点名）；接着 main#64 展示房压宅基台 0.55 m、main#65 底板树侵入路带普查、main#66 行距 A2 落地。取景工具 Tools/devloop/city3d-shots.ps1。",
     "milestone_eta_utc":  "2026-11-01T06:00:00Z"
 }

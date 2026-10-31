@@ -144,6 +144,7 @@
       <p><span class="k">最近实物</span><span class="v" id="f-art">—</span></p>
       <p><span class="k">下个里程碑</span><span class="v" id="f-mile">—</span></p>
       <p><span class="k">今日日志</span><span class="v" id="f-tick">—</span></p>
+      <p><span class="k">运行维护</span><span class="v" id="f-maint">—</span></p>
     </div>
     <div class="card">
       <h2>城市规模</h2>
@@ -252,6 +253,11 @@ const TREND = __TREND_JSON__;
 // rounds,read_ok}) - the panel is built BY that tick, so this is the only honest
 // way to tell whether the 10-minute loop actually ran.
 const TICK = __TICK_JSON__;
+// ARCH = the log-archive duty's own day stamp ({exists,stamp,stamp_day,today,
+// is_today,remain,ran_utc}). `stamp` is the local yyyyMMdd of the last SUCCESSFUL
+// sweep and `remain` is the backlog that sweep measured (-1 = that stamp predates
+// the remain= field, so the page says "not recorded" rather than 0).
+const ARCH = __ARCH_JSON__;
 // SHOTS = builder-resolved City3D evidence frames from qa/ ({items:[{name,rel,
 // url,shot_utc,size,data,w,h,bytes}]}). `data` is a downscaled, inlined JPEG
 // data URI -- the page stays a single self-contained file with zero external
@@ -510,6 +516,39 @@ function artTitle(it){
       if (parts.length) s.title = parts.join(' · ');
     })();
     $('f-tick').appendChild(s);
+  })();
+
+  // 运行维护（queue main#59）：r719 起日志归档自己每天跑一次，但结果原先只躺在
+  // tick 日志里（每 10 分钟重写一遍，人不会去翻）。这里读归档任务自己的日戳，如实
+  // 给一行：今天跑没跑、积压几件、上次几点跑的。口径三条：①无日戳一律说「今天未
+  // 跑」，绝不等于「无积压」；②积压数取自日戳本体（归档器自己的单一数字源），旧
+  // 日戳没记 remain 就写「未记录」；③不读 tick 日志——本页每 tick 重建，抢读会与
+  // tick 自己的追加打架。
+  (function () {
+    const A = ARCH || {};
+    const el = $('f-maint');
+    if (!el) return;
+    if (!A.exists) {
+      el.innerHTML = '<span class="tag warn">今天未跑</span>' +
+        '<span class="muted"> 归档日戳缺失（logs/.archive-duty-last-run.txt 不在盘）· 积压未知</span>';
+      return;
+    }
+    const d = new Date();
+    const p2 = (n) => (n < 10 ? '0' + n : String(n));
+    const today = '' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate());
+    const ran = stampLocal(A.ran_utc);
+    const remainTxt = (typeof A.remain === 'number' && A.remain >= 0)
+      ? ('积压 ' + A.remain + ' 件') : '积压 未记录';
+    if (A.stamp && A.stamp === today) {
+      el.innerHTML = '<span class="tag ok">今日已归档</span>' +
+        '<span class="muted"> ' + esc(remainTxt) + ' · ' + esc(ran.text) + ' 实跑</span>';
+    } else {
+      const last = A.stamp_day ? ('上次日戳 ' + A.stamp_day)
+        : (ran.text ? ('上次写入 ' + ran.text) : '上次时刻未知');
+      el.innerHTML = '<span class="tag warn">今天未跑</span>' +
+        '<span class="muted"> ' + esc(last) + ' · ' + esc(remainTxt) + '</span>';
+    }
+    ageTitle(el, A.ran_utc);
   })();
 
   // 城市取景（queue main#42）：这一页此前全是数字与文字——规模、分区、事件、曲线，

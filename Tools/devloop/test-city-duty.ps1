@@ -98,6 +98,34 @@ foreach ($k in @('A', 'B', 'C', 'D')) {
     $results[$k] = [pscustomobject]@{ log = $log; html = $html }
 }
 
+# --- E/F/G/H) archive duty stamp (queue main#59) ----------------------------
+# The maintenance row must read the archive duty's OWN day stamp, never the tick
+# log: a missing stamp is "not run today" (not "zero backlog"), an older stamp
+# still reports the backlog it measured, and a pre-remain= stamp reports
+# "not recorded" instead of a fake zero.
+$todayStr = (Get-Date).ToString('yyyyMMdd')
+$ydayStr = (Get-Date).AddDays(-1).ToString('yyyyMMdd')
+
+$stampE = Join-Path $sandbox 'arch-today.txt'
+Set-Content -LiteralPath $stampE -Value ($todayStr + ' remain=7') -Encoding ASCII
+$stampF = Join-Path $sandbox 'arch-yday.txt'
+Set-Content -LiteralPath $stampF -Value ($ydayStr + ' remain=3') -Encoding ASCII
+$stampG = Join-Path $sandbox 'arch-today-plain.txt'
+Set-Content -LiteralPath $stampG -Value $todayStr -Encoding ASCII
+$stampH = Join-Path $sandbox 'arch-missing.txt'
+
+foreach ($k in @('E', 'F', 'G', 'H')) {
+    $st = (Get-Variable ('stamp' + $k)).Value
+    $outHtml = Join-Path $sandbox ('panel-' + $k + '.html')
+    $hist = Join-Path $sandbox ('hist-' + $k + '.jsonl')
+    $log = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
+            -ProofRoot $repoDir -DecisionsPath $decA -ArchiveStatePath $st `
+            -OutPath $outHtml -HistoryPath $hist) -join "`n"
+    $html = ''
+    if (Test-Path -LiteralPath $outHtml) { $html = [IO.File]::ReadAllText($outHtml) }
+    $results[$k] = [pscustomobject]@{ log = $log; html = $html }
+}
+
 $pass = 0
 $fail = 0
 function Check([string]$name, [bool]$cond) {
@@ -106,6 +134,7 @@ function Check([string]$name, [bool]$cond) {
 }
 
 $A = $results['A']; $B = $results['B']; $C = $results['C']; $D = $results['D']
+$E = $results['E']; $F = $results['F']; $G = $results['G']; $H = $results['H']
 
 Check 'A: builder reported PANEL OK' ($A.log -match 'PANEL OK')
 Check 'A: exactly one open order' ($A.log -match 'duty=1(?!\d)')
@@ -131,7 +160,22 @@ Check 'D: suspended order is not billed as pending' ($D.log -match 'duty=0(?!\d)
 Check 'D: suspended order counts as nothing late' ($D.log -match 'duty_late=0(?!\d)')
 Check 'D: suspended id never reaches the page' (-not $D.html.Contains('D-20261020-96'))
 
-Check 'no fixture crashes a build' ((@($A.log, $B.log, $C.log, $D.log) | Where-Object { $_ -match 'FAIL:' }).Count -eq 0)
+Check 'E: today stamp reads as ran-today' ($E.log -match 'arch=today(?!\w)')
+Check 'E: backlog number comes from the stamp' ($E.log -match 'arch_remain=7(?!\d)')
+Check 'E: stamp and backlog reach the page' ($E.html.Contains('"stamp":"' + $todayStr + '"') -and $E.html.Contains('"remain":7'))
+Check 'E: maintenance row exists in the page' ($E.html.Contains('id="f-maint"'))
+Check 'E: ARCH placeholder is rendered, never shipped raw' (-not $E.html.Contains('__ARCH_JSON__'))
+
+Check 'F: yesterday stamp reads as stale' ($F.log -match 'arch=stale(?!\w)')
+Check 'F: stale stamp keeps its own backlog figure' ($F.log -match 'arch_remain=3(?!\d)')
+Check 'F: page carries the stale day for the hint line' ($F.html.Contains('"stamp":"' + $ydayStr + '"'))
+
+Check 'G: stamp without remain= is not a fake zero' ($G.log -match 'arch=today(?!\w)' -and $G.log -match 'arch_remain=-1(?!\d)')
+
+Check 'H: missing stamp reads as missing, not as zero backlog' ($H.log -match 'arch=missing(?!\w)')
+Check 'H: missing stamp ships exists=false for that key' ($H.html.Contains('"stamp":""'))
+
+Check 'no fixture crashes a build' ((@($A.log, $B.log, $C.log, $D.log, $E.log, $F.log, $G.log, $H.log) | Where-Object { $_ -match 'FAIL:' }).Count -eq 0)
 
 try { Remove-Item -LiteralPath $sandbox -Recurse -Force } catch { }
 

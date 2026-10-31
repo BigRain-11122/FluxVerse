@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T08:25:59Z",
-    "current_activity":  "r719 毕：日志归档从「手动清一次」变成巡检每天自己跑的职责——新 Tools/devloop/log-archive-duty.ps1 每日历日至多真跑一次（失败当天下一 tick 重试），归档器增 ARCHIVE SUMMARY 机器行做单一数字源，Tools/perceptor/verify.ps1 新 §2e 每 tick 报一行，积压 \u003e200 或没跑完只 WARN。真机首跑归档 4 件，沙盒 22/22。",
-    "artifact":  "qa/site/r2-reloc-A1-20261031-1612-bm-a-compare.jpg ｜ Tools/devloop/log-archive-duty.ps1 ｜ Tools/devloop/archive-logs.ps1 ｜ Tools/perceptor/verify.ps1 ｜ Tools/devloop/test-log-archive-duty.ps1",
-    "artifact_utc":  "2026-10-31T08:25:59Z",
-    "milestone":  "下一个：main#59 面板「运行维护」行印日志归档日更状态（今日已归档 / 积压 N / 上次跑于 M-D HH:mm），改 Tools/devloop/build-city-panel.ps1 让 CEO 在唯一产品面上直接读到这行维护事实；随后 main#54 落位修正（qa/site/r2-reloc-A1-20261031-1612-bm-a-compare.jpg 对照件已备好，归 City3D 模块壳线）。",
+    "updated_utc":  "2026-10-31T08:45:12Z",
+    "current_activity":  "r720 毕：日志归档的日更像成了面板上的「运行维护」行——CEO 打开唯一产品面就能读到「今天归档跑没跑、积压几件、上次几点跑的」，不必去翻每 10 分钟重写的 tick 日志。新 Resolve-ArchiveDuty 只读归档任务自己的日戳（logs/.archive-duty-last-run.txt）：日戳为今日=绿行「今日已归档 · 积压 N」，往日/缺档=注意行写明上次日戳或上次写入时刻，旧日戳没记 remain 就说「未记录」而不是假 0；本行不读 tick 日志。沙盒 Tools/devloop/test-city-duty.ps1 扩到 32/32，全 29 套面板沙盒 ALL PASS。",
+    "artifact":  "qa/city-panel-r720-bm-a.png · Tools/devloop/build-city-panel.ps1 · Tools/devloop/city-panel-template.html · Tools/devloop/test-city-duty.ps1",
+    "artifact_utc":  "2026-10-31T08:45:12Z",
+    "milestone":  "下一个：main#54 R2 街区落位修正（街区 84.7×70.7 m 压水 91.7%，最近全干落位距现位 83 m；对照件 qa/site/r2-reloc-A1-20261031-1612-bm-a-compare.jpg + --offset 复算口径已备好，归 City3D 模块壳线，须与交互窗在飞件对齐）。",
     "milestone_eta_utc":  "2026-11-01T14:00:00Z"
 }

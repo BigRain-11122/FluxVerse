@@ -66,6 +66,15 @@ function injectAll(obj) {
 }
 
 const nowIso = (h) => new Date(Date.now() - h * 3600000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+// Local yyyyMMdd of "today" for the archive-duty fixture: the page derives its
+// own "today" from the clock at render time, so a hard-coded stamp would start
+// claiming "not run today" the moment the date rolls over.
+function YMD(sep) {
+  const d = new Date();
+  const p2 = (n) => (n < 10 ? '0' + n : String(n));
+  return sep ? (d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()))
+    : ('' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()));
+}
 const TS = nowIso(0.05);
 const T1 = nowIso(0.1);
 const T2 = nowIso(0.3);
@@ -118,6 +127,12 @@ const GREEN = {
   DUTY: {
     exists: true, path_rel: 'docs/decisions.md', url: 'file:///D:/g/docs/decisions.md',
     as_of_utc: nowIso(1), scanned: 12, matched: 0, open: 0, late: 0, rows: []
+  },
+  // r719/r720 added the maintenance row (log-archive duty stamp, queue main#59).
+  // A healthy page archived today with nothing left to archive.
+  ARCH: {
+    exists: true, path_rel: 'logs/.archive-duty-last-run.txt', url: 'file:///D:/l/stamp.txt',
+    stamp: YMD(), stamp_day: YMD('-'), today: YMD(), is_today: true, remain: 0, ran_utc: nowIso(1)
   }
 };
 

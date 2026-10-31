@@ -35,6 +35,7 @@ param(
     [string]$ShotDir = 'qa',
     [string]$ProofRoot = '',
     [string]$DecisionsPath = '',
+    [string]$ArchiveStatePath = '',
     [switch]$SiteSkip
 )
 
@@ -947,11 +948,73 @@ function Resolve-Duty
     return $r
 }
 
+# ---------------------------------------------------------------------------
+# Archive duty (queue main#59): r719 turned the one-off log sweep into a duty
+# that verify.ps1 runs at most once a calendar day, but the only place that
+# outcome was readable is the tick log - rewritten every ten minutes and never
+# opened by a human. This reads the duty's own day stamp and ships one row:
+# "did today's sweep run, how much is still archivable, when was it measured".
+# Read-only, fail-soft, honest:
+#  - a missing stamp means "has not run (today)", never "zero backlog"
+#  - the backlog figure comes from the stamp itself (the archiver's single
+#    number source); an older stamp without "remain=" ships -1, and the page
+#    says "not recorded" instead of pretending zero
+#  - the tick log is deliberately NOT read here: the panel is rebuilt every
+#    tick, and racing the tick's own appends would be a self-inflicted flake
+function Resolve-ArchiveDuty
+{
+    param([string]$Path)
+
+    $r = [ordered]@{
+        exists = $false; path_rel = ''; url = ''
+        stamp = ''; stamp_day = ''; today = (Get-Date).ToString('yyyyMMdd')
+        is_today = $false; remain = -1; ran_utc = ''
+    }
+    if ([string]::IsNullOrEmpty($Path)) { return $r }
+    if (-not (Test-Path -LiteralPath $Path)) { return $r }
+
+    $raw = ''
+    try { $raw = [IO.File]::ReadAllText($Path, [Text.Encoding]::UTF8) } catch { return $r }
+    $r.exists = $true
+
+    $full = [IO.Path]::GetFullPath($Path)
+    $rel = $full
+    if ($rel.StartsWith($repoDir, [StringComparison]::OrdinalIgnoreCase)) {
+        $rel = $rel.Substring($repoDir.Length)
+    }
+    $r.path_rel = $rel.TrimStart('\', '/').Replace('\', '/')
+    $r.url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
+
+    $m = [regex]::Match(($raw -replace '\s', ' '), '(\d{8})(?:\s*remain=(\d+))?')
+    if ($m.Success) {
+        $r.stamp = $m.Groups[1].Value
+        try {
+            $r.stamp_day = ([datetime]::ParseExact($r.stamp, 'yyyyMMdd',
+                [Globalization.CultureInfo]::InvariantCulture)).ToString('yyyy-MM-dd')
+        } catch { $r.stamp_day = '' }
+        if ($m.Groups[2].Success) { $r.remain = [int]$m.Groups[2].Value }
+    }
+    $r.is_today = ($r.stamp -ne '' -and $r.stamp -eq $r.today)
+
+    try {
+        $r.ran_utc = (Get-Item -LiteralPath $Path -ErrorAction Stop).LastWriteTimeUtc.ToString(
+            'yyyy-MM-ddTHH:mm:ssZ', [Globalization.CultureInfo]::InvariantCulture)
+    } catch { }
+
+    return $r
+}
+
 if ([string]::IsNullOrEmpty($DecisionsPath)) {
     $DecisionsPath = Join-Path $groupRoot 'docs\decisions.md'
 }
 $duty = Resolve-Duty -Path $DecisionsPath
 $dutyJs = To-JsLiteral -Obj $duty -Label 'duty'
+
+if ([string]::IsNullOrEmpty($ArchiveStatePath)) {
+    $ArchiveStatePath = Join-Path $repoDir 'logs\.archive-duty-last-run.txt'
+}
+$arch = Resolve-ArchiveDuty -Path $ArchiveStatePath
+$archJs = To-JsLiteral -Obj $arch -Label 'arch'
 
 $proof = Resolve-CityProof -Root $ProofRoot
 $proofJs = To-JsLiteral -Obj $proof -Label 'proof'
@@ -987,7 +1050,7 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__DUTY_JSON__','__ART_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__DUTY_JSON__','__ARCH_JSON__','__ART_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
@@ -1011,9 +1074,10 @@ $phMap = @{
     '__SHOTS_JSON__'    = $shotsJs
     '__PROOF_JSON__'    = $proofJs
     '__DUTY_JSON__'     = $dutyJs
+    '__ARCH_JSON__'     = $archJs
     '__ART_JSON__'      = $artJs
 }
-$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|DUTY|ART)_JSON__')
+$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|DUTY|ARCH|ART)_JSON__')
 $evaluator = [System.Text.RegularExpressions.MatchEvaluator]{
     param($m)
     if (-not $phMap.ContainsKey($m.Value)) { return $m.Value }
@@ -1057,5 +1121,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' built=' + $built + ' path=' + $OutPath)
 exit 0

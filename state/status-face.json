@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T06:56:43Z",
-    "current_activity":  "r713（10 分钟浸泡轮）改城市取景构图：原三个机位用固定高度/俯角，实证后果=全景截掉板块南缘、街面帧拍成一栋房的屋顶俯拍（面板取景卡两帧几乎读不出内容）。改为按主体包围盒 8 角点投影反解距离的自适应取景：全景框 Ground512 板块本体、街区 3/4 俯视、街面改 2.9m 人视沿街带朝北；六帧全部重拍，街面帧现在能看出两排房、路带与远处脑塔。改动=City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs（沿用 r710 的只取景入口：不重建、不存盘、不动资产）。新帧同时把真缺陷摆上台面——街区整体落在都市白盒的水域上，已立债 main#54。",
-    "artifact":  "world-public/city-panel.html（面板·file:// 直接打开）｜取证=qa/city-panel-r713-bm-a.png / qa/city-panel-r713-narrow-bm-a.png ｜新取景帧=qa/city3d-shots-20261031-1455-bm-a-overview.jpg 等 6 帧",
-    "artifact_utc":  "2026-10-31T06:56:43Z",
-    "milestone":  "下一步 main#52 空载浸泡复测（判据 render fps_avg≥486.8 且 p95≤2.58ms），前置=0 个其它 Tuanjie 进程；脚本=Tools/devloop/r2-soak.ps1",
-    "milestone_eta_utc":  "2026-11-02T06:00:00Z"
+    "updated_utc":  "2026-10-31T07:34:02Z",
+    "current_activity":  "r714：把「R2 街区泡在湖里」测准并算出可用落位——新工具 Tools/devloop/r2-site-check.py 直读 CityWhitebox 场景内建水面网格（2260 顶点三角），街区 84.7×70.7 m 压水 91.7%（点—三角精确复核 90.9%，两法差 0.9pp），最近全干落位＝城市局部 (0.3,83.2)／世界 (−89.6,−72.7)，距现位 83 m；顺带纠正 r713 的假设：水面不是 Tools/city/td-organic-data.txt 的 64×64 格网。本轮未动场景（落位修正归 City3D 模块壳线）。",
+    "artifact":  "qa/site/r2-site-20261031-1610-bm-a.png（一张诊断图：板块／水面／B 塔／R2 街区／三个全干候选）＋ qa/site/r2-site-20261031-1610-bm-a.md（同数据表）＋ Tools/devloop/r2-site-check.py（可复跑，控制台出 SITE_VERDICT）＋ 产品面 world-public/city-panel.html（file:// 直接打开）",
+    "artifact_utc":  "2026-10-31T07:34:02Z",
+    "milestone":  "下一件＝main#53 logs/ 保留策略（\u003e14d 已 2,263 件，目标 ≤200，归档不删），队列正身 state/queue/main.md；main#54 落位执行等 City3D 模块壳线在「搬街区／铺基台」间裁定，本司只出参数与核验脚本 Tools/devloop/r2-site-check.py",
+    "milestone_eta_utc":  "2026-11-01T14:00:00Z"
 }

@@ -198,6 +198,23 @@ Check 'm: no ALL PASS'             (-not ($rm.out -match 'VERIFY VERDICT: ALL PA
 Check 'm: no timeout instead'      ($rm.out -match 'timeouts=0')
 Write-Fixture $slowPath $counted
 
+# ---------- n) nested-run marker (r752, queue main#94) ----------
+# The gate now owns a sandbox family per side, and suites run the gate in
+# process. A child must carry FLUXVERSE_PS_SUITES_CHILD=1 so the nested gate
+# skips the families (otherwise a direct -Verify run recursed one level and
+# took minutes). The runner must also restore its own environment afterwards.
+Write-Output '--- n) nested-run marker ---'
+$markerSuite = Join-Path $repo1 'Tools\devloop\test-marker.ps1'
+Write-Fixture $markerSuite ("Write-Output 'starting'`r`nWrite-Output ('RESULT pass=1 fail=0 marker=' + `$env:FLUXVERSE_PS_SUITES_CHILD)`r`nexit 0`r`n")
+$rn = Invoke-Runner @('-RepoDir', $repo1, '-Suites', $markerSuite)
+Check 'n: child sees the marker'   ($rn.out -match 'marker=1')
+Check 'n: suite still passes'      ($rn.code -eq 0)
+Check 'n: parent env restored'     ([string]::IsNullOrEmpty($env:FLUXVERSE_PS_SUITES_CHILD))
+$env:FLUXVERSE_PS_SUITES_CHILD = 'keep'
+$null = Invoke-Runner @('-RepoDir', $repo1, '-Suites', $markerSuite)
+Check 'n: pre-set marker restored' ($env:FLUXVERSE_PS_SUITES_CHILD -eq 'keep')
+Remove-Item ('Env:\FLUXVERSE_PS_SUITES_CHILD') -ErrorAction SilentlyContinue
+
 # ---------- i) ASCII-only body ----------
 Write-Output '--- i) ASCII-only body ---'
 $bad = 0

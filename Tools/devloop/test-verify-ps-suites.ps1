@@ -37,6 +37,7 @@ if (Test-Path -LiteralPath $sandbox) { Remove-Item -LiteralPath $sandbox -Recurs
 New-Item -ItemType Directory -Path $sandbox -Force | Out-Null
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 $ticket = Join-Path $sandbox 'ticket.json'
+$vticket = Join-Path $sandbox 'ticket-verify.json'
 
 function New-Runner([string]$name, [string]$body) {
     $p = Join-Path $sandbox $name
@@ -66,9 +67,26 @@ Write-Output 'something went sideways'
 exit 0
 '@
 
+# Default runner for the verify family. Never left empty: an unset env var would
+# let verify.ps1 fall back to the real 8-suite, ~80 s family inside a sandbox.
+$script:vrunner = $runnerGreen
+$script:vforce = $false
+$script:vtimeout = $null
+$script:voff = $false
+$script:child = $false
+
+# Seed the verify-family ticket before the write-side cases: those assert that
+# a cached tick stays under 3 s, and a due verify run would spend that budget
+# on a fixture spawn. The family gets its own cases (k..r) below.
+. $module
+$null = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $vticket -RunnerPath $runnerGreen -TimeoutSec 8
+
 function Clear-PsEnv {
     foreach ($k in @('FLUXVERSE_PS_SUITES', 'FLUXVERSE_PS_SUITES_RUNNER', 'FLUXVERSE_PS_SUITES_TICKET',
-                     'FLUXVERSE_PS_SUITES_TIMEOUT', 'FLUXVERSE_PS_SUITES_FORCE')) {
+                     'FLUXVERSE_PS_SUITES_TIMEOUT', 'FLUXVERSE_PS_SUITES_FORCE',
+                     'FLUXVERSE_PS_SUITES_VERIFY', 'FLUXVERSE_PS_SUITES_VERIFY_RUNNER',
+                     'FLUXVERSE_PS_SUITES_VERIFY_TICKET', 'FLUXVERSE_PS_SUITES_VERIFY_TIMEOUT',
+                     'FLUXVERSE_PS_SUITES_VERIFY_FORCE', 'FLUXVERSE_PS_SUITES_CHILD')) {
         Remove-Item ('Env:\' + $k) -ErrorAction SilentlyContinue
     }
 }
@@ -80,6 +98,15 @@ function Run-Verify {
     if ($script:timeout) { $env:FLUXVERSE_PS_SUITES_TIMEOUT = [string]$script:timeout }
     if ($script:off) { $env:FLUXVERSE_PS_SUITES = 'off' }
     if ($script:force) { $env:FLUXVERSE_PS_SUITES_FORCE = '1' }
+    # The verify family must never reach the real suites from a sandbox: it is
+    # an ~80 s run and its suites call this gate themselves. Always point it at
+    # a fixture runner and its own temp ticket.
+    $env:FLUXVERSE_PS_SUITES_VERIFY_TICKET = $vticket
+    $env:FLUXVERSE_PS_SUITES_VERIFY_RUNNER = $script:vrunner
+    if ($script:vtimeout) { $env:FLUXVERSE_PS_SUITES_VERIFY_TIMEOUT = [string]$script:vtimeout }
+    if ($script:voff) { $env:FLUXVERSE_PS_SUITES_VERIFY = 'off' }
+    if ($script:vforce) { $env:FLUXVERSE_PS_SUITES_VERIFY_FORCE = '1' }
+    if ($script:child) { $env:FLUXVERSE_PS_SUITES_CHILD = '1' }
     $sw = New-Object System.Diagnostics.Stopwatch
     $sw.Start()
     $out = @(& $verify 2>&1 | ForEach-Object { [string]$_ })
@@ -93,6 +120,12 @@ function Run-Verify {
 # $x[0] would hand back a single character (r749 lesson, re-hit here).
 function Get-PsLine($out) {
     return @($out.lines | Where-Object { $_ -match '^VERIFY (HEALTH|WARN): ps-suites:' })
+}
+
+# The verify family prints its own label, so it can never be mistaken for the
+# write-side line (and the write-side assertions above keep their exact shape).
+function Get-VerifyLine($out) {
+    return @($out.lines | Where-Object { $_ -match '^VERIFY (HEALTH|WARN): ps-suites-verify:' })
 }
 
 # ---------- case a: green runner runs, ticket written ------------------------
@@ -241,6 +274,110 @@ Check 'j2 surviving ticket is complete json' ($null -ne $tkRace -and "$($tkRace.
 Check 'j3 surviving ticket carries a suites count' ($null -ne $tkRace -and [int]$tkRace.suites -ge 1 -and [int]$tkRace.suites -le 6) ([string]$tkRace)
 $leftovers = @(Get-ChildItem -Path $sandbox -Filter 'race.json.new*' -File -ErrorAction SilentlyContinue)
 Check 'j4 no side-file residue' ($leftovers.Count -eq 0) (($leftovers | ForEach-Object { $_.Name }) -join ',')
+
+# ---------- case k..q: the verify family rides the same tick (main#94) ------
+# Two things must both hold: the verify family really runs, and ONE tick never
+# pays for both runs (write ~19 s + verify ~80 s would double the round).
+$script:runner = $runnerGreen; $script:vrunner = $runnerGreen
+$script:timeout = $null; $script:force = $false; $script:vforce = $false
+$script:vtimeout = $null; $script:child = $false; $script:off = $false; $script:voff = $false
+
+Remove-Item -LiteralPath $ticket -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $vticket -Force -ErrorAction SilentlyContinue
+$rk = Run-Verify
+$wk = @(Get-PsLine $rk); $vk = @(Get-VerifyLine $rk)
+Check 'k1 one write line and one verify line' ($wk.Count -eq 1 -and $vk.Count -eq 1) ('write=' + $wk.Count + ' verify=' + $vk.Count)
+Check 'k2 write family really ran' ("$($wk[0])" -match 'ran=\d+ms') "$($wk[0])"
+Check 'k3 verify family deferred instead of running' ("$($vk[0])" -like 'VERIFY HEALTH:*' -and "$($vk[0])" -match 'deferred' -and "$($vk[0])" -notmatch 'ran=\d+ms') "$($vk[0])"
+Check 'k4 deferred verify wrote no ticket' (-not (Test-Path -LiteralPath $vticket)) $vticket
+Check 'k5 deferral names the reason (write ran this tick)' ("$($vk[0])" -match 'write-side ran \d+ms this tick') "$($vk[0])"
+$wt1 = ''
+try { $wt1 = [System.IO.File]::ReadAllText($ticket, [System.Text.Encoding]::UTF8) } catch { $wt1 = '' }
+
+# next tick: write is cached, so the verify family takes its turn
+$rl = Run-Verify
+$wl = @(Get-PsLine $rl); $vl = @(Get-VerifyLine $rl)
+Check 'l1 verify family runs on the next tick' ("$($vl[0])" -match 'ran=\d+ms') "$($vl[0])"
+Check 'l2 write family cached while verify runs' ("$($wl[0])" -match 'cached=' -and "$($wl[0])" -notmatch 'ran=\d+ms') "$($wl[0])"
+Check 'l3 verify ticket written' (Test-Path -LiteralPath $vticket) $vticket
+$tv = $null
+try { $tv = [System.IO.File]::ReadAllText($vticket, [System.Text.Encoding]::UTF8) | ConvertFrom-Json } catch { $tv = $null }
+Check 'l4 verify ticket is parseable and carries a sha' ($null -ne $tv -and "$($tv.sha)" -match '^[0-9a-f]{12}$') ([string]$tv)
+$tw = $null
+try { $tw = [System.IO.File]::ReadAllText($ticket, [System.Text.Encoding]::UTF8) | ConvertFrom-Json } catch { $tw = $null }
+Check 'l5 the two families keep different fingerprints' ($null -ne $tv -and $null -ne $tw -and "$($tv.sha)" -ne "$($tw.sha)") ('verify=' + "$($tv.sha)" + ' write=' + "$($tw.sha)")
+$wt2 = ''
+try { $wt2 = [System.IO.File]::ReadAllText($ticket, [System.Text.Encoding]::UTF8) } catch { $wt2 = '' }
+Check 'l6 a verify run leaves the write ticket untouched' ($wt1 -ne '' -and $wt1 -eq $wt2) ('len ' + $wt1.Length + ' -> ' + $wt2.Length)
+
+# third tick: both cached, zero spawn
+$rm = Run-Verify
+$wm = @(Get-PsLine $rm); $vm = @(Get-VerifyLine $rm)
+Check 'm1 both lines cached on a quiet tick' ("$($wm[0])" -match 'cached=' -and "$($vm[0])" -match 'cached=') "$($wm[0]) | $($vm[0])"
+Check 'm2 a fully cached tick stays fast (<4000ms)' ($rm.ms -lt 4000) ('ms=' + $rm.ms)
+
+# ---------- case n: verify-family red is a WARN with the right re-run hint --
+$script:vrunner = $runnerRed
+$script:vforce = $true
+$rn = Run-Verify
+$vn = @(Get-VerifyLine $rn)
+Check 'n1 verify red is WARN' ("$($vn[0])" -like 'VERIFY WARN:*') "$($vn[0])"
+Check 'n2 verify red names red=2' ("$($vn[0])" -match 'red=2') "$($vn[0])"
+Check 'n3 verify red hints the -Verify re-run command' ("$($vn[0])" -match 'run-ps-suites\.ps1 -Verify') "$($vn[0])"
+Check 'n4 verify red does not fail the gate' ($rn.code -eq 0) ('exit=' + $rn.code)
+
+# ---------- case o: verify-family hang is a timeout, never a verdict --------
+$script:vrunner = $runnerSlow; $script:vtimeout = 2; $script:vforce = $true
+$ro = Run-Verify
+$vo = @(Get-VerifyLine $ro)
+Check 'o1 verify hang is WARN' ("$($vo[0])" -like 'VERIFY WARN:*') "$($vo[0])"
+Check 'o2 verify hang says timeout 2s' ("$($vo[0])" -match 'did not finish in 2s') "$($vo[0])"
+Check 'o3 verify hang never claims a run or a verdict' ("$($vo[0])" -notmatch 'ran=\d+ms' -and "$($vo[0])" -notmatch 'parity=ok') "$($vo[0])"
+$script:vtimeout = $null
+
+# ---------- case p: nested sandbox run must not recurse --------------------
+$script:vrunner = $runnerGreen; $script:vforce = $false; $script:child = $true
+$rp = Run-Verify
+$wp = @(Get-PsLine $rp); $vp = @(Get-VerifyLine $rp)
+Check 'p1 nested run skips the write family' ("$($wp[0])" -match 'skipped \(nested sandbox run\)') "$($wp[0])"
+Check 'p2 nested run skips the verify family' ("$($vp[0])" -match 'skipped \(nested sandbox run\)') "$($vp[0])"
+Check 'p3 nested skip spawns nothing (<4000ms)' ($rp.ms -lt 4000) ('ms=' + $rp.ms)
+$script:child = $false
+
+# ---------- case q: verify family has its own off switch -------------------
+$script:voff = $true
+$rq = Run-Verify
+$vq = @(Get-VerifyLine $rq)
+Check 'q1 verify off switch is explicit' ("$($vq[0])" -match 'disabled by FLUXVERSE_PS_SUITES_VERIFY=off') "$($vq[0])"
+$script:voff = $false
+
+# ---------- case r: family defaults + CheckOnly never spawn ---------------
+$wDefs = @(Get-PsSuitesTickDefaults -Family write)
+$vDefs = @(Get-PsSuitesTickDefaults -Family verify)
+Check 'r1 write family still guards its ten sources' ($wDefs.Count -eq 10) ('count=' + $wDefs.Count)
+Check 'r2 verify family guards the gate it proves' ($vDefs -contains 'Tools\perceptor\verify.ps1') (($vDefs -join ','))
+Check 'r3 verify family is wider than the write list' ($vDefs.Count -gt $wDefs.Count) ('verify=' + $vDefs.Count + ' write=' + $wDefs.Count)
+$overlap = @($wDefs | Where-Object { $vDefs -contains $_ })
+Check 'r4 the two source sets overlap only on the shared runner' ($overlap.Count -eq 1 -and $overlap[0] -eq 'Tools\devloop\run-ps-suites.ps1') (($overlap -join ','))
+$chkTicket = Join-Path $sandbox 'chk.json'
+$chk1 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen -CheckOnly
+Check 'r5 CheckOnly reports a due run without spawning' ($chk1.needs_run -eq $true -and $chk1.status -eq 'stale' -and -not (Test-Path -LiteralPath $chkTicket)) ([string]$chk1.status)
+$chk2 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen
+$chk3 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen -CheckOnly
+Check 'r6 after a run CheckOnly says nothing is due' ($chk2.ran -eq $true -and $chk3.needs_run -eq $false -and "$($chk3.sha)" -eq "$($chk2.sha)") ($chk3.needs_run)
+$chk4 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $chkTicket -RunnerPath (Join-Path $sandbox 'nope.ps1') -CheckOnly
+Check 'r7 CheckOnly still reports a missing runner' ($chk4.status -eq 'missing' -and $chk4.needs_run -eq $true) ([string]$chk4.status)
+
+# ---------- case s: verdict lines stay scanner-safe -----------------------
+$allV = @()
+foreach ($r in @($rk, $rl, $rm, $rn, $ro, $rp, $rq)) { $allV += @(Get-VerifyLine $r) }
+$allV = @($allV | Where-Object { "$_" -ne '' })
+Check 's1 verify-family lines exist to judge' ($allV.Count -ge 7) ('count=' + $allV.Count)
+$badV = @($allV | Where-Object { "$_" -match '(?i)fail' })
+Check 's2 no ps-suites-verify line leaks the red token, any case' ($badV.Count -eq 0) (($badV -join ' | '))
+$nonAscii = 0
+foreach ($ln in $allV) { foreach ($ch in $ln.ToCharArray()) { if ([int][char]$ch -gt 127) { $nonAscii++ } } }
+Check 's3 ps-suites-verify lines are ascii-only' ($nonAscii -eq 0) ('non-ascii=' + $nonAscii)
 
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 

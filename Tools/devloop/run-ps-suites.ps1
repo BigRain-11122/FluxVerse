@@ -22,10 +22,11 @@
 # entry, so "did anyone run the verify sandboxes" stops being a memory test.
 # Two differences from the write-side list:
 #   * parity is write-side only (builder regex vs lint constant) -> skipped;
-#   * verify suites are seconds-long each (measured 0.6 s .. 18.9 s on a loaded
-#     box), so each child gets a hard timeout and a hit reports WARN + a
-#     `timeouts=N` counter instead of a verdict. A hang is not a red suite and
-#     must not pretend to be a pass either.
+#   * verify suites run from 0.6 s to 40.8 s each on a loaded box (r752: the
+#     ps-suites sandbox grew when it had to boot the verify family tick), so
+#     each child gets a hard timeout and a hit reports WARN + a `timeouts=N`
+#     counter instead of a verdict. A hang is not a red suite and must not
+#     pretend to be a pass either.
 #
 # Suites are launched as child processes on purpose: they end with `exit N`,
 # which would kill this runner if invoked in-process. Never read
@@ -100,10 +101,13 @@ if ($Suites.Count -gt 0) {
 # Per-suite cap for the verify family. Measured on a loaded box (r751):
 # probe-path-census 0.6 s, queue-due 3.1 s, path-census 2.7 s, ambient 13.3 s,
 # log-archive-duty 14.3 s, verify-queue-due 11.9 s, r2-site 15.6 s,
-# verify-ps-suites 18.9 s. A 20 s cap sits 1 s above the slowest real run, so a
-# busy tick would turn a pass into a WARN; 40 s keeps ~2x headroom and still
-# bounds a hang. Override with -TimeoutSec.
-if ($mode -eq 'verify' -and $TimeoutSec -le 0) { $TimeoutSec = 40 }
+# verify-ps-suites 18.9 s. r752 grew that last one to 40.8 s (it now also boots
+# the verify family tick), so a 40 s cap silently turned the slowest real suite
+# into `timeout>40s no verdict` and dropped its 74 assertions from the total
+# (observed live: assertions 207 -> 133 with failing=0 - a green ticket hiding a
+# suite that never got a verdict). 90 s keeps ~2.2x headroom over 40.8 s and
+# still bounds a hang. Override with -TimeoutSec.
+if ($mode -eq 'verify' -and $TimeoutSec -le 0) { $TimeoutSec = 90 }
 
 $missing = @()
 foreach ($f in $list) { if (-not (Test-Path -LiteralPath $f)) { $missing += $f } }
@@ -164,6 +168,14 @@ if (-not $SkipParity -and $mode -ne 'verify') {
 function Invoke-SuiteChild {
     param([string]$Path, [int]$CapSec)
     $res = [ordered]@{ text = ''; exit = 0; timeout = $false }
+    # Marker: a suite may run the gate in process (verify.ps1), and the gate now
+    # owns a sandbox family for each side. Those nested runs must not start
+    # another family run - we ARE the family run. Without this, a direct
+    # `run-ps-suites.ps1 -Verify` recursed one level deep and the family took
+    # minutes instead of ~2 (measured: >5 min, command killed by the harness).
+    $prevChild = $env:FLUXVERSE_PS_SUITES_CHILD
+    $env:FLUXVERSE_PS_SUITES_CHILD = '1'
+    try {
     if ($CapSec -le 0) {
         # No cap: keep the original capture path byte-for-byte (zero regression
         # risk for the write-side suites, which are also read by the tick ticket).
@@ -218,6 +230,10 @@ function Invoke-SuiteChild {
     }
     $res.timeout = (-not $exited)
     return [pscustomobject]$res
+    } finally {
+        if ($null -eq $prevChild) { Remove-Item 'Env:\FLUXVERSE_PS_SUITES_CHILD' -ErrorAction SilentlyContinue }
+        else { $env:FLUXVERSE_PS_SUITES_CHILD = $prevChild }
+    }
 }
 
 $failing = 0

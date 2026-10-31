@@ -683,6 +683,14 @@ function artTitle(it){
     const coverTxt = (st.prop_cover_text && st.prop_cover_text !== 'n/a')
       ? ((Number(st.prop_cover_text) * 100).toFixed(1) + '%') : '未记录';
     const coverBad = (st.prop_cover_high === true);
+    // main#79：尺度复核（r723）的 A2「零风险拿大头」结论此前只活在
+    // qa/site/r2-scale-*.md 里。builder 读同一条机器行，缺记录写「未记录」——
+    // 未知不等于「不用收紧」。
+    const scaleTxt = (st.scale_found === true && st.scale_a2_text && st.scale_a2_text !== 'n/a')
+      ? (st.scale_a2_text.replace('x', '×') +
+         ((st.scale_a2_area_text && st.scale_a2_area_text !== 'n/a')
+           ? ('（用地 ' + st.scale_a2_area_text + '%）') : ''))
+      : '未记录';
     if (!st.ran) {
       push('街区落位', '读数缺失：r2-site 检查未出结论（python / 场景 / 脚本缺失）', false, '', '', '');
     } else if (st.over_water) {
@@ -696,7 +704,8 @@ function artTitle(it){
         ' — 机位拍进树里，重解机位（main#71）', false, '', '', '');
     } else {
       push('街区落位', '压水 ' + st.block_water_text + '%｜最近干地 ' + dryTxt +
-        '｜路带内道具 ' + propTxt + '｜街面遮挡 ' + coverTxt, true, '', '', '');
+        '｜路带内道具 ' + propTxt + '｜街面遮挡 ' + coverTxt +
+        '｜尺度 A2 ' + scaleTxt, true, '', '', '');
     }
     box.innerHTML = out.join('');
   })();

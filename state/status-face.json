@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T15:18:08Z",
-    "current_activity":  "r738 收口：main#74 尺度研究对「报告比场景旧」由提示升为真降级——报告早于场景时不再沿用旧实测足迹，落 SHOWCASE_SRC=stale 并退回常量 7.5×5.0，摘要带分钟差、md 首段写明不沿用旧值；同轮修掉 r735 的树外崩溃点（--report 指另一盘符时 os.path.relpath 抛 ValueError，改走 rel_display）。自检扩到四态 mtime 夹具，SELF_CHECK OK。",
-    "artifact":  "qa/site/r2-scale-20261031-2320-bm-a.png, qa/site/r2-scale-20261031-2320-bm-a.md, Tools/devloop/r2-scale-study.py",
-    "artifact_utc":  "2026-10-31T15:18:08Z",
-    "milestone":  "下一轮 main#78：树外 --out-dir 的 sheet=／md= 两行打印接 rel_display（与 r738 同族崩点），随后 main#79 把街区尺寸与 A2 收紧建议印进面板「街区落位」与 verify 巡检一行。",
+    "updated_utc":  "2026-10-31T15:25:44Z",
+    "current_activity":  "r739 收口：main#78 树外 --out-dir 崩点收干（sheet=／md= 两行改走 rel_display，树内输出逐字不变），同轮完成 main#79——尺度研究把 SCALE_METRICS 机器行写进 qa/site/r2-scale-20261031-2348-bm-a.md，面板「街区落位」与 verify 巡检各印一行 A2 收紧建议（71.1×47.8 m／用地 -11%），缺记录写「未记录」不写 0。",
+    "artifact":  "qa/site/r2-scale-20261031-2348-bm-a.png, qa/site/r2-scale-20261031-2348-bm-a.md, world-public/city-panel.html, Tools/devloop/r2-scale-study.py",
+    "artifact_utc":  "2026-10-31T15:25:44Z",
+    "milestone":  "下一轮 main#8 城市线附卷（10-19 逾期）→ main#23 司级基准刷新（10-27 逾期）；尺度与遮挡读数都已上页，面板面改动照旧先过 Tools/devloop/build-city-panel.ps1 + Tools/perceptor/verify.ps1 双闸。",
     "milestone_eta_utc":  "2026-11-01T10:00:00Z"
 }

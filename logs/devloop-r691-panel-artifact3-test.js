@@ -15,10 +15,22 @@ function runPanelHtml(html, label) {
   const m = html.match(/<script>([\s\S]*?)<\/script>/);
   if (!m) throw new Error('no inline script in ' + label);
   const els = {};
-  const makeEl = (id) => ({
-    id: id, textContent: '', innerHTML: '', className: '', style: {},
-    children: [], appendChild(c) { this.children.push(c); }
-  });
+  const makeEl = (id) => {
+    const el = {
+      id: id, innerHTML: '', className: '', style: {},
+      children: [], appendChild(c) { this.children.push(c); }
+    };
+    let txt = '';
+    // A real node keeps textContent and innerHTML in sync. The fake DOM used to
+    // drop text assigned via textContent, so "this line stays plain text" read
+    // an empty innerHTML even though the panel had rendered it (r739: the suite
+    // was red on HEAD because r738's face text carried no paths).
+    Object.defineProperty(el, 'textContent', {
+      get() { return txt; },
+      set(v) { txt = String(v); el.innerHTML = txt; }
+    });
+    return el;
+  };
   const document = {
     getElementById(id) { return els[id] || (els[id] = makeEl(id)); },
     createElement() { return makeEl('span'); },

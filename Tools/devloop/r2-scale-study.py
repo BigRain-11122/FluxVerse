@@ -557,6 +557,15 @@ def self_check():
         print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm (fixture: report mtime unreadable)" % (src_m, w_m, d_m))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+    # main#78: the summary prints must survive an out-of-tree --out-dir; the
+    # in-tree form must stay byte-identical to the old relpath() output.
+    in_tree = rel_display(os.path.join(ROOT, "qa", "site", "x.png"))
+    if in_tree != "qa/site/x.png":
+        fails.append("rel_display in-tree -> %r" % in_tree)
+    off_tree = rel_display("Z:\\no-such-dir\\y.png")
+    if not os.path.isabs(off_tree) or not off_tree.endswith("y.png") or "\\\\" in off_tree:
+        fails.append("rel_display off-tree -> %r" % off_tree)
+    print("PRINT_PATH=in-tree:%s off-tree:%s" % (in_tree, off_tree))
     if os.path.isfile(REPORT):
         w_p, d_p, src_p, note_p = resolve_showcase(
             io.open(REPORT, encoding="utf-8", errors="replace").read(), REPORT, SCENE)
@@ -796,11 +805,19 @@ def main(argv):
            % (a2["pitch_z"], STREET_W + 2 * SETBACK),
            "- A3 留作「密度档」备选：只在确认排位可换（大件不要求相邻对照）时启用。",
            "- 本轮按 main#61 判据**只出对照图，不动场景**；落位/重建候选在 main#62（机位）之后一并定。", ""]
+    # main#79: the A2 "zero-risk most of the gain" conclusion used to live only
+    # in this markdown. verify and the panel now read one machine line, so the
+    # numbers have a single source instead of a hand-copied one.
+    md += ["<!-- machine: SCALE_METRICS a1=%.1fx%.1fm a2=%.1fx%.1fm a2_area=%+.0f%% a3=%.1fx%.1fm a3_area=%+.0f%% verdict=%s -->"
+           % (v1["w"], v1["d"], a2["w"], a2["d"],
+              100.0 * (m2["gross"] / m1["gross"] - 1.0),
+              a3["w"], a3["d"], 100.0 * (m3["gross"] / m1["gross"] - 1.0),
+              "COMPACTION_HELPS" if m2["gross"] < m1["gross"] * 0.95 else "NO_GAIN")]
     md_path = os.path.join(site_dir, "r2-scale-%s-bm-a.md" % stamp)
     io.open(md_path, "w", encoding="utf-8").write("\n".join(md))
 
-    print("sheet=" + os.path.relpath(png, ROOT).replace("\\", "/"))
-    print("md=" + os.path.relpath(md_path, ROOT).replace("\\", "/"))
+    print("sheet=" + rel_display(png))
+    print("md=" + rel_display(md_path))
     print("SCALE_VERDICT=%s area A2%+.0f%% A3%+.0f%%"
           % ("COMPACTION_HELPS" if m2["gross"] < m1["gross"] * 0.95 else "NO_GAIN",
              100.0 * (m2["gross"] / m1["gross"] - 1.0), 100.0 * (m3["gross"] / m1["gross"] - 1.0)))

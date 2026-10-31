@@ -256,3 +256,84 @@ function Get-SiteVerdict
     }
     return $res
 }
+
+# main#79: "A2 is the zero-risk most of the gain" only ever lived inside
+# qa\site\r2-scale-*.md - neither the panel nor verify could see it, so the
+# advice was invisible on the one page a human opens. r2-scale-study.py writes
+# one machine line into its markdown; parsing it and the wording live HERE once
+# so the tick and the page cannot drift apart. Read-only, fail-soft: no report
+# is 'n/a' (never a fake 0%), and nothing here can warn or fail the tick - it is
+# an advisory reading, not a red line.
+function ConvertFrom-ScaleStudyText
+{
+    param([string]$Text)
+
+    $r = [ordered]@{
+        found = $false
+        a1_text = 'n/a'
+        a2_text = 'n/a'
+        a2_area_text = 'n/a'
+        a3_text = 'n/a'
+        a3_area_text = 'n/a'
+        verdict = ''
+    }
+    if ([string]::IsNullOrEmpty($Text)) { return $r }
+    $m = [regex]::Match($Text,
+        'SCALE_METRICS\s+a1=([\d.]+x[\d.]+)m\s+a2=([\d.]+x[\d.]+)m\s+a2_area=([+-]?\d+)%\s+a3=([\d.]+x[\d.]+)m\s+a3_area=([+-]?\d+)%')
+    if (-not $m.Success) { return $r }
+    $r.found = $true
+    $r.a1_text = [string]$m.Groups[1].Value
+    $r.a2_text = [string]$m.Groups[2].Value
+    $r.a2_area_text = [string]$m.Groups[3].Value
+    $r.a3_text = [string]$m.Groups[4].Value
+    $r.a3_area_text = [string]$m.Groups[5].Value
+    $mV = [regex]::Match($Text, 'SCALE_METRICS[^>]*verdict=([A-Z_]+)')
+    if ($mV.Success) { $r.verdict = [string]$mV.Groups[1].Value }
+    return $r
+}
+
+# Newest qa\site\r2-scale-*.md (file names carry the stamp, so name order is
+# newest-last). -Report overrides the path (fixtures/tests). Unreadable or
+# missing = 'n/a', never an exception.
+function Get-ScaleStudy
+{
+    param(
+        [string]$Root = '',
+        [string]$Report = $env:FLUXVERSE_SCALE_STUDY
+    )
+
+    if ([string]::IsNullOrEmpty($Report)) {
+        if ([string]::IsNullOrEmpty($Root)) {
+            $Root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+        }
+        $dir = Join-Path $Root 'qa\site'
+        $Report = ''
+        try {
+            if (Test-Path -LiteralPath $dir) {
+                $hit = Get-ChildItem -LiteralPath $dir -Filter 'r2-scale-*.md' -File -ErrorAction SilentlyContinue |
+                    Sort-Object -Property Name |
+                    Select-Object -Last 1
+                if ($hit) { $Report = $hit.FullName }
+            }
+        } catch {
+            $Report = ''
+        }
+        if ([string]::IsNullOrEmpty($Report)) { return (ConvertFrom-ScaleStudyText -Text '') }
+    }
+    try {
+        if (-not (Test-Path -LiteralPath $Report)) { return (ConvertFrom-ScaleStudyText -Text '') }
+        $text = [IO.File]::ReadAllText($Report, [Text.Encoding]::UTF8)
+    } catch {
+        return (ConvertFrom-ScaleStudyText -Text '')
+    }
+    return (ConvertFrom-ScaleStudyText -Text $text)
+}
+
+# Compact key=value tokens for the tick health line (ASCII, no spaces inside a
+# value, 'n/a' when nothing was recorded).
+function Format-ScaleTokens
+{
+    param($Scale)
+    if ($null -eq $Scale -or -not $Scale.found) { return 'scale_a2=n/a scale_a2_area=n/a' }
+    return ('scale_a2=' + $Scale.a2_text + 'm scale_a2_area=' + $Scale.a2_area_text + '%')
+}

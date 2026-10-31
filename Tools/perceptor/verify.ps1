@@ -254,7 +254,10 @@ if ((-not (Test-Path -LiteralPath $siteScript)) -or (-not (Test-Path -LiteralPat
       # without a street_pose line prints n/a and never fails the tick; only a
       # real reading above the red line warns.
       $pose = Get-StreetPose -Root $repoRoot
-      $siteLine = 'r2-site: block_water=' + $sv.block_water_text + '% dry_candidates=' + $sv.dry_candidates_text + ' props_in_road=' + $sv.props_in_road_text + ' prop_cover=' + $pose.prop_cover_text
+      # main#79: the scale study's A2 advice (r723) had no face outside its own
+      # markdown; it rides this line as advisory tokens, never a red line.
+      $scale = Get-ScaleStudy -Root $repoRoot
+      $siteLine = 'r2-site: block_water=' + $sv.block_water_text + '% dry_candidates=' + $sv.dry_candidates_text + ' props_in_road=' + $sv.props_in_road_text + ' prop_cover=' + $pose.prop_cover_text + ' ' + (Format-ScaleTokens -Scale $scale)
       if (Test-SiteOverWater -Verdict $sv) {
         Write-Output ('VERIFY WARN: ' + $siteLine + ' - the R2 district stands over water; run Tools\devloop\r2-site-check.py for the nearest dry patch')
       } elseif (Test-SitePropsInRoad -Verdict $sv) {

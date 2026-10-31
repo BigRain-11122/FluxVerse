@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T09:12:35Z",
-    "current_activity":  "r722 收工：R2 场景背光面纯黑根治（main#60）。归因＝URP 环境光探针从未生成（RenderSettings.ambientMode=Skybox 但批处理构建不跑 DynamicGI.UpdateEnvironment，探针全零），背光面只剩直射光故压成纯黑。正法＝CityRebuildR2 新增 NormalizeAmbient()：显式三色半球环境光（天光/地平/地面反弹，色取本场景实测天空 #90CDEA 与铺装 #A69B7D）＋刷新探针，随 City3D/Assets/Scenes/CityRebuild_R2.unity 存盘；重建/取景/预演三个入口统一走它。实测街面帧纯黑占比 6.47% → 0.15%，剖面帧 9.94% → 0.05%，原本读作「黑侧墙」的整块区域恢复为可读的木挂板纹理与影子剪影。",
-    "artifact":  "qa/city3d-shots-20261031-1710-bm-a-street.jpg · qa/city3d-shots-20261031-1710-bm-a-showcase.jpg · qa/city3d-shots-20261031-1710-bm-a-cutaway.jpg · qa/city-panel-r722-bm-a.png",
-    "artifact_utc":  "2026-10-31T09:12:35Z",
-    "milestone":  "下一步：main#61 街区尺度复核——出「现尺度 vs 缩尺」对照图，量尺入口 Tools/devloop/city3d-rehearsal.ps1 已备；随后 main#40 冻结 fixture 用当前模板重建（现测的还是 10-20 旧模板 logs/panel-fixture-prev.html）。",
-    "milestone_eta_utc":  "2026-11-01T02:00:00Z"
+    "updated_utc":  "2026-10-31T09:30:36Z",
+    "current_activity":  "r723 收口中：main#61 街区尺度复核已出同尺度三联对照图（只读实测，未动场景）——主矛盾是行距不是尺寸：两排中心距 52 m 里只用了 24.8 m（宅基台半深和 18.8 + 路带 6），27.2 m 是空地，前场进深 13.6–20.2 m，街面读不出「街」。A2 只压行距（资产/排位全不动）→ 71.1×47.8 m、用地 −40%、密度 21.2%→35.2%；A3 再加门面重排＋无路缘 → 67.5×43.8 m、−48%、密度 40.4%。顺带量到解剖展示房压进 P07 宅基台 0.55 m（同高共面 z-fighting 风险，另立 main#64）。工具：`Tools/devloop/r2-scale-study.py`",
+    "artifact":  "qa/site/r2-scale-20261031-1730-bm-a.png · qa/site/r2-scale-20261031-1730-bm-a.md · Tools/devloop/r2-scale-study.py",
+    "artifact_utc":  "2026-10-31T09:30:36Z",
+    "milestone":  "下一步：main#62 街面帧机位重定（人视 1.6-1.8 m·沿街轴向·至少一栋立面占 1/4 宽，前后各一帧对照存 qa/site/，取景器 Tools/devloop/city3d-shots.ps1）；随后 main#63 环境光基线入场景体检、main#64 展示房让位与 A2 布局同批落。",
+    "milestone_eta_utc":  "2026-11-01T06:00:00Z"
 }

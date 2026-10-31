@@ -382,38 +382,63 @@ public static class CityRebuildR2
         int nZ = Math.Max(2, Mathf.RoundToInt(6f / L)); // 6m 深
         float halfX = nX * L / 2f, halfZ = nZ * L / 2f;
 
-        // 前侧（-Z）：中段换门洞墙
+        // main#67：Synty 墙/地模块的 pivot 在 AABB 角落（非中心），旧代码按「中心」写 pos，
+        // 整圈墙与地板因此系统性外偏 L/2（WorldBounds 量到 9.0x7.5 对 7.5x5.0，楼梯只是最显眼那截）。
+        // 改为「先摆后按实测 AABB 对齐格位」：位置全由几何解出，pivot 在哪都不猜。
+        float straightYaw = mStraight.RunAlongX ? 0f : 90f;
+        // 前侧（-Z）：中段换门洞墙·厚度朝室内 +z
         for (int i = 0; i < nX; i++)
         {
             bool isDoor = (nX >= 3) ? (i == nX / 2) : (i == 0);
             var pf = isDoor ? doorWall : straight;
-            Place(root.transform, pf, "Wall" + (isDoor ? "Door" : "Front") + i,
-                new Vector3(-halfX + L * (i + 0.5f), 0, -halfZ), 0f, mStraight.RunAlongX ? 0f : 90f);
+            var w = Place(root.transform, pf, "Wall" + (isDoor ? "Door" : "Front") + i, Vector3.zero, 0f, straightYaw);
+            AlignRect(w, -halfX + L * i, -halfZ, false, false);
         }
-        for (int i = 0; i < nX; i++) Place(root.transform, straight, "WallBack" + i, new Vector3(-halfX + L * (i + 0.5f), 0, halfZ), 0f, mStraight.RunAlongX ? 0f : 90f);
-        float wallBase = 0f; // Synty 墙件 pivot=底部（v2 实测无沉浮）
+        for (int i = 0; i < nX; i++)
+        {
+            var w = Place(root.transform, straight, "WallBack" + i, Vector3.zero, 0f, straightYaw);
+            AlignRect(w, -halfX + L * i, halfZ, false, true); // 厚度朝室内 −z
+        }
         for (int i = 0; i < nZ; i++) // 侧墙 nZ 段（前后墙端点咬合·零重叠）
         {
-            Place(root.transform, straight, "WallL" + i, new Vector3(-halfX, wallBase, -halfZ + L * (i + 0.5f)), 0f, mStraight.RunAlongX ? 90f : 0f);
-            Place(root.transform, straight, "WallR" + i, new Vector3(halfX, wallBase, -halfZ + L * (i + 0.5f)), 0f, mStraight.RunAlongX ? 90f : 0f);
+            var wl = Place(root.transform, straight, "WallL" + i, Vector3.zero, 0f, straightYaw + 90f);
+            AlignRect(wl, -halfX, -halfZ + L * i, false, false); // 左墙厚度朝 +x
+            var wr = Place(root.transform, straight, "WallR" + i, Vector3.zero, 0f, straightYaw + 90f);
+            AlignRect(wr, halfX, -halfZ + L * i, true, false);   // 右墙厚度朝 −x
         }
-        // 角柱×4（0.24m 装饰柱·归位角点遮缝）
-        Place(root.transform, corner, "CornerFN", new Vector3(-halfX, 0, -halfZ), 0f, 0f);
-        Place(root.transform, corner, "CornerFS", new Vector3(halfX, 0, -halfZ), 0f, 90f);
-        Place(root.transform, corner, "CornerBS", new Vector3(halfX, 0, halfZ), 0f, 180f);
-        Place(root.transform, corner, "CornerBN", new Vector3(-halfX, 0, halfZ), 0f, 270f);
+        // 角柱×4（0.24m 装饰柱·角点内侧贴齐）
+        AlignRect(Place(root.transform, corner, "CornerFN", Vector3.zero, 0f, 0f), -halfX, -halfZ, false, false);
+        AlignRect(Place(root.transform, corner, "CornerFS", Vector3.zero, 0f, 90f), halfX, -halfZ, true, false);
+        AlignRect(Place(root.transform, corner, "CornerBS", Vector3.zero, 0f, 180f), halfX, halfZ, true, true);
+        AlignRect(Place(root.transform, corner, "CornerBN", Vector3.zero, 0f, 270f), -halfX, halfZ, false, true);
 
-        // 室内地板
+        // 室内地板（格位逐块对齐）
         int fX = Math.Max(1, (int)Mathf.Ceil((nX * L) / Math.Max(0.5f, mFloor.sx)));
         int fZ = Math.Max(1, (int)Mathf.Ceil((nZ * L) / Math.Max(0.5f, mFloor.sz)));
         for (int a = 0; a < fX; a++)
             for (int b = 0; b < fZ; b++)
-                Place(root.transform, floor, "Floor" + a + "_" + b,
-                    new Vector3(-halfX + mFloor.sx * (a + 0.5f), 0.01f, -halfZ + mFloor.sz * (b + 0.5f)), 0f, 0f, 0f);
+            {
+                var fl = Place(root.transform, floor, "Floor" + a + "_" + b, new Vector3(0f, 0.01f, 0f), 0f, 0f);
+                AlignRect(fl, -halfX + mFloor.sx * a, -halfZ + mFloor.sz * b, false, false);
+            }
 
         // 楼梯（后角）+内墙（中隔）
-        if (stairs != null) Place(root.transform, stairs, "Stairs", new Vector3(halfX - 1.2f, 0.01f, halfZ - 1.4f), 0f, 180f, 0f);
-        if (iwall != null) Place(root.transform, iwall, "InteriorWall", new Vector3(0f, 0.01f, halfZ - L * 0.5f), 0f, 90f, 0f);
+        // main#67：此前按 (halfX-1.2, halfZ-1.4) 的经验偏移摆楼梯，但该 prefab 的 pivot
+        // 不在 AABB 中心，一段台阶挂到墙外（WorldBounds 量到 9.1x8.8 对 7.5x5.0）。
+        // 改为「实测 AABB + 收进围合体内壁」：位置由几何解算，pivot 在哪都不猜。
+        if (stairs != null)
+        {
+            var mStairs = MeasureRun(stairs);
+            Report.Add($"showcase_stairs: prefab {mStairs.sx:F2}x{mStairs.sz:F2}xH{mStairs.h:F2}m（AABB 实测·pivot 偏移不靠猜）");
+            var st = Place(root.transform, stairs, "Stairs", new Vector3(halfX - 1.2f, 0.01f, halfZ - 1.4f), 0f, 180f, 0f);
+            FitInsideWalls(st, halfX, halfZ, 0.14f);
+        }
+        if (iwall != null)
+        {
+            var miw = MeasureRun(iwall);
+            var iw = Place(root.transform, iwall, "InteriorWall", Vector3.zero, 0f, miw.RunAlongX ? 0f : 90f);
+            AlignRect(iw, -miw.Run * 0.5f, halfZ - L * 0.5f, false, false); // 横隔墙·厚度朝室内
+        }
 
         // 室内点灯（治剖面死黑·暖光读出室内）
         var lgo = new GameObject("R2_AD-021_InteriorLight");
@@ -423,6 +448,21 @@ public static class CityRebuildR2
         lt.type = LightType.Point; lt.range = 7f; lt.intensity = 0.9f; lt.color = new Color32(0xFF, 0xD9, 0x9E, 255);
 
         SitOnGround(root.transform);
+        // main#67 机检行：拼装体整体 AABB 必须贴住名义 footprint——任何附属件（楼梯等）
+        // 伸出围合体即在此翻 FAIL，不必等到取景帧肉眼发现。
+        var lb = LocalRect(root.transform, root);
+        float overX = Mathf.Max(0f, Mathf.Max(-halfX - lb.x0, lb.x1 - halfX));
+        float overZ = Mathf.Max(0f, Mathf.Max(-halfZ - lb.z0, lb.z1 - halfZ));
+        Report.Add($"showcase_bounds: {lb.x1 - lb.x0:F2}x{lb.z1 - lb.z0:F2}m vs nominal {nX * L:F1}x{nZ * L:F1}m over=({overX:F2},{overZ:F2})m {(overX <= 0.6f && overZ <= 0.6f ? "PASS" : "FAIL")}（判据 ≤0.6m·main#67）");
+        if (overX > 0.6f || overZ > 0.6f)
+            foreach (Transform ct in root.transform)
+            {
+                var cr = LocalRect(root.transform, ct.gameObject);
+                float ox = Mathf.Max(0f, Mathf.Max(-halfX - cr.x0, cr.x1 - halfX));
+                float oz = Mathf.Max(0f, Mathf.Max(-halfZ - cr.z0, cr.z1 - halfZ));
+                if (ox > 0.05f || oz > 0.05f)
+                    Report.Add($"showcase_over_child: {ct.name} rect x[{cr.x0:F2}..{cr.x1:F2}] z[{cr.z0:F2}..{cr.z1:F2}] over=({ox:F2},{oz:F2})");
+            }
         Report.Add($"showcase: 模块壳拼装 {nX}x{nZ} 段（L={L:F2}m footprint={nX * L:F1}x{nZ * L:F1}m）+地板 {fX}x{fZ}+楼梯+内墙·无顶=剖面展示（走进建筑 v2 真证面）");
         return root;
     }
@@ -643,13 +683,57 @@ public static class CityRebuildR2
         return m;
     }
 
-    static void Place(Transform parent, GameObject pf, string name, Vector3 localPos, float pitch, float yaw, float yOffset = 0f)
+    static GameObject Place(Transform parent, GameObject pf, string name, Vector3 localPos, float pitch, float yaw, float yOffset = 0f)
     {
         var go = (GameObject)PrefabUtility.InstantiatePrefab(pf);
         go.name = "R2_AD-021_" + name;
         go.transform.SetParent(parent, false);
         go.transform.localPosition = localPos + Vector3.up * yOffset;
         go.transform.localRotation = Quaternion.Euler(pitch, yaw, 0f);
+        return go;
+    }
+
+    // 某物件 AABB 在 frame 局部 XZ 轴上的矩形（main#67：附属件的 pivot 不可信，
+    // 一律按实测 AABB 算它在围合体里的真实占位）。
+    static Rect2 LocalRect(Transform frame, GameObject go)
+    {
+        var b = WorldBounds(go);
+        var r = new Rect2 { x0 = float.MaxValue, z0 = float.MaxValue, x1 = float.MinValue, z1 = float.MinValue };
+        for (int i = 0; i < 4; i++)
+        {
+            float wx = (i & 1) == 0 ? b.min.x : b.max.x;
+            float wz = (i & 2) == 0 ? b.min.z : b.max.z;
+            var lp = frame.InverseTransformPoint(new Vector3(wx, b.center.y, wz));
+            r.x0 = Mathf.Min(r.x0, lp.x); r.x1 = Mathf.Max(r.x1, lp.x);
+            r.z0 = Mathf.Min(r.z0, lp.z); r.z1 = Mathf.Max(r.z1, lp.z);
+        }
+        return r;
+    }
+
+    // 把物件的实测 AABB 在 frame 局部坐标里对齐到目标线：xIsMax/zIsMax 选择拿 min 角还是 max 角去贴
+    // （main#67：模块件 pivot 在角落，只有按 AABB 对齐才不会整圈外偏）。
+    static void AlignRect(GameObject go, float tX, float tZ, bool xIsMax, bool zIsMax)
+    {
+        var frame = go.transform.parent;
+        var r = LocalRect(frame, go);
+        float dx = (xIsMax ? tX - r.x1 : tX - r.x0);
+        float dz = (zIsMax ? tZ - r.z1 : tZ - r.z0);
+        if (dx != 0f || dz != 0f) go.transform.position += frame.TransformVector(new Vector3(dx, 0f, dz));
+    }
+
+    // 把物件整体平移到「±halfX / ±halfZ 内壁内」的最小位移（只平移、不旋转不缩放）。
+    static void FitInsideWalls(GameObject go, float halfX, float halfZ, float inset)
+    {
+        var frame = go.transform.parent;
+        var r = LocalRect(frame, go);
+        float dx = 0f, dz = 0f;
+        if (r.x1 > halfX - inset) dx = (halfX - inset) - r.x1;
+        else if (r.x0 < -halfX + inset) dx = (-halfX + inset) - r.x0;
+        if (r.z1 > halfZ - inset) dz = (halfZ - inset) - r.z1;
+        else if (r.z0 < -halfZ + inset) dz = (-halfZ + inset) - r.z0;
+        if (dx != 0f || dz != 0f) go.transform.position += frame.TransformVector(new Vector3(dx, 0f, dz));
+        var n = LocalRect(frame, go);
+        Report.Add($"showcase_fit[{go.name}]: AABB {r.x1 - r.x0:F2}x{r.z1 - r.z0:F2}m move=({dx:F2},{dz:F2})m -> x[{n.x0:F2}..{n.x1:F2}] z[{n.z0:F2}..{n.z1:F2}] 内壁±({halfX - inset:F2}/{halfZ - inset:F2})");
     }
 
     static string DoorProbe(GameObject house, string tag)

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T12:50:37Z",
-    "current_activity":  "r728 收口：街道行距 52→29 m（main#66 A2 落地）。r723 量到前场 13.6–20.2 m 把街拉成广场——房体进深+6 m 路带只占 24.8 m，余下 27.2 m 是空院。缩行距后街区进深 70.8→47.8 m、前场 2.1–8.7 m，资产与排布零改动（改面=City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs）；同一取帧器复拍：facade 0.306→0.354（两侧立面对夹变强），并新增铺装占画面度量 street_cover=0.257（判据 \u003c0.55，街心不再是一整块广场）。行距压缩后展示房没了院落净位（NO_SLOT），候选位扩到「排内门面缝」——落进 13.57 m 的 P06|P07 缝，与宅基台/路带净距 2.26 m、重叠 0 由几何解出。底板道具 props_in_road=0（Tools/devloop/r2-site-check.py 实读）。",
-    "artifact":  "qa/city3d-shots-20261031-2047-bm-a-street.jpg、qa/city3d-shots-20261031-2047-bm-a-gamedistrict.jpg、City3D-staging/r2-report.md、world-public/city-panel.html",
-    "artifact_utc":  "2026-10-31T12:47:00Z",
-    "milestone":  "下一步=main#67 展示房楼梯跑出墙外（bounds 9.1×8.8 vs 7.5×5.0）→ main#68 底板道具碰撞体面（让机位遮挡判据能看见它们）→ main#40 冻结 fixture 重建；取帧刷新一律走 Tools/devloop/city3d-shots.ps1。",
+    "updated_utc":  "2026-10-31T13:09:40Z",
+    "current_activity":  "r729 收口：解剖展示房回到真·7.5×5.0 名义占地（main#67）。病灶不是楼梯一处——新「越界子件点名」行 showcase_over_child 一次点出 15 件（WallFront0 x[−5.00..−2.50]、Floor0_0、InteriorWall z[1.25..3.75]…），整圈墙/地板整齐外偏 L/2=1.25 m，根因=Synty 模块 pivot 在 AABB 角落而旧代码按「中心」写 pos。改法=新 AlignRect 按实测 AABB 拿 min/max 角对齐格位（墙/地板/角柱/横隔墙全部「先摆后对齐」、厚度朝室内），楼梯走 FitInsideWalls。机检行 showcase_bounds: 7.50x5.00 vs nominal 7.5x5.0 over=(0.00,0.00) PASS 已入重建报告，越界即 FAIL 并逐件点名；展示房净位 clear 2.29→3.03 m（改面=City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs）。",
+    "artifact":  "qa/city3d-shots-20261031-2105-bm-a-showcase.jpg、qa/city3d-shots-20261031-2105-bm-a-cutaway.jpg、City3D-staging/r2-report.md、world-public/city-panel.html",
+    "artifact_utc":  "2026-10-31T13:05:00Z",
+    "milestone":  "下一步=main#69 街两侧行道树体量/离街距离（showcase 帧左缘仍被 3 m 级绿胶囊挡掉约四成）→ main#68 底板道具碰撞体面（机位遮挡判据配套）→ main#70 scale-study 尺寸改读报告实测行；取帧刷新一律走 Tools/devloop/city3d-shots.ps1。",
     "milestone_eta_utc":  "2026-11-02T06:00:00Z"
 }

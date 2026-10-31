@@ -249,11 +249,18 @@ if ((-not (Test-Path -LiteralPath $siteScript)) -or (-not (Test-Path -LiteralPat
     } elseif ($sv.verdict -eq 'INCONSISTENT') {
       Write-Output ('VERIFY WARN: r2-site: block_water=' + $sv.block_water_text + '% dry_candidates=' + $sv.dry_candidates_text + ' - raster and point-in-triangle disagree; read the checker, not the number')
     } else {
-      $siteLine = 'r2-site: block_water=' + $sv.block_water_text + '% dry_candidates=' + $sv.dry_candidates_text + ' props_in_road=' + $sv.props_in_road_text
+      # main#71: the street camera's prop coverage (r730) is part of the same
+      # "is this pose usable?" question, so it rides the same line. A report
+      # without a street_pose line prints n/a and never fails the tick; only a
+      # real reading above the red line warns.
+      $pose = Get-StreetPose -Root $repoRoot
+      $siteLine = 'r2-site: block_water=' + $sv.block_water_text + '% dry_candidates=' + $sv.dry_candidates_text + ' props_in_road=' + $sv.props_in_road_text + ' prop_cover=' + $pose.prop_cover_text
       if (Test-SiteOverWater -Verdict $sv) {
         Write-Output ('VERIFY WARN: ' + $siteLine + ' - the R2 district stands over water; run Tools\devloop\r2-site-check.py for the nearest dry patch')
       } elseif (Test-SitePropsInRoad -Verdict $sv) {
         Write-Output ('VERIFY WARN: ' + $siteLine + ' - base-plate props stand on the road strip; run Tools\devloop\r2-site-check.py for their names (main#65)')
+      } elseif (Test-SitePropCoverHigh -Pose $pose) {
+        Write-Output ('VERIFY WARN: ' + $siteLine + ' - the street camera shoots through props (over 15%); re-solve the pose with Tools\devloop\city3d-shots.ps1 (main#71)')
       } else {
         Write-Output ('VERIFY HEALTH: ' + $siteLine)
       }

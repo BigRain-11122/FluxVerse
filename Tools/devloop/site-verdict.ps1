@@ -99,6 +99,72 @@ function Test-SitePropsInRoad
     return ([int]$Verdict.props_in_road -gt 0)
 }
 
+# main#71: the street-shot pose solver scores props against the frame as well
+# (prop_cover = share of the picture covered by props, near_pen = near-prop
+# penalty). r730 measured it, but the number only ever lived in
+# City3D-staging\r2-shots.md - the panel and verify could not see it, so "is
+# this camera good?" was not self-checkable. Parsing and the red line live here
+# once; verify reports it every tick and the panel prints it on the page.
+$script:SitePropCoverWarnPct = 0.15
+
+function ConvertFrom-StreetPoseText
+{
+    param([string]$Text)
+
+    $r = [ordered]@{
+        found = $false
+        prop_cover = -1.0
+        prop_cover_text = 'n/a'
+        prop_cover_high = $false
+    }
+    if ([string]::IsNullOrEmpty($Text)) { return $r }
+    # Only the report's own street_pose line counts: street_control carries the
+    # superseded pose (r728) and must never be read as the current camera.
+    $m = [regex]::Match($Text, '(?m)^\s*street_pose:.*?\bprop_cover=([\d.]+)')
+    if (-not $m.Success) { return $r }
+    $r.found = $true
+    $r.prop_cover_text = [string]$m.Groups[1].Value
+    $r.prop_cover = [double]::Parse($r.prop_cover_text,
+        [Globalization.CultureInfo]::InvariantCulture)
+    $r.prop_cover_high = ($r.prop_cover -gt $script:SitePropCoverWarnPct)
+    return $r
+}
+
+# Read the newest pose report. -Report overrides the path (fixtures/tests).
+# A missing or unreadable report is "not recorded" ('n/a'), never a zero: a
+# clean-looking 0% would be exactly the pretty-but-false face this row exists
+# to prevent.
+function Get-StreetPose
+{
+    param(
+        [string]$Root = '',
+        [string]$Report = $env:FLUXVERSE_SHOTS_REPORT
+    )
+
+    if ([string]::IsNullOrEmpty($Report)) {
+        if ([string]::IsNullOrEmpty($Root)) {
+            $Root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+        }
+        $Report = Join-Path $Root 'City3D-staging\r2-shots.md'
+    }
+    try {
+        if (-not (Test-Path -LiteralPath $Report)) { return ConvertFrom-StreetPoseText -Text '' }
+        $text = [IO.File]::ReadAllText($Report, [Text.Encoding]::UTF8)
+    } catch {
+        return ConvertFrom-StreetPoseText -Text ''
+    }
+    return (ConvertFrom-StreetPoseText -Text $text)
+}
+
+# True only when a real reading exceeds the red line (unknown is not clean).
+function Test-SitePropCoverHigh
+{
+    param($Pose)
+    if ($null -eq $Pose) { return $false }
+    if (-not $Pose.found) { return $false }
+    return ([bool]$Pose.prop_cover_high)
+}
+
 # Locate a python interpreter the same way verify does (env override first).
 function Get-SitePython
 {

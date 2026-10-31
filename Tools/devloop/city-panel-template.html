@@ -678,17 +678,25 @@ function artTitle(it){
     const propTxt = (st.props_in_road_text && st.props_in_road_text !== 'n/a')
       ? (st.props_in_road_text + ' 件') : '未知';
     const propBad = (st.props_in_road > 0);
+    // main#71：街面机位被道具占掉的画面比（r730 量出，此前只在取景报告里）。
+    // 'n/a' = 报告没有 street_pose 行，写「未记录」——未知不等于 0。
+    const coverTxt = (st.prop_cover_text && st.prop_cover_text !== 'n/a')
+      ? ((Number(st.prop_cover_text) * 100).toFixed(1) + '%') : '未记录';
+    const coverBad = (st.prop_cover_high === true);
     if (!st.ran) {
       push('街区落位', '读数缺失：r2-site 检查未出结论（python / 场景 / 脚本缺失）', false, '', '', '');
     } else if (st.over_water) {
       push('街区落位', '压水 ' + st.block_water_text + '%｜最近干地 ' + dryTxt +
-        ' — 街区还在湖上（main#54）', false, '', '', '');
+        '｜街面遮挡 ' + coverTxt + ' — 街区还在湖上（main#54）', false, '', '', '');
     } else if (propBad) {
       push('街区落位', '压水 ' + st.block_water_text + '%｜路带内道具 ' + propTxt +
-        ' — 街心有东西挡道（main#65）', false, '', '', '');
+        '｜街面遮挡 ' + coverTxt + ' — 街心有东西挡道（main#65）', false, '', '', '');
+    } else if (coverBad) {
+      push('街区落位', '压水 ' + st.block_water_text + '%｜街面遮挡 ' + coverTxt +
+        ' — 机位拍进树里，重解机位（main#71）', false, '', '', '');
     } else {
       push('街区落位', '压水 ' + st.block_water_text + '%｜最近干地 ' + dryTxt +
-        '｜路带内道具 ' + propTxt, true, '', '', '');
+        '｜路带内道具 ' + propTxt + '｜街面遮挡 ' + coverTxt, true, '', '', '');
     }
     box.innerHTML = out.join('');
   })();
@@ -1311,14 +1319,23 @@ function artTitle(it){
   // 这类欠账，两笔债必须各占一行。读数与红标线全部来自 site-verdict.ps1（verify
   // 同源），读数缺失也点名，绝不当成「没事」。
   const siteDry = pfsite.nearest_dry_text ? (pfsite.nearest_dry_text + ' m') : '未知';
+  // main#71：街面机位遮挡比与街区落位同属一个判据面（机位好不好），所以并进
+  // 这一项；'n/a' 打「未记录」，不当作 0，也不因此把这一项判黑。
+  const siteCover = (pfsite.prop_cover_text && pfsite.prop_cover_text !== 'n/a')
+    ? (' · 街面遮挡 ' + (Number(pfsite.prop_cover_text) * 100).toFixed(1) + '%')
+    : ' · 街面遮挡 未记录';
   let cds;
   if (!pfsite.ran) {
     cds = { ok: false, vd: 'r2-site 检查未出结论（python / 场景 / 脚本缺失）— 压水率当前不可见' };
   } else if (pfsite.over_water) {
     cds = { ok: false, vd: '压水 ' + pfsite.block_water_text + '% · 最近干地 ' + siteDry +
       ' — R2 街区仍在湖上，归 main#54 落位修正' };
+  } else if (pfsite.prop_cover_high === true) {
+    cds = { ok: false, vd: '压水 ' + pfsite.block_water_text + '%' + siteCover +
+      ' — 街面机位拍进树里，重解机位（city3d-shots.ps1 · main#71）' };
   } else {
-    cds = { ok: true, vd: '压水 ' + pfsite.block_water_text + '% · 最近干地 ' + siteDry + '，街区在干地上' };
+    cds = { ok: true, vd: '压水 ' + pfsite.block_water_text + '% · 最近干地 ' + siteDry +
+      '，街区在干地上' + siteCover };
   }
   selfcheck.push({ ok: cds.ok, nm: '街区落位', vd: cds.vd });
 

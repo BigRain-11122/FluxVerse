@@ -642,6 +642,9 @@ function Resolve-CityProof
         ran = $false; block_water = -1.0; block_water_text = ''
         dry_candidates = -1; nearest_dry_m = -1.0; nearest_dry_text = ''
         props_in_road = -1; props_in_road_text = 'n/a'
+        # main#71: street camera prop coverage, parsed from r2-shots.md by the
+        # same module verify uses. 'n/a' = no report line, never a clean zero.
+        prop_cover = -1.0; prop_cover_text = 'n/a'; prop_cover_high = $false
         verdict = ''; over_water = $false; reason = 'skipped'
     }
     if (-not $SiteSkip) {
@@ -651,6 +654,10 @@ function Resolve-CityProof
                              'nearest_dry_m','nearest_dry_text','props_in_road','props_in_road_text',
                              'verdict','over_water','reason')) {
                 $site[$k] = $sv[$k]
+            }
+            $pose = Get-StreetPose -Root $Root
+            foreach ($k in @('prop_cover','prop_cover_text','prop_cover_high')) {
+                $site[$k] = $pose[$k]
             }
         } catch {
             $site.reason = 'site check threw: ' + $_.Exception.Message

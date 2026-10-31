@@ -138,6 +138,17 @@ $noneV = ConvertFrom-SiteCheckText -Text 'boom' -ExitCode 3
 Check 'site: no verdict is never read as dry' ((-not $noneV.ran) -and (-not (Test-SiteOverWater -Verdict $noneV)))
 Check 'site: missing nearest_dry does not crash' ((ConvertFrom-SiteCheckText -Text $dryText.Replace(' nearest_dry=0m','') -ExitCode 0).nearest_dry_text -eq '')
 
+# --- main#71: street pose coverage ------------------------------------------
+# Street-camera prop coverage lives in City3D-staging\r2-shots.md. It must be
+# read from the CURRENT street_pose line only (street_control is the superseded
+# r728 pose), and unknown must stay 'n/a' rather than a clean zero.
+$poseHigh = ConvertFrom-StreetPoseText -Text "street_pose: eye=1.7m prop_cover=0.400 near_pen=3.00 ok"
+Check 'pose: high cover crosses the red line' ($poseHigh.found -and $poseHigh.prop_cover_high -and (Test-SitePropCoverHigh -Pose $poseHigh))
+$poseNone = ConvertFrom-StreetPoseText -Text "capture_only=1`nshots=3"
+Check 'pose: no street_pose is n/a not 0' ((-not $poseNone.found) -and $poseNone.prop_cover_text -eq 'n/a' -and (-not (Test-SitePropCoverHigh -Pose $poseNone)))
+$poseCtrl = ConvertFrom-StreetPoseText -Text "street_control: r728_pose facade=0.354 prop_cover=0.266`nstreet_pose: eye=1.7m prop_cover=0.000 ok"
+Check 'pose: street_control is not the pose' ($poseCtrl.prop_cover_text -eq '0.000' -and (-not $poseCtrl.prop_cover_high))
+
 try { Remove-Item -LiteralPath $sandbox -Recurse -Force } catch { }
 
 Write-Output ('RESULT: pass=' + $pass + ' fail=' + $fail)

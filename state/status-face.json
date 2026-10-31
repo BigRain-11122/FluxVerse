@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T13:35:55Z",
-    "current_activity":  "r731 收口：底板道具碰撞体面（main#68）。先量就推翻了旧结论——重建报告 props_with_collider=62/62 added=0 preexisting=62 mismatch=0 PASS，62 件底板道具全都自带碰撞体（TreeW 同 GO 上有 CapsuleCollider），碰撞盒对渲染盒差 ≤0.05 m；真病根是两条：①ClearRoadBand 把 TreeW 沿 z 推 −6.18 m 后，编辑态 Physics.autoSyncTransforms 不为真、批处理又没有 FixedUpdate 步进，同一次会话里所有射线仍读旧位姿（补一行 Physics.SyncTransforms() 后 door_probe 从 clear=8.00m 满程无命中变成 clear=5.90m 真命中）；②IsBlocked 只认「碰撞体与 MeshRenderer 同 GO」，改成 GetComponentInParent 后挂在子件上的碰撞盒也可见。判据自证=新增 PropBlockProbe()：机位放在道具正后方 3 m 正对某栋房，同一函数给出 blocked=1、把道具碰撞面临时关掉回到 0（prop_block_probe: prop=TreeW house=R2_AD-021_SM_Bld_House_Preset_01 blocked=1 removed_blocked=0 PASS）。street_pose 与 r730 逐位同（facade=0.382 street_cover=0.281 prop_cover=0.000 blocked=0 ok）＝机位结论不回归（改面=City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs）。",
-    "artifact":  "qa/city3d-shots-20261031-2134-bm-a-street.jpg、qa/city3d-shots-20261031-2134-bm-a-showcase.jpg、City3D-staging/r2-report.md、City3D-staging/r2-shots.md、world-public/city-panel.html",
-    "artifact_utc":  "2026-10-31T13:34:41Z",
-    "milestone":  "下一步 main#71（把 prop_cover 接进 verify/面板，让「机位好不好」可从面板自查）→ main#72（行道树 3×8 m 与贴街 1.00 m 的设计判断）→ main#73（重建物理同步收成必经单点）；取帧刷新一律走 Tools/devloop/city3d-shots.ps1。",
+    "updated_utc":  "2026-10-31T13:46:20Z",
+    "current_activity":  "r732 收口（main#71）：街面机位的道具遮挡比（r730 的 prop_cover）从「只活在取景报告」接到每 tick 巡检与面板——解析与 15% 红线单点化进 Tools/devloop/site-verdict.ps1（只认行首 street_pose:，street_control 是被 r730 取代的旧对照，误读会把旧 26.6% 当现值；Get-StreetPose 默认读 City3D-staging/r2-shots.md，FLUXVERSE_SHOTS_REPORT 可注入夹具）。Tools/perceptor/verify.ps1 §2d 的 r2-site 行尾印 prop_cover=（缺行 n/a 不失败闸，\u003e15% 转 WARN 并点名重解机位）；面板两处「街区落位」印「街面遮挡 X%」（缺档「未记录」不写 0，\u003e15% 转红）。实景 VERIFY HEALTH: r2-site: block_water=0.0% dry_candidates=31618 props_in_road=0 prop_cover=0.000 且 VERIFY PASS；页面 PROOF.site 实测携带 prop_cover、prop_cover_text、prop_cover_high 三键。沙盒 test-verify-r2-site 30/30、test-city-panel-proof 28/28、29 套 ALL PASS、COMPILE OK、390 窄屏 offenders=0。另两处改动面=Tools/devloop/build-city-panel.ps1 与 Tools/devloop/city-panel-template.html。",
+    "artifact":  "world-public/city-panel.html、City3D-staging/r2-shots.md、Tools/devloop/site-verdict.ps1、Tools/perceptor/verify.ps1",
+    "artifact_utc":  "2026-10-31T13:44:33Z",
+    "milestone":  "下一步 main#72（行道树 3×8 m 与贴街 1.00 m 的设计判断：街面帧要不要近处树列——要＝补碰撞体或设机位避让区禁植；不要＝整排退 ≥4 m 或缩 0.6；判据=同机位帧 prop_cover≤0.08 且 props_in_road=0 双保持），随后 main#73 把 Physics.SyncTransforms() 收成重建必经单点；改动落 City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs，读数仍出 City3D-staging/r2-shots.md。",
     "milestone_eta_utc":  "2026-11-02T06:00:00Z"
 }

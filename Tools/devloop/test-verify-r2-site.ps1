@@ -32,15 +32,18 @@ function Check([string]$name, [bool]$cond) {
 
 # Runs the real verify with the site checker pointed at a fixture. Returns the
 # console text plus the exit code, so the caller can assert both.
-function Invoke-Verify([string]$scenePath) {
+function Invoke-Verify([string]$scenePath, [string]$shotsReport = '') {
     $env:FLUXVERSE_SITE_SCENE = $scenePath
     $env:FLUXVERSE_SITE_REBUILD = $rebuild
+    if ($shotsReport) { $env:FLUXVERSE_SHOTS_REPORT = $shotsReport }
+    else { Remove-Item Env:\FLUXVERSE_SHOTS_REPORT -ErrorAction SilentlyContinue }
     try {
         $log = (& powershell -NoProfile -ExecutionPolicy Bypass -File $verify) -join "`n"
         $code = $LASTEXITCODE
     } finally {
         Remove-Item Env:\FLUXVERSE_SITE_SCENE -ErrorAction SilentlyContinue
         Remove-Item Env:\FLUXVERSE_SITE_REBUILD -ErrorAction SilentlyContinue
+        Remove-Item Env:\FLUXVERSE_SHOTS_REPORT -ErrorAction SilentlyContinue
     }
     return @{ log = $log; code = $code }
 }
@@ -111,7 +114,35 @@ Check 'props: live road strip clear'   ($mPropsLive.Success -and [int]$mPropsLiv
 Check 'props: fixture says n/a not 0'  ($a.log -match 'props_in_road=n/a')
 Check 'props: no FAIL token'           (-not ($a.log -match 'props_in_road=[^\n]*FAIL'))
 
+# ---------- g) street camera prop coverage (main#71) ----------
+# r730 solved the street pose partly by how much of the frame props cover, but
+# that number only lived in City3D-staging\r2-shots.md - verify and the panel
+# could not see it. It now rides the r2-site line: a report without a
+# street_pose line says n/a (never 0, never a fail), and a real reading above
+# the 15% red line warns instead of passing as healthy.
+Write-Output '--- g) street pose ---'
+$shotsHigh = Join-Path ([System.IO.Path]::GetTempPath()) ('fv-shots-high-' + $PID + '.md')
+$shotsNone = Join-Path ([System.IO.Path]::GetTempPath()) ('fv-shots-none-' + $PID + '.md')
+$utf8 = New-Object System.Text.UTF8Encoding($false)
+[IO.File]::WriteAllText($shotsHigh,
+    "capture_only=1`nstreet_pose: eye=1.7m x=-88.4 facade=0.382 prop_cover=0.400 near_pen=12.00 blocked=0 ok`n", $utf8)
+[IO.File]::WriteAllText($shotsNone, "capture_only=1`nshots=3`n", $utf8)
+
+$g1 = Invoke-Verify $sceneDry $shotsHigh
+Check 'pose: cover value on the site line' ($g1.log -match 'prop_cover=0\.400')
+Check 'pose: high cover warns'             ($g1.log -match 'shoots through props')
+Check 'pose: high cover is not a FAIL'     (-not ($g1.log -match 'r2-site:[^\n]*FAIL'))
+
+$g2 = Invoke-Verify $sceneDry $shotsNone
+Check 'pose: no report line says n/a'      ($g2.log -match 'prop_cover=n/a')
+Check 'pose: no report line stays health'  ($g2.log -match 'VERIFY HEALTH: r2-site:')
+
+$mPoseLive = [regex]::Match($live, 'prop_cover=([\d.]+)')
+Check 'pose: live report parses'           $mPoseLive.Success
+Check 'pose: live pose is under red line'  ($mPoseLive.Success -and [double]$mPoseLive.Groups[1].Value -le 0.15)
+
 Remove-Item -LiteralPath $missing -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $shotsHigh, $shotsNone -Force -ErrorAction SilentlyContinue
 Write-Output ('test-verify-r2-site: ' + $pass + ' passed, ' + $fail + ' failed (of ' + ($pass + $fail) + ')')
 if ($fail -gt 0) { exit 1 }
 exit 0

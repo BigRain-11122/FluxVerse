@@ -16,13 +16,16 @@
 // scrollHeight) and the run retries up to 3 times. If it still disagrees the
 // tool prints `NARROW VERDICT: SHORT`, leaves the previous png untouched and
 // exits 2 - never a first-screen frame wearing an OK badge (queue main#51).
+// The file itself gets a second gate: the capture is written to `<out>.part-<pid>`,
+// its IHDR header is checked against the measured frame, and only then renamed
+// onto the output path (queue main#80 atomic replace / main#81 header readback).
 'use strict';
 
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
-const { judge } = require('./narrow-shot-verify');
+const { judge, judgePng, pngSize } = require('./narrow-shot-verify');
 
 function argOf(name, dflt) {
   const i = process.argv.indexOf('--' + name);
@@ -195,12 +198,49 @@ async function main() {
     clip: { x: 0, y: 0, width: WIDTH, height: contentH, scale: 1 }
   });
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, Buffer.from(shot.data, 'base64'));
+
+  // main#80: write beside the target, then rename - a concurrent instance or a
+  // crash mid-write can never leave a half png at OUT.
+  const part = OUT + '.part-' + process.pid;
+  fs.writeFileSync(part, Buffer.from(shot.data, 'base64'));
+
+  // main#81: the file's own IHDR must describe the frame we measured. A forced
+  // clip or a DPR change truncates silently, and a short png with an OK badge
+  // is exactly the lie this tool exists to prevent.
+  const head = pngSize(fs.readFileSync(part));
+  const pngCheck = judgePng({
+    width: WIDTH,
+    expectW: WIDTH,
+    expectH: contentH,
+    pngW: head && head.w,
+    pngH: head && head.h
+  });
+  console.log('NARROW pnghead=' + (head ? head.w + 'x' + head.h : 'unreadable') +
+    ' expectW=' + WIDTH + ' expectH=' + contentH + ' ' +
+    (pngCheck.ok ? 'OK' : 'MISMATCH reason=' + pngCheck.reason + ' ' + pngCheck.detail));
+
+  if (!pngCheck.ok) {
+    // The previous png stays untouched: this run simply produced nothing valid.
+    try { fs.unlinkSync(part); } catch (e) { /* ignore */ }
+    console.log('NARROW png=skipped(' + path.basename(OUT) + ') reason=' + pngCheck.reason);
+    console.log('NARROW VERDICT: SHORT');
+    if (JSON_OUT) {
+      fs.writeFileSync(JSON_OUT, JSON.stringify({
+        width: WIDTH, attempts: tries, verdict: 'SHORT',
+        reason: pngCheck.reason, detail: pngCheck.detail
+      }, null, 2));
+    }
+    await finish(2);
+    return;
+  }
+
+  fs.renameSync(part, OUT);
 
   const overflow = payload.scrollW - payload.clientW;
   console.log('NARROW width=' + WIDTH + ' clientW=' + payload.clientW +
     ' scrollW=' + payload.scrollW + ' overflow=' + overflow +
-    ' docH=' + contentH + ' png=' + path.basename(OUT) + ' bytes=' + fs.statSync(OUT).size);
+    ' docH=' + contentH + ' png=' + path.basename(OUT) + ' bytes=' + fs.statSync(OUT).size +
+    ' pnghead=' + head.w + 'x' + head.h);
   if (payload.offenders.length === 0) {
     console.log('NARROW offenders=0');
   } else {
@@ -213,7 +253,8 @@ async function main() {
   console.log('NARROW VERDICT: ' + verdict);
   if (JSON_OUT) {
     fs.writeFileSync(JSON_OUT, JSON.stringify(Object.assign({
-      width: WIDTH, overflow, verdict, attempts: tries, reading: reading
+      width: WIDTH, overflow, verdict, attempts: tries, reading: reading,
+      png_w: head.w, png_h: head.h, png_bytes: fs.statSync(OUT).size
     }, payload), null, 2));
   }
 

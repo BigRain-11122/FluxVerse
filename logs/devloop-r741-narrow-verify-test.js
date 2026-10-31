@@ -73,9 +73,11 @@ chk('wiring.port-per-process', /String\(9300 \+ \(process\.pid % 400\)\)/.test(s
 chk('wiring.no-9337-default', !/'9337'/.test(src), 'hardcoded 9337 default came back');
 {
   // the png write must sit after the gate, otherwise a suspect frame lands on
-  // disk anyway and the next reader trusts the stale file
+  // disk anyway and the next reader trusts the stale file. r742 moved the write
+  // to `<out>.part-<pid>` (atomic replace / IHDR readback, queue main#80/81),
+  // so the anchor follows the part file and the intent is unchanged.
   const gateAt = src.indexOf("NARROW VERDICT: SHORT");
-  const writeAt = src.indexOf('fs.writeFileSync(OUT');
+  const writeAt = src.indexOf('fs.writeFileSync(part');
   chk('wiring.gate-before-write', gateAt > -1 && writeAt > gateAt,
     'png write at ' + writeAt + ' vs gate at ' + gateAt);
 }

@@ -7,7 +7,10 @@ param(
   [int]$Days = 14,
   [switch]$DryRun,
   [string]$LogsDir = '',
-  [int]$ChunkMb = 150
+  [int]$ChunkMb = 150,
+  # Test hook only: pretends every zip entry came back with a wrong length so the
+  # "originals are kept, exit 2" branch can be proven without corrupting a zip.
+  [switch]$SimulateVerifyMismatch
 )
 
 $ErrorActionPreference = 'Stop'
@@ -58,6 +61,13 @@ if ($repo) {
 $keepExt = @('.ps1', '.psm1', '.js', '.py', '.cs', '.sh', '.cmd', '.bat')
 $cut = (Get-Date).AddDays(-$Days)
 
+# One machine-readable line so callers (verify 2e / log-archive-duty.ps1) never
+# have to re-derive the selection rules to report a number.
+function Write-ArchiveSummary {
+  param([int]$Candidates, [int]$Archived, [int]$RemainArchivable, [string]$Verdict)
+  Write-Output ("ARCHIVE SUMMARY: candidates={0} archived={1} remain_archivable={2} verdict={3}" -f $Candidates, $Archived, $RemainArchivable, $Verdict)
+}
+
 # single source of truth for the selection rules (candidates and the post-run
 # "what is left" count must never drift apart)
 function Get-ArchivableFiles {
@@ -95,6 +105,7 @@ if ($cands.Count -eq 0) {
   Write-Host ("ARCHIVE REMAIN_OLD: {0}" -f $oldRemaining.Count)
   Write-Host 'ARCHIVE REMAIN_ARCHIVABLE: 0'
   Write-Host 'ARCHIVE VERDICT: OK (nothing to do)'
+  Write-ArchiveSummary -Candidates 0 -Archived 0 -RemainArchivable 0 -Verdict 'OK'
   exit 0
 }
 
@@ -102,6 +113,7 @@ if ($DryRun) {
   Write-Host ("ARCHIVE REMAIN_OLD: {0}" -f $oldRemaining.Count)
   Write-Host ("ARCHIVE REMAIN_ARCHIVABLE: {0}" -f $cands.Count)
   Write-Host 'ARCHIVE VERDICT: DRYRUN'
+  Write-ArchiveSummary -Candidates $cands.Count -Archived 0 -RemainArchivable $cands.Count -Verdict 'DRYRUN'
   exit 0
 }
 
@@ -150,6 +162,9 @@ foreach ($g in $monthGroups) {
       }
     } finally {
       $verify.Dispose()
+    }
+    if ($SimulateVerifyMismatch -and $bad.Count -eq 0) {
+      $bad = @($added | ForEach-Object { $_.Name })
     }
     if ($bad.Count -gt 0) {
       Write-Host ("ARCHIVE FAIL: zip entry mismatch ({0} bad) in {1}" -f $bad.Count, $zipPath)
@@ -209,7 +224,9 @@ Write-Host ("ARCHIVE REMAIN_ARCHIVABLE: {0}" -f $remainArchivable.Count)
 
 if ($failures.Count -gt 0) {
   Write-Host 'ARCHIVE VERDICT: FAIL'
+  Write-ArchiveSummary -Candidates $cands.Count -Archived $archived.Count -RemainArchivable $remainArchivable.Count -Verdict 'FAIL'
   exit 2
 }
 Write-Host 'ARCHIVE VERDICT: OK'
+Write-ArchiveSummary -Candidates $cands.Count -Archived $archived.Count -RemainArchivable $remainArchivable.Count -Verdict 'OK'
 exit 0

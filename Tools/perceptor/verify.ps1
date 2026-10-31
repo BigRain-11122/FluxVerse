@@ -261,6 +261,62 @@ if ((-not (Test-Path -LiteralPath $siteScript)) -or (-not (Test-Path -LiteralPat
   }
 }
 
+# ---------- 2e. daily log archive duty (main#56, r719) ----------
+# r715 archived 2,174 stale log files by hand and nothing ran it again, so the
+# backlog could only grow back. The archiver itself is unchanged and keeps its
+# own dry run; what was missing is a schedule. This runs it through
+# Tools\devloop\log-archive-duty.ps1, which gates to at most one real run per
+# calendar day (a full recursive scan every ten minutes costs more than it saves)
+# and reports the archiver's own ARCHIVE SUMMARY line rather than re-deriving it.
+# WARN, not FAIL - same stance as 2b/2c/2d: a log retention problem must never
+# take the whole city scan down with it. No 'FAIL' token in these messages (the
+# tick red-scan keys on that word).
+$archiveDuty = Join-Path $repoRoot 'Tools\devloop\log-archive-duty.ps1'
+if (-not (Test-Path -LiteralPath $archiveDuty)) {
+  Write-Output 'VERIFY WARN: log-archive: log-archive-duty.ps1 missing - archive duty skipped'
+} else {
+  $adLoaded = $true
+  try { . $archiveDuty } catch { $adLoaded = $false }
+  if ($adLoaded -and (Get-Command Invoke-LogArchiveDuty -ErrorAction SilentlyContinue)) {
+    $adArgs = @{ Root = $repoRoot }
+    if ($env:FLUXVERSE_ARCHIVE_DIR) { $adArgs['LogsDir'] = $env:FLUXVERSE_ARCHIVE_DIR }
+    if ($env:FLUXVERSE_ARCHIVE_STATE) { $adArgs['StatePath'] = $env:FLUXVERSE_ARCHIVE_STATE }
+    if ($env:FLUXVERSE_ARCHIVE_DAYS) { $adArgs['Days'] = [int]$env:FLUXVERSE_ARCHIVE_DAYS }
+    if ($env:FLUXVERSE_ARCHIVE_MAX_REMAIN) { $adArgs['MaxRemainArchivable'] = [int]$env:FLUXVERSE_ARCHIVE_MAX_REMAIN }
+    if ($env:FLUXVERSE_ARCHIVE_FORCE) { $adArgs['Force'] = $true }
+    if ($env:FLUXVERSE_ARCHIVE_SIMULATE_MISMATCH) { $adArgs['SimulateVerifyMismatch'] = $true }
+    $ad = $null
+    try { $ad = Invoke-LogArchiveDuty @adArgs } catch { $ad = $null }
+    if (-not $ad) {
+      Write-Output 'VERIFY WARN: log-archive: duty module threw - archive duty skipped this tick'
+    } else {
+      $adParts = @('log-archive:')
+      if ($ad.ran) { $adParts += 'ran' } else { $adParts += ('skipped(' + $ad.reason + ')') }
+      $adParts += ('candidates=' + $ad.candidates)
+      $adParts += ('archived=' + $ad.archived)
+      if ($ad.remain_stale) {
+        $adParts += ('remain_archivable=' + $ad.remain_archivable + '(last)')
+      } else {
+        $adParts += ('remain_archivable=' + $ad.remain_archivable)
+      }
+      $adLine = ($adParts -join ' ')
+      if ($ad.verdict -ne 'OK' -and $ad.verdict -ne 'SKIP' -and $ad.verdict -ne 'DRYRUN') {
+        Write-Output ('VERIFY WARN: ' + $adLine + ' - the log archiver did not finish (' + $ad.verdict + '); originals are kept and the next tick retries')
+      } elseif ($ad.remain_archivable -gt $ad.max_remain) {
+        if ($ad.remain_stale) {
+          Write-Output ('VERIFY WARN: ' + $adLine + ' - the last archived run left more than ' + $ad.max_remain + ' log files past the cutoff; the daily run is not keeping up')
+        } else {
+          Write-Output ('VERIFY WARN: ' + $adLine + ' - more than ' + $ad.max_remain + ' log files are past the cutoff, the daily run is not keeping up')
+        }
+      } else {
+        Write-Output ('VERIFY HEALTH: ' + $adLine)
+      }
+    }
+  } else {
+    Write-Output 'VERIFY WARN: log-archive-duty.ps1 did not provide Invoke-LogArchiveDuty'
+  }
+}
+
 # ---------- verdict ----------
 if ($fail.Count -gt 0) {
   $fail | ForEach-Object { Write-Output ('VERIFY FAIL: ' + $_) }

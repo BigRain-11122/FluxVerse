@@ -430,6 +430,45 @@ $tg = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 't-gree
 Check 't5 a green run records no reds' ("$($tg.reds)" -eq '') ("$($tg.reds)")
 Check 't6 a green line does not carry reds=' ((Format-PsSuitesLine $tg) -notmatch 'reds=') (Format-PsSuitesLine $tg)
 
+# ---------- case ta: a single red also records WHAT it said (main#98) ------
+# r754 kept the culprit's name and threw its sentence away, so a live red could
+# only be re-run ("it is green now") instead of read. One culprit, one tail: a
+# line cannot carry several, and the name list already says who they were.
+$longTail = ('boom ' * 60).Trim()
+$runnerOneRed = New-Runner 'runner-one-red.ps1' @'
+Write-Output 'PASS  suite-a.ps1  exit=0  ALL PASS'
+Write-Output 'FAIL  suite-b.ps1  exit=1  RESULT: FAIL (1) :: expected 3 got 4'
+Write-Output 'PS SUITES suites=2 assertions=6 counted=2 failing=1 parity=ok'
+exit 2
+'@
+$runnerLongTail = New-Runner 'runner-long-tail.ps1' ("Write-Output 'FAIL  suite-b.ps1  exit=1  " + $longTail + "'`r`nWrite-Output 'PS SUITES suites=1 assertions=1 counted=1 failing=1 parity=ok'`r`nexit 2`r`n")
+$runnerTwoRed = New-Runner 'runner-two-red.ps1' @'
+Write-Output 'FAIL  suite-a.ps1  exit=2  first assertion'
+Write-Output 'FAIL  suite-b.ps1  exit=3  second assertion'
+Write-Output 'PS SUITES suites=2 assertions=6 counted=2 failing=2 parity=ok'
+exit 2
+'@
+$taTicket = Join-Path $sandbox 'ta.json'
+$ta1 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $taTicket -RunnerPath $runnerOneRed -TimeoutSec 8
+Check 'ta1 a single red records the tail sentence' ("$($ta1.redtail)" -match 'expected 3 got 4') ("$($ta1.redtail)")
+Check 'ta2 the tail keeps no census red root, any case' ("$($ta1.redtail)" -notmatch '(?i)fail') ("$($ta1.redtail)")
+Check 'ta3 the printed line carries redtail=' ((Format-PsSuitesLine $ta1) -match 'redtail=.*expected 3 got 4') (Format-PsSuitesLine $ta1)
+$ta2 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $taTicket -RunnerPath $runnerOneRed -TimeoutSec 8
+Check 'ta4 a cached red still says what it said' ($ta2.ran -eq $false -and "$($ta2.redtail)" -match 'expected 3 got 4' -and (Format-PsSuitesLine $ta2) -match 'redtail=') (Format-PsSuitesLine $ta2)
+$taRaw = ''
+if (Test-Path -LiteralPath $taTicket) { $taRaw = [System.IO.File]::ReadAllText($taTicket, [System.Text.Encoding]::UTF8) }
+Check 'ta5 the ticket persists the tail for later ticks' ($taRaw -match 'redtail') $taTicket
+$ta3 = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'ta-long.json') -RunnerPath $runnerLongTail -TimeoutSec 8
+Check 'ta6 a runaway tail is cut at 200 chars' ("$($ta3.redtail)".Length -le 200 -and "$($ta3.redtail)".Length -gt 100) ('len=' + "$($ta3.redtail)".Length)
+Check 'ta7 the tail never carries a newline' ("$($ta3.redtail)" -notmatch '[\r\n]') ("$($ta3.redtail)")
+$taNonAscii = 0
+foreach ($ch in "$($ta3.redtail)".ToCharArray()) { if ([int][char]$ch -gt 127) { $taNonAscii++ } }
+Check 'ta8 the tail is ascii-only' ($taNonAscii -eq 0) ('non-ascii=' + $taNonAscii)
+$ta4 = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'ta-two.json') -RunnerPath $runnerTwoRed -TimeoutSec 8
+Check 'ta9 two culprits keep the names and drop the tail' ("$($ta4.reds)" -match 'suite-a\.ps1' -and "$($ta4.reds)" -match 'suite-b\.ps1' -and "$($ta4.redtail)" -eq '') ("reds=$($ta4.reds) redtail=$($ta4.redtail)")
+$ta5 = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'ta-green.json') -RunnerPath $runnerGreen -TimeoutSec 8
+Check 'ta10 a green run records no tail' ("$($ta5.redtail)" -eq '' -and (Format-PsSuitesLine $ta5) -notmatch 'redtail=') ("$($ta5.redtail)")
+
 # ---------- case u: a non-pass verdict ages out, a pass never does ----------
 # The r754 red was environmental (identical sources re-ran clean), yet the ticket
 # was content addressed: only a human with -Force could clear it. Now a non-pass

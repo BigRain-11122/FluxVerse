@@ -239,6 +239,7 @@ function Write-PsSuitesTicket {
         ts_utc     = [string]$Result.ts_utc
         tries      = [int]$Result.tries
         reds       = [string]$Result.reds
+        redtail    = [string]$Result.redtail
         runs       = [string]$Result.runs
     }
     $dir = Split-Path -Parent $Path
@@ -363,6 +364,10 @@ function Copy-PsSuitesTicketFields {
     $Result.tries = Get-PsSuitesTicketTries $Ticket
     $Result.reds = ''
     if ($Ticket.PSObject.Properties['reds']) { $Result.reds = [string]$Ticket.reds }
+    # The culprit's own last sentence (main#98): a cached red must still be able
+    # to say what it said, not only who it was.
+    $Result.redtail = ''
+    if ($Ticket.PSObject.Properties['redtail']) { $Result.redtail = [string]$Ticket.redtail }
     # Baseline rides with the verdict so a cached tick can still say how close
     # the family is to its cap (main#96).
     $Result.runs = ''
@@ -389,6 +394,43 @@ function Get-PsSuitesRedNames {
     foreach ($m in [regex]::Matches($Text, '(?m)^FAIL\s+(\S+)')) { $names += $m.Groups[1].Value }
     foreach ($m in [regex]::Matches($Text, '(?m)^WARN\s+(\S+)\s+timeout')) { $names += ($m.Groups[1].Value + ':timeout') }
     return ($names -join ',')
+}
+
+function ConvertTo-PsSuitesTail {
+    # A red's own last sentence, made safe to travel on a VERIFY line: one line,
+    # ASCII only, <= $MaxLen chars. The red word root is RENAMED here, not
+    # dropped - r750 made that root illegal in every VERIFY line (case
+    # insensitive), and a suite's own last line is often exactly
+    # `RESULT: FAIL (3)`. `fail`->`red` keeps the sentence readable while the
+    # census rule stays intact; the ticket is a display artefact, not a log.
+    param([string]$Text, [int]$MaxLen = 200)
+    if ([string]::IsNullOrEmpty($Text)) { return '' }
+    $flat = ($Text -replace '\s+', ' ').Trim()
+    $flat = [regex]::Replace($flat, '(?i)fail', 'red')
+    $sb = New-Object System.Text.StringBuilder
+    foreach ($ch in $flat.ToCharArray()) {
+        $code = [int][char]$ch
+        if ($code -lt 32) { continue }
+        if ($code -gt 126) { [void]$sb.Append('?') } else { [void]$sb.Append($ch) }
+    }
+    $s = $sb.ToString()
+    if ($MaxLen -gt 0 -and $s.Length -gt $MaxLen) { $s = $s.Substring(0, $MaxLen) }
+    return $s
+}
+
+function Get-PsSuitesRedTail {
+    # The runner prints `FAIL  <name>  exit=N  <that suite's last output line>`
+    # (r754 kept the name and threw the sentence away). One culprit only: with
+    # several, one line cannot carry them all and the name list already says
+    # who they were. '' means "nothing to add", which covers the green case.
+    param([string]$Text)
+    if ([string]::IsNullOrEmpty($Text)) { return '' }
+    $tails = @()
+    foreach ($m in [regex]::Matches($Text, '(?m)^FAIL\s+(\S+)\s+exit=(-?\d+)\s?(.*)$')) {
+        $tails += (ConvertTo-PsSuitesTail -Text $m.Groups[3].Value)
+    }
+    if ($tails.Count -ne 1) { return '' }
+    return [string]$tails[0]
 }
 
 function Invoke-PsSuitesTick {
@@ -448,6 +490,7 @@ function Invoke-PsSuitesTick {
         needs_run  = $false
         tries      = 0
         reds       = ''
+        redtail    = ''
         runs       = ''
         base_ms    = 0
         budget_over = $false
@@ -609,6 +652,8 @@ function Invoke-PsSuitesTick {
     # Name the culprits before judging the summary: a red we cannot attribute is
     # only half a signal (main#91 r754).
     $res.reds = Get-PsSuitesRedNames -Text $text
+    # ...and, when there is exactly one culprit, what it actually said (main#98).
+    $res.redtail = Get-PsSuitesRedTail -Text $text
 
     $m = [regex]::Match($text, 'PS SUITES suites=(\d+)\s+assertions=(\d+)\s+counted=(\d+)\s+failing=(\d+)\s+parity=(\S+)')
     if (-not $m.Success) {
@@ -672,6 +717,11 @@ function Format-PsSuitesLine {
     # verify-family red re-ran clean and the identity was gone for good).
     if ([string]$Result.reds -ne '' -and [string]$Result.status -ne 'pass') {
         $head = $head + ' reds=' + [string]$Result.reds
+    }
+    # One culprit, one sentence: the (already single-line, ASCII, red-root-free)
+    # tail is what turns "some suite is red" into "this suite died here" (main#98).
+    if ([string]$Result.redtail -ne '' -and [string]$Result.status -ne 'pass') {
+        $head = $head + ' redtail=' + [string]$Result.redtail
     }
     if ([int]$Result.tries -gt 0) { $head = $head + ' tries=' + [int]$Result.tries }
     # Family baseline (main#96): printed for cached ticks too, because the whole

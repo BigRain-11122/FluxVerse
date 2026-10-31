@@ -223,8 +223,11 @@ public static class CityRebuildR2
         string[] presetNames = {
             "SM_Bld_House_Preset_01", "SM_Bld_House_Preset_02", "SM_Bld_House_Preset_03", "SM_Bld_House_Preset_04",
             "SM_Bld_House_Preset_05", "SM_Bld_House_Preset_06", "SM_Bld_House_Preset_07", "SM_Bld_House_Preset_08" };
-        float[] xs = { -33f, -33f, 33f, 33f };
-        float[] zs = { -26f, 26f, -26f, 26f };
+        // main#66（A2 行距）：行距 52 → 29 m。r723 实测前场 13.6–20.2 m 把街拉成广场
+        // （房体进深只占 18.8 m + 6 m 路带 = 24.8 m，余下 27.2 m 是空院），
+        // 缩行距后前场 2.1–8.7 m、街区进深 70.8 → 47.8 m，资产与排布/朝向零改动。
+        float[] gx = { -33f, -11f, 11f, 33f };
+        float[] gz = { -14.5f, 14.5f };
         var houses = new List<GameObject>();
         int idx = 0;
         foreach (var nm in presetNames)
@@ -234,25 +237,16 @@ public static class CityRebuildR2
             var go = (GameObject)PrefabUtility.InstantiatePrefab(pf);
             go.name = "R2_AD-021_" + nm;
             go.transform.SetParent(r2root.transform, false);
-            go.transform.localPosition = new Vector3(xs[idx / 2], 0, zs[idx % 2 == 0 ? 0 : 0] );
-            idx++;
-        }
-        // 重排为 4x2（上面占位数组留痕删）——直接干净铺：
-        idx = 0;
-        float[] gx = { -33f, -11f, 11f, 33f };
-        float[] gz = { -26f, 26f };
-        foreach (var tr in r2root.transform.Cast<Transform>().ToList())
-        {
             int row = idx / 4, col = idx % 4; idx++;
-            tr.localPosition = new Vector3(gx[col], 0, gz[row]);
-            tr.localRotation = Quaternion.Euler(0, gz[row] > 0 ? 180f : 0f, 0f);
-            SitOnGround(tr);
-            houses.Add(tr.gameObject);
+            go.transform.localPosition = new Vector3(gx[col], 0, gz[row]);
+            go.transform.localRotation = Quaternion.Euler(0, gz[row] > 0 ? 180f : 0f, 0f);
+            SitOnGround(go.transform);
+            houses.Add(go);
         }
-        Report.Add("houses=" + houses.Count + "（AD-021 官方 Preset 01-08·4x2·门朝城心）");
+        Report.Add("houses=" + houses.Count + "（AD-021 官方 Preset 01-08·4x2·门朝城心·行距 29 m/main#66 A2）");
 
         // ② 模块解剖房（走进建筑真证·无顶剖面展示位=前排中缺）
-        var showcase = BuildShowcase(r2root.transform, new Vector3(0f, 0f, 26f));
+        var showcase = BuildShowcase(r2root.transform, new Vector3(0f, 0f, 14.5f)); // 行距 29 m 后与北排对齐（位姿由 FindShowcaseSlot 实况解）
 
         // ③ 实例级材质桥（品红根治：Synty Standard .mat → URP Lit·URPMaterialBridge.Convert 复用）
         int bridged = 0, missing = 0;
@@ -504,10 +498,14 @@ public static class CityRebuildR2
             float hi = Mathf.Max(padEdge, streetEdge) - d * 0.5f - CLEAR;
             if (hi < lo) { float mid = (padEdge + streetEdge) * 0.5f; lo = hi = mid; }
 
+            // 行距 29 m（main#66 A2）后院落只剩 ~3.4 m 深，塞不下 8.8 m 进深的展示房——
+            // 增加「排内门面缝」候选：与同排宅基台同 z 轴落位（门仍朝路带），
+            // 缝宽由几何判据把关（与所有宅基台/路带分离 ≥ CLEAR）。
+            float rowCz = (float)row.Average(p => (double)p.center.z);
             for (int i = 0; i < gapCx.Count; i++)
             {
                 float cx = gapCx[i];
-                float[] zs = { (lo + hi) * 0.5f, lo, hi };
+                float[] zs = { (lo + hi) * 0.5f, lo, hi, rowCz };
                 foreach (var cz in zs)
                 {
                     var cand = new Rect2 { x0 = cx - w * 0.5f, x1 = cx + w * 0.5f, z0 = cz - d * 0.5f, z1 = cz + d * 0.5f };
@@ -526,9 +524,9 @@ public static class CityRebuildR2
         if (bestClear <= 0f)
         {
             // 真解不出来才退回旧位，并大声记一笔（禁静默将就）
-            localPos = new Vector3(0f, 0f, 26f);
+            localPos = new Vector3(0f, 0f, 14.5f);
             yaw = 180f;
-            report = "showcase_slot: NO_SLOT（宅基台/路带之间无 ≥1.0 m 净位·退回旧位 0,26）";
+            report = "showcase_slot: NO_SLOT（宅基台/路带之间无 ≥1.0 m 净位·退回旧位 0,14.5）";
             return;
         }
 
@@ -869,12 +867,47 @@ public static class CityRebuildR2
         cam.farClipPlane = Mathf.Max(cam.farClipPlane, b.size.magnitude * 4f);
         RenderShot(cam, file);
 
+        float cover = StreetCoverFrac(cam, root);
+
         var inv = System.Globalization.CultureInfo.InvariantCulture;
         Report.Add("street_pose: eye=" + eyeH.ToString("F1", inv) + "m yaw_off=" + bestYaw.ToString("F1", inv)
             + " lat=" + bestLat.ToString("F1", inv) + " x=" + bestX.ToString("F1", inv)
             + " facade=" + bestFrac.ToString("F3", inv)
+            + " street_cover=" + (cover < 0f ? "n/a" : cover.ToString("F3", inv))
             + " blocked=" + (bestBlocked ? "1" : "0")
-            + (bestFrac >= targetFrac ? " ok" : " BELOW_TARGET"));
+            + (bestFrac >= targetFrac ? " ok" : " BELOW_TARGET")
+            + (cover >= 0f && cover >= 0.55f ? " PAVEMENT_HIGH" : ""));
+    }
+
+    // 铺装占画面比（main#66 判据）：逐屏幕采样射线与路带顶面求交，落在 76x6 路带内的
+    // 采样点占比＝该帧里「脚下是街」的面积比（1.0 = 整帧铺装，广场感来源）。
+    // 相机站在路带上时近角必然在身后，包围盒投影法会整体失效（实测 n/a），
+    // 故用射线法：视线在地平线以上永不命中，天然给出 0。
+    // 注意：不做遮挡判定（地上物件当前无碰撞体，main#68 才补）＝上界读数。
+    static float StreetCoverFrac(Camera cam, Transform root, int nx = 64, int ny = 36)
+    {
+        Transform street = null;
+        foreach (Transform t in root)
+            if (t.name == "R2_AD-021_Street") { street = t; break; }
+        if (street == null) return -1f;
+        var b = WorldBounds(street.gameObject);
+        float y = b.max.y;
+        int hits = 0;
+        for (int iy = 0; iy < ny; iy++)
+        {
+            float vy = (iy + 0.5f) / ny;
+            for (int ix = 0; ix < nx; ix++)
+            {
+                float vx = (ix + 0.5f) / nx;
+                var r = cam.ViewportPointToRay(new Vector3(vx, vy, 0f));
+                if (Mathf.Abs(r.direction.y) < 1e-5f) continue;
+                float t = (y - r.origin.y) / r.direction.y;
+                if (t <= 0f) continue;
+                Vector3 p = r.origin + r.direction * t;
+                if (p.x >= b.min.x && p.x <= b.max.x && p.z >= b.min.z && p.z <= b.max.z) hits++;
+            }
+        }
+        return (float)hits / (nx * ny);
     }
 
     // 视线遮挡：从相机往这栋房可见面中心打一条射线，命中「别的东西的渲染体」=看不清立

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T12:30:27Z",
-    "current_activity":  "r727 收口中：main#65 底板行道树让位路带——先量后治。r2-site-check.py 新增名字无关的几何普查（任何跨度 ≤10 m、与 R2 路带 76×6 m 相交的底板网格），改前实测 props_in_road=1 prop_area=9.00m2（TreeW 整棵 3×3 立在街心）；CityRebuildR2.ClearRoadBand() 在已建 R2 场景里把这些道具沿 z 推出路带（短距离优先、与路带净距 ≥1.0 m、不与其它道具/街区件相撞），实测 moves=TreeW-6.18m，重建后 props_in_road=0。白盒底板 CityWhitebox.unity 零改动。街面人视帧里两棵树退成街两侧门廊，灭点与街心全空。",
-    "artifact":  "qa/city3d-shots-20261031-2027-bm-a-street.jpg · City3D-staging/r2-report.md · world-public/city-panel.html",
-    "artifact_utc":  "2026-10-31T12:27:00Z",
-    "milestone":  "下一步：main#66 行距 A2 落地（街感天花板：前场 13.6–20.2 m 把街拉成广场）→ main#67 展示房楼梯跑出墙体 → main#68 底板道具碰撞体面（让机位遮挡判据能看见它们）→ main#40 冻结 fixture 重建。取景刷新仍走 Tools/devloop/city3d-shots.ps1。",
+    "updated_utc":  "2026-10-31T12:50:37Z",
+    "current_activity":  "r728 收口：街道行距 52→29 m（main#66 A2 落地）。r723 量到前场 13.6–20.2 m 把街拉成广场——房体进深+6 m 路带只占 24.8 m，余下 27.2 m 是空院。缩行距后街区进深 70.8→47.8 m、前场 2.1–8.7 m，资产与排布零改动（改面=City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs）；同一取帧器复拍：facade 0.306→0.354（两侧立面对夹变强），并新增铺装占画面度量 street_cover=0.257（判据 \u003c0.55，街心不再是一整块广场）。行距压缩后展示房没了院落净位（NO_SLOT），候选位扩到「排内门面缝」——落进 13.57 m 的 P06|P07 缝，与宅基台/路带净距 2.26 m、重叠 0 由几何解出。底板道具 props_in_road=0（Tools/devloop/r2-site-check.py 实读）。",
+    "artifact":  "qa/city3d-shots-20261031-2047-bm-a-street.jpg、qa/city3d-shots-20261031-2047-bm-a-gamedistrict.jpg、City3D-staging/r2-report.md、world-public/city-panel.html",
+    "artifact_utc":  "2026-10-31T12:47:00Z",
+    "milestone":  "下一步=main#67 展示房楼梯跑出墙外（bounds 9.1×8.8 vs 7.5×5.0）→ main#68 底板道具碰撞体面（让机位遮挡判据能看见它们）→ main#40 冻结 fixture 重建；取帧刷新一律走 Tools/devloop/city3d-shots.ps1。",
     "milestone_eta_utc":  "2026-11-02T06:00:00Z"
 }

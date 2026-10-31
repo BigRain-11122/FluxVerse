@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T15:52:12Z",
-    "current_activity":  "r742 收口：窄屏取证工具出图前后双闸——先写 qa 目标的 .part-\u003cpid\u003e 旁路件，读它自己的 PNG 头断言 390x6639 与实测一致，才原子 rename 到 qa/city-panel-r742-narrow-bm-a.png；判定纯函数 Tools/devloop/narrow-shot-verify.js 新增 pngSize/judgePng（宽不符、高差 \u003e2px、头不可读一律 SHORT 并删旁路件、旧图不动）。实跑 390 全长图实测 390x6639 offenders=0，29 套面板沙盒全绿。",
-    "artifact":  "qa/city-panel-r742-narrow-bm-a.png, Tools/devloop/narrow-shot.js, Tools/devloop/narrow-shot-verify.js, logs/devloop-r742-narrow-png-test.js",
-    "artifact_utc":  "2026-10-31T15:52:12Z",
-    "milestone":  "下一轮 main#76（r671 fixture 缺档时给出可执行提示）+ main#77（-NoLiveCheck 静态普查只为沙箱开放）；队列见 state/queue/main.md",
+    "updated_utc":  "2026-10-31T16:35:23Z",
+    "current_activity":  "r743 收口：城市城建侧线级附卷（D-20261017-03 死线 10-19 逾期 13 天）＋问题台账直数工具 problem-registry-census.py。工具只读集团正身，解析 PR 条目/城建侧分类/六字段完整性/状态与复发计数，--check 漂移即 exit 1；自检 23/23。轮内抓出真病：首版按 ..\\.. 读到的旧镜像 cph4 只有 14 条、活树 18 条，静默少读 4 条零报错，已改走 resolve-group-root.ps1 同规则。直数 entries=18 city=0（零入册≠零问题），三条候选 PR 交集团审计入册。",
+    "artifact":  "docs/city-problem-registry-annex.md, Tools/devloop/problem-registry-census.py, TECH.md, HQ-FEEDBACK.md, state/queue/main.md, state/runbook.md",
+    "artifact_utc":  "2026-10-31T16:35:23Z",
+    "milestone":  "下一轮排 main#23（司级基准刷新 10-27 逾期）→ main#82（面板产物链接绑绝对路径拼写，13 行 churn/次）→ main#83（队列逾期机械可见面）；队列见 state/queue/main.md",
     "milestone_eta_utc":  "2026-11-01T12:00:00Z"
 }

@@ -127,6 +127,26 @@ class Scene(object):
                 if m:
                     self.filters[m.group(1)] = body
         self._world = {}
+        self._go_of_tf = {}
+        for gid, (tfid, _body) in self.transforms.items():
+            self._go_of_tf[tfid] = gid
+
+    def ancestors(self, gid):
+        """Names of the parent chain of gid, nearest first (cycle-safe)."""
+        out = []
+        cur = gid
+        for _ in range(64):
+            tf = self.transforms.get(cur)
+            if tf is None:
+                break
+            father = re.search(r"m_Father: \{fileID: (-?\d+)\}", tf[1])
+            if not father or father.group(1) == "0":
+                break
+            cur = self._go_of_tf.get(father.group(1))
+            if cur is None:
+                break
+            out.append(self.names.get(cur, "?"))
+        return out
 
     def go_id(self, name):
         for gid, nm in self.names.items():
@@ -373,14 +393,59 @@ class Raster(object):
         return self.covered(x0, z0, x1, z1) > 0.0
 
 
+# ---------------------------------------------------------------- road band props
+# Queue main#65: the base-plate street trees stand on the R2 road strip. They
+# carry no colliders, so the street-shot pose solver (which asks Physics) never
+# saw them and happily framed a street whose vanishing point is a tree trunk.
+# The census below is geometric and name-agnostic: any small mesh outside the
+# R2 district whose XZ box overlaps the road strip is a prop in the way, and it
+# is named individually so a hit can be chased to its object.
+PROP_MAX_SPAN = 10.0    # metres: wider than this is a layer/building, not a prop
+
+
+def road_band(sc):
+    """World XZ AABB (x0, z0, x1, z1) of the district road strip, or None."""
+    gid = sc.go_id("R2_AD-021_Street")
+    if gid is None:
+        return None
+    _, bb = sc.mesh_triangles(gid)
+    return bb
+
+
+def props_in_road_band(sc, band):
+    """[(name, bb, overlap_m2)] for small base-plate meshes crossing the strip."""
+    hits = []
+    if band is None:
+        return hits
+    street_id = sc.go_id("R2_AD-021_Street")
+    for gid, nm in sorted(sc.names.items()):
+        if gid == street_id or not nm or gid not in sc.filters:
+            continue
+        if "R2_AD-021_District" in sc.ancestors(gid):
+            continue
+        _, bb = sc.mesh_triangles(gid)
+        if bb is None:
+            continue
+        w, d = bb[2] - bb[0], bb[3] - bb[1]
+        if w <= 0.0 or d <= 0.0 or max(w, d) > PROP_MAX_SPAN:
+            continue
+        ox = min(bb[2], band[2]) - max(bb[0], band[0])
+        oz = min(bb[3], band[3]) - max(bb[1], band[1])
+        if ox > 0.0 and oz > 0.0:
+            hits.append((nm, bb, ox * oz))
+    hits.sort(key=lambda h: (-h[2], h[0]))
+    return hits
+
+
 # ---------------------------------------------------------------- verdict
-def report_verdict(cur_cov, top, drift):
+def report_verdict(cur_cov, top, drift, props_n=-1):
+    props_txt = ("props_in_road=%d" % props_n) if props_n >= 0 else "props_in_road=n/a"
     if drift > 5.0:
-        print("SITE_VERDICT=INCONSISTENT raster-vs-exact drift %.1fpp" % drift)
+        print("SITE_VERDICT=INCONSISTENT raster-vs-exact drift %.1fpp %s" % (drift, props_txt))
         return 1
-    print("SITE_VERDICT=%s block_water=%.1f%% nearest_dry=%s"
+    print("SITE_VERDICT=%s block_water=%.1f%% nearest_dry=%s %s"
           % ("OVER_WATER" if cur_cov > 0.5 else "DRY", cur_cov * 100.0,
-             ("%.0fm" % top[0][0]) if top else "none"))
+             ("%.0fm" % top[0][0]) if top else "none", props_txt))
     return 0
 
 
@@ -572,6 +637,29 @@ def main(argv):
     print("block_water_coverage=%.1f%%" % (cur_cov * 100.0))
     print("cross_check exact=%.1f%% samples=%d drift=%.1fpp" % (exact_cov * 100.0, check, drift))
     print("dry_candidates=%d" % len(cands))
+
+    # main#65: base-plate props standing on the road strip (no colliders, so the
+    # street-shot pose solver cannot see them). Named + area, so a hit is fixable.
+    # The district and its road strip live in the BUILT scene (the live whitebox
+    # never carries them) - same fallback order the placement reader uses.
+    band_src = "scene"
+    band = road_band(sc)
+    prop_scene = sc
+    if band is None and not scene_overridden and os.path.isfile(BUILT_SCENE):
+        prop_scene = Scene(BUILT_SCENE)
+        band = road_band(prop_scene)
+        band_src = "built-scene"
+    hits = props_in_road_band(prop_scene, band)
+    props_n = len(hits) if band is not None else -1
+    if band is None:
+        print("road_band=missing (R2_AD-021_Street not found) props_in_road=n/a")
+    else:
+        print("road_band=x[%.1f..%.1f] z[%.1f..%.1f] src=%s props_in_road=%d prop_area=%.2fm2"
+              % (band[0], band[2], band[1], band[3], band_src, props_n,
+                 sum(h[2] for h in hits)))
+        for nm, bb, area in hits:
+            print("  prop %s overlap=%.2fm2 bb=x[%.1f..%.1f] z[%.1f..%.1f]"
+                  % (nm, area, bb[0], bb[2], bb[1], bb[3]))
     for dist, x, z in top:
         print("  cand dist=%.1fm world_center=(%.1f,%.1f) local=(%.1f,%.1f) coverage=0%%"
               % (dist, x + width * 0.5, z + depth * 0.5,
@@ -579,7 +667,7 @@ def main(argv):
 
     # ------------------------------------------------------------- png map
     if not artifacts:
-        return report_verdict(cur_cov, top, drift)
+        return report_verdict(cur_cov, top, drift, props_n)
     try:
         from PIL import Image, ImageDraw, ImageFont
     except Exception as exc:
@@ -646,6 +734,10 @@ def main(argv):
           "| 街区范围 | %.1f × %.1f m，世界 x[%.1f..%.1f] z[%.1f..%.1f] |"
           % (width, depth, bx0, bx1, bz0, bz1),
           "| **压水比例** | **%.1f%%** |" % (cur_cov * 100.0),
+          "| 路带内道具 | %s |" % (("**%d 件 / %.2f m²**（%s）"
+                                     % (props_n, sum(h[2] for h in hits),
+                                        "、".join(h[0] for h in hits)))
+                                    if band is not None else "无路带对象（n/a）"),
           "| 全干候选锚点 | %d 处（1 m 栅格、2 m 步长） |" % len(cands), "",
           "## 最近的三个全干落位（城市坐标 = 相对 City_GAME 原点）", "",
           "| 名 | 世界中心 | 城市局部中心 | 距现位 |", "|---|---|---|---|"]
@@ -658,7 +750,7 @@ def main(argv):
 
     print("map=" + os.path.relpath(png_path, ROOT).replace("\\", "/"))
     print("md=" + os.path.relpath(md_path, ROOT).replace("\\", "/"))
-    return report_verdict(cur_cov, top, drift)
+    return report_verdict(cur_cov, top, drift, props_n)
 
 
 if __name__ == "__main__":

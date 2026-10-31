@@ -96,6 +96,21 @@ $pyOut = (& python $pyTest) -join "`n"
 if ($LASTEXITCODE -ne 0) { Write-Output $pyOut }
 Check 'site: placement unit test green' ($LASTEXITCODE -eq 0)
 
+# ---------- f) road-strip prop census (main#65) ----------
+# Base-plate street trees carry no colliders, so the street-shot pose solver
+# never saw them standing on the road strip. The census names them; these
+# assertions keep the count on the tick line and pin the geometry rules.
+Write-Output '--- f) road-strip props ---'
+$propTest = Join-Path $PSScriptRoot 'test-road-props.py'
+$propOut = (& python $propTest) -join "`n"
+if ($LASTEXITCODE -ne 0) { Write-Output $propOut }
+Check 'props: census unit test green' ($LASTEXITCODE -eq 0)
+Check 'props: health line carries the count' ($live -match 'props_in_road=\d+')
+$mPropsLive = [regex]::Match($live, 'props_in_road=(\d+)')
+Check 'props: live road strip clear'   ($mPropsLive.Success -and [int]$mPropsLive.Groups[1].Value -eq 0)
+Check 'props: fixture says n/a not 0'  ($a.log -match 'props_in_road=n/a')
+Check 'props: no FAIL token'           (-not ($a.log -match 'props_in_road=[^\n]*FAIL'))
+
 Remove-Item -LiteralPath $missing -Force -ErrorAction SilentlyContinue
 Write-Output ('test-verify-r2-site: ' + $pass + ' passed, ' + $fail + ' failed (of ' + ($pass + $fail) + ')')
 if ($fail -gt 0) { exit 1 }

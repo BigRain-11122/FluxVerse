@@ -38,6 +38,8 @@ function ConvertFrom-SiteCheckText
         dry_candidates_text = ''
         nearest_dry_m = -1.0
         nearest_dry_text = ''
+        props_in_road = -1
+        props_in_road_text = 'n/a'
         verdict = ''
         over_water = $false
         reason = ''
@@ -46,7 +48,18 @@ function ConvertFrom-SiteCheckText
     $mDry = [regex]::Match($Text, 'dry_candidates=(\d+)')
     $mVerdict = [regex]::Match($Text, 'SITE_VERDICT=([A-Z_]+)')
     $mNear = [regex]::Match($Text, 'nearest_dry=(\d+)m')
+    # main#65: base-plate props standing on the road strip (no colliders, so the
+    # street-shot pose solver never saw them). 'n/a' = the checker had no road
+    # strip to measure (fixture scenes / missing built scene) - not a zero.
+    $mProps = [regex]::Match($Text, 'props_in_road=(\d+|n/a)')
     if ($mVerdict.Success) { $r.verdict = [string]$mVerdict.Groups[1].Value }
+    if ($mProps.Success) {
+        $r.props_in_road_text = [string]$mProps.Groups[1].Value
+        if ($r.props_in_road_text -ne 'n/a') {
+            $r.props_in_road = [int]::Parse($r.props_in_road_text,
+                [Globalization.CultureInfo]::InvariantCulture)
+        }
+    }
     if ($mNear.Success) {
         $r.nearest_dry_text = [string]$mNear.Groups[1].Value
         $r.nearest_dry_m = [double]::Parse($mNear.Groups[1].Value,
@@ -73,6 +86,17 @@ function Test-SiteOverWater
     if ($null -eq $Verdict) { return $false }
     if (-not $Verdict.ran) { return $false }
     return ([bool]$Verdict.over_water)
+}
+
+# main#65: a base-plate prop standing on the road strip (street trees have no
+# colliders, so the street-shot pose solver cannot see them). Unknown ('n/a')
+# is not zero: report it as unknown, never as clean.
+function Test-SitePropsInRoad
+{
+    param($Verdict)
+    if ($null -eq $Verdict) { return $false }
+    if (-not $Verdict.ran) { return $false }
+    return ([int]$Verdict.props_in_road -gt 0)
 }
 
 # Locate a python interpreter the same way verify does (env override first).

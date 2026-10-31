@@ -297,6 +297,11 @@ public static class CityRebuildR2
         street.transform.localScale = new Vector3(76f, 0.04f, 6f);
         street.GetComponent<Renderer>().sharedMaterial = streetMat;
 
+        // ④b2 底板道具让位路带（main#65）：行道树压在路带中线上，街面帧灭点被树挡死。
+        // 树属白盒底板（CityWhitebox 正典不动、且无碰撞体→机位筛选的物理射线看不见它），
+        // 所以在已建 R2 场景里按几何把侵入路带的道具推出去，逐件点名记进报告。
+        Report.Add(ClearRoadBand(r2root.transform, street));
+
         // ④c 展示房净位（main#64）：r723 量到它压在 P07 宅基台上 0.55 m、另一侧 0.36 m，
         // 两块台面顶同为 0.055+0.05 → 共面 z-fighting。宅基台 16.27 m 深、门面缝只有 7.31 m，
         // 装不下 7.5×5.0 的展示房，故不再写死坐标：按本期宅基台/路带实况解位——
@@ -537,6 +542,94 @@ public static class CityRebuildR2
             + " world=(" + wx.ToString("F1", inv) + "," + wz.ToString("F1", inv) + ")"
             + " yaw=" + bestYaw.ToString("F0", inv)
             + "（宅基台/路带矩形分离·重叠=0 由几何解出）";
+    }
+
+    // ===== 底板道具让位路带（main#65）=====
+    // 病灶（r724 街面帧）：底板行道树立在路带中线上，两根绿色胶囊压在街心挡住灭点。
+    // 道具属白盒底板，不归 R2 街区，且没有碰撞体——街面机位筛选用 Physics 射线判遮挡，
+    // 对它们一直报 blocked=0，所以「机位解得出好构图」这件事从来没管过树。
+    // 正法不碰底板正典（CityWhitebox.unity 原样保留）：在已建 R2 场景里把与路带
+    // 相交的道具沿 z 推出去——优先短距离且落位不与其它道具/街区件相撞；解不出净位
+    // 也必须让路并标 NO_CLEAR（路带通行优先于道具原位）。数量与位移逐件落报告。
+    const float PropMaxSpan = 10f;   // 超过这个跨度是图层/建筑，不是街具
+    const float PropClear = 1.0f;    // 道具与路带边缘的最小净距
+
+    static string ClearRoadBand(Transform root, GameObject street)
+    {
+        var band = Rect2Of(WorldBounds(street));
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+
+        var props = new List<GameObject>();
+        var propBounds = new Dictionary<GameObject, Bounds>();
+        foreach (var r in UnityEngine.Object.FindObjectsOfType<MeshRenderer>(true))
+        {
+            var go = r.gameObject;
+            if (go.transform.IsChildOf(root)) continue;
+            if (propBounds.ContainsKey(go)) continue;
+            var b = r.bounds;
+            if (b.size.x <= 0.001f || b.size.z <= 0.001f) continue;
+            if (b.size.x > PropMaxSpan || b.size.z > PropMaxSpan) continue;
+            props.Add(go);
+            propBounds[go] = WorldBounds(go);
+        }
+
+        // 只要侵入路带的那些；父子同族时只算最外层（避免同一棵树被搬两次）
+        var moving = props
+            .Where(p => Rect2Separation(Rect2Of(propBounds[p]), band) < PropClear)
+            .Where(p => !props.Any(q => q != p && p.transform.IsChildOf(q.transform)))
+            .ToList();
+        if (moving.Count == 0)
+            return "road_props: cleared=0（底板道具无一侵入路带·main#65 修面）";
+
+        var obstacles = new List<Rect2>();
+        foreach (Transform t in root)
+        {
+            var rr = t.GetComponent<Renderer>();
+            if (rr != null) obstacles.Add(Rect2Of(rr.bounds));
+        }
+
+        var lines = new List<string>();
+        foreach (var go in moving)
+        {
+            var b = propBounds[go];
+            float up = band.z1 + PropClear - b.min.z;      // 往 +z 推
+            float down = band.z0 - PropClear - b.max.z;    // 往 -z 推（负值）
+            float pick = 0f;
+            var tries = new[] { up, down, up + 1.5f, down - 1.5f, up + 3f, down - 3f };
+            foreach (var dz in tries)
+            {
+                var movedB = propBounds[go];
+                movedB.center += new Vector3(0f, 0f, dz);
+                var rect = Rect2Of(movedB);
+                if (Rect2Separation(rect, band) < PropClear * 0.99f) continue;
+                bool clash = false;
+                foreach (var o in obstacles)
+                    if (Rect2Separation(rect, o) < PropClear) { clash = true; break; }
+                if (!clash)
+                    foreach (var other in props)
+                    {
+                        if (other == go) continue;
+                        if (other.transform.IsChildOf(go.transform)) continue;
+                        if (Rect2Separation(rect, Rect2Of(propBounds[other])) < PropClear) { clash = true; break; }
+                    }
+                if (clash) continue;
+                pick = dz;
+                break;
+            }
+            if (Mathf.Abs(pick) < 0.001f)
+            {
+                pick = Mathf.Abs(up) <= Mathf.Abs(down) ? up : down;
+                lines.Add(go.name + "(" + pick.ToString("F2", inv) + "m,NO_CLEAR)");
+            }
+            else lines.Add(go.name + (pick >= 0f ? "+" : "") + pick.ToString("F2", inv) + "m");
+            go.transform.position += Vector3.forward * pick;
+            var after = propBounds[go];
+            after.center += new Vector3(0f, 0f, pick);
+            propBounds[go] = after;
+        }
+        return "road_props: cleared=" + moving.Count + "/" + props.Count
+            + " band_z=[" + F(band.z0) + ".." + F(band.z1) + "] moves=" + string.Join(" ", lines.ToArray())
+            + "（底板道具不入路带·main#65）";
     }
 
     struct RunMeasure { public float sx, sz, h, Run; public bool RunAlongX; }

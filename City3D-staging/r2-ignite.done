@@ -1,8 +1,8 @@
 ﻿{
-    "ts":  "2026-10-31T17:09:39+08:00",
+    "ts":  "2026-10-31T20:26:27+08:00",
     "order":  "O-20261011-0003 (City3D R2 modular-shell pilot, bm-a interactive window)",
     "exit_code":  0,
-    "wall_s":  37,
+    "wall_s":  23,
     "log_done_marker":  true,
     "shots_present":  5,
     "shots_expected":  5,

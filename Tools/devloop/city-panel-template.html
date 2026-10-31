@@ -673,13 +673,22 @@ function artTitle(it){
     // 装作「没事」。
     const st = p.site || {};
     const dryTxt = st.nearest_dry_text ? (st.nearest_dry_text + ' m') : '未知';
+    // main#65：路带里的底板道具（行道树）没有碰撞体，街面机位筛选看不到它们，
+    // 所以「压水 0%」不等于街心通畅——这一格同时印路带内道具件数。
+    const propTxt = (st.props_in_road_text && st.props_in_road_text !== 'n/a')
+      ? (st.props_in_road_text + ' 件') : '未知';
+    const propBad = (st.props_in_road > 0);
     if (!st.ran) {
       push('街区落位', '读数缺失：r2-site 检查未出结论（python / 场景 / 脚本缺失）', false, '', '', '');
     } else if (st.over_water) {
       push('街区落位', '压水 ' + st.block_water_text + '%｜最近干地 ' + dryTxt +
         ' — 街区还在湖上（main#54）', false, '', '', '');
+    } else if (propBad) {
+      push('街区落位', '压水 ' + st.block_water_text + '%｜路带内道具 ' + propTxt +
+        ' — 街心有东西挡道（main#65）', false, '', '', '');
     } else {
-      push('街区落位', '压水 ' + st.block_water_text + '%｜最近干地 ' + dryTxt, true, '', '', '');
+      push('街区落位', '压水 ' + st.block_water_text + '%｜最近干地 ' + dryTxt +
+        '｜路带内道具 ' + propTxt, true, '', '', '');
     }
     box.innerHTML = out.join('');
   })();

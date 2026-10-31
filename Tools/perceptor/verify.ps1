@@ -249,9 +249,11 @@ if ((-not (Test-Path -LiteralPath $siteScript)) -or (-not (Test-Path -LiteralPat
     } elseif ($sv.verdict -eq 'INCONSISTENT') {
       Write-Output ('VERIFY WARN: r2-site: block_water=' + $sv.block_water_text + '% dry_candidates=' + $sv.dry_candidates_text + ' - raster and point-in-triangle disagree; read the checker, not the number')
     } else {
-      $siteLine = 'r2-site: block_water=' + $sv.block_water_text + '% dry_candidates=' + $sv.dry_candidates_text
+      $siteLine = 'r2-site: block_water=' + $sv.block_water_text + '% dry_candidates=' + $sv.dry_candidates_text + ' props_in_road=' + $sv.props_in_road_text
       if (Test-SiteOverWater -Verdict $sv) {
         Write-Output ('VERIFY WARN: ' + $siteLine + ' - the R2 district stands over water; run Tools\devloop\r2-site-check.py for the nearest dry patch')
+      } elseif (Test-SitePropsInRoad -Verdict $sv) {
+        Write-Output ('VERIFY WARN: ' + $siteLine + ' - base-plate props stand on the road strip; run Tools\devloop\r2-site-check.py for their names (main#65)')
       } else {
         Write-Output ('VERIFY HEALTH: ' + $siteLine)
       }

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T14:53:36Z",
-    "current_activity":  "r735 收口（main#70）：尺度对照图不再用手填常量——`Tools/devloop/r2-scale-study.py` 新增 `read_showcase_size()` 单点解析重建报告的 `showcase_bounds: \u003cW\u003ex\u003cD\u003em` 实测行，`main()` 用 `global` 覆写展示房两常量（度量/机位/绘图全走同一对变量），摘要恒打 `SHOWCASE_SRC=report|const`；新增 `--report` 供夹具注入。`--self-check` 现出三行来源证（夹具有行→report 7.10x4.80m／夹具无行→const 7.50x5.00m／live 报告→report 7.50x5.00m）后仍 `SELF_CHECK OK`。顺带把 A1 面板硬写的「pad clash」改成按 `showcase_pad_clash()` 实测出标签（现为 `clears pads` 绿色），图与终端读数不再互相打脸。零场景改动、零新 LLM 触点。",
-    "artifact":  "qa/site/r2-scale-20261031-2252-bm-a.png，qa/site/r2-scale-20261031-2252-bm-a.md，Tools/devloop/r2-scale-study.py",
-    "artifact_utc":  "2026-10-31T14:52:00Z",
-    "milestone":  "下一个=main#40 冻结 fixture 重建：`logs/panel-fixture-prev.html`／`-regress.html` 是 10-20 的构建快照（内联脚本还是旧模板），改用 builder 的 `-SnapPath`／`-HistoryPath`／`-OutPath` 从当前模板重生成，r671/r672 同轮复跑；判据=重建后 r671 全绿且两件内联脚本与当前模板编译产物一致。",
-    "milestone_eta_utc":  "2026-11-01T03:00:00Z"
+    "updated_utc":  "2026-10-31T15:00:05Z",
+    "current_activity":  "r736 收口（main#40）：面板对比卡的两件冻结 fixture 由「2026-10-20 的旧构建」改为可用当前模板一键重生成——新增重生成脚本，按「一份冻结快照 + 两份合成历史」重出 logs/panel-fixture-prev.html 与 logs/panel-fixture-regress.html，并自带两道门（内联脚本自检项数必须等于当前模板、占位符零残留；历史日志必须仍是 2 条且末条=快照自身时刻，防 builder 追加第三条）。r671 断言随之从形状级升为实义级：行数等于模板项数、对比锚点核对到本地钟点、增量与回落数值全部从 fixture 自己的历史里算（不再硬编码 28843）。同轮修红：里程碑文案里一处裸写的 regress 文件名被实况路径解析器当成路径，4 套面板沙盒转红——改写成完整相对路径后 29 套回绿。",
+    "artifact":  "logs/panel-fixture-prev.html, logs/panel-fixture-regress.html, Tools/devloop/rebuild-panel-fixtures.ps1, logs/devloop-r671-panel-history-test.js",
+    "artifact_utc":  "2026-10-31T15:00:05Z",
+    "milestone":  "下一个=main#33 状态档写入硬化（Tools/devloop/write-fastpath-state.ps1 收 sha 前先与 Tools/devloop/resolve-group-root.ps1 解析出的 live 文件实算值对账，故意传错值必须 exit≠0 且不落盘），随后 main#74 尺度研究对「报告比场景旧」降级为 SHOWCASE_SRC=stale 并退回常量画框；两者都不动场景。",
+    "milestone_eta_utc":  "2026-11-01T10:00:00Z"
 }

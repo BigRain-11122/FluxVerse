@@ -68,22 +68,36 @@ chk('first.chg.rows=5', (first.chg.split('<div class="rowline">').length - 1) ==
 chk('first.chg.all-have-value', first.chg.indexOf('>—<') < 0, 'chg=' + first.chg);
 
 // 2) fixture history one tick older with lower counters => deltas visible
+// The fixtures are rebuilt from the CURRENT template by
+// Tools/devloop/rebuild-panel-fixtures.ps1 (queue main#40), so the row count and
+// the comparison anchor are asserted against real values, not a frozen shape.
+// Expected deltas come from the fixture's own history file, never a literal.
+function localStamp(iso) {
+  const d = new Date(iso);
+  const p2 = (n) => (n < 10 ? '0' + n : String(n));
+  return p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + ' ' +
+    p2(d.getHours()) + ':' + p2(d.getMinutes());
+}
+function readHist(file) {
+  return fs.readFileSync(file, 'utf8').split(/\r?\n/).filter(l => l.trim()).map(l => JSON.parse(l));
+}
+
 const prev = runPanel('logs/panel-fixture-prev.html');
 // current counters straight from the built panel (snapshot values move every tick)
 const snapHtml = fs.readFileSync('logs/panel-fixture-prev.html', 'utf8');
 const curCommits = Number((snapHtml.match(/"commits_total":(\d+)/) || [])[1]);
-// Fixtures are frozen builds: row count is theirs, and snapshot-age warn
-// follows the wall clock, so only the shape is asserted here.
-chk('prev.rows>0', prev.rows > 0, 'rows=' + prev.rows);
+const prevHist = readHist('logs/panel-fixture-prev-hist.jsonl');
+chk('prev.hist.len=2', prevHist.length === 2, 'len=' + prevHist.length);
+const prevRec = prevHist[prevHist.length - 2];
+chk('prev.rows=template', prev.rows === expectedChecks,
+  'rows=' + prev.rows + ' expected=' + expectedChecks);
+// snapshot-age warn follows the wall clock (a frozen snapshot ages), so the
+// summary keeps a shape assertion; everything else below is exact.
 chk('prev.sum=shape', /^\d+ 项(通过|注意)$/.test(prev.sum), 'sum=' + JSON.stringify(prev.sum));
-// NOTE: this fixture is a build frozen on 2026-10-20, so its inlined script is
-// older than the template — it can only assert SHAPE here. The current clock
-// convention for the comparison anchor is asserted against the live build in
-// logs/devloop-r700-panel-trendclock-test.js (queue main#39).
-chk('prev.label', prev.prev.indexOf('对比 ') === 0, 'prev=' + JSON.stringify(prev.prev));
-chk('prev.gap=5min', prev.prev.indexOf('（5 分钟前）') >= 0, 'prev=' + prev.prev);
-chk('prev.delta.commits', prev.chg.indexOf('>+' + (curCommits - 28843) + '<') >= 0,
-  'want +' + (curCommits - 28843) + ' in ' + prev.chg);
+chk('prev.label', prev.prev === '对比 ' + localStamp(prevRec.ts) + '（5 分钟前）',
+  'prev=' + JSON.stringify(prev.prev) + ' want=' + JSON.stringify('对比 ' + localStamp(prevRec.ts) + '（5 分钟前）'));
+chk('prev.delta.commits', prev.chg.indexOf('>+' + (curCommits - Number(prevRec.c)) + '<') >= 0,
+  'want +' + (curCommits - Number(prevRec.c)) + ' in ' + prev.chg);
 chk('prev.delta.renders', prev.chg.indexOf('>+1<') >= 0, 'chg=' + prev.chg);
 chk('prev.flat.fleet', prev.chg.indexOf('持平') >= 0, 'chg=' + prev.chg);
 chk('prev.mono.ok', prev.body.indexOf('未回落') >= 0, 'body=' + prev.body);
@@ -91,11 +105,18 @@ chk('prev.note.count', prev.note.indexOf('已记录 2 条') >= 0, 'note=' + prev
 
 // 3) previous counters higher than current => cross-round monotonic WARN
 const reg = runPanel('logs/panel-fixture-regress.html');
-chk('reg.rows>0', reg.rows > 0, 'rows=' + reg.rows);
+const regHist = readHist('logs/panel-fixture-regress-hist.jsonl');
+const regRec = regHist[regHist.length - 2];
+chk('reg.rows=template', reg.rows === expectedChecks,
+  'rows=' + reg.rows + ' expected=' + expectedChecks);
 chk('reg.sum=warn-shape', /^\d+ 项注意$/.test(reg.sum), 'sum=' + JSON.stringify(reg.sum));
-chk('reg.warn.text', reg.body.indexOf('计数回落 commits 99999') >= 0, 'body=' + reg.body);
-chk('reg.chg.negative', reg.chg.indexOf('>' + (curCommits - 99999) + '<') >= 0,
-  'want ' + (curCommits - 99999) + ' in ' + reg.chg);
+// current wording (r711 split live vs historical drops): the row names the
+// window, the counter and both values.
+chk('reg.warn.text',
+  reg.body.indexOf('窗口内回落 1 处：提交 ' + Number(regRec.c) + '→' + curCommits) >= 0,
+  'want 窗口内回落 1 处：提交 ' + Number(regRec.c) + '→' + curCommits + ' in ' + reg.body);
+chk('reg.chg.negative', reg.chg.indexOf('>' + (curCommits - Number(regRec.c)) + '<') >= 0,
+  'want ' + (curCommits - Number(regRec.c)) + ' in ' + reg.chg);
 
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 process.exit(fail ? 1 : 0);

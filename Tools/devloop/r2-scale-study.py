@@ -32,7 +32,9 @@ import importlib.util
 import math
 import os
 import re
+import shutil
 import sys
+import tempfile
 import datetime
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -62,6 +64,19 @@ def die(msg):
     sys.exit(2)
 
 
+def rel_display(path):
+    """Repo-relative for the printed summary; absolute for out-of-tree fixtures.
+
+    `--report`/`--scene` accept absolute paths (mtime fixtures live in %TEMP%,
+    i.e. another drive), where os.path.relpath raises ValueError -- r735's
+    print would crash before it could report anything.
+    """
+    try:
+        return os.path.relpath(path, ROOT).replace("\\", "/")
+    except ValueError:
+        return os.path.abspath(path).replace("\\", "/")
+
+
 def read_showcase_size(text):
     """(w, d, src) for the walk-in prototype.
 
@@ -78,6 +93,30 @@ def read_showcase_size(text):
         if w > 0.5 and d > 0.5:
             return w, d, "report"
     return SHOWCASE_W, SHOWCASE_D, "const"
+
+
+def resolve_showcase(report_text, report_path, scene_path):
+    """(w, d, src, note): the prototype footprint plus where it came from.
+
+    src="report" only when the report carries a measured line *and* that report
+    is not older than the scene it claims to describe -- r735 shipped the
+    corner case as a bare hint, main#74 makes it a real degradation: an old
+    report is not evidence for the current build, so we fall back to the
+    constants and say so ("stale").  src="const" = no usable line at all.
+    Newer-or-equal mtime counts as fresh (a rebuild writes both in one run).
+    """
+    w, d, src = read_showcase_size(report_text)
+    if src != "report":
+        return w, d, src, ""
+    try:
+        r_m = os.path.getmtime(report_path)
+        s_m = os.path.getmtime(scene_path)
+    except OSError as exc:
+        return SHOWCASE_W, SHOWCASE_D, "stale", "mtime unreadable (%s); constants used" % type(exc).__name__
+    if r_m < s_m:
+        return (SHOWCASE_W, SHOWCASE_D, "stale",
+                "report older than scene by %.0f min; constants used" % ((s_m - r_m) / 60.0))
+    return w, d, "report", ""
 
 
 def load_checker():
@@ -487,11 +526,43 @@ def self_check():
         fails.append("zero-size line must fall back, not pass through")
     print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm (fixture: report line present)" % (src_r, w_r, d_r))
     print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm (fixture: no report line)" % (src_c, w_c, d_c))
+    # main#74: a report older than the scene must degrade to the constants; a
+    # report written in the same rebuild (mtime equal or newer) must still win.
+    tmp = tempfile.mkdtemp(prefix="r2-scale-check-")
+    try:
+        scene_f = os.path.join(tmp, "scene.unity")
+        rep_f = os.path.join(tmp, "report.md")
+        io.open(scene_f, "w", encoding="utf-8").write("scene fixture")
+        io.open(rep_f, "w", encoding="utf-8").write(
+            "showcase_bounds: 7.10x4.80m vs nominal 7.5x5.0m over=(0.00,0.00)m PASS")
+        base = 1700000000.0
+        rep_text = io.open(rep_f, encoding="utf-8").read()
+        for label, rep_m, want_src, want_w in (
+                ("report older than scene", base - 600, "stale", SHOWCASE_W),
+                ("report equal mtime", base, "report", 7.10),
+                ("report newer than scene", base + 600, "report", 7.10)):
+            os.utime(scene_f, (base, base))
+            os.utime(rep_f, (rep_m, rep_m))
+            w_x, d_x, src_x, note_x = resolve_showcase(rep_text, rep_f, scene_f)
+            if src_x != want_src or abs(w_x - want_w) > 1e-9:
+                fails.append("%s -> src=%s w=%.2f (want %s/%.2f)" % (label, src_x, w_x, want_src, want_w))
+            if (want_src == "stale") != bool(note_x):
+                fails.append("%s -> note=%r" % (label, note_x))
+            print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm (fixture: %s)"
+                  % (src_x, w_x, d_x, label))
+        # a missing report path must not raise: stale + note, constants used
+        w_m, d_m, src_m, note_m = resolve_showcase(rep_text, os.path.join(tmp, "nope.md"), scene_f)
+        if src_m != "stale" or not note_m:
+            fails.append("unreadable report mtime -> src=%s note=%r" % (src_m, note_m))
+        print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm (fixture: report mtime unreadable)" % (src_m, w_m, d_m))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
     if os.path.isfile(REPORT):
-        w_p, d_p, src_p = read_showcase_size(
-            io.open(REPORT, encoding="utf-8", errors="replace").read())
-        print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm (live %s)"
-              % (src_p, w_p, d_p, os.path.relpath(REPORT, ROOT).replace("\\", "/")))
+        w_p, d_p, src_p, note_p = resolve_showcase(
+            io.open(REPORT, encoding="utf-8", errors="replace").read(), REPORT, SCENE)
+        print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm (live %s%s)"
+              % (src_p, w_p, d_p, rel_display(REPORT),
+                 (" (%s)" % note_p) if note_p else ""))
     if fails:
         print("SELF_CHECK FAIL " + "; ".join(fails))
         return 2
@@ -535,8 +606,8 @@ def main(argv):
             report_text = io.open(report_path, encoding="utf-8", errors="replace").read()
         except OSError:
             report_text = ""
-    SHOWCASE_W, SHOWCASE_D, showcase_src = read_showcase_size(report_text)
-    stale = bool(showcase_src == "report" and os.path.getmtime(report_path) < os.path.getmtime(scene_path))
+    SHOWCASE_W, SHOWCASE_D, showcase_src, showcase_note = resolve_showcase(
+        report_text, report_path, scene_path)
 
     mod = load_checker()
     sc = mod.Scene(scene_path)
@@ -575,8 +646,8 @@ def main(argv):
              "/".join(str(len(r)) for r in rows)))
     print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm report=%s%s"
           % (showcase_src, SHOWCASE_W, SHOWCASE_D,
-             os.path.relpath(report_path, ROOT).replace("\\", "/") if os.path.isfile(report_path) else "missing",
-             " (report older than scene)" if stale else ""))
+             rel_display(report_path) if os.path.isfile(report_path) else "missing",
+             (" (%s)" % showcase_note) if showcase_note else ""))
     print("A1 as-built   %.1f x %.1f m  %.0f m2  pitch %.1f/%.1f  coverage %.1f%%  front %.1f-%.1f m  gap %.2f-%.2f m"
           % (v1["w"], v1["d"], m1["gross"], v1["pitch_x"], v1["pitch_z"], m1["coverage"] * 100.0,
              m1["front_min"], m1["front_max"], m1["min_gap"], m1["max_gap"]))
@@ -663,11 +734,17 @@ def main(argv):
     png = os.path.join(site_dir, "r2-scale-%s-bm-a.png" % stamp)
     img.save(png)
 
+    if showcase_src == "report":
+        showcase_md = "展示房足迹取重建报告 `showcase_bounds:` 实测行（%.2f × %.2f m）。" % (SHOWCASE_W, SHOWCASE_D)
+    elif showcase_src == "stale":
+        showcase_md = ("重建报告比场景旧（%s）——**不沿用旧实测值**，展示房足迹退回常量 %.2f × %.2f m。"
+                       % (showcase_note, SHOWCASE_W, SHOWCASE_D))
+    else:
+        showcase_md = "重建报告无可用 `showcase_bounds:` 行，展示房足迹用常量 %.2f × %.2f m。" % (SHOWCASE_W, SHOWCASE_D)
     md = ["# R2 街区尺度复核（%s · main#61）" % stamp, "",
           "实测口径：宅基台边长 = 房体边长 + %.1f m（`CityRebuildR2.cs`），尺寸全部从已建场景 `CityRebuild_R2.unity` 读回；"
-          "人速度按 %.2f m/s 计。展示房足迹取重建报告 `showcase_bounds:` 实测行（%.2f × %.2f m，来源 `%s`%s）。"
-          % (lot_pad, WALK_MPS, SHOWCASE_W, SHOWCASE_D, showcase_src,
-             "，⚠ 报告比场景旧" if stale else ""), "",
+          "人速度按 %.2f m/s 计。%s"
+          % (lot_pad, WALK_MPS, showcase_md), "",
           "| 方案 | 街区尺寸 | 用地 | 房屋占地 | 建筑密度 | 前场进深 | 门面间距 | 街宽 | 横穿一趟 |",
           "|---|---|---|---|---|---|---|---|---|"]
     rows_md = []

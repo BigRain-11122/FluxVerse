@@ -76,7 +76,9 @@ chk('compile.ok', compiled);
   chk('real.img.tag', /<img src="data:image\/jpeg;base64,[^"]+" alt="[^"]*"/.test(html));
   chk('real.sum', /^\d+ \/ \d+ 帧$/.test(String(p.get('shot-sum').textContent || '')),
     'summary=' + p.get('shot-sum').textContent);
-  chk('real.link', /<a href="file:\/\/\//.test(html), 'frame name is not a clickable original');
+  // r744 (main#82): repo shots link RELATIVE to the panel, so "clickable" means
+  // any href - the absolute file:/// form is only used outside the repo.
+  chk('real.link', /<a href="[^"]+"/.test(html), 'frame name is not a clickable original');
   chk('real.tag', /<span class="tag[^"]*"[^>]*>[^<]*(分钟|小时|天)前<\/span>/.test(html));
   // The page must never photograph itself: r702 first build shipped an OLD
   // panel screenshot (r665-city-panel-v4.png) as the newest "city view".

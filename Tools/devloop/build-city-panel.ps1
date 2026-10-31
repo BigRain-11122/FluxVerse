@@ -96,6 +96,27 @@ if ([string]::IsNullOrEmpty($groupRoot)) {
     $groupRoot = [IO.Path]::GetFullPath((Join-Path $repoDir '..\..'))
 }
 
+# --- artifact link shape (queue main#82, r744) -----------------------------
+# Repo files are linked RELATIVE to the panel (world-public\city-panel.html), so
+# the same HEAD rebuilt from another drive or another spelling of the same tree
+# produces identical links instead of ~13 rewritten lines per tick. Group files
+# keep an absolute url - they sit outside the repo, and resolve-group-root has
+# already canonicalised that root. Fail-soft: no module, old behaviour.
+$panelUrlModule = Join-Path $PSScriptRoot 'panel-url.ps1'
+if (Test-Path -LiteralPath $panelUrlModule) { . $panelUrlModule }
+$panelDir = ''
+try { $panelDir = [IO.Path]::GetFullPath((Split-Path -Parent $OutPath)) } catch { $panelDir = '' }
+
+function Get-PanelUrl
+{
+    param([string]$Full)
+    if ([string]::IsNullOrWhiteSpace($Full)) { return '' }
+    if (Get-Command New-PanelUrl -ErrorAction SilentlyContinue) {
+        return (New-PanelUrl -Full $Full -PanelDir $panelDir -RepoDir $repoDir)
+    }
+    return ('file:///' + $Full.Replace('\', '/').Replace(' ', '%20'))
+}
+
 foreach ($p in @($SnapPath, $FacePath, $TemplatePath)) {
     if (-not (Test-Path -LiteralPath $p)) { Fail ('input missing: ' + $p) }
 }
@@ -200,7 +221,7 @@ function Resolve-ArtItems
         if ($exists) {
             $full = $abs
             try { $full = (Resolve-Path -LiteralPath $abs).ProviderPath } catch { $full = $abs }
-            $url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
+            $url = Get-PanelUrl $full
             try {
                 $fi = Get-Item -LiteralPath $full -ErrorAction Stop
                 if ($fi -and -not $fi.PSIsContainer) {
@@ -588,7 +609,7 @@ function Resolve-CityShots
             $rel = $rel.Substring($repoDir.Length)
         }
         $rel = $rel.TrimStart('\', '/').Replace('\', '/')
-        $url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
+        $url = Get-PanelUrl $full
         $out += (New-Object PSObject -Property ([ordered]@{
             name     = [string]$c.Name
             rel      = [string]$rel
@@ -643,7 +664,7 @@ function Get-ProofFileInfo
             $rel = $rel.Substring($repoDir.Length)
         }
         $r.rel = $rel.TrimStart('\', '/').Replace('\', '/')
-        $r.url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
+        $r.url = Get-PanelUrl $full
     } catch { }
     return $r
 }
@@ -838,7 +859,7 @@ function Resolve-Duty
         $rel = $rel.Substring($repoDir.Length)
     }
     $r.path_rel = $rel.TrimStart('\', '/').Replace('\', '/')
-    $r.url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
+    $r.url = Get-PanelUrl $full
 
     # Only the tail matters (the newest batches live at the end) and a 400KB file
     # split into objects per row would cost more than the panel is worth.
@@ -1034,7 +1055,7 @@ function Resolve-ArchiveDuty
         $rel = $rel.Substring($repoDir.Length)
     }
     $r.path_rel = $rel.TrimStart('\', '/').Replace('\', '/')
-    $r.url = 'file:///' + $full.Replace('\', '/').Replace(' ', '%20')
+    $r.url = Get-PanelUrl $full
 
     $m = [regex]::Match(($raw -replace '\s', ' '), '(\d{8})(?:\s*remain=(\d+))?')
     if ($m.Success) {

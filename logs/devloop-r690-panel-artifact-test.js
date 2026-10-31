@@ -64,7 +64,9 @@ const realRow = rowByLabel(real, '实况路径');
 const artHtml = real.get('f-art').innerHTML;
 chk('real.row-present', realRow !== null, 'no 实况路径 row');
 chk('real.pass', !!realRow && realRow.ok === true, 'vd=' + JSON.stringify(realRow && realRow.vd));
-chk('real.links', /<a class="artlink" href="file:\/\/\//.test(artHtml), 'html=' + artHtml.slice(0, 200));
+// r744 (main#82): a repo file links RELATIVE to the panel, so "clickable" means
+// any artlink href - the absolute file:/// form is only used outside the repo.
+chk('real.links', /<a class="artlink" href="[^"]+"/.test(artHtml), 'html=' + artHtml.slice(0, 200));
 chk('real.no-miss', artHtml.indexOf('未找到') < 0, 'html=' + artHtml.slice(0, 200));
 chk('real.md5-hit', !!realRow && realRow.vd.indexOf('全部命中盘面') >= 0,
   'vd=' + (realRow && realRow.vd));

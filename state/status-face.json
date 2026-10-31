@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T16:35:23Z",
-    "current_activity":  "r743 收口：城市城建侧线级附卷（D-20261017-03 死线 10-19 逾期 13 天）＋问题台账直数工具 problem-registry-census.py。工具只读集团正身，解析 PR 条目/城建侧分类/六字段完整性/状态与复发计数，--check 漂移即 exit 1；自检 23/23。轮内抓出真病：首版按 ..\\.. 读到的旧镜像 cph4 只有 14 条、活树 18 条，静默少读 4 条零报错，已改走 resolve-group-root.ps1 同规则。直数 entries=18 city=0（零入册≠零问题），三条候选 PR 交集团审计入册。",
-    "artifact":  "docs/city-problem-registry-annex.md, Tools/devloop/problem-registry-census.py, TECH.md, HQ-FEEDBACK.md, state/queue/main.md, state/runbook.md",
-    "artifact_utc":  "2026-10-31T16:35:23Z",
-    "milestone":  "下一轮排 main#23（司级基准刷新 10-27 逾期）→ main#82（面板产物链接绑绝对路径拼写，13 行 churn/次）→ main#83（队列逾期机械可见面）；队列见 state/queue/main.md",
-    "milestone_eta_utc":  "2026-11-01T12:00:00Z"
+    "updated_utc":  "2026-10-31T16:46:01Z",
+    "current_activity":  "r744 收口：面板产物链接不再绑绝对路径拼写（main#82）。此前同一 HEAD 从 D:\\FluxGroup\\gaming\\FluxVerse 与从 C:\\Users\\sjs20\\Desktop\\FluxGroup\\gaming\\FluxVerse（同一目录的两种拼写）重建，19 条仓库内链接各写各的盘符，每 tick 重写 13 行、换盘换机后链接全断。现仓库内文件一律按面板自身目录给相对路径（形如 ../qa 下的取证图），仓库外文件（集团 docs/decisions.md 等）保留绝对 url。同一轮把链接口径抽成单一模块 Tools/devloop/panel-url.ps1，builder 五处落点全接。实测：两种拼写各重建一次，world-public/city-panel.html 仅 3 行时间戳类字段不同（BUILT、BUILT_UTC、tick 龄），其余逐字节一致；沙盒 Tools/devloop/test-panel-url.ps1 23/23。",
+    "artifact":  "Tools/devloop/panel-url.ps1, Tools/devloop/test-panel-url.ps1, Tools/devloop/build-city-panel.ps1, world-public/city-panel.html, state/queue/main.md, ./TECH.md",
+    "artifact_utc":  "2026-10-31T16:46:01Z",
+    "milestone":  "下一轮排 main#83（队列逾期件机械可见面：面板出一行「队列逾期 N 件（最久 D 天）」，数须来自队列 md 解析而非手写）→ main#76（r671 缺档提示）→ main#77（-NoLiveCheck 白名单普查）→ main#23（司级基准刷新，已逾期）；队列见 state/queue/main.md",
+    "milestone_eta_utc":  "2026-11-01T18:00:00Z"
 }

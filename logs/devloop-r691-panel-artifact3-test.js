@@ -62,7 +62,8 @@ function rowByLabel(run, label) {
   const p = hit[0];
   return { ok: p.indexOf('<span class="st ok">') >= 0, vd: p };
 }
-const links = (html) => (html.match(/<a class="artlink" href="file:\/\/\//g) || []).length;
+// r744 (main#82): repo files link RELATIVE to the panel; count any artlink href.
+const links = (html) => (html.match(/<a class="artlink" href="[^"]+"/g) || []).length;
 
 let pass = 0, fail = 0;
 function chk(name, cond, detail) {

@@ -1,0 +1,17 @@
+{
+  "width": 390,
+  "overflow": 0,
+  "verdict": "OK",
+  "attempts": 1,
+  "reading": {
+    "ok": true,
+    "reason": "",
+    "detail": "domH=6639 contentH=6639 diff=0.0000",
+    "diff": 0
+  },
+  "clientW": 390,
+  "scrollW": 390,
+  "docH": 6639,
+  "rowCount": 89,
+  "offenders": []
+}

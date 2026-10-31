@@ -9,13 +9,20 @@
 // No dependencies: uses Node's global fetch + WebSocket (Node 22+).
 //
 // usage: node Tools/devloop/narrow-shot.js [--width 390] [--height 844]
-//          [--out <png>] [--url file:///...] [--json <out.json>]
+//          [--out <png>] [--url file:///...] [--json <out.json>] [--port N]
+//
+// A png is only written when the measurement is trustworthy: narrow-shot-verify
+// judges the double reading (viewport width vs clientWidth, contentSize vs DOM
+// scrollHeight) and the run retries up to 3 times. If it still disagrees the
+// tool prints `NARROW VERDICT: SHORT`, leaves the previous png untouched and
+// exits 2 - never a first-screen frame wearing an OK badge (queue main#51).
 'use strict';
 
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
+const { judge } = require('./narrow-shot-verify');
 
 function argOf(name, dflt) {
   const i = process.argv.indexOf('--' + name);
@@ -28,7 +35,10 @@ const repoDir = path.resolve(__dirname, '..', '..');
 const URL_ARG = argOf('url', 'file:///' + path.join(repoDir, 'world-public', 'city-panel.html').replace(/\\/g, '/'));
 const OUT = argOf('out', path.join(repoDir, 'qa', 'city-panel-narrow.png'));
 const JSON_OUT = argOf('json', '');
-const PORT = parseInt(argOf('port', '9337'), 10);
+// r725: two instances started at once shared the default port 9337, so the
+// second one attached to the first one's page and measured it. Per-process
+// default port keeps concurrent runs independent; --port still overrides.
+const PORT = parseInt(argOf('port', String(9300 + (process.pid % 400))), 10);
 
 const EDGE_CANDIDATES = [
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -69,6 +79,7 @@ const MEASURE = `(() => {
     clientW: w,
     scrollW: document.documentElement.scrollWidth,
     docH: document.documentElement.scrollHeight,
+    rowCount: document.querySelectorAll('.wrap .rowline, .wrap .card').length,
     offenders
   });
 })()`;
@@ -119,18 +130,64 @@ async function main() {
   });
 
   await send('Page.enable');
-  await send('Emulation.setDeviceMetricsOverride', {
-    width: WIDTH, height: HEIGHT, deviceScaleFactor: 1, mobile: true
-  });
-  // Re-run the layout at the phone width (media queries key off the viewport).
-  await send('Page.navigate', { url: URL_ARG });
-  await sleep(1200);
 
-  const measured = await send('Runtime.evaluate', { expression: MEASURE, returnByValue: true });
-  const payload = JSON.parse(measured.result.value);
+  const MAX_ATTEMPTS = 3;
+  let payload = null;
+  let contentH = 0;
+  let reading = null;
+  let tries = 0;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    tries = attempt;
+    await send('Emulation.setDeviceMetricsOverride', {
+      width: WIDTH, height: HEIGHT, deviceScaleFactor: 1, mobile: true
+    });
+    // Re-run the layout at the phone width (media queries key off the viewport).
+    await send('Page.navigate', { url: URL_ARG });
+    await sleep(1200);
 
-  const metrics = await send('Page.getLayoutMetrics');
-  const contentH = Math.ceil((metrics.cssContentSize || metrics.contentSize).height);
+    const measured = await send('Runtime.evaluate', { expression: MEASURE, returnByValue: true });
+    payload = JSON.parse(measured.result.value);
+
+    const metrics = await send('Page.getLayoutMetrics');
+    contentH = Math.ceil((metrics.cssContentSize || metrics.contentSize).height);
+
+    reading = judge({
+      width: WIDTH,
+      clientW: payload.clientW,
+      domH: payload.docH,
+      contentH: contentH,
+      rowCount: payload.rowCount
+    });
+    console.log('NARROW attempt=' + attempt + ' clientW=' + payload.clientW +
+      ' domH=' + payload.docH + ' contentH=' + contentH + ' rows=' + payload.rowCount +
+      ' ' + (reading.ok ? 'OK' : 'SUSPECT reason=' + reading.reason + ' ' + reading.detail));
+    if (reading.ok) break;
+    if (attempt < MAX_ATTEMPTS) await sleep(400);
+  }
+
+  const finish = async (code) => {
+    try { ws.close(); } catch (e) { /* ignore */ }
+    child.kill();
+    await sleep(200);
+    try { fs.rmSync(profile, { recursive: true, force: true }); } catch (e) { /* ignore */ }
+    process.exit(code);
+  };
+
+  if (!reading || !reading.ok) {
+    // Do not overwrite a previously good png with a frame we cannot vouch for.
+    console.log('NARROW png=skipped(' + path.basename(OUT) + ') attempts=' + tries +
+      ' reason=' + (reading ? reading.reason : 'no-reading'));
+    console.log('NARROW VERDICT: SHORT');
+    if (JSON_OUT) {
+      fs.writeFileSync(JSON_OUT, JSON.stringify({
+        width: WIDTH, attempts: tries, verdict: 'SHORT',
+        reason: reading ? reading.reason : 'no-reading',
+        detail: reading ? reading.detail : ''
+      }, null, 2));
+    }
+    await finish(2);
+    return;
+  }
 
   const shot = await send('Page.captureScreenshot', {
     format: 'png',
@@ -155,14 +212,12 @@ async function main() {
   const verdict = (overflow > 0 || payload.offenders.length > 0) ? 'OVERFLOW' : 'OK';
   console.log('NARROW VERDICT: ' + verdict);
   if (JSON_OUT) {
-    fs.writeFileSync(JSON_OUT, JSON.stringify(Object.assign({ width: WIDTH, overflow, verdict }, payload), null, 2));
+    fs.writeFileSync(JSON_OUT, JSON.stringify(Object.assign({
+      width: WIDTH, overflow, verdict, attempts: tries, reading: reading
+    }, payload), null, 2));
   }
 
-  try { ws.close(); } catch (e) { /* ignore */ }
-  child.kill();
-  await sleep(200);
-  try { fs.rmSync(profile, { recursive: true, force: true }); } catch (e) { /* ignore */ }
-  process.exit(verdict === 'OK' ? 0 : 2);
+  await finish(verdict === 'OK' ? 0 : 2);
 }
 
 main().catch((e) => {

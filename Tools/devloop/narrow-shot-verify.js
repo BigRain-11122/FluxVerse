@@ -1,0 +1,75 @@
+// narrow-shot-verify.js - single source of truth for "is this narrow measurement real?"
+//
+// Why this exists (queue main#51): narrow-shot.js once reported
+// `NARROW VERDICT: OK` for a 390px run that had actually attached to another
+// instance's 1400px page (docH=844 vs a real 6679px document), so the shot was
+// the first screen only and the gate still passed. A false green here is worse
+// than a red: it hides panel breakage behind a "measured" claim.
+//
+// Two independent readings must agree before we trust a frame:
+//   - Emulation width vs document.documentElement.clientWidth (self-check that
+//     the viewport override really landed; a mismatch means we are looking at
+//     somebody else's page).
+//   - Page.getLayoutMetrics contentSize height vs the DOM scrollHeight.
+// Plus the "short page that is obviously not short" tell: a content height
+// under 800px while the page still has >20 rows of body text.
+//
+// Pure function, no I/O, so the judge itself can be pinned by a sandbox test.
+'use strict';
+
+const DEFAULTS = {
+  maxDiffRatio: 0.02,   // >2% disagreement between the two height readings
+  shortH: 800,          // a "full page" under this is suspicious
+  minRows: 20,          // ... only when the body clearly has many rows
+  widthTolerance: 1     // emulation width vs clientWidth rounding
+};
+
+function num(v) {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  if (typeof v === 'string' && v.trim() !== '') {
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function bad(reason, detail) {
+  return { ok: false, reason: reason, detail: detail, diff: null };
+}
+
+function judge(obs, opts) {
+  const o = Object.assign({}, DEFAULTS, opts || {});
+  const width = num(obs && obs.width);
+  const clientW = num(obs && obs.clientW);
+  const domH = num(obs && obs.domH);
+  const contentH = num(obs && obs.contentH);
+  const rowCount = num(obs && obs.rowCount);
+
+  if (width === null || clientW === null) {
+    return bad('width-missing', 'width=' + String(obs && obs.width) + ' clientW=' + String(obs && obs.clientW));
+  }
+  if (Math.abs(clientW - width) > o.widthTolerance) {
+    return bad('width-mismatch', 'asked=' + width + ' clientW=' + clientW);
+  }
+  if (contentH === null || contentH <= 0) {
+    return bad('height-missing', 'contentH=' + String(obs && obs.contentH));
+  }
+  if (domH === null || domH <= 0) {
+    return bad('height-missing', 'domH=' + String(obs && obs.domH));
+  }
+  if (contentH < o.shortH) {
+    // Fail closed: under the short threshold we can only clear the reading by
+    // proving the page really is short (few rows). An uncountable page is not
+    // proven short, so it must not earn an OK badge.
+    if (rowCount === null) return bad('rows-missing', 'contentH=' + contentH + ' rows=unknown');
+    if (rowCount > o.minRows) return bad('height-too-short', 'contentH=' + contentH + ' rows=' + rowCount);
+  }
+  const hi = Math.max(domH, contentH);
+  const lo = Math.min(domH, contentH);
+  const diff = (hi - lo) / hi;
+  const detail = 'domH=' + domH + ' contentH=' + contentH + ' diff=' + diff.toFixed(4);
+  if (diff > o.maxDiffRatio) return bad('height-disagree', detail);
+  return { ok: true, reason: '', detail: detail, diff: diff };
+}
+
+module.exports = { judge: judge, DEFAULTS: DEFAULTS };

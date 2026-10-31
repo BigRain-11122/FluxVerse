@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T21:37:11Z",
-    "current_activity":  "r758 收口：main#99——拆族。重沙盒 Tools/devloop/test-verify-ps-suites.ps1 单立第三族 verify2（独立票据、上限 120 s），light verify 族缩回八套并改用 -Suites 显式点名，Tools/perceptor/verify.ps1 新 §2j 令一 tick 至多一族重活；活跑三行全 HEALTH（light 67.9 s／180 s＝38%，heavy 71.8 s／120 s＝60%），r757 那条越线 WARN 当天下线。沙盒 124→148/148。",
-    "artifact":  "Tools/devloop/ps-suites-tick.ps1, Tools/perceptor/verify.ps1, Tools/devloop/test-verify-ps-suites.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
-    "artifact_utc":  "2026-10-31T21:37:11Z",
-    "milestone":  "下一棒：main#92——把 Tools/devloop/test-verify-path-census.ps1 的「verify 不 spawn shell」从字面 grep 升成 dot-source 链白名单式断言，白名单显式登记 Tools/devloop/ps-suites-tick.ps1 并写理由；随后 main#90 → main#98。指针 state/queue/main.md",
+    "updated_utc":  "2026-10-31T21:53:52Z",
+    "current_activity":  "r759 收口：main#92——「verify 不 spawn shell」从字面 grep 升成整条进程内链的普查。新模块 Tools/devloop/shell-chain-census.ps1 用 PS 分词器（注释不算、变量不算、字符串算）走 verify 的点载/调用链，实测链上 10 件文件、只有 Tools/devloop/ps-suites-tick.ps1 一处能起 shell 并已显式白名单署名，另两处 $MoveFile/$flush scriptblock 登记为动态缝；沙盒 Tools/devloop/test-verify-path-census.ps1 由 15 项升到 36 项（含「根文件里新增第二个 spawn」「两跳深的模块 spawn」「ProcessStartInfo 字符串形 spawn」三态必被抓，注释与 $cmd 变量必不误报），verify 轻族八套全绿 68.4 s／180 s＝38%。",
+    "artifact":  "Tools/devloop/shell-chain-census.ps1, Tools/devloop/test-verify-path-census.ps1, Tools/devloop/ps-suites-tick.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
+    "artifact_utc":  "2026-10-31T21:53:52Z",
+    "milestone":  "下一棒：main#90（队列 due 标记的散文引用边界）→ main#98（红票落 redtail= 原因）→ main#76 r671 缺档提示；指针 state/queue/main.md。验收=沙盒三态全绿后 Tools/devloop/run-ps-suites.ps1 -Verify 仍 failing=0。",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

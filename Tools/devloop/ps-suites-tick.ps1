@@ -116,6 +116,7 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\queue-due.ps1',
             'Tools\devloop\log-archive-duty.ps1',
             'Tools\devloop\archive-logs.ps1',
+            'Tools\devloop\shell-chain-census.ps1',
             'Tools\perceptor\verify.ps1',
             'Tools\devloop\fixtures\*\*'
         )

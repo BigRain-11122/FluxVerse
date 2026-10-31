@@ -337,6 +337,7 @@ def main(argv):
     scene_path = SCENE
     rebuild_path = REBUILD
     artifacts = True
+    offset = (0.0, 0.0)
     for i, a in enumerate(argv):
         if a == "--stamp" and i + 1 < len(argv):
             stamp = argv[i + 1]
@@ -348,6 +349,13 @@ def main(argv):
             scene_path = os.path.abspath(os.path.join(ROOT, argv[i + 1]))
         elif a == "--rebuild" and i + 1 < len(argv):
             rebuild_path = os.path.abspath(os.path.join(ROOT, argv[i + 1]))
+        elif a == "--offset" and i + 1 < len(argv):
+            # rehearsal probe (main#58): measure the block as if the R2 district were
+            # shifted by this city-local delta, without writing any scene to disk.
+            parts = argv[i + 1].split(",")
+            if len(parts) != 2:
+                die("--offset wants dx,dz")
+            offset = (float(parts[0]), float(parts[1]))
     if not os.path.isfile(scene_path):
         die("scene not found: " + scene_path)
     if not os.path.isfile(rebuild_path):
@@ -388,10 +396,10 @@ def main(argv):
 
     house_span = 13.9  # widest preset measured in r2-report.md (Preset_03)
     hx = house_span * 0.5 + lot_pad
-    bx0 = origin[0] + min(xs) - hx
-    bx1 = origin[0] + max(xs) + hx
-    bz0 = origin[1] + min(zs) - hx
-    bz1 = origin[1] + max(showcase_z, max(zs)) + hx
+    bx0 = origin[0] + min(xs) - hx + offset[0]
+    bx1 = origin[0] + max(xs) + hx + offset[0]
+    bz0 = origin[1] + min(zs) - hx + offset[1]
+    bz1 = origin[1] + max(showcase_z, max(zs)) + hx + offset[1]
 
     # obstruction raster: water + standing towers + pavement pad
     ras = Raster(min(plate_aabb[0], bx0) - 4, min(plate_aabb[1], bz0) - 4,
@@ -479,6 +487,8 @@ def main(argv):
     top = cands[:3]
 
     print("SITE_CHECK scene=%s" % os.path.basename(scene_path))
+    if offset != (0.0, 0.0):
+        print("offset=%.2f,%.2f (rehearsal probe: scene on disk is untouched)" % offset)
     print("water objects=%s aabb=x[%.1f..%.1f] z[%.1f..%.1f] tris=%d"
           % (",".join(water_names), water_aabb[0], water_aabb[2], water_aabb[1], water_aabb[3], len(tris)))
     print("plate aabb=x[%.1f..%.1f] z[%.1f..%.1f]" % (plate_aabb[0], plate_aabb[2], plate_aabb[1], plate_aabb[3]))

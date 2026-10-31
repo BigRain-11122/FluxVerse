@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T08:06:28Z",
-    "current_activity":  "r717 毕：街区压水不再只藏在 tick 日志里——面板取景卡多了「街区落位」一行，直接印「压水 91.7%｜最近干地 83 m」，房子还在湖上就红标。判据只有一份：新增 Tools/devloop/site-verdict.ps1，Tools/perceptor/verify.ps1 与 Tools/devloop/build-city-panel.ps1 同时引用，页面不自己写阈值；读数缺失如实写「未出结论」，不装没事。",
-    "artifact":  "Tools/devloop/site-verdict.ps1 · Tools/devloop/build-city-panel.ps1 · Tools/devloop/city-panel-template.html · Tools/perceptor/verify.ps1 · Tools/devloop/test-city-panel-proof.ps1 · logs/devloop-r708-panel-proof-test.js · Tools/devloop/test-verify-r2-site.ps1 · world-public/city-panel.html",
-    "artifact_utc":  "2026-10-31T08:06:28Z",
-    "milestone":  "下一步 main#54 落位修正（街区整体搬到干地，归 City3D 模块壳线）：判据=Tools/devloop/r2-site-check.py 复跑 block_water≤5% ＋ overview/gamedistrict/street 三帧证房在干地；随后 main#56 日志归档周期化（Tools/devloop/archive-logs.ps1 接 tick，失败只 WARN）。",
+    "updated_utc":  "2026-10-31T08:14:35Z",
+    "current_activity":  "r718 毕：把「搬不搬」变成一张能直接对比的图——街区整体平移到 r714 算出的全干锚点，只出图不存盘（场景 mtime 仍 10-11、git 零改动）。工具 Tools/devloop/city3d-rehearsal.ps1 只取景，Tools/devloop/r2-site-check.py 新 --offset 口径复算平移后的压水：A1 实测 0.0%，现状仍 91.7%。",
+    "artifact":  "qa/site/r2-reloc-A1-20261031-1612-bm-a-compare.jpg ｜ qa/site/r2-reloc-A1-20261031-1612-bm-a-overview.jpg ｜ Tools/devloop/city3d-rehearsal.ps1 ｜ Tools/devloop/r2-reloc-compare.ps1 ｜ Tools/devloop/r2-site-check.py",
+    "artifact_utc":  "2026-10-31T08:14:35Z",
+    "milestone":  "下一个：main#56 日志归档周期化——接进 tick 或每日教训，Tools/devloop/archive-logs.ps1 跑一次让 logs/ 的 \u003e14d 不再涨回去，失败只 WARN 不 FAIL；随后 main#54 落位修正（对照件已备好，归 City3D 模块壳线）。",
     "milestone_eta_utc":  "2026-11-01T14:00:00Z"
 }

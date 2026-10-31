@@ -80,6 +80,54 @@ public static class CityRebuildR2
         UnityEngine.Debug.Log("CITY3D_SHOTS_DONE shots=" + Report.Count);
     }
 
+    // 搬迁预演（main#58）：把整个 R2 街区平移到 r714 算出的全干锚点，只拍三帧对比，
+    // 供 main#54 决策「搬/不搬/缩」。**场景一律不存盘**——预演不得改变正典场景，
+    // 迁与不迁由 main#54 定。锚点走 City3D-staging/rehearsal-anchor.txt（ASCII "x,z,tag"）。
+    public static void RehearsalShots()
+    {
+        try { RunRehearsal(); }
+        catch (Exception e) { UnityEngine.Debug.LogError("CITY3D_REHEARSAL_FAIL: " + e); EditorApplication.Exit(1); }
+    }
+
+    static void RunRehearsal()
+    {
+        Directory.CreateDirectory(Shots);
+        var anchorFile = Path.Combine(Staging, "rehearsal-anchor.txt");
+        if (!File.Exists(anchorFile)) throw new Exception("anchor file missing: " + anchorFile);
+        var raw = File.ReadAllLines(anchorFile)[0].Split(',');
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        float ax = float.Parse(raw[0].Trim(), inv);
+        float az = float.Parse(raw[1].Trim(), inv);
+        string tag = raw.Length > 2 && raw[2].Trim().Length > 0 ? raw[2].Trim().ToUpperInvariant() : "A";
+
+        var scene = EditorSceneManager.OpenScene("Assets/Scenes/CityRebuild_R2.unity", OpenSceneMode.Single);
+        var cam = Camera.main;
+        if (cam == null) throw new Exception("no main camera in CityRebuild_R2 scene");
+        var cityGame = FindDistrict("City_GAME");
+        if (cityGame == null) throw new Exception("City_GAME not found");
+        var r2root = cityGame.transform.Find("R2_AD-021_District");
+        if (r2root == null) throw new Exception("R2_AD-021_District not found (run BatchEntry first)");
+
+        Vector3 before = r2root.localPosition;
+        r2root.localPosition = new Vector3(ax, before.y, az);
+        Vector3 world = r2root.position;
+
+        var plate = DeepFind(cityGame.transform.root, "Ground512");
+        FitShot(cam, "R2R_" + tag + "_L0_overview.png", plate != null ? WorldBounds(plate.gameObject) : SceneBounds(), 0f, 52f, 1.03f);
+        FitShot(cam, "R2R_" + tag + "_L1_gamedistrict.png", WorldBounds(r2root.gameObject), 18f, 30f, 1.04f);
+        StreetShot(cam, r2root, "R2R_" + tag + "_L2_street.png");
+
+        r2root.localPosition = before;
+        var lines = new List<string> {
+            "rehearsal_only=1 scene_not_saved=" + scene.path,
+            "anchor_local=(" + ax.ToString("F2", inv) + "," + az.ToString("F2", inv) + ") tag=" + tag,
+            "anchor_world=(" + world.x.ToString("F1", inv) + "," + world.z.ToString("F1", inv) + ")",
+            "shots=" + Report.Count
+        };
+        File.WriteAllLines(Path.Combine(Staging, "r2-rehearsal-" + tag + ".md"), lines.ToArray());
+        UnityEngine.Debug.Log("CITY3D_REHEARSAL_DONE shots=" + Report.Count + " tag=" + tag);
+    }
+
     static void Run()
     {
         var sw = Stopwatch.StartNew();

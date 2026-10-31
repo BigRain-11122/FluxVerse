@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T13:46:20Z",
-    "current_activity":  "r732 收口（main#71）：街面机位的道具遮挡比（r730 的 prop_cover）从「只活在取景报告」接到每 tick 巡检与面板——解析与 15% 红线单点化进 Tools/devloop/site-verdict.ps1（只认行首 street_pose:，street_control 是被 r730 取代的旧对照，误读会把旧 26.6% 当现值；Get-StreetPose 默认读 City3D-staging/r2-shots.md，FLUXVERSE_SHOTS_REPORT 可注入夹具）。Tools/perceptor/verify.ps1 §2d 的 r2-site 行尾印 prop_cover=（缺行 n/a 不失败闸，\u003e15% 转 WARN 并点名重解机位）；面板两处「街区落位」印「街面遮挡 X%」（缺档「未记录」不写 0，\u003e15% 转红）。实景 VERIFY HEALTH: r2-site: block_water=0.0% dry_candidates=31618 props_in_road=0 prop_cover=0.000 且 VERIFY PASS；页面 PROOF.site 实测携带 prop_cover、prop_cover_text、prop_cover_high 三键。沙盒 test-verify-r2-site 30/30、test-city-panel-proof 28/28、29 套 ALL PASS、COMPILE OK、390 窄屏 offenders=0。另两处改动面=Tools/devloop/build-city-panel.ps1 与 Tools/devloop/city-panel-template.html。",
-    "artifact":  "world-public/city-panel.html、City3D-staging/r2-shots.md、Tools/devloop/site-verdict.ps1、Tools/perceptor/verify.ps1",
-    "artifact_utc":  "2026-10-31T13:44:33Z",
-    "milestone":  "下一步 main#72（行道树 3×8 m 与贴街 1.00 m 的设计判断：街面帧要不要近处树列——要＝补碰撞体或设机位避让区禁植；不要＝整排退 ≥4 m 或缩 0.6；判据=同机位帧 prop_cover≤0.08 且 props_in_road=0 双保持），随后 main#73 把 Physics.SyncTransforms() 收成重建必经单点；改动落 City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs，读数仍出 City3D-staging/r2-shots.md。",
-    "milestone_eta_utc":  "2026-11-02T06:00:00Z"
+    "updated_utc":  "2026-10-31T14:27:14Z",
+    "current_activity":  "r733 收口：main#72 街面行道树——设计判断定谳「街面帧要近树列」，不碰底板正典（占位树隐身 53 件）改 ithappy Megacity 真树 10 株（6.0/6.75/7.5 m 三档归一、冠幅 ≤0.7×高、14 m 错列）＋路灯 5 盏（26 m 错半格）。本轮真增量=`PlaceStreetDress` 加「路缘净距守卫」：写 pos 的 2.6 m 只算意图，prefab pivot 不在包围盒中心、收冠幅又绕 pivot 做，实测近树 `lane_gap` 掉到 0.01 m（冠幅压路缘）；改为摆完按实测 AABB 与路带净距沿 z 外推到 ≥0.6 m。另加 `AxisBlockers()` 灭点窗归因行（10×10 采样按首个命中件点名，实测 `clear hits=0/100`），证明上一版 0.234 的读数来自中央 20% 窗而非「树顶掉灭点」本义；判据窗口定死中央 10%×10%（`prop_cover`），20% 窗记 `prop_w2` 参考，两个数同帧公示。实景 `street_pose: x=-119.7 facade=0.357 street_cover=0.284 prop_cover=0.000 prop_ray=0.464 prop_w2=0.172 near_pen=1.03 cand_ok=1/135 ok`；重建 `curb_min_gap=0.60`、`props_in_road=0`、`door_probe PASS clear=8.00m`、`showcase_bounds over=(0.00,0.00)`；`test-verify-r2-site` 30/30。改动面=City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs＋City3D-staging/r2-{report,shots}.md＋qa 六帧。",
+    "artifact":  "qa/city3d-shots-20261031-2225-bm-a-street.jpg、qa/city3d-shots-20261031-2225-bm-a-gamedistrict.jpg、qa/city3d-shots-20261031-2225-bm-a-showcase.jpg、City3D-staging/r2-shots.md、City3D-staging/r2-report.md",
+    "artifact_utc":  "2026-10-31T14:25:00Z",
+    "milestone":  "下一个 main#73：把重建里的物理同步收成「必经单点」——`Physics.SyncTransforms()` 现藏在 `AddPropColliders()` 内部，它今天走 added=0 空路径，一旦短路，`DoorProbe`/`IsBlocked` 的射线会悄悄退回位移前位姿而报告数字看起来正常；判据=报告新增 `physics_sync: calls=N at=`，人为短路同步点后 `door_probe` 必须从「有命中」退回 8.00 m 满程、恢复后逐位复原。改动面=City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs（Run 位移段之后）。",
+    "milestone_eta_utc":  "2026-11-01T06:00:00Z"
 }

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T07:46:45Z",
-    "current_activity":  "r715：治掉 logs/ 只增不减——新工具 Tools/devloop/archive-logs.ps1（候选＝14 天前、非 git-tracked、非代码扩展名、非 .lock、非 _archive；按月分卷 zip 落 logs/_archive/；删前逐条比对 zip 条目长度，任一条不符整卷不删 exit 2）＋沙盒 Tools/devloop/test-archive-logs.ps1 29/29。真机执行 2,174 件 / 43.6 MB 入归档卷 logs/_archive/logs-202610-part00-20261031-1543.zip（压缩后 34.7 MB），删后全量 CRC 复验 2174/2174 bad=0；\u003e14d 由 2,266 件降到 92 件（92 件全是保护面）。",
-    "artifact":  "logs/_archive/logs-202610-part00-20261031-1543.zip（归档包·可直接解压还原）＋ logs/_archive/manifest-20261031-154304.json（逐件 path/size/mtime 清单）＋ Tools/devloop/archive-logs.ps1（可复跑）＋ Tools/devloop/test-archive-logs.ps1（沙盒 29/29）＋ 产品面 world-public/city-panel.html（file:// 直接打开）",
-    "artifact_utc":  "2026-10-31T07:46:45Z",
-    "milestone":  "下一件＝main#55 把 Tools/devloop/r2-site-check.py 接进 Tools/perceptor/verify.ps1 巡检（每 tick 出 VERIFY HEALTH: r2-site 一行＋三夹具）；随后 main#56 归档周期化（接 tick，失败只 WARN）。main#54 落位执行仍等 City3D 模块壳线在「搬街区／铺基台」间裁定",
+    "updated_utc":  "2026-10-31T07:55:55Z",
+    "current_activity":  "r716：r714 测出的「街区压水 91.7%」不再是一份手跑死报告——接进巡检每 10 分钟自己播报。Tools/devloop/r2-site-check.py 增 --no-artifacts（只出摘要行、不出图、不依赖 Pillow，否则一天 144 张图埋掉 qa/site）与 --scene/--rebuild 夹具开关；Tools/perceptor/verify.ps1 新增 §2d，每 tick 打一行 VERIFY HEALTH: r2-site: block_water=…% dry_candidates=…，压水 \u003e50% 或栅格/点—三角互校不一致翻 WARN 点名，场景或 python 缺失一律 WARN 不 FAIL。真机读数 block_water=91.7% dry_candidates=28274（与 r714 逐位一致），verify PASS、整轮 2 秒。",
+    "artifact":  "Tools/perceptor/verify.ps1 （新 §2d·每 tick 出 r2-site 读数） ＋ Tools/devloop/r2-site-check.py （--no-artifacts 巡检模式） ＋ Tools/devloop/test-verify-r2-site.ps1 （沙盒 16/16·跑真 verify 对三夹具） ＋ Tools/devloop/fixtures/r2-site/scene-dry.unity ＋ Tools/devloop/fixtures/r2-site/scene-wet.unity ＋ Tools/devloop/fixtures/r2-site/rebuild-fixture.cs ＋ world-public/city-panel.html （file:// 直接打开）",
+    "artifact_utc":  "2026-10-31T07:55:55Z",
+    "milestone":  "下一件＝main#57 把落位结论印到面板城市取景卡（压水 91.7%｜最近干地 83 m，读数与 verify 同一判据，禁另写阈值）；随后 main#56 归档周期化。main#54 搬街区/铺基台仍待 City3D 模块壳线裁定——现在它每 tick 都有实时读数可依。",
     "milestone_eta_utc":  "2026-11-01T14:00:00Z"
 }

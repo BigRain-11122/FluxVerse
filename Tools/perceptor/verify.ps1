@@ -217,6 +217,78 @@ if (Test-Path -LiteralPath $shotModule) {
   }
 }
 
+# ---------- 2d. R2 district site check (main#55, r716) ----------
+# r713/r714 found the R2 district standing 91.7% over the L_Water mesh, and the
+# answer only lived in a hand-run report: move the block or reshape the water
+# and the panel would keep quoting the old number forever. The checker itself
+# (Tools\devloop\r2-site-check.py) is read-only and needs no Unity, so verify
+# runs it every tick in --no-artifacts mode (summary lines only, no map files)
+# and republishes its verdict on the console.
+# WARN, not FAIL - same stance as 2b/2c: an observation, not a broken city. A
+# missing scene / missing python is a WARN too; a moved read path must never
+# take the whole city scan down with it.
+$siteScript = Join-Path $repoRoot 'Tools\devloop\r2-site-check.py'
+if (Test-Path -LiteralPath $siteScript) {
+  $pyExe = $env:FLUXVERSE_PYTHON
+  if (-not $pyExe) {
+    foreach ($cand in @('python', 'py')) {
+      $cmd = Get-Command $cand -ErrorAction SilentlyContinue
+      if ($cmd) { $pyExe = $cmd.Source; break }
+    }
+  }
+  if (-not $pyExe) {
+    Write-Output 'VERIFY WARN: r2-site: no python interpreter on PATH - site check skipped'
+  } else {
+    $siteArgs = @(('"' + $siteScript + '"'), '--no-artifacts')
+    if ($env:FLUXVERSE_SITE_SCENE) { $siteArgs += @('--scene', ('"' + $env:FLUXVERSE_SITE_SCENE + '"')) }
+    if ($env:FLUXVERSE_SITE_REBUILD) { $siteArgs += @('--rebuild', ('"' + $env:FLUXVERSE_SITE_REBUILD + '"')) }
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $pyExe
+    $psi.Arguments = ($siteArgs -join ' ')
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.WorkingDirectory = $repoRoot
+    $siteOut = ''
+    $siteErr = ''
+    $siteExit = -1
+    $proc = $null
+    try {
+      $proc = [System.Diagnostics.Process]::Start($psi)
+      $outTask = $proc.StandardOutput.ReadToEndAsync()
+      $errTask = $proc.StandardError.ReadToEndAsync()
+      if ($proc.WaitForExit(120000)) { $siteExit = $proc.ExitCode } else { try { $proc.Kill() } catch { }; $siteExit = -2 }
+      $siteOut = [string]$outTask.Result
+      $siteErr = [string]$errTask.Result
+    } catch {
+      $siteExit = -3
+    } finally {
+      if ($proc) { try { $proc.Dispose() } catch { } }
+    }
+    $mCov = [regex]::Match($siteOut, 'block_water_coverage=([\d.]+)%')
+    $mDry = [regex]::Match($siteOut, 'dry_candidates=(\d+)')
+    $mVerdict = [regex]::Match($siteOut, 'SITE_VERDICT=([A-Z_]+)')
+    if ($mCov.Success -and $mDry.Success -and $mVerdict.Success -and $mVerdict.Groups[1].Value -eq 'INCONSISTENT') {
+      Write-Output ('VERIFY WARN: r2-site: block_water=' + $mCov.Groups[1].Value + '% dry_candidates=' + $mDry.Groups[1].Value + ' - raster and point-in-triangle disagree; read the checker, not the number')
+    } elseif ($siteExit -ne 0 -or -not $mCov.Success -or -not $mDry.Success) {
+      # No 'FAIL' token in this message: the tick red-scan keys on that word.
+      $reason = 'exit ' + $siteExit
+      if ($siteErr.Trim()) { $reason = $reason + ': ' + (($siteErr.Trim() -split "`n")[0]) }
+      $reason = $reason -replace 'FAIL', 'ERR'
+      Write-Output ('VERIFY WARN: r2-site: the district site check produced no verdict (' + $reason + ') - scene or rebuild script moved?')
+    } else {
+      $siteLine = 'r2-site: block_water=' + $mCov.Groups[1].Value + '% dry_candidates=' + $mDry.Groups[1].Value
+      $cov = [double]$mCov.Groups[1].Value
+      if ($cov -gt 50.0) {
+        Write-Output ('VERIFY WARN: ' + $siteLine + ' - the R2 district stands over water; run Tools\devloop\r2-site-check.py for the nearest dry patch')
+      } else {
+        Write-Output ('VERIFY HEALTH: ' + $siteLine)
+      }
+    }
+  }
+}
+
 # ---------- verdict ----------
 if ($fail.Count -gt 0) {
   $fail | ForEach-Object { Write-Output ('VERIFY FAIL: ' + $_) }

@@ -12,6 +12,13 @@ Deterministic and read-only: it never touches the scene or the assets.
 
 Usage:
   python Tools/devloop/r2-site-check.py [--stamp YYYYMMDD-HHMM] [--out-dir qa]
+                                       [--no-artifacts] [--scene PATH] [--rebuild PATH]
+
+--no-artifacts prints only the summary lines (no PNG / MD, no Pillow needed):
+that is the mode Tools/perceptor/verify.ps1 calls once per tick, so a check
+every ten minutes does not bury qa/site under 144 maps a day.
+--scene / --rebuild point the checker at fixture copies; the default targets
+are the live City3D scene and its rebuild script.
 """
 
 import io
@@ -312,19 +319,43 @@ class Raster(object):
         return self.covered(x0, z0, x1, z1) > 0.0
 
 
+# ---------------------------------------------------------------- verdict
+def report_verdict(cur_cov, top, drift):
+    if drift > 5.0:
+        print("SITE_VERDICT=INCONSISTENT raster-vs-exact drift %.1fpp" % drift)
+        return 1
+    print("SITE_VERDICT=%s block_water=%.1f%% nearest_dry=%s"
+          % ("OVER_WATER" if cur_cov > 0.5 else "DRY", cur_cov * 100.0,
+             ("%.0fm" % top[0][0]) if top else "none"))
+    return 0
+
+
 # ---------------------------------------------------------------- main
 def main(argv):
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
     out_dir = os.path.join(ROOT, "qa")
+    scene_path = SCENE
+    rebuild_path = REBUILD
+    artifacts = True
     for i, a in enumerate(argv):
         if a == "--stamp" and i + 1 < len(argv):
             stamp = argv[i + 1]
         elif a == "--out-dir" and i + 1 < len(argv):
             out_dir = os.path.join(ROOT, argv[i + 1])
-    if not os.path.isdir(out_dir):
+        elif a == "--no-artifacts":
+            artifacts = False
+        elif a == "--scene" and i + 1 < len(argv):
+            scene_path = os.path.abspath(os.path.join(ROOT, argv[i + 1]))
+        elif a == "--rebuild" and i + 1 < len(argv):
+            rebuild_path = os.path.abspath(os.path.join(ROOT, argv[i + 1]))
+    if not os.path.isfile(scene_path):
+        die("scene not found: " + scene_path)
+    if not os.path.isfile(rebuild_path):
+        die("rebuild script not found: " + rebuild_path)
+    if artifacts and not os.path.isdir(out_dir):
         die("out dir missing: " + out_dir)
 
-    sc = Scene(SCENE)
+    sc = Scene(scene_path)
     tris, water_aabb = [], None
     water_names = []
     for gid, nm in sorted(sc.names.items()):
@@ -348,7 +379,7 @@ def main(argv):
     if plate_aabb is None:
         die("Ground512 bounds unreadable")
 
-    xs, zs, showcase_z, lot_pad = parse_block(REBUILD)
+    xs, zs, showcase_z, lot_pad = parse_block(rebuild_path)
     city_id = sc.go_id("City_GAME")
     if city_id is None:
         die("City_GAME not found")
@@ -447,7 +478,7 @@ def main(argv):
     cands.sort()
     top = cands[:3]
 
-    print("SITE_CHECK scene=%s" % os.path.basename(SCENE))
+    print("SITE_CHECK scene=%s" % os.path.basename(scene_path))
     print("water objects=%s aabb=x[%.1f..%.1f] z[%.1f..%.1f] tris=%d"
           % (",".join(water_names), water_aabb[0], water_aabb[2], water_aabb[1], water_aabb[3], len(tris)))
     print("plate aabb=x[%.1f..%.1f] z[%.1f..%.1f]" % (plate_aabb[0], plate_aabb[2], plate_aabb[1], plate_aabb[3]))
@@ -462,6 +493,8 @@ def main(argv):
                  x + width * 0.5 - origin[0], z + depth * 0.5 - origin[1]))
 
     # ------------------------------------------------------------- png map
+    if not artifacts:
+        return report_verdict(cur_cov, top, drift)
     try:
         from PIL import Image, ImageDraw, ImageFont
     except Exception as exc:
@@ -540,13 +573,7 @@ def main(argv):
 
     print("map=" + os.path.relpath(png_path, ROOT).replace("\\", "/"))
     print("md=" + os.path.relpath(md_path, ROOT).replace("\\", "/"))
-    if drift > 5.0:
-        print("SITE_VERDICT=INCONSISTENT raster-vs-exact drift %.1fpp" % drift)
-        return 1
-    print("SITE_VERDICT=%s block_water=%.1f%% nearest_dry=%s"
-          % ("OVER_WATER" if cur_cov > 0.5 else "DRY", cur_cov * 100.0,
-             ("%.0fm" % top[0][0]) if top else "none"))
-    return 0
+    return report_verdict(cur_cov, top, drift)
 
 
 if __name__ == "__main__":

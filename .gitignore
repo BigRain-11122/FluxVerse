@@ -40,3 +40,9 @@ City3D/Assets/ithappy/
 
 # Playwright MCP browser session artifacts (r384: snapshot/console auto-dump dir - tool cache, never committable)
 .playwright-mcp/
+
+# Python bytecode (r716: verify now runs Tools/devloop/r2-site-check.py every tick;
+# a stray import would drop __pycache__ into the tree, and a dirty tree fires a
+# FULL-ROUND on every fastpath check)
+__pycache__/
+*.pyc

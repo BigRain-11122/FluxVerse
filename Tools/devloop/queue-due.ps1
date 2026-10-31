@@ -46,6 +46,16 @@
 #         (that is a real misplacement the next reader must fix).
 #    Fail-closed on the other side: an unpaired backtick does not swallow the
 #    rest of a cell - only paired spans are masked.
+#  - QUOTED DEADLINES ARE COUNTED, NOT JUDGED (main#101). Rule (a) above means a
+#    real deadline written inside backticks becomes invisible: it neither dates
+#    the row nor reports as bad - it just disappears, which is the opposite of
+#    main#85's "never silently drop a deadline". Counting it as bad would accuse
+#    every row that shows the format template, so the fix is a read-only census:
+#    `code` = number of STRICT (due=YYYY-MM-DD, real calendar day) markers hidden
+#    inside a paired backtick span in the REMARK cell. Zero is the normal state;
+#    a non-zero number is not a verdict, it is the queue saying "these dates are
+#    quoted, look at them yourself". Quoted markers in other cells stay silent -
+#    they are citations by construction, and every doc row would be a hit.
 # Read-only, fail-soft: a missing/empty directory ships exists=false and the
 # page says so instead of printing a comfortable zero.
 # ASCII-only (PS 5.1 GBK law): the CJK rows live in the UTF-8 queue files.
@@ -146,9 +156,11 @@ function Get-QueueDue
         max_days = 0
         max_id   = ''
         bad      = 0
+        code     = 0
         as_of    = $Today.Date.ToString('yyyy-MM-dd')
         items    = @()
         bad_items = @()
+        code_items = @()
     }
     if ([string]::IsNullOrEmpty($Dir)) { return $r }
     if (-not (Test-Path -LiteralPath $Dir)) { return $r }
@@ -168,6 +180,7 @@ function Get-QueueDue
 
     $items = New-Object System.Collections.ArrayList
     $badItems = New-Object System.Collections.ArrayList
+    $codeItems = New-Object System.Collections.ArrayList
     $files = 0
     $rows = 0
     $opens = 0
@@ -211,6 +224,25 @@ function Get-QueueDue
                     file   = $f.Name
                     token  = $bt.token
                     reason = $bt.reason
+                })
+            }
+
+            # Quoted deadlines in the remark cell (main#101): a strict marker
+            # that sits inside a paired backtick span is invisible by design
+            # (main#90 rule a) - count it so a deadline that walked into a quote
+            # is at least seen. Masking keeps offsets, so "the same span is
+            # blank in the masked row" is exactly "this marker was quoted".
+            foreach ($cm in [regex]::Matches($t, 'due=(\d{4})-(\d{2})-(\d{2})')) {
+                if ($cm.Index + $cm.Length -gt $masked.Length) { continue }
+                $cmCell = ($t.Substring(0, $cm.Index).Split('|')).Count - 1
+                if ($cmCell -ne $remarkIndex) { continue }
+                $cmVal = $cm.Groups[1].Value + '-' + $cm.Groups[2].Value + '-' + $cm.Groups[3].Value
+                if (-not (Test-DueValueShape $cmVal)) { continue }
+                if ($masked.Substring($cm.Index, $cm.Length).Trim().Length -gt 0) { continue }
+                $null = $codeItems.Add([ordered]@{
+                    id    = $idTxt
+                    file  = $f.Name
+                    token = $cm.Value
                 })
             }
 
@@ -267,7 +299,9 @@ function Get-QueueDue
     $r.dated = $dated
     $r.late = $items.Count
     $r.bad = $badItems.Count
+    $r.code = $codeItems.Count
     if ($badItems.Count -gt 0) { $r.bad_items = @($badItems) }
+    if ($codeItems.Count -gt 0) { $r.code_items = @($codeItems) }
     if ($items.Count -gt 0) {
         $r.items = @($items | Sort-Object -Property @{ Expression = { $_.days } } -Descending)
     }

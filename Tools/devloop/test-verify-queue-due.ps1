@@ -12,6 +12,8 @@
 #      and a missing directory are WARNs, never a FAIL and never a silent zero
 #   3. prose in a non-remark cell does not make a row accuse itself
 #      (the r747 false-hit class: 5 hits on the author's own row)
+#   4. a strict deadline quoted in backticks (invisible by rule) is reported as
+#      a read-only `code=` count - it never turns the line red (main#101)
 #
 # Boundary: verify.ps1 is executed for real (read-only against world state; it
 # only rewrites the event cursor with the same count). The live queue is read
@@ -90,6 +92,16 @@ $dirLate = New-Queue 'late' @"
 | 1 | open, overdue | p | due=2026-01-05 |
 "@
 
+# quoted (main#101): a strict deadline written inside backticks dates nothing,
+# so it silently disappears - the read-only code= count is what makes it visible
+$dirCode = New-Queue 'code' @'
+# fixture queue: quoted deadline
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | quoted real deadline | p | `due=2026-01-05` |
+'@
+
 # ---------- 1. live machine --------------------------------------------------
 $out = Run-Verify ''
 $text = $out -join "`n"
@@ -101,6 +113,7 @@ if ($live.Count -eq 1) {
   Check 'live line carries late=' ($live[0] -match 'late=\d+') $live[0]
   Check 'live line carries max=' ($live[0] -match 'max=\d+d') $live[0]
   Check 'live line carries bad=' ($live[0] -match 'bad=\d+') $live[0]
+  Check 'live line carries code=' ($live[0] -match 'code=\d+') $live[0]
 }
 Check 'live gate still passes with the census wired' ($text -match 'VERIFY PASS') $text
 Check 'live census text contains no FAIL token' (-not ($text -match 'FAIL')) $text
@@ -151,6 +164,18 @@ if ($w5.Count -eq 1) {
   Check 'WARN names the overdue row' ($w5[0] -match '#1 \d+d') $w5[0]
 }
 Check 'overdue fixture does not fail the gate' ($text5 -match 'VERIFY PASS') $text5
+
+# ---------- 5b. quoted deadline -> code=1, still HEALTH, still no FAIL -------
+$out5b = Run-Verify $dirCode
+$text5b = $out5b -join "`n"
+$h5b = @(Get-QdueLine $out5b)
+Check 'quoted fixture prints one qdue line' ($h5b.Count -eq 1) $text5b
+if ($h5b.Count -eq 1) {
+  Check 'quoted fixture reports code=1' ($h5b[0] -match 'code=1(?!\d)') $h5b[0]
+  Check 'quoted fixture still stays HEALTH (a count is not a verdict)' ($h5b[0] -match '^VERIFY HEALTH: qdue:') $h5b[0]
+  Check 'quoted fixture counts no deadline' ($h5b[0] -match 'dated=0(?!\d)') $h5b[0]
+}
+Check 'quoted fixture text contains no FAIL token' (-not ($text5b -match 'FAIL')) $text5b
 
 # ---------- 6. missing directory -> WARN "unknown", never zero --------------
 $missing = Join-Path $sandbox 'no-such-queue'

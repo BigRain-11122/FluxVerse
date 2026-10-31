@@ -154,5 +154,23 @@ chk('real.row-present', realHtml.indexOf('id="f-queue"') >= 0);
 chk('real.const-present', /const QUEUE = \{/.test(realHtml));
 chk('real.no-placeholder', realHtml.indexOf('__QUEUE_JSON__') < 0);
 
+// --- 9) quoted deadlines (queue main#101) ---------------------------------
+// `due=YYYY-MM-DD` inside backticks is a quotation, so it dates nothing - which
+// is exactly how a real deadline can vanish. The page shows a read-only count
+// and never a warn chip: the number is a question, not a verdict.
+const quoted = {
+  exists: true, dir_rel: 'state/queue', files: 1, scanned: 4, open: 4, dated: 1, late: 0,
+  max_days: 0, max_id: '', bad: 0, code: 1, as_of: '2026-11-01', items: [],
+  code_items: [{ id: '1', file: 'queue-i.md', token: 'due=2026-10-20' }]
+};
+const e9 = runPanel(withQueue(quoted), 'quoted')('f-queue');
+chk('code.count-shown', e9.innerHTML.indexOf('引号内期限 1 处') >= 0, e9.innerHTML);
+chk('code.ids', e9.innerHTML.indexOf('（#1）') >= 0, e9.innerHTML);
+chk('code.says-not-counted', e9.innerHTML.indexOf('不计期限') >= 0, e9.innerHTML);
+chk('code.not-a-warn-chip', e9.innerHTML.indexOf('tag warn') < 0, e9.innerHTML);
+chk('code.keeps-ok-chip', e9.innerHTML.indexOf('tag ok') >= 0, e9.innerHTML);
+const e10 = runPanel(withQueue(calm), 'calm2')('f-queue');
+chk('code.absent-when-zero', e10.innerHTML.indexOf('引号内期限') < 0, e10.innerHTML);
+
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 if (fail > 0) process.exit(1);

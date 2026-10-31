@@ -24,6 +24,11 @@
 #   H) inline code (main#90 rule a): backticked spans are quotations in EVERY
 #      cell, including the remark cell; an unpaired backtick must not be able
 #      to hide a real marker behind it.
+#   I) a deadline that walked into a quote (main#101): rule (a) makes it date
+#      nothing and report nothing - invisible. A read-only `code` count makes it
+#      visible without accusing every row that shows the format template; only
+#      strict, calendar-valid markers inside paired backticks in the REMARK cell
+#      are counted.
 # ASCII-only law: fixtures are ASCII; the live CJK rows are only counted.
 
 $ErrorActionPreference = 'Stop'
@@ -120,12 +125,32 @@ $rowH = @'
 '@
 Write-TextFile (Join-Path $qdirH 'queue-h.md') $rowH
 
+# --- I) quoted strict deadlines are counted, not judged (main#101) ----------
+# A strict marker inside backticks is a citation by rule (main#90a), so it dates
+# nothing and reports nothing - i.e. a deadline written that way vanishes in
+# silence. The count makes it visible without turning every template example
+# into a red mark.
+$qdirI = Join-Path $sandbox 'queueI'
+New-Item -ItemType Directory -Path $qdirI -Force | Out-Null
+$rowI = @'
+# fixture queue: deadlines that walked into a quote
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | quoted real deadline in the remark cell | p | `due=2026-10-20` |
+| 2 | plain deadline | p | due=2026-12-25 |
+| 3 | quoted broken form | p | `due=2026-1-5` |
+| 4 | quoted date in a prose cell | see `due=2026-10-01` | nothing here |
+'@
+Write-TextFile (Join-Path $qdirI 'queue-i.md') $rowI
+
 # --- results ---------------------------------------------------------------
 $A = Get-QueueDue -Dir $qdirA -Today $today
 $B = Get-QueueDue -Dir $qdirB -Today $today
 $QF = Get-QueueDue -Dir $qdirF -Today $today
 $QG = Get-QueueDue -Dir $qdirG -Today $today
 $QH = Get-QueueDue -Dir $qdirH -Today $today
+$QI = Get-QueueDue -Dir $qdirI -Today $today
 
 # --- C) live queue, independent recount ------------------------------------
 $qdirLive = Join-Path $repoDir 'state\queue'
@@ -177,6 +202,13 @@ $logE = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
         -OutPath $outE -HistoryPath (Join-Path $sandbox 'hist-e.jsonl')) -join "`n"
 $htmlE = ''
 if (Test-Path -LiteralPath $outE) { $htmlE = [IO.File]::ReadAllText($outE) }
+
+$outI = Join-Path $sandbox 'panel-i.html'
+$logI = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
+        -ProofRoot $repoDir -QueueDir $qdirI `
+        -OutPath $outI -HistoryPath (Join-Path $sandbox 'hist-i.jsonl')) -join "`n"
+$htmlI = ''
+if (Test-Path -LiteralPath $outI) { $htmlI = [IO.File]::ReadAllText($outI) }
 
 $pass = 0
 $fail = 0
@@ -242,6 +274,17 @@ Check 'H: quoted broken form is not bad' ($QH.bad -eq 0)
 Check 'H: a quoted date in a prose cell declares nothing' ($QH.max_id -eq '5')
 Check 'H: an unpaired backtick cannot hide a real marker' ($QH.late -eq 1 -and $QH.max_days -eq 12)
 Check 'H: the plain deadline is still honoured' (@($QH.items | Where-Object { $_.id -eq '5' }).Count -eq 1)
+Check 'H: a quoted strict marker in the remark cell is counted' ($QH.code -eq 1)
+Check 'H: code items agree with the code count' (@($QH.code_items).Count -eq $QH.code)
+
+Check 'I: four rows scanned' ($QI.scanned -eq 4)
+Check 'I: one quoted strict marker counted' ($QI.code -eq 1)
+Check 'I: the quoted row is named' (((@($QI.code_items | ForEach-Object { $_.id })) -join ',') -eq '1')
+Check 'I: a quoted marker dates nothing' ($QI.dated -eq 1)
+Check 'I: a quoted marker is never late' ($QI.late -eq 0)
+Check 'I: a quoted broken form is not counted (not strict)' (@($QI.code_items | Where-Object { $_.id -eq '3' }).Count -eq 0)
+Check 'I: a quoted date in a prose cell is not counted' (@($QI.code_items | Where-Object { $_.id -eq '4' }).Count -eq 0)
+Check 'I: code census never makes a marker bad' ($QI.bad -eq 0)
 
 Check 'D: builder reported PANEL OK' ($logD -match 'PANEL OK')
 Check 'D: fixture queue reports one late' ($logD -match 'qdue=1(?!\d)')
@@ -249,11 +292,16 @@ Check 'D: fixture queue reports 12 days' ($logD -match 'qdue_max=12(?!\d)')
 Check 'D: page carries the queue row' ($htmlD.Contains('id="f-queue"'))
 Check 'D: page carries the counter' ($htmlD.Contains('const QUEUE ='))
 Check 'D: an unreadable date is reported as bad, not dropped' ($logD -match 'qdue_bad=1(?!\d)')
+Check 'D: a queue with no quoted deadline reports code=0' ($logD -match 'qdue_code=0(?!\d)')
 
 Check 'E: missing queue dir still builds' ($logE -match 'PANEL OK')
 Check 'E: missing queue dir says missing, not zero' ($logE -match 'qdue=missing')
 Check 'E: missing queue dir says bad=missing too' ($logE -match 'qdue_bad=missing')
+Check 'E: missing queue dir says code=missing too' ($logE -match 'qdue_code=missing')
 Check 'E: page still carries the row element' ($htmlE.Contains('id="f-queue"'))
+
+Check 'I: builder reports the quoted count' ($logI -match 'PANEL OK' -and $logI -match 'qdue_code=1(?!\d)')
+Check 'I: the quoted count reaches the page data' ($htmlI.Contains('code_items'))
 
 if (Test-Path -LiteralPath $sandbox) { Remove-Item -LiteralPath $sandbox -Recurse -Force }
 

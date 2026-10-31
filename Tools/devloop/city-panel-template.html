@@ -260,8 +260,11 @@ const TICK = __TICK_JSON__;
 // the remain= field, so the page says "not recorded" rather than 0).
 const ARCH = __ARCH_JSON__;
 // QUEUE = the self-drive queues' overdue counter ({exists,files,scanned,open,
-// dated,late,max_days,max_id,as_of,items:[{id,file,due,days}]}), computed by
-// Tools/devloop/queue-due.ps1 from the rows' own `due=YYYY-MM-DD` markers.
+// dated,late,max_days,max_id,as_of,bad,code,items:[{id,file,due,days}]}), computed
+// by Tools/devloop/queue-due.ps1 from the rows' own `due=YYYY-MM-DD` markers.
+// `bad` counts markers written in a shape the counter cannot read; `code` counts
+// strict markers hidden inside backticks in the remark cell (a quotation is not
+// a declaration, so it dates nothing - the number is shown so it is not silent).
 // The page never recounts: builder is the single number source (queue main#83).
 const QUEUE = __QUEUE_JSON__;
 // SHOTS = builder-resolved City3D evidence frames from qa/ ({items:[{name,rel,
@@ -589,6 +592,19 @@ function artTitle(it){
         ' · 未计入期限' + (late > 0 ? '' : (' · 在队 ' + open + ' 件（带期限 ' + dated + '）')) +
         '</span>')
       : '';
+    // 引号里的期限（queue main#101）：反引号＝引用，于是写在反引号里的真期限既不
+    // 算期限也不报坏——静默消失，方向与「不静默丢期限」相反。开红灯会冤枉每一行
+    // 举格式模板的示例，所以只给读数：有几处、在哪几行，判不判由读的人定。
+    const code = (typeof Q.code === 'number') ? Q.code : 0;
+    const codeIds = (Array.isArray(Q.code_items) ? Q.code_items : [])
+      .map(function (it) { return (it && it.id) ? ('#' + it.id) : ''; })
+      .filter(function (s) { return s !== ''; })
+      .slice(0, 3);
+    const codeTxt = code > 0
+      ? ('<span class="muted"> · 引号内期限 ' + code + ' 处' +
+        (codeIds.length ? ('（' + codeIds.join(' · ') + '）') : '') +
+        ' 不计期限</span>')
+      : '';
     if (late > 0) {
       // r749（main#87）：点名「哪几行」逾期，而不只是「几件」。此前只有最久
       // 一行的 id，读者还得自己翻文件去数；标记面本就带每一行，直接印前五条。
@@ -604,12 +620,13 @@ function artTitle(it){
         (lateIds.length
           ? ('<span class="muted"> · 逾期行 ' + esc(lateIds.join(' · ')) +
             (late > lateIds.length ? ' …' : '') + '</span>')
-          : '') + badTxt;
+          : '') + badTxt + codeTxt;
     } else if (bad > 0) {
-      el.innerHTML = badTxt;
+      el.innerHTML = badTxt + codeTxt;
     } else {
       el.innerHTML = '<span class="tag ok">无逾期</span>' +
-        '<span class="muted"> 在队 ' + open + ' 件（带期限 ' + dated + '）</span>';
+        '<span class="muted"> 在队 ' + open + ' 件（带期限 ' + dated + '）</span>' +
+        codeTxt;
     }
   })();
 

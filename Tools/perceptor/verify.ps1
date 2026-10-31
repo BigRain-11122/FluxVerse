@@ -411,7 +411,7 @@ if (-not (Test-Path -LiteralPath $qdueMod)) {
     } elseif (-not $qd.exists) {
       Write-Output ('VERIFY WARN: qdue: queue dir not readable (' + $qdir + ') - open/late/bad unknown, not zero')
     } else {
-      $qLine = 'qdue: open=' + $qd.open + ' dated=' + $qd.dated + ' late=' + $qd.late + ' max=' + $qd.max_days + 'd bad=' + $qd.bad
+      $qLine = 'qdue: open=' + $qd.open + ' dated=' + $qd.dated + ' late=' + $qd.late + ' max=' + $qd.max_days + 'd bad=' + $qd.bad + ' code=' + $qd.code
       if ($qd.bad -gt 0) {
         $qBad = @($qd.bad_items | ForEach-Object { '#' + $_.id + '(' + $_.token + ' ' + $_.reason + ')' })
         Write-Output ('VERIFY WARN: ' + $qLine + ' - badly written due markers: ' + ($qBad -join ', ') + '; the remark cell wants due=YYYY-MM-DD')

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T22:26:13Z",
-    "current_activity":  "r761 收口：main#98——红票第一次说得出自己为什么红。r754 让票据记下红套件名字（reds=），但同一行里 runner 早就印着该套最后一句输出，那份原因被丢掉了，于是偶发红只能靠复跑说「现在绿了」。现在单凶手时票据多一列 redtail=（折叠成一行、纯 ASCII、截 200 字符、红词根改写为 red 以守 r750 的 VERIFY 禁词律），缓存红同样带得出原因，WARN 行直接印出来。重沙盒 Tools/devloop/test-verify-ps-suites.ps1 148→158/158。",
-    "artifact":  "Tools/devloop/ps-suites-tick.ps1, Tools/devloop/test-verify-ps-suites.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
-    "artifact_utc":  "2026-10-31T22:26:13Z",
-    "milestone":  "下一棒：main#101（反引号掩掉真期限 → 面板/巡检增 qdue_code= 只读计数）→ main#102（表格行缺收尾竖线时备注格错位且不吭声）→ main#76 r671 缺档提示；指针 state/queue/main.md。验收=沙盒两态全绿且 Tools/devloop/run-ps-suites.ps1 -Verify 仍 failing=0。",
+    "updated_utc":  "2026-10-31T23:56:54Z",
+    "current_activity":  "r762 收口：main#101——反引号里的真期限不再静默消失。r760 把成对反引号当引用来掩（引用不是声明），代价是写在反引号里的真期限既不报坏也不算期限，静默蒸发。开红灯会冤枉每一行举格式模板的示例，所以本轮只加读数：queue-due 多算 code（备注格里被反引号掩掉的严格标记数，只认真实日历日），面板队列行印「引号内期限 N 处（#id）不计期限」且绝不转红，verify 每 tick 行多一列 code=。活队列实测 qdue_code=0。沙盒 Tools/devloop/test-queue-due.ps1 62→76/76、verify 侧 33→37 全绿、面板队列渲染套 33→39。",
+    "artifact":  "Tools/devloop/queue-due.ps1, Tools/devloop/test-queue-due.ps1, Tools/devloop/test-verify-queue-due.ps1, Tools/perceptor/verify.ps1, Tools/devloop/build-city-panel.ps1, Tools/devloop/city-panel-template.html, logs/devloop-r745-panel-queue-test.js, qa/city-panel-narrow.png, ./TECH.md",
+    "artifact_utc":  "2026-10-31T23:56:54Z",
+    "milestone":  "下一棒：main#102（表格行缺收尾竖线时备注格整格错位且机器一声不响 → 改用行尾竖线定备注格 + 坏形状行不静默）→ main#76 r671 缺档提示 → main#77 -NoLiveCheck 白名单普查；指针 state/queue/main.md。验收=沙盒两态全绿且 Tools/devloop/run-ps-suites.ps1 -Verify 仍 failing=0。",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

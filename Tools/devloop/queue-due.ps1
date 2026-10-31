@@ -1,4 +1,4 @@
-﻿# queue-due.ps1 - machine-visible overdue count for the self-drive queues
+# queue-due.ps1 - machine-visible overdue count for the self-drive queues
 # (queue main#83).
 # ---------------------------------------------------------------------------
 # Why: queue rows carry real deadlines, but they lived as free prose inside the
@@ -26,6 +26,15 @@
 #    Not a marker, therefore not counted: a bare word with no value (prose such
 #    as "no due= marker"), a bare word followed by non-date prose ("due to"),
 #    and the literal format template `due=YYYY-MM-DD`.
+#  - WHERE a marker may be written (main#87): the remark cell, i.e. the LAST
+#    cell of the row, is the only declaration cell. Before this, the whole row
+#    was scanned, so an open row whose subject cell described a past bug
+#    ("fix the due=2026-1-5 case") accused itself: r747 counted 5 such hits on
+#    its own main#85 row and they only vanished when that row was struck.
+#    Prose is ABOUT markers; the remark cell is where one is MADE.
+#    Not silently lost, though: a strict valid `due=YYYY-MM-DD` found in any
+#    other cell is still counted as a deadline, and additionally reported as
+#    bad with reason `cell` - the next reader will look in the remark cell.
 # Read-only, fail-soft: a missing/empty directory ships exists=false and the
 # page says so instead of printing a comfortable zero.
 # ASCII-only (PS 5.1 GBK law): the CJK rows live in the UTF-8 queue files.
@@ -47,7 +56,7 @@ function Get-QueueDueBadTokens
     # "due" as its own word (not qdue_*, not overdue), then an optional
     # separator and a value. The value class is deliberately ASCII-only: a due
     # value can never be CJK, and stopping at the first CJK glyph is what keeps
-    # `due=2026-10-18（prose）` from swallowing the rest of the cell (first live
+    # `due=2026-10-18(prose)` from swallowing the rest of the cell (first live
     # run read a whole CJK sentence as the token and reported a false bad).
     $rx = New-Object System.Text.RegularExpressions.Regex(
         '(?<![A-Za-z0-9_])(?<key>[Dd][Uu][Ee])(?![A-Za-z0-9_])\s*(?<sep>[=:]?)\s*(?<val>[A-Za-z0-9:/\-_+]+)')
@@ -138,7 +147,11 @@ function Get-QueueDue
             if ($t.Contains('~~')) { continue }
             $opens++
 
-            foreach ($bt in @(Get-QueueDueBadTokens -Text $t)) {
+            # Only the remark cell (last cell) declares a marker; every other
+            # cell is prose about markers (main#87). $cells has a trailing
+            # empty element because the row text ends with '|'.
+            $remark = $cells[$cells.Count - 2]
+            foreach ($bt in @(Get-QueueDueBadTokens -Text $remark)) {
                 $null = $badItems.Add([ordered]@{
                     id     = $idTxt
                     file   = $f.Name
@@ -149,6 +162,18 @@ function Get-QueueDue
 
             $m = [regex]::Match($t, 'due=(\d{4})-(\d{2})-(\d{2})')
             if (-not $m.Success) { continue }
+            # A strict marker outside the remark cell keeps its meaning as a
+            # deadline (never silently lose one) but is a writing error: say so
+            # instead of letting the next reader hunt for it.
+            $cellIndex = ($t.Substring(0, $m.Index).Split('|')).Count - 1
+            if ($cellIndex -ne ($cells.Count - 2)) {
+                $null = $badItems.Add([ordered]@{
+                    id     = $idTxt
+                    file   = $f.Name
+                    token  = $m.Value
+                    reason = 'cell'
+                })
+            }
             $due = $null
             try {
                 $due = [datetime]::new([int]$m.Groups[1].Value, [int]$m.Groups[2].Value,

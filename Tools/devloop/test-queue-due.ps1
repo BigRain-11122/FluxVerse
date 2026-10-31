@@ -15,6 +15,11 @@
 #   F) bad markers (main#85): a `due` marker that is not `due=YYYY-MM-DD` is
 #      counted and named, never silently read as "no deadline"; prose ("due to")
 #      and the literal format template are not markers
+#   G) marker CELL (main#87): only the remark cell (last cell) declares a
+#      marker. Prose in the subject/pointer cells that quotes a broken shape is
+#      NOT counted (r747's own row accused itself with 5 hits); a strict valid
+#      marker written in another cell is still honoured as a deadline but
+#      reported as bad with reason `cell`
 # ASCII-only law: fixtures are ASCII; the live CJK rows are only counted.
 
 $ErrorActionPreference = 'Stop'
@@ -76,10 +81,27 @@ $rowF = @"
 "@
 Write-TextFile (Join-Path $qdirF 'queue-f.md') $rowF
 
+# --- G) marker cell (main#87) ----------------------------------------------
+$qdirG = Join-Path $sandbox 'queueG'
+New-Item -ItemType Directory -Path $qdirG -Force | Out-Null
+$rowG = @"
+# fixture queue: which cell holds a marker
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | fix the due=2026-1-5 case | p | nothing here |
+| 2 | quote of due: 2026-01-05 | p | nothing here |
+| 3 | see the due=2026-12-01 row | p | nothing here |
+| 4 | plain task | p | due=2026-12-25 |
+| 5 | plain task | p | due=2026-1-5 |
+"@
+Write-TextFile (Join-Path $qdirG 'queue-g.md') $rowG
+
 # --- results ---------------------------------------------------------------
 $A = Get-QueueDue -Dir $qdirA -Today $today
 $B = Get-QueueDue -Dir $qdirB -Today $today
 $QF = Get-QueueDue -Dir $qdirF -Today $today
+$QG = Get-QueueDue -Dir $qdirG -Today $today
 
 # --- C) live queue, independent recount ------------------------------------
 $qdirLive = Join-Path $repoDir 'state\queue'
@@ -160,6 +182,7 @@ Check 'C: late count matches recount' ($C.late -eq $liveLate)
 Check 'C: live overdue ids match recount' ((@($C.items | ForEach-Object { $_.id }) -join ',') -eq ($liveLateIds -join ','))
 Check 'C: max_days is the largest late day count' ($C.max_days -eq (@($C.items | ForEach-Object { $_.days } | Measure-Object -Maximum).Maximum))
 Check 'C: bad items agree with the bad count' (@($C.bad_items).Count -eq $C.bad)
+Check 'C: no live marker sits outside the remark cell' (@($C.bad_items | Where-Object { $_.reason -eq 'cell' }).Count -eq 0)
 
 Check 'F: eight rows scanned' ($QF.scanned -eq 8)
 Check 'F: five bad markers' ($QF.bad -eq 5)
@@ -175,6 +198,16 @@ Check 'F: short month reason' ((@($QF.bad_items | Where-Object { $_.id -eq '2' }
 Check 'F: impossible date reason' ((@($QF.bad_items | Where-Object { $_.id -eq '6' })[0].reason) -eq 'calendar')
 Check 'F: only the strict marker is dated' ($QF.dated -eq 1)
 Check 'F: tokens keep their original spelling' ((@($QF.bad_items | Where-Object { $_.id -eq '3' })[0].token) -eq 'due:2026-01-05')
+
+Check 'G: five rows scanned' ($QG.scanned -eq 5)
+Check 'G: prose in the subject cell is not bad' (@($QG.bad_items | Where-Object { $_.id -eq '1' }).Count -eq 0)
+Check 'G: prose in the subject cell never dates the row' ($QG.dated -eq 2)
+Check 'G: prose quoting a colon form is not bad' (@($QG.bad_items | Where-Object { $_.id -eq '2' }).Count -eq 0)
+Check 'G: only the remark cell declares a marker' (@($QG.bad_items | Where-Object { $_.id -eq '4' }).Count -eq 0)
+Check 'G: a strict marker elsewhere is still a deadline' (@($QG.items | Where-Object { $_.id -eq '3' }).Count -eq 0 -and $QG.dated -eq 2)
+Check 'G: a strict marker elsewhere is a writing error' ((@($QG.bad_items | Where-Object { $_.id -eq '3' })[0].reason) -eq 'cell')
+Check 'G: a broken marker in the remark cell is still bad' ((@($QG.bad_items | Where-Object { $_.id -eq '5' })[0].reason) -eq 'shape')
+Check 'G: exactly two bad markers' ($QG.bad -eq 2)
 
 Check 'D: builder reported PANEL OK' ($logD -match 'PANEL OK')
 Check 'D: fixture queue reports one late' ($logD -match 'qdue=1(?!\d)')

@@ -590,11 +590,21 @@ function artTitle(it){
         '</span>')
       : '';
     if (late > 0) {
+      // r749（main#87）：点名「哪几行」逾期，而不只是「几件」。此前只有最久
+      // 一行的 id，读者还得自己翻文件去数；标记面本就带每一行，直接印前五条。
+      const lateIds = (Array.isArray(Q.items) ? Q.items : [])
+        .map(function (it) { return (it && it.id) ? ('#' + it.id + ' ' + it.days + 'd') : ''; })
+        .filter(function (s) { return s !== ''; })
+        .slice(0, 5);
       const worst = (Q.max_id ? ('最久 ' + Q.max_days + ' 天（#' + Q.max_id + '）')
         : ('最久 ' + Q.max_days + ' 天'));
       el.innerHTML = '<span class="tag warn">逾期 ' + late + ' 件</span>' +
         '<span class="muted"> ' + esc(worst) + ' · 在队 ' + open +
-        ' 件（带期限 ' + dated + '）</span>' + badTxt;
+        ' 件（带期限 ' + dated + '）</span>' +
+        (lateIds.length
+          ? ('<span class="muted"> · 逾期行 ' + esc(lateIds.join(' · ')) +
+            (late > lateIds.length ? ' …' : '') + '</span>')
+          : '') + badTxt;
     } else if (bad > 0) {
       el.innerHTML = badTxt;
     } else {

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T17:30:09Z",
-    "current_activity":  "r748 收口（main#86 写侧闸的 PS 沙盒终于有每轮入口）：新建 Tools/devloop/run-ps-suites.ps1，一条命令跑完写侧闸五套 PS 沙盒（脸面写手 bare 32、state 写手、r247 25、r197、r271 52），并在同一次运行里自己再做一遍 parity 断言——解析 Tools/devloop/build-city-panel.ps1 的 artPattern 与 Tools/devloop/face-path-lint.ps1 的常量逐字节比对，不一致就 PARITY FAIL 点名两侧差异。活跑 suites=5 assertions=193 failing=0 parity=ok；实弹验证：把 builder 正则末位加一个字符，同一命令立刻 failing=2 parity=FAIL exit 2，按备份还原后 SHA256 逐位相同。沙盒 Tools/devloop/test-run-ps-suites.ps1 29/29。",
-    "artifact":  "Tools/devloop/run-ps-suites.ps1, Tools/devloop/test-run-ps-suites.ps1, ./TECH.md, state/queue/main.md, state/runbook.md",
-    "artifact_utc":  "2026-10-31T17:30:09Z",
-    "milestone":  "下一轮：main#87（坏标记普查的两个边界：散文自计入、qdue_bad 进 verify 每 tick 健康行）→ main#88（Tools/devloop/run-ps-suites.ps1 还没有任何 tick 自动跑它），队列见 state/queue/main.md",
+    "updated_utc":  "2026-10-31T17:42:38Z",
+    "current_activity":  "r749 收口（main#87 坏标记普查的两个边界一起收干）：①标记只认「备注格」——此前整行扫描，一行在正文里描述旧 bug（如「修 due=2026-1-5 那类」）会把自己算成坏标记，r747 写过 5 处假命中，直到那行被划掉才消失；现在只有最后一格算「声明」，其它格子是「谈论」。②Tools/perceptor/verify.ps1 每 tick 新增「qdue」健康行（open/dated/late/max/bad 五数），队列逾期与坏标记第一次进入无人值守巡检——此前它们只活在页面上，tick 看不见。活跑一行：open=208 dated=4 late=2 bad=0，点名 #3 逾期 14 天、#23 逾期 5 天。③面板「队列逾期」行从「几件」升级为「哪几行」：印逾期行前五条（#3 14d · #23 5d）。",
+    "artifact":  "Tools/devloop/test-verify-queue-due.ps1, Tools/devloop/queue-due.ps1, Tools/perceptor/verify.ps1, Tools/devloop/city-panel-template.html, world-public/city-panel.html, qa/city-panel-narrow.png",
+    "artifact_utc":  "2026-10-31T17:42:38Z",
+    "milestone":  "下一轮：main#88（Tools/devloop/run-ps-suites.ps1 还没有任何 tick 或面板自检自动跑它）→ main#89（verify 侧沙盒同样没有每轮入口）→ main#23 司级基准刷新（已逾期 5 天），队列见 state/queue/main.md",
     "milestone_eta_utc":  "2026-11-02T04:00:00Z"
 }

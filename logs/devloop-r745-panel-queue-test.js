@@ -74,6 +74,20 @@ chk('late.count', e1.innerHTML.indexOf('逾期 2 件') >= 0, e1.innerHTML);
 chk('late.worst', e1.innerHTML.indexOf('最久 14 天（#3）') >= 0, e1.innerHTML);
 chk('late.queue-size', e1.innerHTML.indexOf('在队 9 件（带期限 3）') >= 0, e1.innerHTML);
 chk('late.no-ok-tag', e1.innerHTML.indexOf('tag ok') < 0, e1.innerHTML);
+// r749 (main#87): the row names which rows are late, not only the worst one.
+chk('late.names-rows', e1.innerHTML.indexOf('逾期行 #3 14d · #23 5d') >= 0, e1.innerHTML);
+chk('late.names-no-ellipsis-when-all-shown', e1.innerHTML.indexOf('…#') < 0 && e1.innerHTML.indexOf(' …') < 0, e1.innerHTML);
+chk('late.single-size-mention', e1.innerHTML.split('在队').length - 1 === 1, e1.innerHTML);
+// Seven late rows: print five and say so - a wall of ids is not a reading either.
+const many = Object.assign({}, late, {
+  late: 7,
+  items: [1, 2, 3, 4, 5, 6, 7].map(function (n) {
+    return { id: String(n), file: 'main.md', due: '2026-10-01', days: 10 };
+  })
+});
+const e1b = runPanel(withQueue(many), 'many')('f-queue');
+chk('late.ellipsis-when-truncated', e1b.innerHTML.indexOf(' …') >= 0, e1b.innerHTML);
+chk('late.shows-only-five', e1b.innerHTML.indexOf('#5 10d') >= 0 && e1b.innerHTML.indexOf('#6 10d') < 0, e1b.innerHTML);
 
 // --- 2) nothing late -------------------------------------------------------
 const calm = {

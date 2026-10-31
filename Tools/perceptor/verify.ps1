@@ -368,6 +368,48 @@ if (-not (Test-Path -LiteralPath $ambMod)) {
   }
 }
 
+# ---------- 2g. queue due-marker census (main#87) ----------
+# r745 put the overdue count on the page and r747 made a badly written `due`
+# marker visible instead of silently reading as "no deadline" - but both only
+# ever reached the page, so the tick, the one thing that runs every ten
+# minutes, could not see a queue full of broken markers. This republishes the
+# same counter from Tools\devloop\queue-due.ps1 (one copy of the rules, no
+# second threshold to drift).
+# WARN, not FAIL - same stance as 2b..2f: an observation, not a broken city.
+# A missing queue directory is a WARN too, and says "unknown", never zero.
+# No 'FAIL' token in these messages (the tick red-scan keys on that word).
+$qdueMod = Join-Path $repoRoot 'Tools\devloop\queue-due.ps1'
+if (-not (Test-Path -LiteralPath $qdueMod)) {
+  Write-Output 'VERIFY WARN: qdue: queue-due.ps1 missing - queue marker census skipped'
+} else {
+  $qLoaded = $true
+  try { . $qdueMod } catch { $qLoaded = $false }
+  if ($qLoaded -and (Get-Command Get-QueueDue -ErrorAction SilentlyContinue)) {
+    $qdir = Join-Path $repoRoot 'state\queue'
+    if ($env:FLUXVERSE_QUEUE_DIR) { $qdir = $env:FLUXVERSE_QUEUE_DIR }
+    $qd = $null
+    try { $qd = Get-QueueDue -Dir $qdir -RepoRoot $repoRoot } catch { $qd = $null }
+    if ($null -eq $qd) {
+      Write-Output 'VERIFY WARN: qdue: queue-due.ps1 threw - queue marker census skipped this tick'
+    } elseif (-not $qd.exists) {
+      Write-Output ('VERIFY WARN: qdue: queue dir not readable (' + $qdir + ') - open/late/bad unknown, not zero')
+    } else {
+      $qLine = 'qdue: open=' + $qd.open + ' dated=' + $qd.dated + ' late=' + $qd.late + ' max=' + $qd.max_days + 'd bad=' + $qd.bad
+      if ($qd.bad -gt 0) {
+        $qBad = @($qd.bad_items | ForEach-Object { '#' + $_.id + '(' + $_.token + ' ' + $_.reason + ')' })
+        Write-Output ('VERIFY WARN: ' + $qLine + ' - badly written due markers: ' + ($qBad -join ', ') + '; the remark cell wants due=YYYY-MM-DD')
+      } elseif ($qd.late -gt 0) {
+        $qLate = @($qd.items | ForEach-Object { '#' + $_.id + ' ' + $_.days + 'd' })
+        Write-Output ('VERIFY WARN: ' + $qLine + ' - overdue queue rows: ' + ($qLate -join ', '))
+      } else {
+        Write-Output ('VERIFY HEALTH: ' + $qLine)
+      }
+    }
+  } else {
+    Write-Output 'VERIFY WARN: queue-due.ps1 did not provide Get-QueueDue'
+  }
+}
+
 # ---------- verdict ----------
 if ($fail.Count -gt 0) {
   $fail | ForEach-Object { Write-Output ('VERIFY FAIL: ' + $_) }

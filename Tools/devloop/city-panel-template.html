@@ -145,6 +145,7 @@
       <p><span class="k">下个里程碑</span><span class="v" id="f-mile">—</span></p>
       <p><span class="k">今日日志</span><span class="v" id="f-tick">—</span></p>
       <p><span class="k">运行维护</span><span class="v" id="f-maint">—</span></p>
+      <p><span class="k">队列逾期</span><span class="v" id="f-queue">—</span></p>
     </div>
     <div class="card">
       <h2>城市规模</h2>
@@ -258,6 +259,11 @@ const TICK = __TICK_JSON__;
 // sweep and `remain` is the backlog that sweep measured (-1 = that stamp predates
 // the remain= field, so the page says "not recorded" rather than 0).
 const ARCH = __ARCH_JSON__;
+// QUEUE = the self-drive queues' overdue counter ({exists,files,scanned,open,
+// dated,late,max_days,max_id,as_of,items:[{id,file,due,days}]}), computed by
+// Tools/devloop/queue-due.ps1 from the rows' own `due=YYYY-MM-DD` markers.
+// The page never recounts: builder is the single number source (queue main#83).
+const QUEUE = __QUEUE_JSON__;
 // SHOTS = builder-resolved City3D evidence frames from qa/ ({items:[{name,rel,
 // url,shot_utc,size,data,w,h,bytes}]}). `data` is a downscaled, inlined JPEG
 // data URI -- the page stays a single self-contained file with zero external
@@ -549,6 +555,35 @@ function artTitle(it){
         '<span class="muted"> ' + esc(last) + ' · ' + esc(remainTxt) + '</span>';
     }
     ageTitle(el, A.ran_utc);
+  })();
+
+  // 队列逾期（queue main#83）：队列里的期限原先只写在备注散文里，main#8 晚 13 天、
+  // main#23 晚 5 天才被人在轮首翻到。这里读 builder 从行内 `due=YYYY-MM-DD` 标记
+  // 算出的单一数字源，如实给一行：逾期几件、最久几天、在队几件。口径四条：①目录
+  // 读不到一律说「队列不可读」，绝不等于「无逾期」；②划掉的完成行不计；③没有
+  // due= 标记的行是「无期限」而非「准时」；④天数由 builder 按构建当日算，页面不重算。
+  (function () {
+    const Q = QUEUE || {};
+    const el = $('f-queue');
+    if (!el) return;
+    if (!Q.exists) {
+      el.innerHTML = '<span class="tag warn">队列不可读</span>' +
+        '<span class="muted"> state/queue 目录不在盘 · 逾期未知</span>';
+      return;
+    }
+    const open = (typeof Q.open === 'number') ? Q.open : 0;
+    const dated = (typeof Q.dated === 'number') ? Q.dated : 0;
+    const late = (typeof Q.late === 'number') ? Q.late : 0;
+    if (late > 0) {
+      const worst = (Q.max_id ? ('最久 ' + Q.max_days + ' 天（#' + Q.max_id + '）')
+        : ('最久 ' + Q.max_days + ' 天'));
+      el.innerHTML = '<span class="tag warn">逾期 ' + late + ' 件</span>' +
+        '<span class="muted"> ' + esc(worst) + ' · 在队 ' + open +
+        ' 件（带期限 ' + dated + '）</span>';
+    } else {
+      el.innerHTML = '<span class="tag ok">无逾期</span>' +
+        '<span class="muted"> 在队 ' + open + ' 件（带期限 ' + dated + '）</span>';
+    }
   })();
 
   // 城市取景（queue main#42）：这一页此前全是数字与文字——规模、分区、事件、曲线，

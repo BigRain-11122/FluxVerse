@@ -104,6 +104,12 @@ const FIXTURE = {
   ARCH: {
     exists: true, path_rel: 'logs/.archive-duty-last-run.txt', url: 'file:///D:/l/stamp.txt',
     stamp: YMD(), stamp_day: YMD('-'), today: YMD(), is_today: true, remain: 0, ran_utc: nowIso(1)
+  },
+  // r745 added the queue-overdue row (queue main#83); calm fixture = readable,
+  // dated rows present, nothing late.
+  QUEUE: {
+    exists: true, dir_rel: 'state/queue', files: 3, scanned: 12, open: 12,
+    dated: 3, late: 0, max_days: 0, max_id: '', as_of: YMD(), items: []
   }
 };
 

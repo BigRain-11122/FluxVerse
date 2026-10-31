@@ -42,10 +42,18 @@
 param(
     [string]$ContentPath = '',
     [string]$FacePath = '',
-    [string]$SimNowUtc = ''
+    [string]$SimNowUtc = '',
+    [switch]$CheckOnly
 )
 
 $ErrorActionPreference = 'Stop'
+
+# r746 (queue main#84): the face's three lines must name files BY PATH. The
+# rule lives in one module shared with the builder's artPattern so the write
+# side and the build side cannot drift.
+$lintPath = Join-Path $PSScriptRoot 'face-path-lint.ps1'
+if (-not (Test-Path -LiteralPath $lintPath)) { Write-Output ('FAIL: lint module missing: ' + $lintPath); exit 1 }
+. $lintPath
 
 function Fail
 {
@@ -109,6 +117,26 @@ foreach ($k in @('current_activity','artifact','milestone')) {
     $v = ''
     try { $v = [string]$obj.$k } catch { $v = '' }
     if ([string]::IsNullOrWhiteSpace($v)) { Fail ('content key missing/empty: ' + $k) }
+}
+
+# --- bare file names are refused HERE, not at build time (queue main#84) ---
+# A token like `TECH.md` is prose, not a path: the builder can only count it and
+# drop it, so the author never learns. Same rule, same module, fail loud.
+$bareAll = @()
+foreach ($k in @('current_activity','artifact','milestone')) {
+    $rawLine = ''
+    try { $rawLine = [string]$obj.$k } catch { $rawLine = '' }
+    foreach ($bn in @(Get-FaceBareNames -Raw $rawLine)) {
+        $bareAll += ([string]$bn + ' (' + $k + ')')
+    }
+}
+if ($bareAll.Count -gt 0) {
+    Fail ('bare artifact name: ' + ($bareAll -join ', ') + '; face lines must carry a path (e.g. ./TECH.md)')
+}
+
+if ($CheckOnly) {
+    Write-Output ('FACE CHECK OK bare=0 keys=3 path=' + $ContentPath)
+    exit 0
 }
 
 # --- milestone_eta_utc must parse (exporter three-ts by-name contract) ---

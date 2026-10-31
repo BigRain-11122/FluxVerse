@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T17:02:10Z",
-    "current_activity":  "r745 收口：面板「本司实况」卡新增「队列逾期」一行（main#83）——逾期件第一次在页面上可见。此前期限只写在队列行的备注散文里（main#8 逾期 13 天、main#23 逾期 5 天才被人翻到）。现期限由行自己声明一次：行内写 due=YYYY-MM-DD，计数交给单一模块 Tools/devloop/queue-due.ps1（表格行只认首格纯整数 id；划掉的完成件不计；无 due= 是无期限而非准时；due= 解析失败计入 dated 但不计逾期；目录缺档显式「队列不可读」而不是印 0）。builder 加 -QueueDir 注入与队列数据占位符，PANEL OK 增 qdue/qdue_max/qdue_open/qdue_dated 四键。活队列实测 逾期 2 件、最久 14 天（#3）、在队 208 件（带期限 3）。同轮修红：新占位符使 r704/r705 两套按占位符名注入的夹具崩掉，已各补静止夹具，30 套全 PASS；并把 dir_rel 从绝对路径改为仓库相对（r744 同族 churn）。",
-    "artifact":  "Tools/devloop/queue-due.ps1, Tools/devloop/test-queue-due.ps1, logs/devloop-r745-panel-queue-test.js, Tools/devloop/build-city-panel.ps1, Tools/devloop/city-panel-template.html, world-public/city-panel.html, qa/city-panel-r745-narrow-bm-a.png, ./TECH.md",
-    "artifact_utc":  "2026-10-31T17:02:10Z",
-    "milestone":  "下一轮排 main#84（脸面写侧裸名普查：写脸面那一刻就拦裸文件名）→ main#85（due= 坏标记普查：拼错期限不再静默降级成「无期限」）→ main#76（r671 缺档提示）→ main#77（-NoLiveCheck 白名单普查）→ main#23（司级基准刷新，已逾期）；队列见 state/queue/main.md",
+    "updated_utc":  "2026-10-31T17:09:03Z",
+    "current_activity":  "r746 收口（main#84 写侧闸）：脸面三行现在写裸文件名会被当场拒——新增单一规则模块 Tools/devloop/face-path-lint.ps1，写侧 Tools/devloop/write-status-face.ps1 与建造侧 Tools/devloop/build-city-panel.ps1 用同一条正则判「这算不算路径」，命中即点名令牌与所在行并退出，脸面一个字节都不动、不留半成品。此前 r743（写 ./TECH.md 时漏掉 ./）与 r744（写 Tools/devloop/test-panel-url.ps1 时漏掉目录）各自为同一个坑赔掉一轮。防漂移＝沙盒直接解析建造侧的 $artPattern 字面量与模块常量逐字节比对。",
+    "artifact":  "Tools/devloop/face-path-lint.ps1, Tools/devloop/write-status-face.ps1, Tools/devloop/test-write-status-face-bare.ps1, state/status-face.json, ./TECH.md, state/queue/main.md",
+    "artifact_utc":  "2026-10-31T17:09:03Z",
+    "milestone":  "下一步＝main#85（拼错的 due= 会静默降级成「无期限」）→ main#86（写侧闸的 ./ 前缀提示文案）→ main#76（r671 缺档提示）；状态与判据见 state/queue/main.md",
     "milestone_eta_utc":  "2026-11-01T04:00:00Z"
 }

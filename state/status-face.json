@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T19:12:40Z",
-    "current_activity":  "r754 收口（main#91）：tick 里那张红票第一次能自己说出「谁红了」并且会自己痊愈——每次真跑把 FAIL/WARN 的套件名写进票据 (reds=) 并印上 VERIFY WARN 行；未过的票带 tries 计数，被引用 3 次后自动重跑一次（auto=1，FLUXVERSE_PS_SUITES_AUTORETRY 可调），pass 的票永不老化永不重写；Tools/devloop/fixtures 全树按显式文件清单并入指纹（空 glob 落 =NOFILES）。沙盒 Tools/devloop/test-verify-ps-suites.ps1 74→97/97，verify 族 suites=9 assertions=260 failing=0 timeouts=0。",
-    "artifact":  "Tools/devloop/ps-suites-tick.ps1, Tools/devloop/test-verify-ps-suites.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
-    "artifact_utc":  "2026-10-31T19:12:40Z",
-    "milestone":  "下一轮：main#95（FLUXVERSE_WORLD_DIR 注入钩，让门本身可端到端证：FAIL 丢候选／PASS 发布）→ main#97（票据 exit 恒假，Start-Process 取不到 ExitCode）→ main#96（verify 族基线 115.6 s＝180 s 上限 64%，余量告急），队列见 state/queue/main.md",
+    "updated_utc":  "2026-10-31T20:46:02Z",
+    "current_activity":  "r755 收口（main#95）：门本身第一次能被端到端地证——Tools/perceptor/verify.ps1 顶部新增 FLUXVERSE_WORLD_DIR 只读注入（空值回落 world/，未设＝行为逐字节不变），于是整条门可以在临时目录里跑：PASS 真发布候选、FAIL 真丢弃候选、真 world/ 两件前后指纹不变。沙盒 Tools/devloop/test-state-promote.ps1 30→43/43（新增 j/k/l/m 四组，子进程带 FLUXVERSE_PS_SUITES_CHILD=1 遵守嵌套律）；活跑不设环境变量的门仍是 VERIFY PASS。",
+    "artifact":  "Tools/perceptor/verify.ps1, Tools/devloop/test-state-promote.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
+    "artifact_utc":  "2026-10-31T20:46:02Z",
+    "milestone":  "下一轮：main#97（票据 exit 恒假——Start-Process 取不到 ExitCode，r751 修法没搬进 Tools/devloop/ps-suites-tick.ps1）→ main#96（verify 族基线 110.6 s＝180 s 上限 61%，断言已到 273，余量仍紧）→ main#92，队列见状态队列文件 state/queue/main.md",
     "milestone_eta_utc":  "2026-11-02T06:00:00Z"
 }

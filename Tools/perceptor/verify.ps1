@@ -15,7 +15,15 @@
 # ASCII-only (group PS5.1 encoding law).
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')      # -> gaming/FluxVerse
-$worldDir  = Join-Path $repoRoot 'world'
+# World dir is injectable so the gate ITSELF can be proven end to end
+# (queue main#95): FLUXVERSE_WORLD_DIR lets a sandbox run this whole file
+# against a temp directory and watch "PASS publishes the candidate / FAIL
+# discards it", instead of trusting only the state-promote module in isolation.
+# Unset = the live world/ directory, i.e. previous behaviour byte for byte.
+# Read-only knob: it selects WHERE this run reads and writes world state; it
+# never changes what the gate decides.
+$worldDir  = $env:FLUXVERSE_WORLD_DIR
+if ([string]::IsNullOrWhiteSpace($worldDir)) { $worldDir = Join-Path $repoRoot 'world' }
 $registryFile = Join-Path $repoRoot 'schema\events-registry.json'
 $stateFile  = Join-Path $worldDir 'world-state.json'
 $newStateFile = Join-Path $worldDir 'world-state.json.new'

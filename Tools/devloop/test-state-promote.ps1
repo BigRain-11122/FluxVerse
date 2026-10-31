@@ -127,6 +127,95 @@ Check 'h5 gate treats failed as red' ($gate -match "Status -eq 'failed'")
 Check 'h6 gate still exits 1 on a real promote failure' ($gate -match "state promote failed, candidate kept")
 Check 'h7 gate fails loud when the module is missing' ($gate -match 'state-promote module missing')
 
+# ---------- j/k. the GATE end to end (queue main#95) ----------
+# Groups a..h prove the decision; groups j/k prove the gate that uses it, by
+# running Tools/perceptor/verify.ps1 as a child with FLUXVERSE_WORLD_DIR
+# pointed at a temp directory. Without the knob this file could only ever
+# test-verify the live world/, which no sandbox may write.
+$repoRootSandbox = Split-Path (Split-Path $gatePath -Parent) -Parent
+$liveWorld = Join-Path $repoRootSandbox 'world'
+
+# Minimal state that passes every field check (protocol/zones/fleet/tasks/
+# flows/products/governance/history). Kept literal so the fixture cannot drift
+# with the live file.
+$validState = '{"protocol":"fluxverse/1","ts_utc":"2026-11-01T00:00:00Z",' +
+    '"zones":[{"id":"gaming","name":"Gaming","status":"ok","activity":"idle"},' +
+    '{"id":"quant","name":"Quant","status":"ok","activity":"idle"},' +
+    '{"id":"media","name":"Media","status":"ok","activity":"idle"}],' +
+    '"fleet":[],"tasks":[],"flows":[],"products":[],' +
+    '"governance":{"ceo_orders_pending":0},' +
+    '"history":{"commits_total":1,"last_commit_ts":"2026-11-01T00:00:00Z"}}'
+
+function Get-LiveFingerprint {
+    # Byte length + write time of the two files a misdirected run would touch.
+    $fp = @{}
+    foreach ($n in @('world-state.json', 'world-events.jsonl')) {
+        $p = Join-Path $liveWorld $n
+        if (Test-Path -LiteralPath $p) {
+            $it = Get-Item -LiteralPath $p
+            $fp[$n] = ('' + $it.Length + '@' + $it.LastWriteTimeUtc.Ticks)
+        } else {
+            $fp[$n] = 'MISSING'
+        }
+    }
+    return $fp
+}
+
+function Invoke-Gate([string]$world) {
+    $prevWorld = $env:FLUXVERSE_WORLD_DIR
+    $prevChild = $env:FLUXVERSE_PS_SUITES_CHILD
+    $env:FLUXVERSE_WORLD_DIR = $world
+    # Nested-run law (r752): the gate's own sandbox families must not spawn
+    # while a sandbox is driving the gate.
+    $env:FLUXVERSE_PS_SUITES_CHILD = '1'
+    try {
+        $out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $gatePath 2>&1
+        $code = $LASTEXITCODE
+    } finally {
+        if ($null -eq $prevWorld) { Remove-Item Env:\FLUXVERSE_WORLD_DIR -ErrorAction SilentlyContinue }
+        else { $env:FLUXVERSE_WORLD_DIR = $prevWorld }
+        if ($null -eq $prevChild) { Remove-Item Env:\FLUXVERSE_PS_SUITES_CHILD -ErrorAction SilentlyContinue }
+        else { $env:FLUXVERSE_PS_SUITES_CHILD = $prevChild }
+    }
+    return [pscustomobject]@{ Code = $code; Out = @($out | ForEach-Object { [string]$_ }) }
+}
+
+$liveBefore = Get-LiveFingerprint
+
+# j. PASS side: a healthy candidate is published by the gate itself.
+$r = New-Root 'j'
+$stateFile = Join-Path $r 'world-state.json'
+$newFile = Join-Path $r 'world-state.json.new'
+[System.IO.File]::WriteAllText($stateFile, '{"protocol":"fluxverse/1","gen":"old"}', $utf8)
+[System.IO.File]::WriteAllText($newFile, $validState, $utf8)
+$run = Invoke-Gate $r
+Check 'j1 gate exits 0 on a healthy candidate' ($run.Code -eq 0)
+Check 'j2 gate prints VERIFY PASS' (@($run.Out | Where-Object { $_ -match '^VERIFY PASS' }).Count -eq 1)
+Check 'j3 gate promoted the candidate into world-state.json' ([System.IO.File]::ReadAllText($stateFile, $utf8) -eq $validState)
+Check 'j4 gate consumed the .new candidate' (-not (Test-Path -LiteralPath $newFile))
+
+# k. FAIL side: a broken candidate is rejected, the old state survives.
+$r = New-Root 'k'
+$stateFile = Join-Path $r 'world-state.json'
+$newFile = Join-Path $r 'world-state.json.new'
+[System.IO.File]::WriteAllText($stateFile, $validState, $utf8)
+[System.IO.File]::WriteAllText($newFile, '{"protocol":"fluxverse/1","zones":[', $utf8)
+$run = Invoke-Gate $r
+Check 'k1 gate exits 1 on a broken candidate' ($run.Code -eq 1)
+Check 'k2 gate names the failure' (@($run.Out | Where-Object { $_ -match '^VERIFY FAIL: state: not parseable JSON' }).Count -eq 1)
+Check 'k3 gate says it discarded the candidate' (@($run.Out | Where-Object { $_ -match 'discarded, old world-state.json kept' }).Count -eq 1)
+Check 'k4 gate discarded the .new candidate' (-not (Test-Path -LiteralPath $newFile))
+Check 'k5 gate kept the old state verbatim' ([System.IO.File]::ReadAllText($stateFile, $utf8) -eq $validState)
+
+# l. Neither run may touch the live world/ directory.
+$liveAfter = Get-LiveFingerprint
+Check 'l1 live world-state.json untouched by both gate runs' ($liveBefore['world-state.json'] -eq $liveAfter['world-state.json'])
+Check 'l2 live world-events.jsonl untouched by both gate runs' ($liveBefore['world-events.jsonl'] -eq $liveAfter['world-events.jsonl'])
+
+# m. The knob itself: injected when set, live dir when not.
+Check 'm1 gate reads FLUXVERSE_WORLD_DIR' ($gate -match 'FLUXVERSE_WORLD_DIR')
+Check 'm2 gate falls back to the live world dir when unset' ($gate -match "Join-Path \`$repoRoot 'world'")
+
 # ---------- i. shape and hygiene ----------
 $r = New-Root 'i'
 $res = Invoke-StatePromotion -NewPath (Join-Path $r 'nope.new') -StatePath (Join-Path $r 'nope.json')

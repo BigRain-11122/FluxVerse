@@ -42,6 +42,7 @@ public static class CityRebuildR2
         var scene = EditorSceneManager.OpenScene("Assets/Scenes/CityRebuild_R2.unity", OpenSceneMode.Single);
         var cam = Camera.main;
         if (cam == null) throw new Exception("no main camera in CityRebuild_R2 scene");
+        NormalizeAmbient(); // main#60：取景面同光照（不改场景·不存盘）
 
         var cityGame = FindDistrict("City_GAME");
         if (cityGame == null) throw new Exception("City_GAME not found");
@@ -103,6 +104,7 @@ public static class CityRebuildR2
         var scene = EditorSceneManager.OpenScene("Assets/Scenes/CityRebuild_R2.unity", OpenSceneMode.Single);
         var cam = Camera.main;
         if (cam == null) throw new Exception("no main camera in CityRebuild_R2 scene");
+        NormalizeAmbient(); // main#60：预演帧同光照（不改场景·不存盘）
         var cityGame = FindDistrict("City_GAME");
         if (cityGame == null) throw new Exception("City_GAME not found");
         var r2root = cityGame.transform.Find("R2_AD-021_District");
@@ -160,6 +162,26 @@ public static class CityRebuildR2
 
     static string F(float v) { return v.ToString("F2", System.Globalization.CultureInfo.InvariantCulture); }
 
+    // ===== 环境光基线（main#60 归因修复）=====
+    // 病灶：URP 下 RenderSettings.ambientMode=Skybox 只有在 ambient probe 生成过才有值；批处理构建
+    // 从不跑 DynamicGI.UpdateEnvironment()，探针保持全零 → 所有「背光面」只剩直射光 = 纯黑（实测像素
+    // (0,0,0)），街面帧右近房朝街那面因此整块黑墙（r713 首帧同病）。
+    // 正法：显式给三色半球环境光（天光/地平/地面反弹，色取自本场景实测天空 #90CDEA 与铺装 #A69B7D）
+    // 再刷一次探针——物理语义是真实日光下天空与地面的间接光，不是加泛光遮丑。
+    static void NormalizeAmbient()
+    {
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+        RenderSettings.ambientSkyColor = new Color(0.34f, 0.46f, 0.55f);
+        RenderSettings.ambientEquatorColor = new Color(0.28f, 0.29f, 0.28f);
+        RenderSettings.ambientGroundColor = new Color(0.22f, 0.20f, 0.16f);
+        RenderSettings.ambientIntensity = 1f;
+        try { DynamicGI.UpdateEnvironment(); }
+        catch (Exception e) { UnityEngine.Debug.LogWarning("AMBIENT probe update failed: " + e.Message); }
+        Report.Add("ambient: mode=Trilight sky=(0.34,0.46,0.55) equator=(0.28,0.29,0.28) ground=(0.22,0.20,0.16) intensity=1"
+            + "（背光面纯黑根治=补 ambient probe·main#60）");
+        UnityEngine.Debug.Log("AMBIENT OK mode=Trilight");
+    }
+
     static void Run()
     {
         var sw = Stopwatch.StartNew();
@@ -167,6 +189,7 @@ public static class CityRebuildR2
         var scene = EditorSceneManager.OpenScene("Assets/Scenes/CityWhitebox.unity", OpenSceneMode.Single);
         var cam = Camera.main;
         if (cam == null) throw new Exception("no main camera in CityWhitebox scene");
+        NormalizeAmbient(); // main#60：环境光基线随场景存盘（重建后判据帧与导入引擎同一光照）
 
         var cityGame = FindDistrict("City_GAME"); // 布局正典：GAME 城=AD-021 城镇族
         if (cityGame == null) throw new Exception("City_GAME not found");

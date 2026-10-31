@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T08:58:36Z",
-    "current_activity":  "r721 收口：R2 街区从湖面搬到北岸干地（main#54 落地）。街区 84.7×70.7 m 原来正压在 L_Water 上（压水 91.7%，房子泡在水里）；本轮把落位从「城市原点」改到 r714 算出的全干锚点（局部 0.3, 83.2，世界 −89.6,−72.7）：CityRebuildR2 按 City3D-staging/rehearsal-anchor.txt 定落位（缺档回落常量并如实记 source），重建后 City3D/Assets/Scenes/CityRebuild_R2.unity 的 R2 根节点就在新位；r2-site-check.py 不再假设「街区在原点」，改为直读已建场景的 Transform 局部坐标，实测 block_water 91.7% → 0.0%（点—三角互校同为 0.0%，最近干地 0.1 m）。面板取景卡六帧同批重拍，房在干地、水退到街区南缘。",
-    "artifact":  "qa/city3d-shots-20261031-1656-bm-a-gamedistrict.jpg ＋ qa/site/r2-site-20261031-1658-bm-a.png ＋ qa/site/r2-site-20261031-1658-bm-a.md ＋ qa/city-panel-r721-bm-a.png",
-    "artifact_utc":  "2026-10-31T08:58:36Z",
-    "milestone":  "下一个：R2 落位留下的小债——街面帧右侧黑侧墙材质归因（City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs 的街面取景）、84.7 m 见方是否缩尺（模块设计决定）；研究线 main#23 司级 7 天基准刷新已逾期 5 日（docs/global-benchmarks.md ④更新记录）。",
+    "updated_utc":  "2026-10-31T09:12:35Z",
+    "current_activity":  "r722 收工：R2 场景背光面纯黑根治（main#60）。归因＝URP 环境光探针从未生成（RenderSettings.ambientMode=Skybox 但批处理构建不跑 DynamicGI.UpdateEnvironment，探针全零），背光面只剩直射光故压成纯黑。正法＝CityRebuildR2 新增 NormalizeAmbient()：显式三色半球环境光（天光/地平/地面反弹，色取本场景实测天空 #90CDEA 与铺装 #A69B7D）＋刷新探针，随 City3D/Assets/Scenes/CityRebuild_R2.unity 存盘；重建/取景/预演三个入口统一走它。实测街面帧纯黑占比 6.47% → 0.15%，剖面帧 9.94% → 0.05%，原本读作「黑侧墙」的整块区域恢复为可读的木挂板纹理与影子剪影。",
+    "artifact":  "qa/city3d-shots-20261031-1710-bm-a-street.jpg · qa/city3d-shots-20261031-1710-bm-a-showcase.jpg · qa/city3d-shots-20261031-1710-bm-a-cutaway.jpg · qa/city-panel-r722-bm-a.png",
+    "artifact_utc":  "2026-10-31T09:12:35Z",
+    "milestone":  "下一步：main#61 街区尺度复核——出「现尺度 vs 缩尺」对照图，量尺入口 Tools/devloop/city3d-rehearsal.ps1 已备；随后 main#40 冻结 fixture 用当前模板重建（现测的还是 10-20 旧模板 logs/panel-fixture-prev.html）。",
     "milestone_eta_utc":  "2026-11-01T02:00:00Z"
 }

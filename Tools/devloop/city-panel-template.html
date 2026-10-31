@@ -1231,6 +1231,7 @@ function artTitle(it){
   const artPaths = Number(art.paths || 0);
   const artMiss = Number(art.missing || 0);
   const artMissNames = Array.isArray(art.miss_names) ? art.miss_names : [];
+  const artBareNames = Array.isArray(art.bare_names) ? art.bare_names : [];
   const artBy = art.by || {};
   // 第四行（今日 tick 日志）单独报账：它不是三行承诺的一部分（缺日志由第 9 项
   // 「tick 覆盖」判），但读者必须在这一行明细里看见它到底在不在盘上。
@@ -1252,6 +1253,12 @@ function artTitle(it){
       (lineStat.length ? '（' + lineStat.join('／') + '）' : '') + ' · 页上可直接点开' };
   }
   ap.vd = ap.vd + ' · ' + tickFace;
+  // 裸文件名（queue main#75）：builder 只认带目录的路径，「foo.html」这种随手缩写
+  // 不算实况路径。这里必须说出来，否则读者会以为那一行已经可点。
+  if (artBareNames.length) {
+    ap.vd = ap.vd + ' · 裸名 ' + artBareNames.length + ' 处不作路径：' +
+      artBareNames.slice(0, 2).join(' / ') + (artBareNames.length > 2 ? ' …' : '');
+  }
   selfcheck.push({ ok: ap.ok, nm: '实况路径', vd: ap.vd });
 
   // 取景帧（queue main#43）：r702 把城市取景卡做出来后，帧数与帧龄只在卡片徽标上

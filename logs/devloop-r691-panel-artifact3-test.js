@@ -159,5 +159,27 @@ chk('sc.row', !!row, 'no 实况路径 row');
 chk('sc.breakdown', !!row && row.vd.indexOf('当前活') >= 0 && row.vd.indexOf('最近实物') >= 0 &&
   row.vd.indexOf('里程碑') >= 0, 'vd=' + (row && row.vd));
 
+// --- 6) bare names are reported, never silently dropped (queue main#75) ---
+// The builder now refuses to treat "foo.html" as a path. Dropping it is not
+// enough: the reader must be told that a token on that line is NOT clickable,
+// otherwise the self-check would praise a line whose file is unreachable.
+const bareArt = JSON.parse(JSON.stringify(art));
+bareArt.bare = 1;
+bareArt.bare_names = ['foo.html'];
+const bareRun = runPanelHtml(withArt(realHtml, bareArt), 'bare');
+const bareRow = rowByLabel(bareRun, '实况路径');
+chk('bare.row', !!bareRow, 'no 实况路径 row');
+chk('bare.note', !!bareRow && bareRow.vd.indexOf('裸名 1 处不作路径') >= 0 &&
+  bareRow.vd.indexOf('foo.html') >= 0, 'vd=' + (bareRow && bareRow.vd));
+chk('bare.no-link', links(bareRun.get('f-art').innerHTML) === expectLinks['f-art'],
+  'bare token must not add or remove links');
+const cleanBare = JSON.parse(JSON.stringify(art));
+cleanBare.bare = 0;
+cleanBare.bare_names = [];
+const cleanRun = runPanelHtml(withArt(realHtml, cleanBare), 'clean-bare');
+const cleanRow = rowByLabel(cleanRun, '实况路径');
+chk('bare.absent-when-clean', !!cleanRow && cleanRow.vd.indexOf('裸名') < 0,
+  'vd=' + (cleanRow && cleanRow.vd));
+
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 process.exit(fail ? 1 : 0);

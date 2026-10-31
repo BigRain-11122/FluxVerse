@@ -155,10 +155,11 @@ function Resolve-ArtItems
     $items = @()
     $seen = @{}
     $miss = @()
+    $bare = @()
     $paths = 0
     if ([string]::IsNullOrWhiteSpace($Raw)) {
         return (New-Object PSObject -Property ([ordered]@{
-            paths = 0; missing = 0; miss_names = @(); items = @()
+            paths = 0; missing = 0; miss_names = @(); bare = 0; bare_names = @(); items = @()
         }))
     }
     $ms = [regex]::Matches($Raw, $artPattern)
@@ -166,7 +167,18 @@ function Resolve-ArtItems
         $tok = $m.Value
         if ([string]::IsNullOrWhiteSpace($tok)) { continue }
         $norm = $tok.Replace('\', '/')
-        if ($norm -match '^[A-Za-z]:/' -or $norm.StartsWith('//')) { $abs = $norm }
+        $isAbs = ($norm -match '^[A-Za-z]:/' -or $norm.StartsWith('//'))
+        # A token with no directory separator is a bare file name, not a path
+        # (queue main#75). The pattern only demanded an extension, so prose like
+        # "-regress.html" became a "real path", painted art_missing=1 and turned
+        # the self-check amber for a file the author never claimed existed. Face
+        # lines must carry a relative path; bare names are counted and dropped,
+        # even when a file with that name happens to exist somewhere.
+        if (-not $isAbs -and $norm.IndexOf('/') -lt 0) {
+            if (-not $seen.ContainsKey($norm)) { $seen[$norm] = $true; $bare += $norm }
+            continue
+        }
+        if ($isAbs) { $abs = $norm }
         else { $abs = Join-Path $repoDir $norm.Replace('/', '\') }
         $exists = $false
         try { $exists = Test-Path -LiteralPath $abs } catch { $exists = $false }
@@ -174,7 +186,7 @@ function Resolve-ArtItems
         # files (docs/decisions.md, cph4/evolution-ledger.md); testing them only
         # against the repo painted a red "not found" on a file that exists one
         # level up (r709, art_missing=1 on a live path).
-        if (-not $exists -and $norm -notmatch '^[A-Za-z]:/' -and -not $norm.StartsWith('//')) {
+        if (-not $exists -and -not $isAbs) {
             $groupAbs = Join-Path $groupRoot $norm.Replace('/', '\')
             try { if (Test-Path -LiteralPath $groupAbs) { $abs = $groupAbs; $exists = $true } } catch { }
         }
@@ -214,7 +226,8 @@ function Resolve-ArtItems
         if ($items.Count -ge $Max) { break }
     }
     return (New-Object PSObject -Property ([ordered]@{
-        paths = [int]$paths; missing = [int]$miss.Count; miss_names = @($miss); items = @($items)
+        paths = [int]$paths; missing = [int]$miss.Count; miss_names = @($miss)
+        bare = [int]$bare.Count; bare_names = @($bare); items = @($items)
     }))
 }
 
@@ -222,6 +235,8 @@ $faceKeyMap = [ordered]@{ act = 'current_activity'; art = 'artifact'; mile = 'mi
 $artBy = [ordered]@{}
 $artItems = @()
 $artMiss = @()
+$artBare = @()
+$artBareSeen = @{}
 $artPaths = 0
 foreach ($k in $faceKeyMap.Keys) {
     $raw = ''
@@ -238,11 +253,20 @@ foreach ($k in $faceKeyMap.Keys) {
     }
     $artBy[$k] = (New-Object PSObject -Property ([ordered]@{
         paths = [int]$one.paths; missing = [int]$one.missing
-        miss_names = @($one.miss_names); items = @($tagged)
+        miss_names = @($one.miss_names); bare = [int]$one.bare
+        bare_names = @($one.bare_names); items = @($tagged)
     }))
     $artItems += $tagged
     $artPaths += [int]$one.paths
     $artMiss += @($one.miss_names)
+    # Distinct names only: the same bare token often shows up on two lines, and
+    # a WARN that lists "TECH.md, TECH.md" reads like a bug in the reporter.
+    foreach ($bn in @($one.bare_names)) {
+        if (-not $artBareSeen.ContainsKey([string]$bn)) {
+            $artBareSeen[[string]$bn] = $true
+            $artBare += [string]$bn
+        }
+    }
 }
 # --- 4th row: today's tick log as a clickable anchor (queue main#30) ---------
 # The CEO should be able to open TODAY's tick log from the panel in one click.
@@ -274,10 +298,18 @@ $artBy['tick'] = (New-Object PSObject -Property ([ordered]@{
     items      = @($tickTagged)
 }))
 
+# Say it out loud instead of hiding it (queue main#75): a bare name is not a
+# path, and the whole point of the fix is that the panel stops pretending it is.
+if ($artBare.Count -gt 0) {
+    Write-Output ('PANEL WARN: bare-artifact-names=' + [int]$artBare.Count + ' ignored (' + ($artBare -join ', ') + '); face lines must carry a relative path')
+}
+
 $artMeta = New-Object PSObject -Property ([ordered]@{
     paths      = [int]$artPaths
     missing    = [int]$artMiss.Count
     miss_names = @($artMiss)
+    bare       = [int]$artBare.Count
+    bare_names = @($artBare)
     items      = @($artItems)
     by         = $artBy
 })
@@ -1140,5 +1172,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' art_bare=' + [int]$artBare.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' built=' + $built + ' path=' + $OutPath)
 exit 0

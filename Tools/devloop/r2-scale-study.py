@@ -42,19 +42,42 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCENE = os.path.join(ROOT, "City3D", "Assets", "Scenes", "CityRebuild_R2.unity")
 REBUILD = os.path.join(ROOT, "City3D", "Assets", "Editor", "CityRebuild", "CityRebuildR2.cs")
+REPORT = os.path.join(ROOT, "City3D-staging", "r2-report.md")
 
 WALK_MPS = 1.35       # leisurely walking speed used for the "cross the block" figure
 MIN_GAP = 3.0         # comfortable gap between two neighbouring lot pads
 SETBACK = 2.0         # walkable strip between a lot edge and the street edge
 STREET_W = 6.0        # the street band actually built in the scene
-SHOWCASE_W = 7.5      # measured: 3 x 2 modules of 2.5 m
+# showcase size: the fallback is 3 x 2 modules of 2.5 m.  The rebuild report
+# writes the measured AABB on every run (`showcase_bounds: 7.50x5.00m ...`),
+# so main() overwrites both globals from that line when the report is readable.
+SHOWCASE_W = 7.5
 SHOWCASE_D = 5.0
 SHOWCASE_CLEAR = 1.0  # wanted clearance each side of the walk-in prototype
+SHOWCASE_RE = re.compile(r"showcase_bounds:\s*([\d.]+)\s*x\s*([\d.]+)\s*m", re.IGNORECASE)
 
 
 def die(msg):
     sys.stderr.write("SCALE_STUDY FAIL: " + msg + "\n")
     sys.exit(2)
+
+
+def read_showcase_size(text):
+    """(w, d, src) for the walk-in prototype.
+
+    src="report" when the rebuild report carries a `showcase_bounds:` line with
+    two sane numbers, otherwise the constants above ("const").  No report line
+    is a normal state (older reports, fixture input), not an error.
+    """
+    m = SHOWCASE_RE.search(text or "")
+    if m:
+        try:
+            w, d = float(m.group(1)), float(m.group(2))
+        except ValueError:
+            w, d = 0.0, 0.0
+        if w > 0.5 and d > 0.5:
+            return w, d, "report"
+    return SHOWCASE_W, SHOWCASE_D, "const"
 
 
 def load_checker():
@@ -216,6 +239,23 @@ def metrics(v):
             "showcase_fits": best >= SHOWCASE_W + 2 * SHOWCASE_CLEAR}
 
 
+def showcase_pad_clash(v):
+    """[(lot id, overlap x, overlap z)] for the pads the prototype box sits on."""
+    out = []
+    sc = v.get("showcase")
+    if not sc:
+        return out
+    sx, sz = sc["cx"], sc["cz"]
+    box = (sx - SHOWCASE_W * 0.5, sz - SHOWCASE_D * 0.5,
+           sx + SHOWCASE_W * 0.5, sz + SHOWCASE_D * 0.5)
+    for l in v["lots"]:
+        ox = min(box[2], l["x1"]) - max(box[0], l["x0"])
+        oz = min(box[3], l["z1"]) - max(box[1], l["z0"])
+        if ox > 0.01 and oz > 0.01:
+            out.append((l["id"], round(ox, 2), round(oz, 2)))
+    return out
+
+
 def variant_from_scene(houses, street, showcase):
     """A1 = whatever the built scene actually holds."""
     rows = cluster_rows(houses)
@@ -271,7 +311,8 @@ def variant_from_scene(houses, street, showcase):
 
 
 # ------------------------------------------------------------------ drawing
-def draw_panel(dr, font, small, v, m, ox, oy, ppm, title, sub, colour, actual_showcase=None):
+def draw_panel(dr, font, small, v, m, ox, oy, ppm, title, sub, colour, actual_showcase=None,
+               actual_note="measured"):
     """One top-down plan panel at ppm pixels per metre.
 
     ox/oy = top-left of the block rectangle. Both variant() and
@@ -306,13 +347,14 @@ def draw_panel(dr, font, small, v, m, ox, oy, ppm, title, sub, colour, actual_sh
     # widest gap the walk-in building could move into
     if actual_showcase:
         sx, sz = actual_showcase["cx"], actual_showcase["cz"]
+        note_fill = (250, 130, 130) if actual_note.startswith("pad clash") else (140, 220, 160)
         dr.rectangle([X(sx - SHOWCASE_W * 0.5), Z(sz - SHOWCASE_D * 0.5),
                       X(sx + SHOWCASE_W * 0.5), Z(sz + SHOWCASE_D * 0.5)],
-                     outline=(250, 110, 110), width=2)
+                     outline=note_fill, width=2)
         dr.text((X(sx - SHOWCASE_W * 0.5) + 2, Z(sz - SHOWCASE_D * 0.5) + 1),
                 "showcase", fill=(250, 130, 130), font=small)
         dr.text((X(sx - SHOWCASE_W * 0.5) + 2, Z(sz - SHOWCASE_D * 0.5) + 11),
-                "pad clash", fill=(250, 130, 130), font=small)
+                actual_note, fill=note_fill, font=small)
     elif v["gaps"]:
         g, a, b = v["gaps"][0]
         fits = g >= SHOWCASE_W
@@ -433,6 +475,23 @@ def self_check():
         fails.append("metrics degenerate")
     if m["showcase_fits"] and m["max_gap"] < SHOWCASE_W:
         fails.append("showcase_fits inconsistent")
+    # showcase size source: a measured report line wins, its absence falls back
+    w_r, d_r, src_r = read_showcase_size(
+        "showcase_bounds: 7.10x4.80m vs nominal 7.5x5.0m over=(0.00,0.00)m PASS")
+    if src_r != "report" or abs(w_r - 7.10) > 1e-9 or abs(d_r - 4.80) > 1e-9:
+        fails.append("showcase line parse -> %.2fx%.2f src=%s" % (w_r, d_r, src_r))
+    w_c, d_c, src_c = read_showcase_size("no showcase line at all")
+    if src_c != "const" or abs(w_c - SHOWCASE_W) > 1e-9 or abs(d_c - SHOWCASE_D) > 1e-9:
+        fails.append("showcase fallback -> %.2fx%.2f src=%s" % (w_c, d_c, src_c))
+    if read_showcase_size("showcase_bounds: 0x0m")[2] != "const":
+        fails.append("zero-size line must fall back, not pass through")
+    print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm (fixture: report line present)" % (src_r, w_r, d_r))
+    print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm (fixture: no report line)" % (src_c, w_c, d_c))
+    if os.path.isfile(REPORT):
+        w_p, d_p, src_p = read_showcase_size(
+            io.open(REPORT, encoding="utf-8", errors="replace").read())
+        print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm (live %s)"
+              % (src_p, w_p, d_p, os.path.relpath(REPORT, ROOT).replace("\\", "/")))
     if fails:
         print("SELF_CHECK FAIL " + "; ".join(fails))
         return 2
@@ -443,11 +502,12 @@ def self_check():
 
 # ------------------------------------------------------------------ main
 def main(argv):
+    global SHOWCASE_W, SHOWCASE_D
     if "--self-check" in argv:
         return self_check()
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
     out_dir = os.path.join(ROOT, "qa")
-    scene_path, rebuild_path = SCENE, REBUILD
+    scene_path, rebuild_path, report_path = SCENE, REBUILD, REPORT
     artifacts = True
     for i, a in enumerate(argv):
         if a == "--stamp" and i + 1 < len(argv):
@@ -460,10 +520,23 @@ def main(argv):
             scene_path = os.path.abspath(os.path.join(ROOT, argv[i + 1]))
         elif a == "--rebuild" and i + 1 < len(argv):
             rebuild_path = os.path.abspath(os.path.join(ROOT, argv[i + 1]))
+        elif a == "--report" and i + 1 < len(argv):
+            report_path = os.path.abspath(os.path.join(ROOT, argv[i + 1]))
     if not os.path.isfile(scene_path):
         die("scene not found: " + scene_path)
     if not os.path.isfile(rebuild_path):
         die("rebuild script not found: " + rebuild_path)
+
+    # single source for the prototype footprint: the last rebuild's measured
+    # AABB, not a hand-typed constant
+    report_text = ""
+    if os.path.isfile(report_path):
+        try:
+            report_text = io.open(report_path, encoding="utf-8", errors="replace").read()
+        except OSError:
+            report_text = ""
+    SHOWCASE_W, SHOWCASE_D, showcase_src = read_showcase_size(report_text)
+    stale = bool(showcase_src == "report" and os.path.getmtime(report_path) < os.path.getmtime(scene_path))
 
     mod = load_checker()
     sc = mod.Scene(scene_path)
@@ -472,6 +545,7 @@ def main(argv):
     rows = cluster_rows(houses)
     v1 = variant_from_scene(houses, street, showcase)
     m1 = metrics(v1)
+    clash1 = showcase_pad_clash(v1)
 
     # A2: same order, same assets; only the row pitch is compacted
     z_floor = (max(h["ld"] for h in rows[0]) + max(h["ld"] for h in rows[1])) * 0.5
@@ -499,6 +573,10 @@ def main(argv):
     print("SCALE_STUDY scene=%s lot_pad=%.2f houses=%d rows=%s"
           % (os.path.basename(scene_path), lot_pad, len(houses),
              "/".join(str(len(r)) for r in rows)))
+    print("SHOWCASE_SRC=%s showcase=%.2fx%.2fm report=%s%s"
+          % (showcase_src, SHOWCASE_W, SHOWCASE_D,
+             os.path.relpath(report_path, ROOT).replace("\\", "/") if os.path.isfile(report_path) else "missing",
+             " (report older than scene)" if stale else ""))
     print("A1 as-built   %.1f x %.1f m  %.0f m2  pitch %.1f/%.1f  coverage %.1f%%  front %.1f-%.1f m  gap %.2f-%.2f m"
           % (v1["w"], v1["d"], m1["gross"], v1["pitch_x"], v1["pitch_z"], m1["coverage"] * 100.0,
              m1["front_min"], m1["front_max"], m1["min_gap"], m1["max_gap"]))
@@ -516,14 +594,8 @@ def main(argv):
     if v1.get("showcase"):
         # does the walk-in prototype actually clear its neighbours' pads today?
         sx, sz = v1["showcase"]["cx"], v1["showcase"]["cz"]
-        box = (sx - SHOWCASE_W * 0.5, sz - SHOWCASE_D * 0.5, sx + SHOWCASE_W * 0.5, sz + SHOWCASE_D * 0.5)
-        hits = []
-        for l in v1["lots"]:
-            ox = min(box[2], l["x1"]) - max(box[0], l["x0"])
-            oz = min(box[3], l["z1"]) - max(box[1], l["z0"])
-            if ox > 0.01 and oz > 0.01:
-                hits.append((l["id"], round(ox, 2), round(oz, 2)))
-        print("  showcase_box=(%.1f,%.1f) pad_clash=%s" % (sx, sz, hits if hits else "none"))
+        print("  showcase_box=(%.1f,%.1f) pad_clash=%s"
+              % (sx, sz, clash1 if clash1 else "none"))
 
     if not artifacts:
         print("SCALE_VERDICT=%s area A2%+.0f%% A3%+.0f%%"
@@ -557,11 +629,12 @@ def main(argv):
             fill=(150, 160, 172), font=small)
 
     panels = (
-        (v1, (196, 168, 120), "A1  as built", v1.get("showcase")),
-        (a2, (128, 186, 236), "A2  row pitch compacted", None),
-        (a3, (128, 214, 150), "A3  A2 + frontage reorder + curbless lane", None),
+        (v1, (196, 168, 120), "A1  as built", v1.get("showcase"),
+         ("pad clash " + ",".join(c[0] for c in clash1)) if clash1 else "clears pads"),
+        (a2, (128, 186, 236), "A2  row pitch compacted", None, "measured"),
+        (a3, (128, 214, 150), "A3  A2 + frontage reorder + curbless lane", None, "measured"),
     )
-    for k, (v, col, title, act) in enumerate(panels):
+    for k, (v, col, title, act, note) in enumerate(panels):
         m = v["m"]
         ox = left + (k % 2) * panel_w
         oy = top + (k // 2) * panel_h + 48
@@ -569,7 +642,8 @@ def main(argv):
                "density %.1f%%  front yard %.1f-%.1f m  street %.1f m  walk across %.0f s"
                % (v["w"], v["d"], m["gross"], v["pitch_x"], v["pitch_z"],
                   m["coverage"] * 100.0, m["front_min"], m["front_max"], v["street_w"], m["walk_x"]))
-        draw_panel(dr, font, small, v, m, ox, oy, ppm, title, sub, col, actual_showcase=act)
+        draw_panel(dr, font, small, v, m, ox, oy, ppm, title, sub, col,
+                   actual_showcase=act, actual_note=note)
 
     # fourth panel: the city grain, own scale
     side = panel_w - 74
@@ -591,7 +665,9 @@ def main(argv):
 
     md = ["# R2 街区尺度复核（%s · main#61）" % stamp, "",
           "实测口径：宅基台边长 = 房体边长 + %.1f m（`CityRebuildR2.cs`），尺寸全部从已建场景 `CityRebuild_R2.unity` 读回；"
-          "人速度按 %.2f m/s 计。" % (lot_pad, WALK_MPS), "",
+          "人速度按 %.2f m/s 计。展示房足迹取重建报告 `showcase_bounds:` 实测行（%.2f × %.2f m，来源 `%s`%s）。"
+          % (lot_pad, WALK_MPS, SHOWCASE_W, SHOWCASE_D, showcase_src,
+             "，⚠ 报告比场景旧" if stale else ""), "",
           "| 方案 | 街区尺寸 | 用地 | 房屋占地 | 建筑密度 | 前场进深 | 门面间距 | 街宽 | 横穿一趟 |",
           "|---|---|---|---|---|---|---|---|---|"]
     rows_md = []

@@ -63,6 +63,8 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\test-log-archive-duty.ps1',
             'Tools\devloop\test-verify-ps-suites.ps1',
             'Tools\devloop\test-probe-path-census.ps1',
+            'Tools\devloop\test-state-promote.ps1',
+            'Tools\devloop\state-promote.ps1',
             'Tools\devloop\run-ps-suites.ps1',
             'Tools\devloop\ps-suites-tick.ps1',
             'Tools\devloop\site-verdict.ps1',

@@ -151,7 +151,8 @@ $verifyRel = @(
     'Tools\devloop\test-queue-due.ps1',
     'Tools\devloop\test-log-archive-duty.ps1',
     'Tools\devloop\test-verify-ps-suites.ps1',
-    'Tools\devloop\test-probe-path-census.ps1'
+    'Tools\devloop\test-probe-path-census.ps1',
+    'Tools\devloop\test-state-promote.ps1'
 )
 $counted = "Write-Output 'RESULT: 30 passed, 0 failed (of 30)'`r`nexit 0`r`n"
 foreach ($rel in $verifyRel) { Write-Fixture (Join-Path $repo3 $rel) $counted }
@@ -159,12 +160,12 @@ foreach ($rel in $verifyRel) { Write-Fixture (Join-Path $repo3 $rel) $counted }
 Write-Output '--- j) -Verify list ---'
 $rj = Invoke-Runner @('-RepoDir', $repo3, '-Verify')
 Check 'j: exit 0'                  ($rj.code -eq 0)
-Check 'j: eight verify suites'     ($rj.out -match 'PS SUITES suites=8 ')
+Check 'j: nine verify suites'     ($rj.out -match 'PS SUITES suites=9 ')
 Check 'j: mode=verify printed'     ($rj.out -match 'mode=verify timeouts=0')
 Check 'j: parity skipped'          ($rj.out -match 'parity=skipped')
 Check 'j: no PARITY line'          (-not ($rj.out -cmatch 'PARITY'))
 Check 'j: verify verdict'          ($rj.out -match 'PS SUITES VERIFY VERDICT: ALL PASS')
-Check 'j: "N passed" dialect counted' ($rj.out -match 'assertions=240 counted=8')
+Check 'j: "N passed" dialect counted' ($rj.out -match 'assertions=270 counted=9')
 Check 'j: names a verify suite'    ($rj.out -match 'PASS  test-verify-r2-site\.ps1')
 
 Write-Output '--- k) -Verify missing file ---'

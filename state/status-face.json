@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T18:43:21Z",
-    "current_activity":  "r752 收口（main#94 verify 侧沙盒进 tick）：Tools/devloop/ps-suites-tick.ps1 家族化——写侧与 verify 侧受保护源互不相交、票据分家、-CheckOnly 先判要不要 spawn；写侧本轮真跑过则 verify 记 deferred 推到下一 tick，一轮只付一个重跑（轮钟取 max 不取和），超时按族 45s／180s。同轮修红两处：verify 家族单套上限 40s 会把长到 40.8s 的沙盒打成 timeout 并静默丢 74 条断言（活票据 assertions 207→133 仍显示 pass），上限提到 90s；直跑 Tools/devloop/run-ps-suites.ps1 -Verify 会递归一层（\u003e5 分钟被杀），runner 现给子套件打 FLUXVERSE_PS_SUITES_CHILD=1 并还原。活跑：写侧 suites=5 red=0 cached=0m，verify 侧 suites=8 red=0 assertions=207 parity=skipped ran=103411ms，整轮 106s。",
-    "artifact":  "Tools/devloop/ps-suites-tick.ps1, Tools/devloop/run-ps-suites.ps1, Tools/perceptor/verify.ps1, Tools/devloop/test-verify-ps-suites.ps1, Tools/devloop/test-run-ps-suites.ps1, state/queue/main.md, ./TECH.md",
-    "artifact_utc":  "2026-10-31T18:42:43Z",
-    "milestone":  "下一轮：main#93（Tools/perceptor/verify.ps1 状态提升竞态缺确定性沙盒，需 state 根注入钩或抽模块）→ main#91（红票据粘性＋夹具不入指纹）→ main#92（verify 不 spawn 断言升白名单式），队列头 state/queue/main.md",
+    "updated_utc":  "2026-10-31T18:53:59Z",
+    "current_activity":  "r753 收口（main#93 Tools/perceptor/verify.ps1 状态提升竞态缺确定性沙盒）：把「候选提升」从门里抽成单点模块 Tools/devloop/state-promote.ps1（四态 no-candidate／promoted／lost-race／failed＋Clear-StateCandidate），门自己不再自带 Move-Item；模块缺档即 FAIL exit 1。新沙盒 Tools/devloop/test-state-promote.ps1 30/30——竞态败者（搬失败且源已消失＝静默）与真故障（搬失败且源仍在＝必须红）两支都确定性复现，其中真故障一支不靠任何测试缝：对目标文件持独占锁，真 Move-Item 必失败且源原地不动。新套件已进 verify 侧家族（8→9 套），活跑 suites=9 assertions=237 failing=0 timeouts=0 ALL PASS；门本身回 VERIFY PASS。同轮修红三处：runner 沙盒的八件 fixture 副本随家族扩到九件而 17 红（补件＋改断言 53/53 复原）、新写两件被写入器带上 UTF-8 BOM（非 ASCII 3 字节，剥 BOM 归零）、我自己那条残留断言写错（e/f 两组的语义就是保住候选）。",
+    "artifact":  "Tools/devloop/state-promote.ps1, Tools/devloop/test-state-promote.ps1, Tools/devloop/run-ps-suites.ps1, Tools/devloop/ps-suites-tick.ps1, Tools/devloop/test-run-ps-suites.ps1, Tools/perceptor/verify.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
+    "artifact_utc":  "2026-10-31T18:53:59Z",
+    "milestone":  "下一轮：main#91（写侧票据粘性＋夹具不入指纹）→ main#95（FLUXVERSE_WORLD_DIR 注入钩，让门本身可端到端证 FAIL 丢候选／PASS 发布）→ main#96（verify 族 9 套后的新基线，180 s 余量未知），队列头 state/queue/main.md",
     "milestone_eta_utc":  "2026-11-02T06:00:00Z"
 }

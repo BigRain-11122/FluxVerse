@@ -26,6 +26,15 @@ $utf8 = New-Object System.Text.UTF8Encoding($false)
 $fail = @()
 $healed = 0
 
+# Two-phase promotion lives in one module so a sandbox can drive every branch
+# (queue main#93). Missing module = the gate cannot keep its promise on FAIL.
+$statePromoteMod = Join-Path $repoRoot 'Tools\devloop\state-promote.ps1'
+if (-not (Test-Path -LiteralPath $statePromoteMod)) {
+  Write-Output ('VERIFY FAIL: state-promote module missing: ' + $statePromoteMod)
+  exit 1
+}
+. $statePromoteMod
+
 # ---------- 1. state (candidate = .new if present, else current) ----------
 $promote = (Test-Path $newStateFile)
 $cand = $null
@@ -518,25 +527,20 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
 if ($fail.Count -gt 0) {
   $fail | ForEach-Object { Write-Output ('VERIFY FAIL: ' + $_) }
   if ($promote) {
-    Remove-Item $newStateFile -Force -ErrorAction SilentlyContinue
+    [void](Clear-StateCandidate -NewPath $newStateFile)
     Write-Output 'VERIFY FAIL: .new state discarded, old world-state.json kept'
   }
   exit 1
 }
-# Promote the candidate state. Two verify instances can overlap (the 5-minute
-# tick plus a sandbox that runs this gate in-process); both compute $promote from
-# the same .new file, so the loser used to die on Move-Item PathNotFound and
-# report an exit 1 that looked like a real red (r751). Vanished source = someone
-# else already published the same candidate (same content, same rule). A source
-# that is still there after a failed move is a real promote failure: stay loud.
+# Promote the candidate state. The decision itself lives in
+# Tools/devloop/state-promote.ps1 (queue main#93) so a sandbox can prove every
+# branch: promoted / lost-race (source already published by the other
+# instance) / failed (source survived a failed move = stay loud) / no-candidate.
 if ($promote) {
-  if (Test-Path -LiteralPath $newStateFile) {
-    $promoteOk = $false
-    try { Move-Item -Force $newStateFile $stateFile -ErrorAction Stop; $promoteOk = $true } catch { $promoteOk = $false }
-    if (-not $promoteOk -and (Test-Path -LiteralPath $newStateFile)) {
-      Write-Output ('VERIFY FAIL: state promote failed, candidate kept: ' + $newStateFile)
-      exit 1
-    }
+  $spRes = Invoke-StatePromotion -NewPath $newStateFile -StatePath $stateFile
+  if ($spRes.Status -eq 'failed') {
+    Write-Output ('VERIFY FAIL: state promote failed, candidate kept: ' + $spRes.Detail)
+    exit 1
   }
 }
 if ($healed -gt 0) {

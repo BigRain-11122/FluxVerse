@@ -32,9 +32,20 @@
 #    ("fix the due=2026-1-5 case") accused itself: r747 counted 5 such hits on
 #    its own main#85 row and they only vanished when that row was struck.
 #    Prose is ABOUT markers; the remark cell is where one is MADE.
-#    Not silently lost, though: a strict valid `due=YYYY-MM-DD` found in any
-#    other cell is still counted as a deadline, and additionally reported as
-#    bad with reason `cell` - the next reader will look in the remark cell.
+#  - QUOTATION vs DECLARATION (main#90). r749 still reported a strict valid
+#    `due=YYYY-MM-DD` sitting in another cell as bad (`reason=cell`) and still
+#    read it as that row's deadline, so a row whose prose merely POINTS at
+#    another row's date ("see the due=2026-12-01 row") carried a deadline it
+#    never had. Two rules close that:
+#      a) inline code (`...` spans) is a citation, never a marker - the repo
+#         writes examples and templates in backticks;
+#      b) outside the remark cell a marker only declares if the cell is
+#         ESSENTIALLY JUST THAT MARKER (nothing left once decoration is
+#         stripped). Prose about a date declares nothing and is not bad; a
+#         lone date sitting in the wrong cell is still reported as `cell`
+#         (that is a real misplacement the next reader must fix).
+#    Fail-closed on the other side: an unpaired backtick does not swallow the
+#    rest of a cell - only paired spans are masked.
 # Read-only, fail-soft: a missing/empty directory ships exists=false and the
 # page says so instead of printing a comfortable zero.
 # ASCII-only (PS 5.1 GBK law): the CJK rows live in the UTF-8 queue files.
@@ -47,12 +58,48 @@ function Test-DueValueShape([string]$Value)
     return $true
 }
 
+# Inline code is a citation, not a declaration (main#90): mask every PAIRED
+# `...` span with spaces. Masking (not deleting) keeps the string length, so a
+# regex match index here still maps to the same cell of the un-masked row.
+# An unpaired backtick is left as-is: a stray quote must not be able to hide a
+# real marker for the rest of the cell.
+function Hide-InlineCode([string]$Text)
+{
+    if ([string]::IsNullOrEmpty($Text)) { return '' }
+    $rx = New-Object System.Text.RegularExpressions.Regex('`[^`]*`')
+    $ms = $rx.Matches($Text)
+    if ($ms.Count -eq 0) { return $Text }
+    $sb = New-Object System.Text.StringBuilder
+    $pos = 0
+    foreach ($m in $ms) {
+        if ($m.Index -gt $pos) { $null = $sb.Append($Text.Substring($pos, $m.Index - $pos)) }
+        $null = $sb.Append((' ' * $m.Length))
+        $pos = $m.Index + $m.Length
+    }
+    if ($pos -lt $Text.Length) { $null = $sb.Append($Text.Substring($pos)) }
+    return $sb.ToString()
+}
+
+# Does this cell declare the marker, or merely mention it? A declaration cell
+# holds nothing but the marker and its markdown decoration; anything else is
+# prose ABOUT some date (main#90 rule b).
+function Test-CellDeclaresMarker([string]$Cell, [string]$Marker)
+{
+    if ([string]::IsNullOrEmpty($Cell)) { return $false }
+    $rest = $Cell
+    if (-not [string]::IsNullOrEmpty($Marker)) { $rest = $Cell.Replace($Marker, ' ') }
+    $rest = $rest -replace '[`\*_~\-\.\,\:\;\(\)\[\]\s]', ''
+    return ($rest.Length -eq 0)
+}
+
 function Get-QueueDueBadTokens
 {
     param([string]$Text)
 
     $out = New-Object System.Collections.ArrayList
     if ([string]::IsNullOrEmpty($Text)) { return @() }
+    # Backticked examples are quotations, never markers (main#90 rule a).
+    $Text = Hide-InlineCode $Text
     # "due" as its own word (not qdue_*, not overdue), then an optional
     # separator and a value. The value class is deliberately ASCII-only: a due
     # value can never be CJK, and stopping at the first CJK glyph is what keeps
@@ -149,8 +196,15 @@ function Get-QueueDue
 
             # Only the remark cell (last cell) declares a marker; every other
             # cell is prose about markers (main#87). $cells has a trailing
-            # empty element because the row text ends with '|'.
-            $remark = $cells[$cells.Count - 2]
+            # empty element because the row text ends with '|'. Inline code is
+            # masked first so quoted examples are never markers (main#90).
+            $masked = Hide-InlineCode $t
+            $cellsMasked = $masked.Split('|')
+            $remarkIndex = $cells.Count - 2
+            $remark = ''
+            if ($remarkIndex -ge 0 -and $remarkIndex -lt $cellsMasked.Count) {
+                $remark = $cellsMasked[$remarkIndex]
+            }
             foreach ($bt in @(Get-QueueDueBadTokens -Text $remark)) {
                 $null = $badItems.Add([ordered]@{
                     id     = $idTxt
@@ -160,20 +214,34 @@ function Get-QueueDue
                 })
             }
 
-            $m = [regex]::Match($t, 'due=(\d{4})-(\d{2})-(\d{2})')
-            if (-not $m.Success) { continue }
-            # A strict marker outside the remark cell keeps its meaning as a
-            # deadline (never silently lose one) but is a writing error: say so
-            # instead of letting the next reader hunt for it.
-            $cellIndex = ($t.Substring(0, $m.Index).Split('|')).Count - 1
-            if ($cellIndex -ne ($cells.Count - 2)) {
+            # A marker outside the remark cell only declares if that cell IS
+            # the marker - otherwise the cell is prose pointing at some other
+            # date and this row has no deadline at all (main#90). A lone
+            # marker in the wrong cell stays bad with reason `cell`.
+            # EVERY marker is classified here, not just the first one: a row
+            # whose prose cites a date before its own remark marker must still
+            # keep the real deadline (a first-match scan silently lost it).
+            $pick = $null
+            $pickMisplaced = $null
+            foreach ($mm in [regex]::Matches($masked, 'due=(\d{4})-(\d{2})-(\d{2})')) {
+                $cellIndex = ($masked.Substring(0, $mm.Index).Split('|')).Count - 1
+                if ($cellIndex -eq $remarkIndex) {
+                    if ($null -eq $pick) { $pick = $mm }
+                    continue
+                }
+                if ($cellIndex -ge $cells.Count) { continue }
+                if (-not (Test-CellDeclaresMarker -Cell $cells[$cellIndex] -Marker $mm.Value)) { continue }
                 $null = $badItems.Add([ordered]@{
                     id     = $idTxt
                     file   = $f.Name
-                    token  = $m.Value
+                    token  = $mm.Value
                     reason = 'cell'
                 })
+                if ($null -eq $pickMisplaced) { $pickMisplaced = $mm }
             }
+            if ($null -eq $pick) { $pick = $pickMisplaced }
+            if ($null -eq $pick) { continue }
+            $m = $pick
             $due = $null
             try {
                 $due = [datetime]::new([int]$m.Groups[1].Value, [int]$m.Groups[2].Value,

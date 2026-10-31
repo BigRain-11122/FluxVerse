@@ -15,11 +15,15 @@
 #   F) bad markers (main#85): a `due` marker that is not `due=YYYY-MM-DD` is
 #      counted and named, never silently read as "no deadline"; prose ("due to")
 #      and the literal format template are not markers
-#   G) marker CELL (main#87): only the remark cell (last cell) declares a
-#      marker. Prose in the subject/pointer cells that quotes a broken shape is
-#      NOT counted (r747's own row accused itself with 5 hits); a strict valid
-#      marker written in another cell is still honoured as a deadline but
-#      reported as bad with reason `cell`
+#   G) marker CELL (main#87) + quotation vs declaration (main#90): only the
+#      remark cell (last cell) declares a marker. Prose that quotes a marker -
+#      broken or valid - is not a marker at all: r747's own row accused itself
+#      with 5 hits, and until r760 a prose cell citing someone else's due date
+#      handed this row a deadline it never had. A marker alone in the wrong
+#      cell is still reported (reason `cell`) - that is a real misplacement.
+#   H) inline code (main#90 rule a): backticked spans are quotations in EVERY
+#      cell, including the remark cell; an unpaired backtick must not be able
+#      to hide a real marker behind it.
 # ASCII-only law: fixtures are ASCII; the live CJK rows are only counted.
 
 $ErrorActionPreference = 'Stop'
@@ -94,14 +98,34 @@ $rowG = @"
 | 3 | see the due=2026-12-01 row | p | nothing here |
 | 4 | plain task | p | due=2026-12-25 |
 | 5 | plain task | p | due=2026-1-5 |
+| 6 | misplaced deadline | due=2026-10-05 | nothing here |
+| 7 | see the due=2026-12-01 row | p | due=2026-10-25 |
 "@
 Write-TextFile (Join-Path $qdirG 'queue-g.md') $rowG
+
+# --- H) inline code is a quotation (main#90) --------------------------------
+# Single-quoted here-string: the backticks must reach the file literally.
+$qdirH = Join-Path $sandbox 'queueH'
+New-Item -ItemType Directory -Path $qdirH -Force | Out-Null
+$rowH = @'
+# fixture queue: quoted markers
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | template in the remark cell | p | write it as `due=2026-12-31` |
+| 2 | broken form quoted in the remark cell | p | never write `due=2026-1-5` |
+| 3 | quoted date in a prose cell | see `due=2026-12-09` | nothing here |
+| 4 | plain deadline | p | due=2026-12-25 |
+| 5 | stray backtick before a real marker | p | ` due=2026-10-20 |
+'@
+Write-TextFile (Join-Path $qdirH 'queue-h.md') $rowH
 
 # --- results ---------------------------------------------------------------
 $A = Get-QueueDue -Dir $qdirA -Today $today
 $B = Get-QueueDue -Dir $qdirB -Today $today
 $QF = Get-QueueDue -Dir $qdirF -Today $today
 $QG = Get-QueueDue -Dir $qdirG -Today $today
+$QH = Get-QueueDue -Dir $qdirH -Today $today
 
 # --- C) live queue, independent recount ------------------------------------
 $qdirLive = Join-Path $repoDir 'state\queue'
@@ -199,15 +223,25 @@ Check 'F: impossible date reason' ((@($QF.bad_items | Where-Object { $_.id -eq '
 Check 'F: only the strict marker is dated' ($QF.dated -eq 1)
 Check 'F: tokens keep their original spelling' ((@($QF.bad_items | Where-Object { $_.id -eq '3' })[0].token) -eq 'due:2026-01-05')
 
-Check 'G: five rows scanned' ($QG.scanned -eq 5)
+Check 'G: seven rows scanned' ($QG.scanned -eq 7)
 Check 'G: prose in the subject cell is not bad' (@($QG.bad_items | Where-Object { $_.id -eq '1' }).Count -eq 0)
-Check 'G: prose in the subject cell never dates the row' ($QG.dated -eq 2)
+Check 'G: a prose citation declares no deadline' ($QG.dated -eq 3)
 Check 'G: prose quoting a colon form is not bad' (@($QG.bad_items | Where-Object { $_.id -eq '2' }).Count -eq 0)
+Check 'G: the remark cell is not bad when the subject is prose' (@($QG.bad_items | Where-Object { $_.id -eq '3' }).Count -eq 0)
 Check 'G: only the remark cell declares a marker' (@($QG.bad_items | Where-Object { $_.id -eq '4' }).Count -eq 0)
-Check 'G: a strict marker elsewhere is still a deadline' (@($QG.items | Where-Object { $_.id -eq '3' }).Count -eq 0 -and $QG.dated -eq 2)
-Check 'G: a strict marker elsewhere is a writing error' ((@($QG.bad_items | Where-Object { $_.id -eq '3' })[0].reason) -eq 'cell')
+Check 'G: a lone marker in a prose cell is a writing error' ((@($QG.bad_items | Where-Object { $_.id -eq '6' })[0].reason) -eq 'cell')
+Check 'G: a lone marker in a prose cell still dates the row' ($QG.max_id -eq '6')
+Check 'G: a prose citation never shadows the real marker' (@($QG.items | Where-Object { $_.id -eq '7' -and $_.days -eq 7 }).Count -eq 1)
+Check 'G: a prose citation before the real marker is not bad' (@($QG.bad_items | Where-Object { $_.id -eq '7' }).Count -eq 0)
 Check 'G: a broken marker in the remark cell is still bad' ((@($QG.bad_items | Where-Object { $_.id -eq '5' })[0].reason) -eq 'shape')
 Check 'G: exactly two bad markers' ($QG.bad -eq 2)
+
+Check 'H: five rows scanned' ($QH.scanned -eq 5)
+Check 'H: quoted template in the remark cell is not a deadline' ($QH.dated -eq 2)
+Check 'H: quoted broken form is not bad' ($QH.bad -eq 0)
+Check 'H: a quoted date in a prose cell declares nothing' ($QH.max_id -eq '5')
+Check 'H: an unpaired backtick cannot hide a real marker' ($QH.late -eq 1 -and $QH.max_days -eq 12)
+Check 'H: the plain deadline is still honoured' (@($QH.items | Where-Object { $_.id -eq '5' }).Count -eq 1)
 
 Check 'D: builder reported PANEL OK' ($logD -match 'PANEL OK')
 Check 'D: fixture queue reports one late' ($logD -match 'qdue=1(?!\d)')

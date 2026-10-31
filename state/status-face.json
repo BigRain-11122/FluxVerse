@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T21:53:52Z",
-    "current_activity":  "r759 收口：main#92——「verify 不 spawn shell」从字面 grep 升成整条进程内链的普查。新模块 Tools/devloop/shell-chain-census.ps1 用 PS 分词器（注释不算、变量不算、字符串算）走 verify 的点载/调用链，实测链上 10 件文件、只有 Tools/devloop/ps-suites-tick.ps1 一处能起 shell 并已显式白名单署名，另两处 $MoveFile/$flush scriptblock 登记为动态缝；沙盒 Tools/devloop/test-verify-path-census.ps1 由 15 项升到 36 项（含「根文件里新增第二个 spawn」「两跳深的模块 spawn」「ProcessStartInfo 字符串形 spawn」三态必被抓，注释与 $cmd 变量必不误报），verify 轻族八套全绿 68.4 s／180 s＝38%。",
-    "artifact":  "Tools/devloop/shell-chain-census.ps1, Tools/devloop/test-verify-path-census.ps1, Tools/devloop/ps-suites-tick.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
-    "artifact_utc":  "2026-10-31T21:53:52Z",
-    "milestone":  "下一棒：main#90（队列 due 标记的散文引用边界）→ main#98（红票落 redtail= 原因）→ main#76 r671 缺档提示；指针 state/queue/main.md。验收=沙盒三态全绿后 Tools/devloop/run-ps-suites.ps1 -Verify 仍 failing=0。",
+    "updated_utc":  "2026-10-31T22:08:42Z",
+    "current_activity":  "r760 收口：main#90——队列逾期计数器第一次分得清「引用」和「声明」。成对反引号 = 引文（掩成等长空格后所有标记判定都在掩后文本上做，孤立引号不掩以防藏掉真标记）；非备注格里只有「整格就是标记」才算声明，散文指路既不报 bad 也不算期限；并逐个分类全部标记而非只认第一个——否则「散文引用在前、真标记在后」的行会丢掉真期限。沙盒 Tools/devloop/test-queue-due.ps1 53→62/62，活队列 bad=0、逾期仍是 main#23（5 天）。",
+    "artifact":  "Tools/devloop/queue-due.ps1, Tools/devloop/test-queue-due.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
+    "artifact_utc":  "2026-10-31T22:08:42Z",
+    "milestone":  "下一棒：main#98（红票落 redtail= 原因）→ main#101（反引号掩掉真期限的可见化 → qdue_code=）→ main#76 r671 缺档提示；指针 state/queue/main.md。验收=沙盒两态全绿且 Tools/devloop/run-ps-suites.ps1 -Verify 仍 failing=0。",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

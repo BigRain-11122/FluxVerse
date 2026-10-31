@@ -50,10 +50,12 @@ chk('good.sum=consistent', good.sum === (expectedChecks + ' 项通过') ||
 // r703: the real panel may carry ONE legitimate warn -- the 取景帧 row when qa/
 // holds no fresh City3D frames (they come from the City3D window, not from this
 // one). r709 adds a second legitimate warn source: 应办令, which goes red when the
-// group's ledger itself carries an overdue order addressed to us. Any warn on a
-// different row is still a defect, so assert by exclusion instead of "no warn".
+// group's ledger itself carries an overdue order addressed to us. r712 adds a
+// third: 城市证据 goes red while the soak sits >20% under the accepted baseline
+// (main#52 open). Any warn on a different row is still a defect, so assert by
+// exclusion instead of "no warn".
 const warnRows = good.body.split('<div class="chk">').slice(1).filter(c => c.indexOf('>注意<') >= 0);
-const WARN_OK = ['<span class="nm">取景帧</span>', '<span class="nm">应办令</span>'];
+const WARN_OK = ['<span class="nm">取景帧</span>', '<span class="nm">应办令</span>', '<span class="nm">城市证据</span>'];
 const strayWarn = warnRows.filter(c => !WARN_OK.some(nm => c.indexOf(nm) >= 0));
 chk('good.no-unexplained-warn', strayWarn.length === 0,
   'warn=' + warnRows.length + ' stray=' + strayWarn.length);

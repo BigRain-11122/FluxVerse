@@ -616,6 +616,9 @@ function Resolve-CityProof
     $soak = [ordered]@{
         exists = $false; fps_avg = -1; errors = -1; exceptions = -1
         ts_utc = ''; rel = ''; url = ''
+        p95_ms = -1
+        baseline_fps = -1; baseline_p95_ms = -1; baseline_rel = ''; baseline_url = ''
+        drift_pct = $null; p95_drift_pct = $null
     }
     $code = [ordered]@{ exists = $false; sha = ''; ts_utc = '' }
 
@@ -659,8 +662,37 @@ function Resolve-CityProof
             $soak.ts_utc = Convert-UtcIso -Raw ([string]$sj.ts_utc)
             $soak.errors = [int]$sj.errors
             $soak.exceptions = [int]$sj.exceptions
-            if ($null -ne $sj.render) { $soak.fps_avg = [double]$sj.render.fps_avg }
+            if ($null -ne $sj.render) {
+                $soak.fps_avg = [double]$sj.render.fps_avg
+                if ($null -ne $sj.render.dt_p95_ms) { $soak.p95_ms = [double]$sj.render.dt_p95_ms }
+            }
         } catch { $soak.fps_avg = -1 }
+    }
+
+    # Baseline (queue main#52): a bare "409.8 fps" says nothing to a human - only
+    # the distance from the accepted baseline does. The baseline receipt is the
+    # r680 uncapped 10-minute soak that the city perf line was certified against;
+    # when the newest receipt IS the baseline the drift is 0 by construction.
+    # Both sides are read the same way, so an unreadable baseline yields nulls
+    # (page then prints the number without a drift claim - never a fake 0%).
+    $basePath = Join-Path $Root 'qa\smoke-r680-bm-a-soak.json'
+    $baseInfo = Get-ProofFileInfo -Path $basePath
+    if ($baseInfo.exists) {
+        $soak.baseline_rel = [string]$baseInfo.rel
+        $soak.baseline_url = [string]$baseInfo.url
+        try {
+            $bj = ConvertFrom-Json ([IO.File]::ReadAllText($basePath, [Text.Encoding]::UTF8))
+            if ($null -ne $bj.render) {
+                $soak.baseline_fps = [double]$bj.render.fps_avg
+                if ($null -ne $bj.render.dt_p95_ms) { $soak.baseline_p95_ms = [double]$bj.render.dt_p95_ms }
+            }
+        } catch { $soak.baseline_fps = -1 }
+    }
+    if (($soak.fps_avg -gt 0) -and ($soak.baseline_fps -gt 0)) {
+        $soak.drift_pct = [Math]::Round((($soak.fps_avg - $soak.baseline_fps) / $soak.baseline_fps) * 100, 1)
+    }
+    if (($soak.p95_ms -gt 0) -and ($soak.baseline_p95_ms -gt 0)) {
+        $soak.p95_drift_pct = [Math]::Round((($soak.p95_ms - $soak.baseline_p95_ms) / $soak.baseline_p95_ms) * 100, 1)
     }
 
     # Read-only git lookup: which commit last touched City3D/. A git-less machine

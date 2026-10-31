@@ -600,9 +600,26 @@ function artTitle(it){
     } else if (typeof s.fps_avg !== 'number' || s.fps_avg < 0 || s.errors < 0) {
       push('10 分钟浸泡', '收据在盘但不可解析（fps/错误未知）', false, s.ts_utc, s.url, '收据');
     } else {
+      // main#52: a bare fps number means nothing without the accepted baseline.
+      // Both sides come from receipts the builder read; an unreadable baseline
+      // prints no drift claim at all (never a fake 0%).
+      let driftTxt = '';
+      const hasBase = typeof s.baseline_fps === 'number' && s.baseline_fps > 0;
+      const hasDrift = typeof s.drift_pct === 'number';
+      if (hasBase) {
+        driftTxt = ' · 基线 ' + Number(s.baseline_fps).toFixed(1);
+        if (hasDrift) driftTxt += '（' + (s.drift_pct > 0 ? '+' : '') + Number(s.drift_pct).toFixed(1) + '%）';
+      }
+      if (typeof s.p95_ms === 'number' && s.p95_ms > 0) {
+        driftTxt += ' · p95 ' + Number(s.p95_ms).toFixed(2) + 'ms';
+        if (typeof s.p95_drift_pct === 'number') {
+          driftTxt += '（' + (s.p95_drift_pct > 0 ? '+' : '') + Number(s.p95_drift_pct).toFixed(1) + '%）';
+        }
+      }
+      const driftBad = hasDrift && s.drift_pct <= -20;
       push('10 分钟浸泡', 'render ' + Number(s.fps_avg).toFixed(1) + ' fps · 错误 ' +
-        s.errors + ' · ' + fmtAge(ago(s.ts_utc)),
-        (s.errors === 0 && s.exceptions === 0), s.ts_utc, s.url, '收据');
+        s.errors + ' · ' + fmtAge(ago(s.ts_utc)) + driftTxt,
+        (s.errors === 0 && s.exceptions === 0 && !driftBad), s.ts_utc, s.url, '收据');
     }
     const c = p.code || {};
     if (!c.exists) {
@@ -1198,9 +1215,23 @@ function artTitle(it){
     cd = { ok: false, vd: '浸泡收据在盘但不可解析（fps/错误未知）' };
   } else if (pfs.errors !== 0 || pfs.exceptions !== 0) {
     cd = { ok: false, vd: '浸泡有错误 errors=' + pfs.errors + ' exceptions=' + pfs.exceptions };
+  } else if (typeof pfs.drift_pct === 'number' && pfs.drift_pct <= -20) {
+    // main#52: a soak that is >20% below the accepted baseline is a performance
+    // regression until proven to be co-machine load. Reporting it as "ok" would
+    // be exactly the pretty-but-false face this row exists to prevent.
+    cd = { ok: false, vd: '浸泡 render ' + Number(pfs.fps_avg).toFixed(1) + 'fps 对基线 ' +
+      Number(pfs.baseline_fps).toFixed(1) + ' 漂移 ' + Number(pfs.drift_pct).toFixed(1) +
+      '%（阈 -20%）' + (typeof pfs.p95_drift_pct === 'number'
+        ? ' · p95 ' + Number(pfs.p95_ms).toFixed(2) + 'ms（' +
+          (pfs.p95_drift_pct > 0 ? '+' : '') + Number(pfs.p95_drift_pct).toFixed(1) + '%）' : '') +
+      ' — 待空载复测归因（main#52）' };
   } else {
     const sow = ago(pfs.ts_utc);
     const parts = ['批建 exit 0', '浸泡 ' + Number(pfs.fps_avg).toFixed(1) + 'fps/错误 0'];
+    if (typeof pfs.drift_pct === 'number') {
+      parts.push('对基线 ' + Number(pfs.baseline_fps).toFixed(1) + ' 漂移 ' +
+        (pfs.drift_pct > 0 ? '+' : '') + Number(pfs.drift_pct).toFixed(1) + '%');
+    }
     if (sow != null) parts.push('收据 ' + fmtAge(sow));
     if (pfc.exists) parts.push('代码 ' + pfc.sha);
     if (sow != null && sow > 48) {

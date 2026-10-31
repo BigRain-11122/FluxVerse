@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-29T05:23:25Z",
-    "current_activity":  "r711 收口：先把上一窗 r710 的产品实物复核并上链（main#17 十分钟浸泡复跑 exit 0·两 settings 键双 CLEAN；main#49 六帧 City3D 真帧取景·新工具 Tools/devloop/city3d-shots.ps1 与 City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs），再修掉一个长期红着的自检项：「跨轮单调」把多仓求和口径里兄弟仓 HEAD 的前移当成本仓丢数据（10-28T14:41Z 31778→31775）——现在回落点若已涨回且距末点 \u003e2 小时，判「历史回落（外部计数事件）」绿行但仍写出具体数字，仍在跌才红。",
-    "artifact":  "world-public/city-panel.html（面板·file:// 直接打开）；取证=qa/city-panel-r711-bm-a.png 与 qa/city-panel-r711-narrow-bm-a.png；City3D 真帧=qa/city3d-shots-20261028-1902-bm-a-overview.jpg（另 5 帧同目录）；浸泡数据=qa/r2-soak-20261028-105922.json；工具=Tools/devloop/city3d-shots.ps1 与 City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs",
-    "artifact_utc":  "2026-10-29T05:23:25Z",
-    "milestone":  "下一步=main#52 空载复测浸泡漂移（本轮实读 render 409.8fps/p95 3.35ms 对基线 608.5/2.147ms，同窗 9 个 Tuanjie 进程只算嫌疑），脚本=Tools/devloop/r2-soak.ps1，判据 fps_avg≥486.8 且 p95≤2.58ms 即判环境干扰；随后 main#23 司级 7 天基准刷新（10-27 到期·已逾期，落 docs/global-benchmarks.md）→ main#40 冻结 fixture 重建化（logs/panel-fixture-prev.html）→ main#53 logs/ 1,786 件 \u003e14d 保留策略与一次清理",
-    "milestone_eta_utc":  "2026-10-30T12:00:00Z"
+    "updated_utc":  "2026-10-31T06:41:53Z",
+    "current_activity":  "r712：面板「10 分钟浸泡」行改成对基线读数——render 409.8fps 对基线 608.5（-32.7%）、p95 3.35ms（+56.0%），自检「城市证据」在漂移超 20% 时翻注意并点名 main#52；此前页面只印一个孤零零的 409.8fps，人看不出退了多少。改动=Tools/devloop/build-city-panel.ps1 与 Tools/devloop/city-panel-template.html。空载复测本轮跑不了：同机还有 2 个 Tuanjie 进程，跑出来的数不算空载。",
+    "artifact":  "world-public/city-panel.html（面板·file:// 直接打开）；取证=qa/city-panel-r712-bm-a.png、qa/city-panel-r712-narrow-bm-a.png；漂移两源=qa/r2-soak-20261028-105922.json 对基线 qa/smoke-r680-bm-a-soak.json",
+    "artifact_utc":  "2026-10-31T06:41:53Z",
+    "milestone":  "下一件 main#52 空载复测浸泡漂移（判据 fps_avg≥486.8 且 p95≤2.58ms，须先确认 0 个其他 Tuanjie 进程），脚本=Tools/devloop/r2-soak.ps1",
+    "milestone_eta_utc":  "2026-11-02T06:00:00Z"
 }

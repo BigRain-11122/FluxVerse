@@ -130,10 +130,25 @@ chk('compile.ok', compiled);
   const fpsRe = new RegExp('render ' + (isFinite(soakFps) ? soakFps.toFixed(1) : '?') + ' fps \\u00b7 \\u9519\\u8bef ' + soakErr);
   chk('real.soak-numbers', rows.length === 3 && fpsRe.test(rows[1].text),
     (rows[1] ? rows[1].text : 'no row') + ' from ' + soakName);
-  chk('real.code-sha', rows.length === 3 && /5a7ae301/.test(rows[2].text),
+  chk('real.code-sha', rows.length === 3 &&
+    rows[2].text.indexOf(require('child_process').execSync('git log -1 --format=%h -- City3D/',
+      { encoding: 'utf8' }).trim()) >= 0,
     rows[2] ? rows[2].text : 'no row');
-  chk('real.all-green', rows.length === 3 && rows.every(r => !r.warn),
-    JSON.stringify(rows.map(r => r.warn)));
+  // main#52: the soak row now states the accepted baseline and the drift, and a
+  // >20% drop is a real warn. The expectation is therefore computed from the two
+  // receipts on disk, not hard-coded to "all green".
+  const baseJson = JSON.parse(fs.readFileSync('qa/smoke-r680-bm-a-soak.json', 'utf8'));
+  const baseFps = baseJson && baseJson.render ? Number(baseJson.render.fps_avg) : NaN;
+  const driftPct = (isFinite(soakFps) && isFinite(baseFps) && baseFps > 0)
+    ? ((soakFps - baseFps) / baseFps) * 100 : null;
+  const badDrift = driftPct !== null && driftPct <= -20;
+  const soakWarn = soakErr !== 0 || badDrift;
+  chk('real.all-green', rows.length === 3 && !rows[0].warn && !rows[2].warn &&
+    rows[1].warn === soakWarn, JSON.stringify(rows.map(r => r.warn)) + ' drift=' + driftPct);
+  chk('real.soak-drift', rows.length === 3 && (!isFinite(baseFps) ||
+    (rows[1].text.indexOf('基线 ' + Number(baseFps).toFixed(1)) >= 0 &&
+     rows[1].text.indexOf(Number(driftPct).toFixed(1) + '%') >= 0)) &&
+    rows[1].text.indexOf('p95 ') >= 0, rows[1] ? rows[1].text : 'no row');
   chk('real.no-nan', rows.every(r => !/undefined|NaN/.test(r.raw)));
   chk('real.has-links', rows.length === 3 && rows[0].raw.indexOf('r2-report.md') >= 0 &&
     rows[1].raw.indexOf(soakName) >= 0);
@@ -141,9 +156,12 @@ chk('compile.ok', compiled);
   // --- 4) self-check row inside the 48h window ---
   const row = rowOf(real, '城市证据');
   chk('real.sc-present', !!row, 'no 城市证据 row');
-  chk('real.sc-ok', !!row && row.ok, row ? 'vd=' + row.vd : 'no row');
-  chk('real.sc-text', !!row && row.vd.indexOf('批建 exit 0') >= 0 &&
-    /48 小时/.test(row.vd), row ? 'vd=' + row.vd : 'no row');
+  chk('real.sc-ok', !!row && row.ok === !badDrift,
+    (row ? 'vd=' + row.vd : 'no row') + ' badDrift=' + badDrift);
+  chk('real.sc-text', !!row &&
+    (badDrift ? (/漂移/.test(row.vd) && /main#52/.test(row.vd))
+              : (row.vd.indexOf('批建 exit 0') >= 0 && /48 小时/.test(row.vd))),
+    row ? 'vd=' + row.vd : 'no row');
 
   // --- 9) row count matches the template ---
   const expected = (template.match(/selfcheck\.push\(/g) || []).length;

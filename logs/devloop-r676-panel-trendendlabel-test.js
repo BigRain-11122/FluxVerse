@@ -132,15 +132,19 @@ const expect = (Number(data[data.length - 1].c) || 0) + 5;
 chk('bump.end-value', !!bumpLab && bumpLab.value === expect, 'lab=' + JSON.stringify(bumpLab) + ' expect=' + expect);
 
 // 5) constant series -> no end label (fixture), other series unaffected
+// The fixture must GUARANTEE a varied neighbour: with real trend data both r and
+// e can flatten (r711 left this assertion red on such data), which says nothing
+// about whether flattening c dropped their labels.
 const flatTrend = data.map((p, i) => {
   const c = vals(data, 'c');
-  return Object.assign({}, p, { c: c[0] });
+  const r = vals(data, 'r');
+  return Object.assign({}, p, { c: c[0], r: r[r.length - 1] + (i + 1) });
 });
 const flatRun = runPanelHtml(withTrend(realHtml, flatTrend), 'fixture-flat-c');
 const flatSvg = flatRun.get('tr-chart').innerHTML;
 chk('flat.no-end-c', endLabel(flatSvg, 'c') === null, 'unexpected data-end for c');
-chk('flat.other-series-kept', flatSvg.indexOf('data-end="r"') >= 0 || flatSvg.indexOf('data-end="e"') >= 0,
-  'all end labels dropped');
+chk('flat.other-series-kept', flatSvg.indexOf('data-end="r"') >= 0,
+  'r label dropped although r was varied in the fixture');
 
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 process.exit(fail ? 1 : 0);

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T18:00:56Z",
-    "current_activity":  "r750 收口（main#88 写侧沙盒由 tick 自己跑）：新增 Tools/devloop/ps-suites-tick.ps1 做内容寻址——十件受保护源（五套写侧沙盒＋Tools/devloop/run-ps-suites.ps1＋Tools/devloop/build-city-panel.ps1＋Tools/devloop/face-path-lint.ps1＋两个 writer）逐件 sha12 再 sha12；源未变则零子进程、引用票据 logs/.ps-suites-last.json，源一变就把 runner 当子进程真跑一遍带硬超时。Tools/perceptor/verify.ps1 新增 §2h，每 tick 恒印一行 ps-suites（suites/red/assertions/parity/sha/ran|cached），WARN 不 FAIL。实测首跑 ran=19803ms（整轮 22.4 秒）→ 次跑 cached=0m（整轮 2.5 秒，spawn 归零）。",
-    "artifact":  "Tools/devloop/ps-suites-tick.ps1, Tools/devloop/test-verify-ps-suites.ps1, Tools/perceptor/verify.ps1, logs/.ps-suites-last.json, world-public/city-panel.html, ./TECH.md",
-    "artifact_utc":  "2026-10-31T18:00:56Z",
-    "milestone":  "下一轮：main#89（verify 侧沙盒没有每轮入口，可复用同一票据机制扩到 -Verify 清单）→ main#91（红票据粘性与夹具不入指纹）→ main#92（verify 不 spawn 断言升白名单式），队列见 state/queue/main.md",
+    "updated_utc":  "2026-10-31T18:17:34Z",
+    "current_activity":  "r751 收口（main#89 verify 侧沙盒有了每轮入口）：Tools/devloop/run-ps-suites.ps1 增 -Verify，一条命令跑齐八套 verify 侧沙盒（r2-site/ambient/path-census/verify-queue-due/queue-due/log-archive-duty/verify-ps-suites/probe-path-census）。三处与写侧不同：parity 跳过（那条断言只关于 builder 的 artPattern）、逐套硬超时（默认 40s，最慢一套实测 18.9s）、超时只打 WARN 并计 timeouts= —— 既不进 failing 也不冒充 PASS。同轮修红：verify 侧首跑抓到 Tools/devloop/test-verify-path-census.ps1 一次 exit 1 PathNotFound，根因是两条并发写 —— Tools/perceptor/verify.ps1 的状态提升无守卫（两实例都从同一 .new 算 promote）+ 票据写入用固定 .new 侧文件；已加提升前 Test-Path 守卫、票据改唯一侧件加三次重试。活跑 suites=8 assertions=173 failing=0 timeouts=0。",
+    "artifact":  "Tools/devloop/run-ps-suites.ps1, Tools/devloop/test-run-ps-suites.ps1, Tools/devloop/test-verify-ps-suites.ps1, Tools/devloop/ps-suites-tick.ps1, Tools/perceptor/verify.ps1, state/queue/main.md, ./TECH.md",
+    "artifact_utc":  "2026-10-31T18:17:34Z",
+    "milestone":  "下一轮：main#94（verify 侧沙盒也进 tick，按指纹分家各自票据、总墙钟不翻倍）→ main#93（verify 提升竞态缺确定性沙盒，需 state 根注入钩）→ main#91（红票据粘性与夹具不入指纹），队列见 state/queue/main.md",
     "milestone_eta_utc":  "2026-11-02T06:00:00Z"
 }

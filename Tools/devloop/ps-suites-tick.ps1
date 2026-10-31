@@ -105,9 +105,20 @@ function Write-PsSuitesTicket {
     $dir = Split-Path -Parent $Path
     if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
     $enc = New-Object System.Text.UTF8Encoding($false)
-    $side = $Path + '.new'
-    [System.IO.File]::WriteAllText($side, ($obj | ConvertTo-Json -Compress), $enc)
-    Move-Item -LiteralPath $side -Destination $Path -Force
+    # Unique side file per writer: two verify instances can overlap (5-minute tick
+    # plus a sandbox that runs the gate in-process). A fixed `.new` name made the
+    # loser die on Move-Item PathNotFound (r751); unique names + retry mean the
+    # last writer wins with a complete ticket and nobody throws.
+    $side = $Path + '.new-' + [System.IO.Path]::GetRandomFileName()
+    try { [System.IO.File]::WriteAllText($side, ($obj | ConvertTo-Json -Compress), $enc) } catch { return }
+    $published = $false
+    for ($attempt = 0; $attempt -lt 3 -and -not $published; $attempt++) {
+        if (-not (Test-Path -LiteralPath $side)) { break }
+        try { Move-Item -LiteralPath $side -Destination $Path -Force -ErrorAction Stop; $published = $true } catch { Start-Sleep -Milliseconds 40 }
+    }
+    if (-not $published -and (Test-Path -LiteralPath $side)) {
+        try { Remove-Item -LiteralPath $side -Force -ErrorAction SilentlyContinue } catch { }
+    }
 }
 
 function Invoke-PsSuitesTick {

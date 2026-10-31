@@ -470,7 +470,22 @@ if ($fail.Count -gt 0) {
   }
   exit 1
 }
-if ($promote) { Move-Item -Force $newStateFile $stateFile }
+# Promote the candidate state. Two verify instances can overlap (the 5-minute
+# tick plus a sandbox that runs this gate in-process); both compute $promote from
+# the same .new file, so the loser used to die on Move-Item PathNotFound and
+# report an exit 1 that looked like a real red (r751). Vanished source = someone
+# else already published the same candidate (same content, same rule). A source
+# that is still there after a failed move is a real promote failure: stay loud.
+if ($promote) {
+  if (Test-Path -LiteralPath $newStateFile) {
+    $promoteOk = $false
+    try { Move-Item -Force $newStateFile $stateFile -ErrorAction Stop; $promoteOk = $true } catch { $promoteOk = $false }
+    if (-not $promoteOk -and (Test-Path -LiteralPath $newStateFile)) {
+      Write-Output ('VERIFY FAIL: state promote failed, candidate kept: ' + $newStateFile)
+      exit 1
+    }
+  }
+}
 if ($healed -gt 0) {
   Write-Output ('VERIFY PASS (healed ' + $healed + ' bad event line(s) -> quarantine)')
 } else {

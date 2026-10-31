@@ -202,6 +202,46 @@ Check 'i2 direct call reuses the ticket' ($again.ran -eq $false) ([string]$again
 $forced = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'direct.json') -RunnerPath $runnerGreen -TimeoutSec 8 -Force
 Check 'i3 -Force overrides the cache' ($forced.ran -eq $true) ([string]$forced.ran)
 
+# ---------- case j: two verify instances must not fight over the ticket ---
+# r751: the ticket used a fixed `<path>.new` side file, so when the 5-minute tick
+# and a sandbox ran verify at the same time the loser died on Move-Item
+# PathNotFound - an exit 1 that looked like a real gate failure. Six concurrent
+# writers on one ticket path: every one must return quietly and the surviving
+# file must still be a complete ticket with no side-file residue.
+$raceTicket = Join-Path $sandbox 'race.json'
+$jobs = @()
+foreach ($n in 1..6) {
+  $jobs += Start-Job -ScriptBlock {
+    param($modPath, $ticketPath, $idx)
+    # Capture the error stream too: Move-Item failures are non-terminating, so a
+    # bare try/catch would report OK while the writer shouted into the stream.
+    $out = & {
+      . $modPath
+      try {
+        $r = [pscustomobject]@{
+          sha = ('0123456789ab'); status = 'pass'; suites = $idx; assertions = $idx
+          failing = 0; parity = 'ok'; exit = 0; ms = $idx; ts_utc = '2026-01-01T00:00:00Z'
+        }
+        Write-PsSuitesTicket -Path $ticketPath -Result $r
+        'OK'
+      } catch { 'ERR ' + $_.Exception.GetType().Name }
+    } 2>&1
+    ($out | ForEach-Object { "$_" }) -join '|'
+  } -ArgumentList $module, $raceTicket, $n
+}
+$null = Wait-Job -Job $jobs -Timeout 90
+$raceResults = @($jobs | Receive-Job)
+Remove-Job -Job $jobs -Force -ErrorAction SilentlyContinue
+
+$raceErr = @($raceResults | Where-Object { "$_" -ne 'OK' })
+Check 'j1 six concurrent ticket writers all quiet' ($raceErr.Count -eq 0) (($raceErr -join ' | '))
+$tkRace = $null
+try { $tkRace = [System.IO.File]::ReadAllText($raceTicket, [System.Text.Encoding]::UTF8) | ConvertFrom-Json } catch { $tkRace = $null }
+Check 'j2 surviving ticket is complete json' ($null -ne $tkRace -and "$($tkRace.sha)" -match '^[0-9a-f]{12}$') ([string]$tkRace)
+Check 'j3 surviving ticket carries a suites count' ($null -ne $tkRace -and [int]$tkRace.suites -ge 1 -and [int]$tkRace.suites -le 6) ([string]$tkRace)
+$leftovers = @(Get-ChildItem -Path $sandbox -Filter 'race.json.new*' -File -ErrorAction SilentlyContinue)
+Check 'j4 no side-file residue' ($leftovers.Count -eq 0) (($leftovers | ForEach-Object { $_.Name }) -join ',')
+
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Output ('RESULT pass=' + ($script:checks - $script:fails) + ' fail=' + $script:fails)

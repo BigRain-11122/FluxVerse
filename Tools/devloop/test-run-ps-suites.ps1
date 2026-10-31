@@ -138,6 +138,66 @@ Check 'h: five default suites'   ($rh.out -match 'PS SUITES suites=5 ')
 Check 'h: r247 in default set'   ($rh.out -match 'devloop-r247-facewriter-test\.ps1')
 Check 'h: r271 in default set'   ($rh.out -match 'devloop-r271-keep-negcon\.ps1')
 
+# ---------- j..m) verify-side family (-Verify, main#89) ----------
+# The verify family is a different list with different rules: no parity (that
+# assertion is about build-city-panel.ps1's regex), a per-suite time cap, and a
+# timeout that reports WARN + timeouts= instead of a verdict.
+$repo3 = Join-Path $sbDir 'repo3'
+$verifyRel = @(
+    'Tools\devloop\test-verify-r2-site.ps1',
+    'Tools\devloop\test-verify-ambient.ps1',
+    'Tools\devloop\test-verify-path-census.ps1',
+    'Tools\devloop\test-verify-queue-due.ps1',
+    'Tools\devloop\test-queue-due.ps1',
+    'Tools\devloop\test-log-archive-duty.ps1',
+    'Tools\devloop\test-verify-ps-suites.ps1',
+    'Tools\devloop\test-probe-path-census.ps1'
+)
+$counted = "Write-Output 'RESULT: 30 passed, 0 failed (of 30)'`r`nexit 0`r`n"
+foreach ($rel in $verifyRel) { Write-Fixture (Join-Path $repo3 $rel) $counted }
+
+Write-Output '--- j) -Verify list ---'
+$rj = Invoke-Runner @('-RepoDir', $repo3, '-Verify')
+Check 'j: exit 0'                  ($rj.code -eq 0)
+Check 'j: eight verify suites'     ($rj.out -match 'PS SUITES suites=8 ')
+Check 'j: mode=verify printed'     ($rj.out -match 'mode=verify timeouts=0')
+Check 'j: parity skipped'          ($rj.out -match 'parity=skipped')
+Check 'j: no PARITY line'          (-not ($rj.out -cmatch 'PARITY'))
+Check 'j: verify verdict'          ($rj.out -match 'PS SUITES VERIFY VERDICT: ALL PASS')
+Check 'j: "N passed" dialect counted' ($rj.out -match 'assertions=240 counted=8')
+Check 'j: names a verify suite'    ($rj.out -match 'PASS  test-verify-r2-site\.ps1')
+
+Write-Output '--- k) -Verify missing file ---'
+$rjMissing = Join-Path $repo3 'Tools\devloop\test-verify-ambient.ps1'
+$saved = [System.IO.File]::ReadAllText($rjMissing)
+Remove-Item -LiteralPath $rjMissing -Force
+$rk = Invoke-Runner @('-RepoDir', $repo3, '-Verify')
+Check 'k: exit 3'                  ($rk.code -eq 3)
+Check 'k: names one missing'       ($rk.out -match 'PS SUITES ERROR: 1 suite file\(s\) missing')
+Write-Fixture $rjMissing $counted
+
+Write-Output '--- l) verify suite over the cap ---'
+$slowRel = 'Tools\devloop\test-verify-ps-suites.ps1'
+$slowPath = Join-Path $repo3 $slowRel
+Write-Fixture $slowPath ("Write-Output 'starting'`r`nStart-Sleep -Seconds 5`r`n" + $counted)
+$rl = Invoke-Runner @('-RepoDir', $repo3, '-Verify', '-TimeoutSec', '1')
+Check 'l: timeout is not a red'    ($rl.code -eq 0)
+Check 'l: WARN names the timeout'  ($rl.out -match 'WARN  test-verify-ps-suites\.ps1  timeout>1s')
+Check 'l: timeouts=1 counted'      ($rl.out -match 'timeouts=1')
+Check 'l: failing stays 0'         ($rl.out -match 'failing=0')
+Check 'l: cap warn line'           ($rl.out -match 'PS SUITES WARN: 1 suite\(s\) hit the 1s cap')
+Write-Fixture $slowPath $counted
+
+Write-Output '--- m) red suite under the cap ---'
+Write-Fixture $slowPath ("Write-Output '  PASS a'`r`nWrite-Output '  FAIL b named-check'`r`nWrite-Output 'RESULT: 1 passed, 1 failed'`r`nexit 1`r`n")
+$rm = Invoke-Runner @('-RepoDir', $repo3, '-Verify', '-TimeoutSec', '20')
+Check 'm: exit 2'                  ($rm.code -eq 2)
+Check 'm: failing=1'               ($rm.out -match 'failing=1')
+Check 'm: red suite named'         ($rm.out -match 'FAIL  test-verify-ps-suites\.ps1  exit=1')
+Check 'm: no ALL PASS'             (-not ($rm.out -match 'VERIFY VERDICT: ALL PASS'))
+Check 'm: no timeout instead'      ($rm.out -match 'timeouts=0')
+Write-Fixture $slowPath $counted
+
 # ---------- i) ASCII-only body ----------
 Write-Output '--- i) ASCII-only body ---'
 $bad = 0

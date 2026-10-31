@@ -16,6 +16,17 @@
 #   3. prints one line per suite + a machine summary `PS SUITES ... failing=N`
 #      and exits 2 when anything is red (zero resident processes).
 #
+# r751 (queue main#89): the VERIFY-side sandboxes (test-verify-*.ps1 plus the
+# modules they guard) had the same problem from the other side - they only ran
+# when a round remembered the names. `-Verify` runs that family from this one
+# entry, so "did anyone run the verify sandboxes" stops being a memory test.
+# Two differences from the write-side list:
+#   * parity is write-side only (builder regex vs lint constant) -> skipped;
+#   * verify suites are seconds-long each (measured 0.6 s .. 18.9 s on a loaded
+#     box), so each child gets a hard timeout and a hit reports WARN + a
+#     `timeouts=N` counter instead of a verdict. A hang is not a red suite and
+#     must not pretend to be a pass either.
+#
 # Suites are launched as child processes on purpose: they end with `exit N`,
 # which would kill this runner if invoked in-process. Never read
 # $LASTEXITCODE after `& script.ps1` (B795) - we always call powershell.exe.
@@ -24,7 +35,9 @@
 param(
     [string[]]$Suites = @(),
     [switch]$All,
+    [switch]$Verify,
     [switch]$SkipParity,
+    [int]$TimeoutSec = 0,
     [string]$RepoDir = ''
 )
 
@@ -45,10 +58,26 @@ $defaultRel = @(
     'logs\devloop-r271-keep-negcon.ps1'
 )
 
+# Verify-side family (main#89). Each of these proves a slice of Tools\perceptor\
+# verify.ps1 or of a module it dot-sources, so a change to the gate can be
+# checked from one command instead of six remembered names. probe-path-census
+# is the cheap one (0.6 s) and guards the census that every tick calls.
+$verifyRel = @(
+    'Tools\devloop\test-verify-r2-site.ps1',
+    'Tools\devloop\test-verify-ambient.ps1',
+    'Tools\devloop\test-verify-path-census.ps1',
+    'Tools\devloop\test-verify-queue-due.ps1',
+    'Tools\devloop\test-queue-due.ps1',
+    'Tools\devloop\test-log-archive-duty.ps1',
+    'Tools\devloop\test-verify-ps-suites.ps1',
+    'Tools\devloop\test-probe-path-census.ps1'
+)
+
 $selfName = Split-Path -Leaf $MyInvocation.MyCommand.Path
 # `powershell.exe -File x.ps1 -Suites a,b` arrives as ONE comma-joined string,
 # so split the bound values back into real paths (r748 sandbox caught this).
 $list = @()
+$mode = 'write'
 if ($Suites.Count -gt 0) {
     foreach ($s in $Suites) {
         foreach ($one in ($s -split '[,;]')) {
@@ -56,6 +85,9 @@ if ($Suites.Count -gt 0) {
             if ($t -ne '') { $list += $t }
         }
     }
+} elseif ($Verify) {
+    $mode = 'verify'
+    $list = @($verifyRel | ForEach-Object { Join-Path $RepoDir $_ })
 } elseif ($All) {
     $list = @(Get-ChildItem -Path (Join-Path $RepoDir 'Tools\devloop') -Filter 'test-*.ps1' |
         Where-Object { $_.Name -ne $selfName } |
@@ -64,6 +96,14 @@ if ($Suites.Count -gt 0) {
 } else {
     $list = @($defaultRel | ForEach-Object { Join-Path $RepoDir $_ })
 }
+
+# Per-suite cap for the verify family. Measured on a loaded box (r751):
+# probe-path-census 0.6 s, queue-due 3.1 s, path-census 2.7 s, ambient 13.3 s,
+# log-archive-duty 14.3 s, verify-queue-due 11.9 s, r2-site 15.6 s,
+# verify-ps-suites 18.9 s. A 20 s cap sits 1 s above the slowest real run, so a
+# busy tick would turn a pass into a WARN; 40 s keeps ~2x headroom and still
+# bounds a hang. Override with -TimeoutSec.
+if ($mode -eq 'verify' -and $TimeoutSec -le 0) { $TimeoutSec = 40 }
 
 $missing = @()
 foreach ($f in $list) { if (-not (Test-Path -LiteralPath $f)) { $missing += $f } }
@@ -78,9 +118,12 @@ if ($missing.Count -gt 0) {
 }
 
 # ---------- art-pattern parity (single source, two sides) ----------
+# Write-side only: the verify family does not guard build-city-panel.ps1's
+# artifact regex, so asking it for that parity would report a drift nobody in
+# that family could have caused.
 $failItems = 0
 $parityNote = 'skipped'
-if (-not $SkipParity) {
+if (-not $SkipParity -and $mode -ne 'verify') {
     $builder = Join-Path $RepoDir 'Tools\devloop\build-city-panel.ps1'
     $lint = Join-Path $RepoDir 'Tools\devloop\face-path-lint.ps1'
     $parityOk = $true
@@ -118,26 +161,94 @@ if (-not $SkipParity) {
 }
 
 # ---------- run suites ----------
+function Invoke-SuiteChild {
+    param([string]$Path, [int]$CapSec)
+    $res = [ordered]@{ text = ''; exit = 0; timeout = $false }
+    if ($CapSec -le 0) {
+        # No cap: keep the original capture path byte-for-byte (zero regression
+        # risk for the write-side suites, which are also read by the tick ticket).
+        $prevEap = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            $res.text = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $Path 2>&1 | Out-String
+            $res.exit = $LASTEXITCODE
+        } finally { $ErrorActionPreference = $prevEap }
+        return [pscustomobject]$res
+    }
+    $tmpOut = [System.IO.Path]::GetTempFileName()
+    $tmpErr = [System.IO.Path]::GetTempFileName()
+    $proc = $null
+    $exited = $false
+    # The child goes through cmd.exe only to get a reliable exit code: a Process
+    # object from Start-Process -PassThru reports an empty ExitCode on this box
+    # (measured, PS5.1 + PS7 alike), which silently turned a red suite into
+    # `exit=0`. cmd /c captures the output to the two temp files AND yields the
+    # real code (r751 sandbox case m caught this).
+    try {
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.FileName = 'cmd.exe'
+        $psi.Arguments = '/c ""powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "' + $Path + '" > "' + $tmpOut + '" 2> "' + $tmpErr + '""'
+        $psi.UseShellExecute = $false
+        $psi.CreateNoWindow = $true
+        $proc = [System.Diagnostics.Process]::Start($psi)
+        $exited = $proc.WaitForExit($CapSec * 1000)
+    } catch {
+        $exited = $false
+    }
+    if (-not $exited -and $null -ne $proc) {
+        # Kill the tree: cmd.exe alone would leave the suite running as an orphan.
+        try { & taskkill.exe /T /F /PID $proc.Id 2>&1 | Out-Null } catch { }
+        try { if (-not $proc.HasExited) { $proc.Kill() } } catch { }
+    }
+    $body = ''
+    try { if (Test-Path -LiteralPath $tmpOut) { $body = [System.IO.File]::ReadAllText($tmpOut, [System.Text.Encoding]::UTF8) } } catch { $body = '' }
+    try {
+        if (Test-Path -LiteralPath $tmpErr) {
+            $errText = [System.IO.File]::ReadAllText($tmpErr, [System.Text.Encoding]::UTF8)
+            if ($errText.Trim() -ne '') { $body = $body + "`n" + $errText }
+        }
+    } catch { }
+    Remove-Item -LiteralPath $tmpOut -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $tmpErr -Force -ErrorAction SilentlyContinue
+    $res.text = $body
+    if ($exited -and $null -ne $proc) {
+        $code = -1
+        try { $code = [int]$proc.ExitCode } catch { $code = -1 }
+        $res.exit = $code
+    }
+    $res.timeout = (-not $exited)
+    return [pscustomobject]$res
+}
+
 $failing = 0
+$timeouts = 0
 $assertTotal = 0
 $assertKnown = 0
 foreach ($f in $list) {
     $name = Split-Path -Leaf $f
-    $out = ''
-    $code = 0
-    $prevEap = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    try {
-        $out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $f 2>&1 | Out-String
-        $code = $LASTEXITCODE
-    } finally { $ErrorActionPreference = $prevEap }
+    $r = Invoke-SuiteChild -Path $f -CapSec $TimeoutSec
+    if ($r.timeout) {
+        # Not a verdict: we do not know whether it would have passed. WARN, and
+        # keep it out of failing so a loaded box cannot impersonate a red suite.
+        $timeouts++
+        Write-Output ('WARN  ' + $name + '  timeout>' + $TimeoutSec + 's  no verdict')
+        continue
+    }
+    $out = $r.text
+    $code = $r.exit
 
     $passCount = -1
     $failCount = -1
+    # Two count dialects in this repo: `pass=3 fail=0` (writer sandboxes) and
+    # `30 passed, 0 failed` (verify sandboxes). Accept both, last match wins.
     $mp = [regex]::Matches($out, '(?i)\bpass(?:ed)?\s*[=:]\s*(\d+)')
     if ($mp.Count -gt 0) { $passCount = [int]$mp[$mp.Count - 1].Groups[1].Value }
+    $mp2 = [regex]::Matches($out, '(?i)\b(\d+)\s+passed\b')
+    if ($mp2.Count -gt 0) { $passCount = [int]$mp2[$mp2.Count - 1].Groups[1].Value }
     $mf = [regex]::Matches($out, '(?i)\bfail(?:ed|s)?\s*[=:]\s*(\d+)')
     if ($mf.Count -gt 0) { $failCount = [int]$mf[$mf.Count - 1].Groups[1].Value }
+    $mf2 = [regex]::Matches($out, '(?i)\b(\d+)\s+failed\b')
+    if ($mf2.Count -gt 0) { $failCount = [int]$mf2[$mf2.Count - 1].Groups[1].Value }
 
     if ($passCount -ge 0 -and $failCount -ge 0) {
         $assertTotal += ($passCount + $failCount)
@@ -162,7 +273,18 @@ foreach ($f in $list) {
 }
 
 $totalFailing = $failing + $failItems
-Write-Output ('PS SUITES suites=' + $list.Count + ' assertions=' + $assertTotal + ' counted=' + $assertKnown + ' failing=' + $totalFailing + ' parity=' + $parityNote)
+$summary = 'PS SUITES suites=' + $list.Count + ' assertions=' + $assertTotal + ' counted=' + $assertKnown + ' failing=' + $totalFailing + ' parity=' + $parityNote
+if ($mode -eq 'verify') {
+    $summary = $summary + ' mode=verify timeouts=' + $timeouts
+    Write-Output $summary
+    if ($timeouts -gt 0) {
+        Write-Output ('PS SUITES WARN: ' + $timeouts + ' suite(s) hit the ' + $TimeoutSec + 's cap - re-run them alone before trusting green')
+    }
+    if ($totalFailing -gt 0) { exit 2 }
+    Write-Output 'PS SUITES VERIFY VERDICT: ALL PASS'
+    exit 0
+}
+Write-Output $summary
 if ($totalFailing -gt 0) { exit 2 }
 Write-Output 'PS SUITES VERDICT: ALL PASS'
 exit 0

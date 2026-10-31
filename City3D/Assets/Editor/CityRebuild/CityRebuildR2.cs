@@ -296,6 +296,12 @@ public static class CityRebuildR2
         // 所以在已建 R2 场景里按几何把侵入路带的道具推出去，逐件点名记进报告。
         Report.Add(ClearRoadBand(r2root.transform, street));
 
+        // ④b3 底板道具碰撞面（main#68）：机位遮挡判据问的是 Physics，而底板道具一个碰撞体都没有，
+        // 于是同一批件在「路带几何普查」里数得清、在「机位遮挡」里永远看不见。
+        // 不碰底板正典（CityWhitebox 原样保留）：在已建 R2 场景里给每件道具补一条世界轴对齐盒，
+        // 幂等（已有碰撞面即跳过），逐件用 collider.bounds 对渲染包围盒复核后落报告。
+        Report.Add(AddPropColliders(r2root.transform));
+
         // ④c 展示房净位（main#64）：r723 量到它压在 P07 宅基台上 0.55 m、另一侧 0.36 m，
         // 两块台面顶同为 0.055+0.05 → 共面 z-fighting。宅基台 16.27 m 深、门面缝只有 7.31 m，
         // 装不下 7.5×5.0 的展示房，故不再写死坐标：按本期宅基台/路带实况解位——
@@ -599,14 +605,12 @@ public static class CityRebuildR2
 
         var props = new List<GameObject>();
         var propBounds = new Dictionary<GameObject, Bounds>();
+        var seen = new HashSet<GameObject>();
         foreach (var r in UnityEngine.Object.FindObjectsOfType<MeshRenderer>(true))
         {
             var go = r.gameObject;
-            if (go.transform.IsChildOf(root)) continue;
-            if (propBounds.ContainsKey(go)) continue;
-            var b = r.bounds;
-            if (b.size.x <= 0.001f || b.size.z <= 0.001f) continue;
-            if (b.size.x > PropMaxSpan || b.size.z > PropMaxSpan) continue;
+            if (!seen.Add(go)) continue;                       // 多材质件只算一件
+            if (!IsPropMesh(go, r.bounds, root)) continue;      // 判据与 PropUniverse 同源（main#68）
             props.Add(go);
             propBounds[go] = WorldBounds(go);
         }
@@ -668,6 +672,137 @@ public static class CityRebuildR2
         return "road_props: cleared=" + moving.Count + "/" + props.Count
             + " band_z=[" + F(band.z0) + ".." + F(band.z1) + "] moves=" + string.Join(" ", lines.ToArray())
             + "（底板道具不入路带·main#65）";
+    }
+
+    // ===== 底板道具集合与碰撞面（main#68）=====
+    // 判据单点：路带让位（main#65）与碰撞面补齐（main#68）必须看同一批件，
+    // 否则「普查说 0」与「射线永远看不见」继续各说各话。
+    static bool IsPropMesh(GameObject go, Bounds b, Transform root)
+    {
+        if (go == null) return false;
+        if (go.transform.IsChildOf(root)) return false;
+        if (b.size.x <= 0.001f || b.size.z <= 0.001f) return false;
+        if (b.size.x > PropMaxSpan || b.size.z > PropMaxSpan) return false;
+        return true;
+    }
+
+    // 底板道具全集（每件一条：GO + 世界包围盒），判据只此一处。
+    static List<KeyValuePair<GameObject, Bounds>> PropUniverse(Transform root)
+    {
+        var list = new List<KeyValuePair<GameObject, Bounds>>();
+        var seen = new HashSet<GameObject>();
+        foreach (var r in UnityEngine.Object.FindObjectsOfType<MeshRenderer>(true))
+        {
+            var go = r.gameObject;
+            if (!seen.Add(go)) continue;
+            if (!IsPropMesh(go, r.bounds, root)) continue;
+            list.Add(new KeyValuePair<GameObject, Bounds>(go, WorldBounds(go)));
+        }
+        return list;
+    }
+
+    // 给每件底板道具补一条碰撞盒：挂在道具下的无渲染子件，世界轴对齐、尺寸＝渲染包围盒，
+    // 因此不依赖 pivot 在哪也不受父级旋转影响（父级非等比缩放用倒数抵消）。
+    // 幂等：已有碰撞面（自带或本函数早先补过）即跳过；复核用 collider.bounds 对渲染盒比差。
+    const string PropColliderName = "R2_AD-021_PropCollider";
+    const float PropColliderTol = 0.05f;
+
+    static string AddPropColliders(Transform root)
+    {
+        var props = PropUniverse(root);
+        int added = 0, have = 0, mismatch = 0, missing = 0, off = 0;
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        var lines = new List<string>();
+        foreach (var kv in props)
+        {
+            var go = kv.Key;
+            var b = kv.Value;
+            var existing = go.GetComponentInChildren<Collider>(true);
+            if (existing != null)
+            {
+                have++;
+                if (lines.Count < 3)
+                    lines.Add(go.name + "×" + Mathf.Max(1, go.GetComponentsInChildren<Collider>(true).Length));
+                continue;
+            }
+            var h = new GameObject(PropColliderName);
+            h.transform.SetParent(go.transform, false);
+            h.transform.position = b.center;
+            h.transform.rotation = Quaternion.identity;
+            var ls = go.transform.lossyScale;
+            h.transform.localScale = new Vector3(
+                Mathf.Abs(ls.x) < 1e-4f ? 1f : 1f / ls.x,
+                Mathf.Abs(ls.y) < 1e-4f ? 1f : 1f / ls.y,
+                Mathf.Abs(ls.z) < 1e-4f ? 1f : 1f / ls.z);
+            var bc = h.AddComponent<BoxCollider>();
+            bc.center = Vector3.zero;
+            bc.size = b.size;
+            added++;
+        }
+        Physics.SyncTransforms();   // 同帧建完立刻给下面的射线判据用
+
+        foreach (var kv in props)
+        {
+            var go = kv.Key;
+            var b = kv.Value;
+            var col = go.GetComponentInChildren<Collider>(true);
+            if (col == null) { missing++; continue; }
+            var cb = col.bounds;
+            if ((cb.center - b.center).magnitude > PropColliderTol || (cb.size - b.size).magnitude > PropColliderTol)
+            {
+                mismatch++;
+                if (lines.Count < 6)
+                    lines.Add(go.name + " box=" + F(cb.size.x) + "x" + F(cb.size.y) + "x" + F(cb.size.z)
+                        + " render=" + F(b.size.x) + "x" + F(b.size.y) + "x" + F(b.size.z));
+            }
+        }
+        foreach (var kv in props)
+            if (kv.Key.GetComponentInChildren<Collider>(true) != null &&
+                !kv.Key.GetComponentInChildren<Collider>(true).enabled) off++;
+
+        return "props_with_collider=" + (props.Count - missing) + "/" + props.Count
+            + " added=" + added + " preexisting=" + have + " missing=" + missing
+            + " mismatch=" + mismatch + " disabled=" + off
+            + "（底板道具碰撞面·尺寸对渲染盒差 ≤" + F(PropColliderTol) + "m·main#68）"
+            + (lines.Count > 0 ? " sample=" + string.Join(" | ", lines.ToArray()) : "")
+            + (mismatch > 0 ? " MISMATCH" : " PASS");
+    }
+
+    // ===== 遮挡判据夹具自证（main#68）=====
+    // 同一个 IsBlocked 判据：机位放到「某件道具正后方、正对某栋房」的位姿必须报 blocked=1；
+    // 再把该道具碰撞面临时关掉（＝把道具移走）必须回到 0。两条读数同一帧、同一函数给出，
+    // 这样「判据看得见道具」不靠口头声明。
+    static string PropBlockProbe(List<KeyValuePair<GameObject, Bounds>> props, List<GameObject> houses, float groundY)
+    {
+        if (props.Count == 0) return "prop_block_probe: skipped reason=no_props（main#68）";
+        if (houses.Count == 0) return "prop_block_probe: skipped reason=no_houses（main#68）";
+        string why = "no_pair";
+        int tried = 0;
+        foreach (var kv in props.Take(30))
+        {
+            var go = kv.Key;
+            var cols = go.GetComponentsInChildren<Collider>(true);
+            if (cols.Length == 0) { why = "no_collider"; continue; }
+            foreach (var h in houses)
+            {
+                var hb = WorldBounds(h);
+                Vector3 aim = new Vector3(hb.center.x, Mathf.Lerp(hb.min.y, hb.max.y, 0.55f), hb.center.z);
+                Vector3 d = aim - kv.Value.center;
+                if (d.magnitude < 4f) { why = "too_close"; continue; }
+                d.Normalize();
+                Vector3 eye = kv.Value.center - d * 3f;
+                eye.y = groundY + 1.7f;
+                if (!IsBlocked(eye, h)) { why = "not_blocked"; continue; }
+                tried++;
+                foreach (var c in cols) c.enabled = false;
+                bool after = IsBlocked(eye, h);
+                foreach (var c in cols) c.enabled = true;
+                if (after) { why = "other_blocker"; continue; }
+                return "prop_block_probe: prop=" + go.name + " house=" + h.name
+                    + " eye=(" + F(eye.x) + "," + F(eye.z) + ") blocked=1 removed_blocked=0 PASS（同源自证·main#68）";
+            }
+        }
+        return "prop_block_probe: NOT_FOUND why=" + why + " tried=" + tried + "（main#68·夹具未解出·如实标注）";
     }
 
     struct RunMeasure { public float sx, sz, h, Run; public bool RunAlongX; }
@@ -1007,6 +1142,10 @@ public static class CityRebuildR2
                 + (ctlCov * 100f).ToString("F0", inv) + "% 画面·扣 " + (ctlCov * 400f).ToString("F0", inv)
                 + " 分后不再是并列最优·main#69）");
         }
+
+        // main#68 自证：遮挡判据现在看得见底板道具（碰撞面由 AddPropColliders 补齐）——
+        // 同一帧给出「挡=1 / 移开=0」两条读数，阴性对照在所难免地同源。
+        Report.Add(PropBlockProbe(props, houses, groundY));
     }
 
     // 铺装占画面比（main#66 判据）：逐屏幕采样射线与路带顶面求交，落在 76x6 路带内的
@@ -1054,7 +1193,7 @@ public static class CityRebuildR2
             if (hit.collider == null) continue;
             var t = hit.collider.transform;
             if (t == house.transform || t.IsChildOf(house.transform)) continue;
-            if (hit.collider.GetComponent<MeshRenderer>() == null) continue;
+            if (hit.collider.GetComponentInParent<MeshRenderer>() == null) continue;
             return true;
         }
         return false;

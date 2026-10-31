@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T20:46:02Z",
-    "current_activity":  "r755 收口（main#95）：门本身第一次能被端到端地证——Tools/perceptor/verify.ps1 顶部新增 FLUXVERSE_WORLD_DIR 只读注入（空值回落 world/，未设＝行为逐字节不变），于是整条门可以在临时目录里跑：PASS 真发布候选、FAIL 真丢弃候选、真 world/ 两件前后指纹不变。沙盒 Tools/devloop/test-state-promote.ps1 30→43/43（新增 j/k/l/m 四组，子进程带 FLUXVERSE_PS_SUITES_CHILD=1 遵守嵌套律）；活跑不设环境变量的门仍是 VERIFY PASS。",
-    "artifact":  "Tools/perceptor/verify.ps1, Tools/devloop/test-state-promote.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
-    "artifact_utc":  "2026-10-31T20:46:02Z",
-    "milestone":  "下一轮：main#97（票据 exit 恒假——Start-Process 取不到 ExitCode，r751 修法没搬进 Tools/devloop/ps-suites-tick.ps1）→ main#96（verify 族基线 110.6 s＝180 s 上限 61%，断言已到 273，余量仍紧）→ main#92，队列见状态队列文件 state/queue/main.md",
-    "milestone_eta_utc":  "2026-11-02T06:00:00Z"
+    "updated_utc":  "2026-10-31T20:58:15Z",
+    "current_activity":  "r756 收口（main#97）：看门票据第一次说得出 runner 的真实退出码——Tools/devloop/ps-suites-tick.ps1 的子进程段改走 ProcessStartInfo＋cmd.exe /c，票据 exit 与 runner 真码一致（读不到记 -1 仍判非绿，超时 taskkill 杀进程树）。沙盒 Tools/devloop/test-verify-ps-suites.ps1 97→107/107（x 组 10 条钉住「汇总行绿＋exit 2 不得记 pass」）。",
+    "artifact":  "Tools/devloop/ps-suites-tick.ps1, Tools/devloop/test-verify-ps-suites.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
+    "artifact_utc":  "2026-10-31T20:58:15Z",
+    "milestone":  "下一轮：main#96（verify 族基线 112.2 s＝180 s 上限 62%，断言 283 → 落族基线列与 2/3 WARN 判据）→ main#92 → main#90 → main#98，队列见 state/queue/main.md",
+    "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

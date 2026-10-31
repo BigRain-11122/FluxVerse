@@ -453,6 +453,53 @@ $wReal = @(Expand-PsSuitesSourceList -RepoDir $repo -Paths $wDefs)
 $wMissing = @($wReal | Where-Object { -not (Test-Path -LiteralPath (Join-Path $repo $_)) })
 Check 'w8 every guarded write-side source exists in the real tree' ($wMissing.Count -eq 0 -and $wReal.Count -ge 15) (($wMissing -join ',') + ' of ' + $wReal.Count)
 
+# ---------- case x: the ticket's `exit` is the runner's REAL code (main#97) --
+# r754 caught a live ticket reading `failing=1 exit=0` while the runner must have
+# exited 2, and only the `failing>0` half of the judge was doing any work: a
+# Process object from Start-Process -PassThru reports an empty ExitCode here, so
+# `[int]$proc.ExitCode` silently became 0. These cases pin both halves.
+$runnerLiar = New-Runner 'runner-liar.ps1' @'
+Write-Output 'PS SUITES suites=2 assertions=10 counted=2 failing=0 parity=ok'
+Write-Output 'PS SUITES VERDICT: ALL PASS'
+exit 2
+'@
+$runnerNoSummary = New-Runner 'runner-nosummary.ps1' @'
+Write-Output 'PS SUITES ERROR: 2 suite file(s) missing'
+exit 3
+'@
+$xLiarTicket = Join-Path $sandbox 'x-liar.json'
+$xl = Invoke-PsSuitesTick -RepoDir $root -TicketPath $xLiarTicket -RunnerPath $runnerLiar -TimeoutSec 8
+Check 'x1 a green-looking summary with a non-zero exit is not cached as pass' ($xl.status -eq 'red') ([string]$xl.status)
+Check 'x2 the ticket records the real exit code' ($xl.exit -eq 2) ('exit=' + $xl.exit)
+$xLiarRaw = ''
+try { $xLiarRaw = [System.IO.File]::ReadAllText($xLiarTicket, [System.Text.Encoding]::UTF8) } catch { $xLiarRaw = '' }
+$xlTk = $null
+try { $xlTk = $xLiarRaw | ConvertFrom-Json } catch { $xlTk = $null }
+Check 'x3 the persisted ticket carries exit=2, not 0' ($null -ne $xlTk -and [int]$xlTk.exit -eq 2) ([string]$xlTk)
+
+$xGreenTicket = Join-Path $sandbox 'x-green.json'
+$xg = Invoke-PsSuitesTick -RepoDir $root -TicketPath $xGreenTicket -RunnerPath $runnerGreen -TimeoutSec 8
+Check 'x4 a real pass records exit=0' ($xg.status -eq 'pass' -and $xg.exit -eq 0) ([string]$xg.status + ' exit=' + $xg.exit)
+
+$xNoSumTicket = Join-Path $sandbox 'x-nosummary.json'
+$xn = Invoke-PsSuitesTick -RepoDir $root -TicketPath $xNoSumTicket -RunnerPath $runnerNoSummary -TimeoutSec 8
+Check 'x5 a runner without a summary is unreadable, not green' ($xn.status -eq 'unreadable') ([string]$xn.status)
+Check 'x6 the unreadable ticket keeps the exit code' ($xn.exit -eq 3) ('exit=' + $xn.exit)
+Check 'x7 the unreadable note names the exit for humans' ("$($xn.note)" -match 'exit=3') ("$($xn.note)")
+
+$xSlowTicket = Join-Path $sandbox 'x-slow.json'
+$xs = Invoke-PsSuitesTick -RepoDir $root -TicketPath $xSlowTicket -RunnerPath $runnerSlow -TimeoutSec 2
+Check 'x8 a timeout records exit=-1 (no fake zero)' ($xs.status -eq 'timeout' -and $xs.exit -eq -1) ([string]$xs.status + ' exit=' + $xs.exit)
+
+# Static half of the same fix: the module must get its code from cmd.exe, never
+# from a Start-Process -PassThru handle (the shape that read empty for a year).
+# Comments may still name the old shape - only executable lines matter.
+$tickSrc = [System.IO.File]::ReadAllText($module, [System.Text.Encoding]::UTF8)
+$tickCode = @(($tickSrc -split "`r?`n") | Where-Object { -not ($_.TrimStart().StartsWith('#')) })
+$tickCodeText = ($tickCode -join "`n")
+Check 'x9 module launches the runner through cmd.exe' ($tickSrc -match 'cmd\.exe') 'no cmd.exe in module'
+Check 'x10 no live code reads an ExitCode off Start-Process' (-not ($tickCodeText -match 'Start-Process')) 'Start-Process still in executable code'
+
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Output ('RESULT pass=' + ($script:checks - $script:fails) + ' fail=' + $script:fails)

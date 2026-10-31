@@ -54,6 +54,10 @@
 #     the machine is loaded or a suite hangs; we report `timeout`, never a
 #     verdict. 180 s keeps ~1.8x headroom and still bounds a hang inside one
 #     5-minute tick.
+#   - the ticket's `exit` is the RUNNER's real exit code (main#97). Until r756
+#     it was always 0 because `Start-Process -PassThru` yields an empty
+#     ExitCode, so only `failing>0` could turn a ticket red; `-1` now means
+#     "could not be read" and still counts as not-green.
 #
 # ASCII-only (PS5.1 GBK law). No auto-variable locals ($pid family, r164).
 # ---------------------------------------------------------------------------
@@ -416,10 +420,21 @@ function Invoke-PsSuitesTick {
     }
 
     # ---------- run once, hard timeout ----------
+    # The child goes through cmd.exe for exactly ONE reason: a Process object
+    # from `Start-Process -PassThru` reports an EMPTY ExitCode on this box
+    # (measured on PS5.1 and PS7 alike), so `[int]$proc.ExitCode` silently read
+    # 0 and the ticket's `exit` field was permanently fake (main#97: a live
+    # ticket said `failing=1 exit=0` while the runner must have been 2). Only
+    # the `failing>0` half of the judge was doing any work, and a runner that
+    # exited non-zero with a green-looking summary - a crash after the summary
+    # line, or `exit 3` from a missing suite file - would have been cached as
+    # `pass`. cmd /c writes both streams to the temp files AND yields the real
+    # code; this is the same fix r751 landed inside run-ps-suites.ps1.
     $tmpOut = [System.IO.Path]::GetTempFileName()
     $tmpErr = [System.IO.Path]::GetTempFileName()
     $argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $RunnerPath + '"'))
     foreach ($a in $ExtraArgs) { if ($a -ne '') { $argList += $a } }
+    $cmdLine = '/c ""powershell.exe" ' + ($argList -join ' ') + ' > "' + $tmpOut + '" 2> "' + $tmpErr + '""'
 
     $sw = New-Object System.Diagnostics.Stopwatch
     $sw.Start()
@@ -431,8 +446,12 @@ function Invoke-PsSuitesTick {
     $prevChild = $env:FLUXVERSE_PS_SUITES_CHILD
     $env:FLUXVERSE_PS_SUITES_CHILD = '1'
     try {
-        $proc = Start-Process -FilePath 'powershell.exe' -ArgumentList $argList -NoNewWindow -PassThru `
-            -RedirectStandardOutput $tmpOut -RedirectStandardError $tmpErr
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.FileName = 'cmd.exe'
+        $psi.Arguments = $cmdLine
+        $psi.UseShellExecute = $false
+        $psi.CreateNoWindow = $true
+        $proc = [System.Diagnostics.Process]::Start($psi)
         $exited = $proc.WaitForExit($TimeoutSec * 1000)
     } catch {
         $res.status = 'missing'
@@ -444,10 +463,21 @@ function Invoke-PsSuitesTick {
     $sw.Stop()
     $res.ms = [int]$sw.ElapsedMilliseconds
 
-    if (-not $exited -and $proc -ne $null) {
+    if ($exited -and $null -ne $proc) {
+        # -1 means "the code could not be read"; the judge below treats any
+        # non-zero as not-green, so an unreadable code fails closed rather than
+        # quietly becoming a pass.
+        $code = -1
+        try { $code = [int]$proc.ExitCode } catch { $code = -1 }
+        $res.exit = $code
+    } elseif ($null -ne $proc) {
+        # Kill the tree: cmd.exe alone would leave the runner and its per-suite
+        # children alive as orphans (r751 lesson).
+        try { & taskkill.exe /T /F /PID $proc.Id 2>&1 | Out-Null } catch { }
         try { if (-not $proc.HasExited) { $proc.Kill() } } catch { }
         $res.status = 'timeout'
         $res.note = 'runner did not finish in ' + $TimeoutSec + 's'
+        $res.exit = -1
     }
 
     $text = ''
@@ -475,7 +505,7 @@ function Invoke-PsSuitesTick {
         $tail = (($text -split "`r?`n") | Where-Object { $_.Trim() -ne '' } | Select-Object -Last 1)
         if ([string]::IsNullOrWhiteSpace($tail)) { $tail = '(no output)' }
         if ($errText -ne '') { $tail = $tail + ' / ' + (($errText -split "`r?`n") | Select-Object -Last 1) }
-        $res.note = ($res.note + ' summary line not found; last output: ' + $tail).Trim()
+        $res.note = ($res.note + ' summary line not found; last output: ' + $tail + ' exit=' + $res.exit).Trim()
         $res.ts_utc = [datetime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
         $res.tries = 0
         Write-PsSuitesTicket -Path $TicketPath -Result ([pscustomobject]$res)
@@ -486,7 +516,10 @@ function Invoke-PsSuitesTick {
     $res.assertions = [int]$m.Groups[2].Value
     $res.failing = [int]$m.Groups[4].Value
     $res.parity = [string]$m.Groups[5].Value
-    if ($null -ne $proc) { $res.exit = [int]$proc.ExitCode }
+    # Two independent halves, and neither may be skipped: a red suite list, or a
+    # runner that did not exit 0 (crash after its summary, missing suite file ->
+    # exit 3, an unreadable code -> -1). Before main#97 the second half could
+    # never fire because the code was always 0.
     if ($res.status -eq 'unknown') {
         if ($res.failing -gt 0 -or $res.exit -ne 0) { $res.status = 'red' } else { $res.status = 'pass' }
     }

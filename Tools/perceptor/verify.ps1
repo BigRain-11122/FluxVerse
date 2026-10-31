@@ -317,6 +317,45 @@ if (-not (Test-Path -LiteralPath $archiveDuty)) {
   }
 }
 
+# ---------- 2f. R2 ambient baseline (main#63, r725) ----------
+# r722 fixed the street frame's black right wall by giving the scene a Trilight
+# ambient plus a probe refresh, but that only runs inside the three build entries
+# (CityRebuildR2.NormalizeAmbient()). A scene opened or imported anywhere else
+# keeps ambientMode=Skybox with a probe that was never generated - zero indirect
+# light on back-lit surfaces, invisible until a shot comes back black.
+# The parse and its red line live in ONE module (Tools\devloop\ambient-verdict.ps1)
+# so the tick cannot drift from any other reader of the same scene.
+# WARN, not FAIL - same stance as 2b/2c/2d/2e: an observation, not a broken city.
+# Missing scene / unreadable head is a WARN too. No 'FAIL' token in these messages
+# (the tick red-scan keys on that word).
+$ambMod = Join-Path $repoRoot 'Tools\devloop\ambient-verdict.ps1'
+if (-not (Test-Path -LiteralPath $ambMod)) {
+  Write-Output 'VERIFY WARN: ambient: ambient-verdict.ps1 missing - ambient baseline not read'
+} else {
+  $ambLoaded = $true
+  try { . $ambMod } catch { $ambLoaded = $false }
+  if ($ambLoaded -and (Get-Command Get-AmbientVerdict -ErrorAction SilentlyContinue)) {
+    $ambArgs = @{ Root = $repoRoot }
+    if ($env:FLUXVERSE_AMBIENT_SCENE) { $ambArgs['Scene'] = $env:FLUXVERSE_AMBIENT_SCENE }
+    $amb = $null
+    try { $amb = Get-AmbientVerdict @ambArgs } catch { $amb = $null }
+    if ($null -eq $amb) {
+      Write-Output 'VERIFY WARN: ambient: verdict module threw - ambient baseline not read this tick'
+    } else {
+      $ambLine = Format-AmbientLine $amb
+      if (-not $amb.ran) {
+        Write-Output ('VERIFY WARN: ' + $ambLine + ' - could not read the R2 scene ambient block; scene or its RenderSettings moved?')
+      } elseif (Test-AmbientHealthy $amb) {
+        Write-Output ('VERIFY HEALTH: ' + $ambLine)
+      } else {
+        Write-Output ('VERIFY WARN: ' + $ambLine + ' - ' + $amb.reason + '; run CityRebuildR2 (NormalizeAmbient) after opening the scene')
+      }
+    }
+  } else {
+    Write-Output 'VERIFY WARN: ambient-verdict.ps1 did not provide Get-AmbientVerdict'
+  }
+}
+
 # ---------- verdict ----------
 if ($fail.Count -gt 0) {
   $fail | ForEach-Object { Write-Output ('VERIFY FAIL: ' + $_) }

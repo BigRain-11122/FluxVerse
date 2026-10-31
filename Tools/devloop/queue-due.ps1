@@ -17,9 +17,59 @@
 #    an unreadable deadline is unknown, not satisfied
 #  - days late is calendar days against the caller's "today", so a test can
 #    pin the clock instead of sleeping
+#  - a `due` marker written in any other shape is BAD, not "undated" (main#85):
+#    before this, `due=2026-1-5`, `due: 2026-01-05`, `Due=2026-01-05`,
+#    `due 2027-06-30` and `due=2026-13-45` all fell through the strict match and
+#    the row silently became "no deadline" - the same lie that let main#8 sit
+#    13 days late. Bad markers are counted per token with a reason
+#    (key/sep/shape/calendar) and reported, never silently dropped.
+#    Not a marker, therefore not counted: a bare word with no value (prose such
+#    as "no due= marker"), a bare word followed by non-date prose ("due to"),
+#    and the literal format template `due=YYYY-MM-DD`.
 # Read-only, fail-soft: a missing/empty directory ships exists=false and the
 # page says so instead of printing a comfortable zero.
 # ASCII-only (PS 5.1 GBK law): the CJK rows live in the UTF-8 queue files.
+
+function Test-DueValueShape([string]$Value)
+{
+    if ($Value -notmatch '^\d{4}-\d{2}-\d{2}$') { return $false }
+    try { $null = [datetime]::new([int]$Value.Substring(0, 4), [int]$Value.Substring(5, 2),
+            [int]$Value.Substring(8, 2)) } catch { return $false }
+    return $true
+}
+
+function Get-QueueDueBadTokens
+{
+    param([string]$Text)
+
+    $out = New-Object System.Collections.ArrayList
+    if ([string]::IsNullOrEmpty($Text)) { return @() }
+    # "due" as its own word (not qdue_*, not overdue), then an optional
+    # separator and a value. The value class is deliberately ASCII-only: a due
+    # value can never be CJK, and stopping at the first CJK glyph is what keeps
+    # `due=2026-10-18（prose）` from swallowing the rest of the cell (first live
+    # run read a whole CJK sentence as the token and reported a false bad).
+    $rx = New-Object System.Text.RegularExpressions.Regex(
+        '(?<![A-Za-z0-9_])(?<key>[Dd][Uu][Ee])(?![A-Za-z0-9_])\s*(?<sep>[=:]?)\s*(?<val>[A-Za-z0-9:/\-_+]+)')
+    foreach ($m in $rx.Matches($Text)) {
+        $key = $m.Groups['key'].Value
+        $sep = $m.Groups['sep'].Value
+        $val = $m.Groups['val'].Value
+        if ([string]::IsNullOrEmpty($val)) { continue }
+        if ($val -ceq 'YYYY-MM-DD') { continue }
+        # No separator and no date-looking value is English prose ("due to").
+        if ([string]::IsNullOrEmpty($sep) -and $val -notmatch '^\d{4}[-/.]\d{1,2}') { continue }
+        $reason = ''
+        if ($key -cne 'due') { $reason = 'key' }
+        elseif ($sep -cne '=') { $reason = 'sep' }
+        elseif (-not (Test-DueValueShape $val)) {
+            if ($val -match '^\d{4}-\d{2}-\d{2}$') { $reason = 'calendar' } else { $reason = 'shape' }
+        }
+        if ([string]::IsNullOrEmpty($reason)) { continue }
+        $null = $out.Add([ordered]@{ token = ($key + $sep + $val); reason = $reason })
+    }
+    return @($out)
+}
 
 function Get-QueueDue
 {
@@ -39,8 +89,10 @@ function Get-QueueDue
         late     = 0
         max_days = 0
         max_id   = ''
+        bad      = 0
         as_of    = $Today.Date.ToString('yyyy-MM-dd')
         items    = @()
+        bad_items = @()
     }
     if ([string]::IsNullOrEmpty($Dir)) { return $r }
     if (-not (Test-Path -LiteralPath $Dir)) { return $r }
@@ -59,6 +111,7 @@ function Get-QueueDue
     $r.dir_rel = $rel.TrimStart('\', '/').Replace('\', '/')
 
     $items = New-Object System.Collections.ArrayList
+    $badItems = New-Object System.Collections.ArrayList
     $files = 0
     $rows = 0
     $opens = 0
@@ -84,6 +137,15 @@ function Get-QueueDue
             # The queue's closed convention is a struck-through subject cell.
             if ($t.Contains('~~')) { continue }
             $opens++
+
+            foreach ($bt in @(Get-QueueDueBadTokens -Text $t)) {
+                $null = $badItems.Add([ordered]@{
+                    id     = $idTxt
+                    file   = $f.Name
+                    token  = $bt.token
+                    reason = $bt.reason
+                })
+            }
 
             $m = [regex]::Match($t, 'due=(\d{4})-(\d{2})-(\d{2})')
             if (-not $m.Success) { continue }
@@ -111,6 +173,8 @@ function Get-QueueDue
     $r.open = $opens
     $r.dated = $dated
     $r.late = $items.Count
+    $r.bad = $badItems.Count
+    if ($badItems.Count -gt 0) { $r.bad_items = @($badItems) }
     if ($items.Count -gt 0) {
         $r.items = @($items | Sort-Object -Property @{ Expression = { $_.days } } -Descending)
     }

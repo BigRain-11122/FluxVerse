@@ -1,4 +1,4 @@
-﻿# test-queue-due.ps1 - sandbox proof for the queue overdue row (queue main#83)
+# test-queue-due.ps1 - sandbox proof for the queue overdue row (queue main#83)
 # --------------------------------------------------------------------------
 # Two facts motivated this: main#8 and main#23 sat overdue for 13 and 5 days and
 # nothing machine-readable knew about it. The fix is a `due=YYYY-MM-DD` marker
@@ -12,6 +12,9 @@
 #      same marker (panel never carries a hand-written number)
 #   D) the real builder ships the row: qdue=1 in PANEL OK and id="f-queue"
 #      in the page; a missing queue dir still builds (fail-soft) and says so
+#   F) bad markers (main#85): a `due` marker that is not `due=YYYY-MM-DD` is
+#      counted and named, never silently read as "no deadline"; prose ("due to")
+#      and the literal format template are not markers
 # ASCII-only law: fixtures are ASCII; the live CJK rows are only counted.
 
 $ErrorActionPreference = 'Stop'
@@ -54,9 +57,29 @@ Write-TextFile (Join-Path $qdirA 'queue-a.md') $rowA
 # --- B) absent directory ----------------------------------------------------
 $qdirB = Join-Path $sandbox 'queueB-missing'
 
+# --- F) bad markers (main#85) ----------------------------------------------
+$qdirF = Join-Path $sandbox 'queueF'
+New-Item -ItemType Directory -Path $qdirF -Force | Out-Null
+$rowF = @"
+# fixture queue: bad due forms
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | strict marker | p | due=2026-12-25 |
+| 2 | short month | p | due=2026-1-5 |
+| 3 | colon separator | p | due: 2026-01-05 |
+| 4 | capital key | p | Due=2026-01-05 |
+| 5 | space separator | p | due 2027-06-30 |
+| 6 | impossible calendar date | p | due=2026-13-45 |
+| 7 | prose, not a marker | p | no due marker; due to weather |
+| 8 | format template | p | write it as `due=YYYY-MM-DD` |
+"@
+Write-TextFile (Join-Path $qdirF 'queue-f.md') $rowF
+
 # --- results ---------------------------------------------------------------
 $A = Get-QueueDue -Dir $qdirA -Today $today
 $B = Get-QueueDue -Dir $qdirB -Today $today
+$QF = Get-QueueDue -Dir $qdirF -Today $today
 
 # --- C) live queue, independent recount ------------------------------------
 $qdirLive = Join-Path $repoDir 'state\queue'
@@ -136,15 +159,33 @@ Check 'C: dated count matches recount' ($C.dated -eq $liveDated)
 Check 'C: late count matches recount' ($C.late -eq $liveLate)
 Check 'C: live overdue ids match recount' ((@($C.items | ForEach-Object { $_.id }) -join ',') -eq ($liveLateIds -join ','))
 Check 'C: max_days is the largest late day count' ($C.max_days -eq (@($C.items | ForEach-Object { $_.days } | Measure-Object -Maximum).Maximum))
+Check 'C: bad items agree with the bad count' (@($C.bad_items).Count -eq $C.bad)
+
+Check 'F: eight rows scanned' ($QF.scanned -eq 8)
+Check 'F: five bad markers' ($QF.bad -eq 5)
+Check 'F: bad items agree with the bad count' (@($QF.bad_items).Count -eq $QF.bad)
+Check 'F: bad ids are the five broken rows' (((@($QF.bad_items | ForEach-Object { $_.id }) | Sort-Object -Unique) -join ',') -eq '2,3,4,5,6')
+Check 'F: a strict marker is never bad' (@($QF.bad_items | Where-Object { $_.id -eq '1' }).Count -eq 0)
+Check 'F: prose is not a marker' (@($QF.bad_items | Where-Object { $_.id -eq '7' }).Count -eq 0)
+Check 'F: the format template is not a marker' (@($QF.bad_items | Where-Object { $_.id -eq '8' }).Count -eq 0)
+Check 'F: capital key reason' ((@($QF.bad_items | Where-Object { $_.id -eq '4' })[0].reason) -eq 'key')
+Check 'F: colon separator reason' ((@($QF.bad_items | Where-Object { $_.id -eq '3' })[0].reason) -eq 'sep')
+Check 'F: bare date-shaped marker reason' ((@($QF.bad_items | Where-Object { $_.id -eq '5' })[0].reason) -eq 'sep')
+Check 'F: short month reason' ((@($QF.bad_items | Where-Object { $_.id -eq '2' })[0].reason) -eq 'shape')
+Check 'F: impossible date reason' ((@($QF.bad_items | Where-Object { $_.id -eq '6' })[0].reason) -eq 'calendar')
+Check 'F: only the strict marker is dated' ($QF.dated -eq 1)
+Check 'F: tokens keep their original spelling' ((@($QF.bad_items | Where-Object { $_.id -eq '3' })[0].token) -eq 'due:2026-01-05')
 
 Check 'D: builder reported PANEL OK' ($logD -match 'PANEL OK')
 Check 'D: fixture queue reports one late' ($logD -match 'qdue=1(?!\d)')
 Check 'D: fixture queue reports 12 days' ($logD -match 'qdue_max=12(?!\d)')
 Check 'D: page carries the queue row' ($htmlD.Contains('id="f-queue"'))
 Check 'D: page carries the counter' ($htmlD.Contains('const QUEUE ='))
+Check 'D: an unreadable date is reported as bad, not dropped' ($logD -match 'qdue_bad=1(?!\d)')
 
 Check 'E: missing queue dir still builds' ($logE -match 'PANEL OK')
 Check 'E: missing queue dir says missing, not zero' ($logE -match 'qdue=missing')
+Check 'E: missing queue dir says bad=missing too' ($logE -match 'qdue_bad=missing')
 Check 'E: page still carries the row element' ($htmlE.Contains('id="f-queue"'))
 
 if (Test-Path -LiteralPath $sandbox) { Remove-Item -LiteralPath $sandbox -Recurse -Force }

@@ -104,7 +104,38 @@ let threw5 = '';
 try { runPanel(withQueue(late), 'noel', { dropId: 'f-queue' }); } catch (e) { threw5 = e.message; }
 chk('absent.no-crash', threw5 === '', threw5);
 
-// --- 6) the real build ships the row and the counter ----------------------
+// --- 7) bad due markers (queue main#85) -----------------------------------
+// A marker written as `due=2026-1-5` / `due: 2026-01-05` / `Due=...` used to
+// read as "no deadline". Now it is named on the page - and it must NOT keep the
+// green "no overdue" chip, which would vouch for a number that may be hiding a
+// deadline.
+const badOnly = {
+  exists: true, dir_rel: 'state/queue', files: 1, scanned: 8, open: 8, dated: 1, late: 0,
+  max_days: 0, max_id: '', bad: 2, as_of: '2026-11-01', items: [],
+  bad_items: [{ id: '2', file: 'queue-f.md', token: 'due=2026-1-5', reason: 'shape' },
+              { id: '4', file: 'queue-f.md', token: 'Due=2026-01-05', reason: 'key' }]
+};
+const e7 = runPanel(withQueue(badOnly), 'badonly')('f-queue');
+chk('bad.warn-class', e7.innerHTML.indexOf('class="tag warn"') >= 0, e7.innerHTML);
+chk('bad.count', e7.innerHTML.indexOf('标记坏 2 处') >= 0, e7.innerHTML);
+chk('bad.ids', e7.innerHTML.indexOf('（#2 · #4）') >= 0, e7.innerHTML);
+chk('bad.not-counted-as-dated', e7.innerHTML.indexOf('未计入期限') >= 0, e7.innerHTML);
+chk('bad.no-ok-tag', e7.innerHTML.indexOf('tag ok') < 0, e7.innerHTML);
+chk('bad.still-reports-size', e7.innerHTML.indexOf('在队 8 件（带期限 1）') >= 0, e7.innerHTML);
+
+const lateBad = {
+  exists: true, dir_rel: 'state/queue', files: 2, scanned: 20, open: 9, dated: 3, late: 1,
+  max_days: 12, max_id: '1', bad: 1, as_of: '2026-11-01',
+  items: [{ id: '1', file: 'queue-f.md', due: '2026-10-20', days: 12 }],
+  bad_items: [{ id: '2', file: 'queue-f.md', token: 'due=2026-1-5', reason: 'shape' }]
+};
+const e8 = runPanel(withQueue(lateBad), 'latebad')('f-queue');
+chk('latebad.keeps-late', e8.innerHTML.indexOf('逾期 1 件') >= 0, e8.innerHTML);
+chk('latebad.keeps-worst', e8.innerHTML.indexOf('最久 12 天（#1）') >= 0, e8.innerHTML);
+chk('latebad.adds-bad', e8.innerHTML.indexOf('标记坏 1 处') >= 0, e8.innerHTML);
+chk('latebad.single-size', e8.innerHTML.split('在队').length - 1 === 1, e8.innerHTML);
+
+// --- 8) the real build ships the row and the counter ----------------------
 chk('real.row-present', realHtml.indexOf('id="f-queue"') >= 0);
 chk('real.const-present', /const QUEUE = \{/.test(realHtml));
 chk('real.no-placeholder', realHtml.indexOf('__QUEUE_JSON__') < 0);

@@ -574,12 +574,29 @@ function artTitle(it){
     const open = (typeof Q.open === 'number') ? Q.open : 0;
     const dated = (typeof Q.dated === 'number') ? Q.dated : 0;
     const late = (typeof Q.late === 'number') ? Q.late : 0;
+    // 写法不对的 due 标记（queue main#85）：`due=2026-1-5`／`due: 2026-01-05`／
+    // `Due=…` 这类行此前静默变成「无期限」，谁也不会发现截止日根本没被读到。
+    // 有坏标记时不再亮绿灯「无逾期」——那是拿读数替写法作保。
+    const bad = (typeof Q.bad === 'number') ? Q.bad : 0;
+    const badIds = (Array.isArray(Q.bad_items) ? Q.bad_items : [])
+      .map(function (it) { return (it && it.id) ? ('#' + it.id) : ''; })
+      .filter(function (s) { return s !== ''; })
+      .slice(0, 3);
+    const badTxt = bad > 0
+      ? ('<span class="tag warn">标记坏 ' + bad + ' 处</span>' +
+        '<span class="muted"> due 写法不对' +
+        (badIds.length ? ('（' + badIds.join(' · ') + '）') : '') +
+        ' · 未计入期限' + (late > 0 ? '' : (' · 在队 ' + open + ' 件（带期限 ' + dated + '）')) +
+        '</span>')
+      : '';
     if (late > 0) {
       const worst = (Q.max_id ? ('最久 ' + Q.max_days + ' 天（#' + Q.max_id + '）')
         : ('最久 ' + Q.max_days + ' 天'));
       el.innerHTML = '<span class="tag warn">逾期 ' + late + ' 件</span>' +
         '<span class="muted"> ' + esc(worst) + ' · 在队 ' + open +
-        ' 件（带期限 ' + dated + '）</span>';
+        ' 件（带期限 ' + dated + '）</span>' + badTxt;
+    } else if (bad > 0) {
+      el.innerHTML = badTxt;
     } else {
       el.innerHTML = '<span class="tag ok">无逾期</span>' +
         '<span class="muted"> 在队 ' + open + ' 件（带期限 ' + dated + '）</span>';

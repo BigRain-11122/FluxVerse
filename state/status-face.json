@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T17:09:03Z",
-    "current_activity":  "r746 收口（main#84 写侧闸）：脸面三行现在写裸文件名会被当场拒——新增单一规则模块 Tools/devloop/face-path-lint.ps1，写侧 Tools/devloop/write-status-face.ps1 与建造侧 Tools/devloop/build-city-panel.ps1 用同一条正则判「这算不算路径」，命中即点名令牌与所在行并退出，脸面一个字节都不动、不留半成品。此前 r743（写 ./TECH.md 时漏掉 ./）与 r744（写 Tools/devloop/test-panel-url.ps1 时漏掉目录）各自为同一个坑赔掉一轮。防漂移＝沙盒直接解析建造侧的 $artPattern 字面量与模块常量逐字节比对。",
-    "artifact":  "Tools/devloop/face-path-lint.ps1, Tools/devloop/write-status-face.ps1, Tools/devloop/test-write-status-face-bare.ps1, state/status-face.json, ./TECH.md, state/queue/main.md",
-    "artifact_utc":  "2026-10-31T17:09:03Z",
-    "milestone":  "下一步＝main#85（拼错的 due= 会静默降级成「无期限」）→ main#86（写侧闸的 ./ 前缀提示文案）→ main#76（r671 缺档提示）；状态与判据见 state/queue/main.md",
-    "milestone_eta_utc":  "2026-11-01T04:00:00Z"
+    "updated_utc":  "2026-10-31T17:21:45Z",
+    "current_activity":  "r747 收口（main#85 坏标记普查）：due 标记写错形（短月 2026-1-5、冒号分隔、大写 Due、空格分隔、不存在的日期）此前一律静默读成「无期限」——和让 main#8 逾期 13 天没人发现的是同一个病。现在单一模块 Tools/devloop/queue-due.ps1 逐 token 计数并给原因（key/sep/shape/calendar），坏标记不再消失：面板「队列逾期」行有坏标记时不亮绿灯，改红标「标记坏 N 处」+ 点名条目号 + 「未计入期限」，建造读数增 qdue_bad。首跑即在活队列抓到 1 处真坏标记（state/queue/explore.md 的 #97 写成 due 2027-06-30），改正后活队列 bad=0。",
+    "artifact":  "Tools/devloop/queue-due.ps1, Tools/devloop/test-queue-due.ps1, Tools/devloop/build-city-panel.ps1, Tools/devloop/city-panel-template.html, logs/devloop-r745-panel-queue-test.js, qa/city-panel-r747-narrow-bm-a.png, state/queue/explore.md, state/queue/main.md, world-public/city-panel.html, ./TECH.md",
+    "artifact_utc":  "2026-10-31T17:21:45Z",
+    "milestone":  "下一步＝main#86（写侧闸的 PS 沙盒没有每轮常跑入口，parity 断言实际没上膛）→ main#76（r671 缺档提示）→ main#77（-NoLiveCheck 白名单普查）；口径见 state/queue/main.md",
+    "milestone_eta_utc":  "2026-11-02T04:00:00Z"
 }

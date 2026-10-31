@@ -59,9 +59,15 @@ public static class CityRebuildR2
         if (houses.Count == 0) throw new Exception("no house presets under R2_AD-021_District");
         if (showcase == null) throw new Exception("modular showcase not found");
 
-        Shot(cam, "R2_L0_overview.png", 50f, 320f, Vector3.zero);
-        Shot(cam, "R2_L1_gamedistrict.png", 55f, 110f, cityGame.transform.position);
-        Shot(cam, "R2_L2_street.png", 60f, 24f, houses[Math.Min(1, houses.Count - 1)].transform.position);
+        // r713 取景构图：原固定高度/俯角三个 Shot 的实证后果=全景截掉板块南缘、
+        // 街区两帧大半是空铺装与水面（r712 面板取景卡上两帧几乎读不出内容）。
+        // 改为按主体包围盒自适应取景：距离由包围球与相机视场角反解，
+        // 主体无论多大都占满画面；街面帧改真·人视（低机位沿街带看）。
+        // 全景框板块本体（Ground512）：框全场景会把板外路网算进去，板块被压成一小块。
+        var plate = DeepFind(cityGame.transform.root, "Ground512");
+        FitShot(cam, "R2_L0_overview.png", plate != null ? WorldBounds(plate.gameObject) : SceneBounds(), 0f, 52f, 1.03f);
+        FitShot(cam, "R2_L1_gamedistrict.png", WorldBounds(r2root.gameObject), 18f, 30f, 1.04f);
+        StreetShot(cam, r2root, "R2_L2_street.png");
         HouseFrontShot(cam, houses[0], "R2_house_front.png");
         ShowcaseShots(cam, showcase);
 
@@ -387,6 +393,18 @@ public static class CityRebuildR2
         t.position += Vector3.up * (0f - b.min.y);
     }
 
+    // 深查找（r713）：取景要按名字锁定板块地面件（Ground512）。
+    static Transform DeepFind(Transform t, string name)
+    {
+        if (t.name == name) return t;
+        for (int i = 0; i < t.childCount; i++)
+        {
+            var r = DeepFind(t.GetChild(i), name);
+            if (r != null) return r;
+        }
+        return null;
+    }
+
     static Bounds WorldBounds(GameObject go)
     {
         var b = new Bounds(go.transform.position, Vector3.zero);
@@ -395,6 +413,74 @@ public static class CityRebuildR2
         { if (!any) { b = r.bounds; any = true; } else b.Encapsulate(r.bounds); }
         if (!any) b = new Bounds(go.transform.position, Vector3.one);
         return b;
+    }
+
+    // 全场景包围盒（r713）：全景帧要的是「整个板块」，此前硬编码 height/pitch
+    // 与板块真实尺寸无关——板块一放大就截边，缩小就留一堆空场。
+    static Bounds SceneBounds()
+    {
+        Bounds b = new Bounds(Vector3.zero, Vector3.zero);
+        bool any = false;
+        foreach (var root in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+            foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (r.GetComponent<Camera>() != null) continue;
+                if (!any) { b = r.bounds; any = true; } else b.Encapsulate(r.bounds);
+            }
+        if (!any) b = new Bounds(Vector3.zero, Vector3.one * 100f);
+        return b;
+    }
+
+    // 自适应取景（r713）：距离由包围球半径与相机视场角反解（取横竖较窄一轴为准），
+    // 保证主体任何尺寸都铺满画面且不裁切。yaw/pitch 只决定看的角度，不再决定远近。
+    static void FitShot(Camera cam, string file, Bounds b, float yawDeg, float pitchDeg, float margin)
+    {
+        // 包围球拟合对平板太保守（512x512 地面的球半径 362，案子拍出来只占半屏），
+        // 改为把 8 个角点投影到相机三轴反解最小距离——平铺件也能贴边不裁。
+        Vector3 dir = Quaternion.Euler(pitchDeg, yawDeg, 0f) * Vector3.forward; // 相机->主体
+        Quaternion rot = Quaternion.LookRotation(dir, Vector3.up);
+        Vector3 right = rot * Vector3.right, up = rot * Vector3.up;
+        float aspect = (float)ShotW / ShotH;
+        float vHalf = cam.fieldOfView * 0.5f * Mathf.Deg2Rad;
+        float hHalf = Mathf.Atan(Mathf.Tan(vHalf) * aspect);
+        float dist = 0f, halfH = 0.5f, halfW = 0.5f;
+        for (int i = 0; i < 8; i++)
+        {
+            Vector3 p = Vector3.Scale(b.extents, new Vector3(
+                (i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+            float along = Vector3.Dot(p, dir);
+            float pr = Mathf.Abs(Vector3.Dot(p, right));
+            float pu = Mathf.Abs(Vector3.Dot(p, up));
+            dist = Mathf.Max(dist, along + pr / Mathf.Tan(hHalf), along + pu / Mathf.Tan(vHalf));
+            halfW = Mathf.Max(halfW, pr);
+            halfH = Mathf.Max(halfH, pu);
+        }
+        dist = Mathf.Max(dist * margin, 1f);
+        if (cam.orthographic)
+        {
+            cam.orthographicSize = halfH * margin;
+            dist = halfW * 3f + 10f;
+        }
+        else
+        {
+            cam.farClipPlane = Mathf.Max(cam.farClipPlane, dist + b.size.magnitude * 3f);
+            cam.nearClipPlane = Mathf.Min(cam.nearClipPlane, Mathf.Max(0.05f, dist * 0.01f));
+        }
+        cam.transform.position = b.center - dir * dist;
+        cam.transform.LookAt(b.center);
+        RenderShot(cam, file);
+    }
+
+    // 街面人视（r713）：沿两排宅基之间的路带低机位朝北看——原 60 度俯角拍的是
+    // 「一栋房的屋顶+大片空地」，读不出街。
+    static void StreetShot(Camera cam, Transform root, string file)
+    {
+        var b = WorldBounds(root.gameObject);
+        Vector3 target = new Vector3(b.center.x, b.min.y + Mathf.Clamp(b.size.y * 0.18f, 1.4f, 3.2f), b.center.z);
+        cam.transform.position = target + new Vector3(0f, 2.9f, -(b.size.z * 0.5f + 7f));
+        cam.farClipPlane = Mathf.Max(cam.farClipPlane, b.size.magnitude * 4f);
+        cam.transform.LookAt(target + Vector3.up * 0.5f);
+        RenderShot(cam, file);
     }
 
     static void HouseFrontShot(Camera cam, GameObject house, string file)

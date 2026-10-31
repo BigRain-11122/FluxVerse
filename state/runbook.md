@@ -3,12 +3,12 @@
 ## 我是谁
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建）＋CEO 唯一产品面 `world-public/city-panel.html`。
 ## 我现在在干什么
-r725 毕（FULL-ROUND·triggers=4 c3/c4/c6/c7·产品面=巡检面多一条可读读数）：main#63 收口——环境光基线入场景体检。新增单一判定模块 `Tools/devloop/ambient-verdict.ps1`（判据三条＝mode 非 Trilight／三色全零／intensity ≤ 0，各点名原因与行号；只读场景头 400 行，80 MB 级场景不全读），`verify.ps1` 新 §2f 每 tick 打 `VERIFY HEALTH: ambient: mode=Trilight sky=… equator=… ground=… intensity=1 scene=CityRebuild_R2.unity`，缺档/不可读一律 WARN 不 FAIL。沙盒 `test-verify-ambient.ps1` 22/22；verify 族四套回归全绿（r2-site 18/18·log-archive 22/22·path-census 15/15·probe 6/6）；真机 `VERIFY PASS` exit 0。顺带实证 main#51 新一态：两个 `narrow-shot.js` **并行**会互踩（390 那次量到 clientW=1400 仍打 OK），一次只跑一个实例。
+r726 毕（FULL-ROUND·triggers=1 c4-tech·产品面=展示房取景帧第一次拍到门洞与开顶剖面）：main#64 收口——解剖展示房不再写死坐标。新 `CityRebuildR2.FindShowcaseSlot()` 只读本期宅基台/路带，按「门面缝中心 × 前场空带」候选解出净位（轴对齐矩形分离 ≥1.0 m 才算数，解不出就写 `NO_SLOT` 并退回旧位），并补一块自带的 `R2_AD-021_ShowcasePad`。实测 `clear=3.50m gap=13.57m world=(-111.5,-85.1) yaw=180`，`r2-scale-study` 的 `pad_clash=none`（改前 P07 压 0.55 m）、`r2-site-check` `block_water=0.0%`、`door_probe PASS clear=8.00m`。顺带勘正一整类假产品面：`ShowcaseShots()` 的前脸机位挂在 `transform.forward` 上，而门洞在模块局部 −Z，r713~r725 的 `showcase` 帧全在拍后墙；改到 −forward 侧 3/4 机位后首次给出门洞+侧墙+开顶剖面。重建 `exit 0`、六帧 `SHOTS_OK`、面板 29 套 ALL PASS、390 窄屏 `offenders=0`、`VERIFY PASS`。
 ## 我现在在干什么（历史）
-r724：街面取景卡换真·人视帧（main#62，机位由判据解出，`street_pose` 30.6%）。r723：街区尺度对照图（main#61，行距是主矛盾）。r721：街区搬到北岸干地，压水 91.7%→0.0%。r720：面板「运行维护」行印归档日更状态。r719：`log-archive-duty.ps1` 让归档每天自跑一次。
+r725：环境光基线入 verify 巡检（`ambient-verdict.ps1`＋§2f）。r724：街面取景卡换真·人视帧（`street_pose` 30.6%）。r723：街区尺度对照图（行距是主矛盾）。r721：街区搬到北岸干地，压水 91.7%→0.0%。r720：「运行维护」行印归档日更状态。r719：归档每天自跑一次。
 ## 下一步（队列头）
-1. 轮首跑 `Tools\devloop\check-fastpath.ps1`：FASTPATH=队列取活（`state/queue/{main,tech,explore}.md`）→提案轨→一行声明；FULL-ROUND=按 mandate 读序施工。r725 收尾=四 sha 全刷现值（§九 open 可领面：main#64/#65/#66/#40/#33/#8/#23/#51/#52/#20）。
-2. **队列头=main#64 展示房压宅基台 0.55 m**（移进最大门面缝或基台让净位，机检贴图元重叠=0，与 main#61 的 A2 同批）→ main#65 底板行道树侵入路带（几何普查，不能靠射线）→ main#66 行距 A2 落地 → main#40 冻结 fixture 重建 → main#33 状态档写入硬化 → main#8 城市线附卷（10-19 逾期）→ main#23 司级基准刷新（10-27 逾期）→ main#51 `narrow-shot.js` 残页（债不销；**禁并行跑**，一次一个实例）→ main#20 ABORT 观察位。
+1. 轮首跑 `Tools\devloop\check-fastpath.ps1`：FASTPATH=队列取活（`state/queue/{main,tech,explore}.md`）→提案轨→一行声明；FULL-ROUND=按 mandate 读序施工。
+2. **队列头=main#65 底板行道树侵入路带**（`r2-site-check.py` 几何普查：树包围盒 ∩ 76×6 路带，能按名点名件数/面积；物理射线对它们报 blocked=0，不能靠射线）→ main#66 行距 A2 落地 → main#67 展示房楼梯跑出墙外（bounds 9.1×8.8 vs 7.5×5.0）→ main#40 冻结 fixture 重建 → main#33 状态档写入硬化 → main#8 城市线附卷（10-19 逾期）→ main#23 司级基准刷新（10-27 逾期）→ main#51 `narrow-shot.js` 残页（**禁并行跑**，一次一个实例）→ main#20 ABORT 观察位。
 3. **main#52 空载复测仍跑不了**：`Get-Process Tuanjie` 实读 2 个（gui-agent 编辑器＋Cowork hub）；032 判据 `fps_avg≥486.8` 且 `p95≤2.58ms`。挑 0 进程窗口再跑，禁带载凑数。
 4. **面板品质线（r690→r713 常态）**：改模板/builder 后必跑 `build-city-panel.ps1` + `node logs/devloop-r702-compile-check.js` + 四套 PS 闸（`test-city-shot-shape` 11／`test-city-shot-census` 18／`test-city-panel-proof` 17／`test-city-duty` 32）+ 全 **29 套** `powershell -File Tools\devloop\run-panel-suites.ps1`（exit 2=有失败）+ `node Tools/devloop/narrow-shot.js --width 390`（VERDICT 必须 OK）。改面部前先写 `logs/devloop-face-content.json` → `write-status-face.ps1` → 再重建（否则假红）。
    - **取景家族注册表**：只有 `city-`/`city3d-`/`smoke-`/`frame-`/`soak-` 开头的 `qa/` **顶层**图会被取景卡采用；示意图一律放 `qa/site/`（r714 新增），不许冒充城市帧。

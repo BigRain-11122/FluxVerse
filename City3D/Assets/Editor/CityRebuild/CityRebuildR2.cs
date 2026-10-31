@@ -296,6 +296,29 @@ public static class CityRebuildR2
         street.transform.localPosition = new Vector3(0f, 0.04f, 0f);
         street.transform.localScale = new Vector3(76f, 0.04f, 6f);
         street.GetComponent<Renderer>().sharedMaterial = streetMat;
+
+        // ④c 展示房净位（main#64）：r723 量到它压在 P07 宅基台上 0.55 m、另一侧 0.36 m，
+        // 两块台面顶同为 0.055+0.05 → 共面 z-fighting。宅基台 16.27 m 深、门面缝只有 7.31 m，
+        // 装不下 7.5×5.0 的展示房，故不再写死坐标：按本期宅基台/路带实况解位——
+        // 在「宅基台前缘 ↔ 路带」的空带里取与最大门面缝对齐的落位，朝向路带，
+        // 与所有宅基台/路带矩形分离 ≥ 1.0 m（零重叠由几何算出，不靠人眼）。
+        Vector3 slotPos; float slotYaw; string slotReport;
+        FindShowcaseSlot(r2root.transform, showcase, out slotPos, out slotYaw, out slotReport);
+        showcase.transform.localPosition = slotPos;
+        showcase.transform.localRotation = Quaternion.Euler(0f, slotYaw, 0f);
+        SitOnGround(showcase.transform);
+        Report.Add(slotReport);
+
+        // 展示房自己也给一块基台（同宅基台工艺·0.055 底 0.05 厚 → 顶面 0.08 与宅基台齐）
+        var sBow = WorldBounds(showcase);
+        var sPad = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        sPad.name = "R2_AD-021_ShowcasePad";
+        sPad.transform.SetParent(r2root.transform, false);
+        Vector3 sLp = r2root.transform.InverseTransformPoint(new Vector3(sBow.center.x, 0, sBow.center.z));
+        sPad.transform.localPosition = new Vector3(sLp.x, 0.055f, sLp.z);
+        sPad.transform.localScale = new Vector3(sBow.size.x + 2.4f, 0.05f, sBow.size.z + 2.4f);
+        sPad.GetComponent<Renderer>().sharedMaterial = lotMat;
+
         foreach (var h in houses.Concat(new[] { showcase })) h.transform.position += Vector3.up * 0.08f;
         Report.Add("lots=8+street=1（宅基台 0.08 顶·路带两排间·整体抬升 0.08 治漂浮）");
 
@@ -405,6 +428,117 @@ public static class CityRebuildR2
         return root;
     }
 
+    // ===== 展示房净位解算（main#64）=====
+    // 只读本期已摆好的宅基台 + 路带：不写死坐标，行距/门面重排（main#61 A2）落地后
+    // 同一段代码自动改解位，避免「搬一次写死一次坐标」的返工。
+    struct Rect2 { public float x0, z0, x1, z1; }
+
+    static Rect2 Rect2Of(Bounds b)
+    {
+        return new Rect2 { x0 = b.min.x, z0 = b.min.z, x1 = b.max.x, z1 = b.max.z };
+    }
+
+    // 轴对齐矩形分离距：任一轴分离即取该轴间隙；两轴都相交=重叠返 0。
+    static float Rect2Separation(Rect2 a, Rect2 b)
+    {
+        float dx = Mathf.Max(a.x0 - b.x1, b.x0 - a.x1);
+        float dz = Mathf.Max(a.z0 - b.z1, b.z0 - a.z1);
+        if (dx <= 0f && dz <= 0f) return 0f;
+        return Mathf.Max(dx, dz);
+    }
+
+    static void FindShowcaseSlot(Transform root, GameObject showcase,
+                                 out Vector3 localPos, out float yaw, out string report)
+    {
+        const float CLEAR = 1.0f;
+        var sb = WorldBounds(showcase);
+        float w = sb.size.x, d = sb.size.z;
+
+        var pads = new List<Bounds>();
+        Bounds? streetB = null;
+        foreach (Transform t in root)
+        {
+            var r = t.GetComponent<Renderer>();
+            if (r == null) continue;
+            if (t.name.StartsWith("R2_AD-021_Lot_")) pads.Add(r.bounds);
+            else if (t.name == "R2_AD-021_Street") streetB = r.bounds;
+        }
+        if (pads.Count < 4 || streetB == null) throw new Exception("showcase slot: pads/street missing");
+        var street = streetB.Value;
+
+        var rows = new List<List<Bounds>>();
+        foreach (var pb in pads.OrderBy(q => q.center.z))
+        {
+            if (rows.Count == 0 || Mathf.Abs(pb.center.z - rows[rows.Count - 1][0].center.z) > 2f)
+                rows.Add(new List<Bounds>());
+            rows[rows.Count - 1].Add(pb);
+        }
+
+        Rect2 best = new Rect2(); float bestClear = -1f; float bestYaw = 0f; float bestGap = 0f;
+        foreach (var row in rows)
+        {
+            var xs = row.OrderBy(p => p.center.x).ToList();
+            // 本排最大门面缝（相邻宅基台之间的净距）中心
+            var gapCx = new List<float>();
+            var gapW = new List<float>();
+            for (int i = 1; i < xs.Count; i++)
+            {
+                float gw = xs[i].min.x - xs[i - 1].max.x;
+                if (gw <= 0f) continue;
+                gapCx.Add((xs[i - 1].max.x + xs[i].min.x) * 0.5f);
+                gapW.Add(gw);
+            }
+            gapCx.Add((float)row.Average(p => (double)p.center.x)); // 排中心兜底
+            gapW.Add(0f);
+
+            bool northOfStreet = row[0].center.z < street.center.z;
+            float padEdge = northOfStreet ? row.Max(p => p.max.z) : row.Min(p => p.min.z);
+            float streetEdge = northOfStreet ? street.min.z : street.max.z;
+            float yawHere = northOfStreet ? 180f : 0f; // 门洞在模块局部 −Z（BuildShowcase 前侧），转过来朝路带
+            float lo = Mathf.Min(padEdge, streetEdge) + d * 0.5f + CLEAR;
+            float hi = Mathf.Max(padEdge, streetEdge) - d * 0.5f - CLEAR;
+            if (hi < lo) { float mid = (padEdge + streetEdge) * 0.5f; lo = hi = mid; }
+
+            for (int i = 0; i < gapCx.Count; i++)
+            {
+                float cx = gapCx[i];
+                float[] zs = { (lo + hi) * 0.5f, lo, hi };
+                foreach (var cz in zs)
+                {
+                    var cand = new Rect2 { x0 = cx - w * 0.5f, x1 = cx + w * 0.5f, z0 = cz - d * 0.5f, z1 = cz + d * 0.5f };
+                    float clear = Rect2Separation(cand, Rect2Of(street));
+                    foreach (var p in pads)
+                        clear = Mathf.Min(clear, Rect2Separation(cand, Rect2Of(p)));
+                    if (clear > bestClear + 0.001f)
+                    {
+                        bestClear = clear; best = cand; bestYaw = yawHere;
+                        bestGap = (i < gapW.Count - 1) ? gapW[i] : 0f;
+                    }
+                }
+            }
+        }
+
+        if (bestClear <= 0f)
+        {
+            // 真解不出来才退回旧位，并大声记一笔（禁静默将就）
+            localPos = new Vector3(0f, 0f, 26f);
+            yaw = 180f;
+            report = "showcase_slot: NO_SLOT（宅基台/路带之间无 ≥1.0 m 净位·退回旧位 0,26）";
+            return;
+        }
+
+        float wx = (best.x0 + best.x1) * 0.5f, wz = (best.z0 + best.z1) * 0.5f;
+        localPos = root.InverseTransformPoint(new Vector3(wx, 0f, wz));
+        yaw = bestYaw;
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        report = "showcase_slot: footprint=" + w.ToString("F1", inv) + "x" + d.ToString("F1", inv)
+            + "m clear=" + bestClear.ToString("F2", inv) + "m"
+            + " gap=" + bestGap.ToString("F2", inv) + "m"
+            + " world=(" + wx.ToString("F1", inv) + "," + wz.ToString("F1", inv) + ")"
+            + " yaw=" + bestYaw.ToString("F0", inv)
+            + "（宅基台/路带矩形分离·重叠=0 由几何解出）";
+    }
+
     struct RunMeasure { public float sx, sz, h, Run; public bool RunAlongX; }
     static RunMeasure MeasureRun(GameObject pf)
     {
@@ -450,10 +584,13 @@ public static class CityRebuildR2
     {
         var b = WorldBounds(showcase);
         Vector3 c = b.center;
-        // 解剖房前脸（门洞可见）
-        Vector3 front = showcase.transform.position + showcase.transform.forward * (b.size.z * 0.5f + 5f) + Vector3.up * 3.2f;
+        // 解剖房前脸（门洞可见）——r726 勘正：门洞墙在模块局部 −Z（BuildShowcase 前侧），
+        // 相机若挂在 +forward 上拍到的一直是后墙（r713~r725 全部 showcase 帧都是空墙），
+        // 故取 −forward 一侧=真·前脸。
+        Vector3 front = showcase.transform.position - showcase.transform.forward * (b.size.z * 0.5f + 9f)
+            + showcase.transform.right * (b.size.x * 0.45f) + Vector3.up * 4.2f;
         cam.transform.position = front;
-        cam.transform.LookAt(c + Vector3.up * 1.2f);
+        cam.transform.LookAt(c + Vector3.up * 1.5f);
         RenderShot(cam, "R2_showcase_front.png");
         // 剖面顶斜视（无顶·室内地板+楼梯+内墙可见）
         cam.transform.position = c + new Vector3(b.size.x * 0.6f, b.size.y * 2.4f + 6f, b.size.z * 0.9f);

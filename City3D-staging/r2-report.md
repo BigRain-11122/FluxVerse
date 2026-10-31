@@ -6,6 +6,7 @@ module_measure: straight 2.50x0.20xH3.94 · door 2.50x0.20 · corner 0.24x0.24 �
 showcase: 模块壳拼装 3x2 段（L=2.50m footprint=7.5x5.0m）+地板 3x2+楼梯+内墙·无顶=剖面展示（走进建筑 v2 真证面）
 mat_bridge: converted=56 missing_filled=0（实例级·prefab 资产零触碰）
 pad_recolor: DistrictPad → R2_Pavement 暖混凝土（v1 蓝灰误读水面修正）
+showcase_slot: footprint=9.1x8.8m clear=3.50m gap=13.57m world=(-111.5,-85.1) yaw=180（宅基台/路带矩形分离·重叠=0 由几何解出）
 lots=8+street=1（宅基台 0.08 顶·路带两排间·整体抬升 0.08 治漂浮）
 colliders_added=30
 measure R2_AD-021_SM_Bld_House_Preset_01: 6.4x5.8x8.9 m
@@ -20,4 +21,4 @@ shot: R2_house_front.png
 shot: R2_showcase_front.png
 shot: R2_interior_cutaway.png
 scene_saved=Assets/Scenes/CityRebuild_R2.unity（CityWhitebox.unity 原样保留）
-elapsed_ms=1406
+elapsed_ms=1451

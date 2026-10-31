@@ -346,6 +346,14 @@ public static class CityRebuildR2
         foreach (var h in houses.Take(3))
         { var b = WorldBounds(h); Report.Add($"measure {h.name}: {b.size.x:F1}x{b.size.y:F1}x{b.size.z:F1} m"); }
 
+        // ⑤b 物理同步必经点（main#73）：到这里所有位移段（推树/解净位/落地/整体抬升/街具摆放）
+        // 与刚补的碰撞面都已落地，探针之前只在这一处同步——短路它，门洞射线与机位遮挡
+        // 会静默读「位移前的位姿」，报告数字却依然正常（本行就是让这件事看得见）。
+        SyncPhysics("pre-probes");
+        Report.Add(PhysicsSyncReport());
+        Report.Add(SyncLivenessProbe());
+        Report.Add(PhysicsPoseProbe(PropUniverse(r2root.transform), showcase));
+
         // ⑥ 门洞可通机检：解剖房 Door 墙（真实开洞）——preset 单体组合 Mesh 无门件锚=如实记录
         Report.Add(DoorProbe(showcase, "showcase"));
         Report.Add("preset_door_note: 官方 Preset=单体组合 Mesh（无门件子节点）→门洞机检归解剖房承载·preset 街面层不承担走进建筑判据（如实标注）");
@@ -705,6 +713,116 @@ public static class CityRebuildR2
         return list;
     }
 
+    // ===== 物理同步单一必经点（main#73）=====
+    // 病根：Physics.SyncTransforms() 以往散落在 AddPropColliders / DressStreet 内部。重建里所有位移段
+    // （ClearRoadBand 推树、FindShowcaseSlot 解净位、SitOnGround 落地、整体 +0.08 抬升、街具摆放）
+    // 之后没有任何必经同步——只要那两步被短路或提前 return，DoorProbe / IsBlocked 的射线就会
+    // 静默退回「位移前的位姿」，而报告里的数字看上去仍然正常。
+    // 正法：一律经 SyncPhysics(at) 调用并逐点记账，重建报告出 `physics_sync: calls=N at=...`；
+    // 位移段收尾在探针前再落一个必经点（Run() 的 pre-probes 行）。
+    // 夹具钩子：FLUXVERSE_R2_SKIP_SYNC=1 时全部跳过——用来验证「不同步必掉」这条判据本身，
+    // 不是运行期开关（默认永不设）。
+    static int PhysicsSyncCalls;
+    static int PhysicsSyncSkipped;
+    static readonly List<string> PhysicsSyncAt = new List<string>();
+
+    static void SyncPhysics(string at)
+    {
+        if (System.Environment.GetEnvironmentVariable("FLUXVERSE_R2_SKIP_SYNC") == "1")
+        { PhysicsSyncSkipped++; PhysicsSyncAt.Add(at + "~skip"); return; }
+        Physics.SyncTransforms();
+        PhysicsSyncCalls++;
+        PhysicsSyncAt.Add(at);
+    }
+
+    static string PhysicsSyncReport()
+    {
+        return "physics_sync: calls=" + PhysicsSyncCalls + " skipped=" + PhysicsSyncSkipped
+            + " at=" + (PhysicsSyncAt.Count > 0 ? string.Join(",", PhysicsSyncAt.ToArray()) : "-")
+            + "（单一必经点·位移段后·main#73）";
+    }
+
+    // 同步是否真的必要（main#73 夹具自证）：本工程的 Physics.autoSyncTransforms=0，但「需要同步」这件事
+// 不能只在注释里断言。做法＝在空域造一个临时盒碰撞体，建完后再整体挪 6 m（＝复现 ClearRoadBand 那类
+// 「碰撞面存在、随后被位移、没人同步」的情形），同一帧给两条射线读数：
+//   before＝新位置上方打下去（未同步时打空＝0）
+//   after ＝ SyncPhysics 之后再打（必须命中自己＝1）
+// 另外补一条 old＝旧位置上方（未同步时仍命中＝1）。临时件用完即删，零场景残留。
+    static string SyncLivenessProbe()
+    {
+        var go = new GameObject("R2_AD-021_SyncProbe");
+        Vector3 a = new Vector3(1000f, 200f, 1000f);
+        go.transform.position = a;
+        var bc = go.AddComponent<BoxCollider>();
+        bc.size = Vector3.one;
+        Vector3 b = a + Vector3.right * 6f;
+        go.transform.position = b;
+
+        bool RayHits(BoxCollider c, Vector3 top)
+        {
+            RaycastHit h;
+            return Physics.Raycast(top, Vector3.down, out h, 8f) && h.collider == (Collider)c;
+        }
+
+        bool before = RayHits(bc, b + Vector3.up * 3f);
+        bool old = RayHits(bc, a + Vector3.up * 3f);
+        SyncPhysics("liveness");
+        bool after = RayHits(bc, b + Vector3.up * 3f);
+        UnityEngine.Object.DestroyImmediate(go);
+
+        bool pass = !before && old && after;
+        return "sync_liveness: stale_before=" + (before ? 1 : 0) + " old_pose=" + (old ? 1 : 0)
+            + " after_sync=" + (after ? 1 : 0) + (pass ? " PASS" : " FAIL")
+            + "（夹具：未同步读旧位姿·同步后读新位姿·main#73）";
+    }
+
+    // 同帧自证（main#73）：编辑态里 Collider.bounds 会跟着 Transform 走（读不出「未同步」），
+    // 真正落后的是 PhysX 世界——而射线正是探针实际用的那条通道。所以自证也走射线：
+    // 从每件测得的渲染包围盒正上方垂直下打，命中自己的碰撞面＝物理面与渲染面同位；
+    // 未同步时被位移过的件（ClearRoadBand 推的树 = 6.18 m）整件跑开，射线打空或先撞别人。
+    static string PhysicsPoseProbe(List<KeyValuePair<GameObject, Bounds>> props, GameObject showcase,
+                                   float padY = 2f)
+    {
+        var targets = new List<GameObject>();
+        foreach (var kv in props) if (kv.Key != null) targets.Add(kv.Key);
+        if (showcase != null) targets.Add(showcase);
+
+        int probe = 0, self = 0, other = 0, noHit = 0, skipped = 0;
+        var miss = new List<string>();
+        var otherNames = new List<string>();
+        foreach (var go in targets)
+        {
+            // 隐身占位件（main#72 令 53 棵占位树 SetActive(false)）与无启用碰撞面的件一律不参证：
+            // 它们本来就不该被射线看见，混进来只会把「不同步」与「本来就不可见」说成一回事。
+            if (!go.activeInHierarchy) { skipped++; continue; }
+            bool anyCol = false;
+            foreach (var c in go.GetComponentsInChildren<Collider>(true)) if (c.enabled) { anyCol = true; break; }
+            if (!anyCol) { skipped++; continue; }
+            var rb = WorldBounds(go);
+            Vector3 org = new Vector3(rb.center.x, rb.max.y + padY, rb.center.z);
+            probe++;
+            RaycastHit h;
+            if (!Physics.Raycast(org, Vector3.down, out h, rb.size.y + padY * 3f))
+            {
+                noHit++;
+                if (miss.Count < 3) miss.Add(go.name + "=no_hit");
+                continue;
+            }
+            if (h.collider.transform == go.transform || h.collider.transform.IsChildOf(go.transform)) self++;
+            else
+            {
+                // 先撞到别人＝该点位的遮挡不确定，不计失败（只作参考），避免件件叠放时假红。
+                other++;
+                if (otherNames.Count < 2) otherNames.Add(go.name + "<" + h.collider.gameObject.name);
+            }
+        }
+        return "physics_pose: probe=" + probe + " hit_self=" + self + " hit_other=" + other
+            + " no_hit=" + noHit + " skipped=" + skipped
+            + (miss.Count > 0 ? " sample=" + string.Join(" | ", miss.ToArray()) : "")
+            + (otherNames.Count > 0 ? " other=" + string.Join(" | ", otherNames.ToArray()) : "")
+            + (noHit == 0 ? " PASS" : " FAIL") + "（射线自证·物理面 vs 渲染面同位·main#73）";
+    }
+
     // 给每件底板道具补一条碰撞盒：挂在道具下的无渲染子件，世界轴对齐、尺寸＝渲染包围盒，
     // 因此不依赖 pivot 在哪也不受父级旋转影响（父级非等比缩放用倒数抵消）。
     // 幂等：已有碰撞面（自带或本函数早先补过）即跳过；复核用 collider.bounds 对渲染盒比差。
@@ -743,7 +861,7 @@ public static class CityRebuildR2
             bc.size = b.size;
             added++;
         }
-        Physics.SyncTransforms();   // 同帧建完立刻给下面的射线判据用
+        SyncPhysics("props-colliders");   // 同帧建完立刻给下面的射线判据用
 
         foreach (var kv in props)
         {
@@ -937,7 +1055,7 @@ public static class CityRebuildR2
             }
         }
 
-        Physics.SyncTransforms();   // 新街具同帧要对下面的机位射线判据可见
+        SyncPhysics("street-dress");   // 新街具同帧要对下面的机位射线判据可见
 
         // 诊断列：街轴上仍立着的底板高件（自家街具除外），用于定位灭点里的残件
         var left = new List<string>();
@@ -1078,17 +1196,21 @@ public static class CityRebuildR2
         foreach (var tr in house.GetComponentsInChildren<Transform>(true))
             if (tr.name.IndexOf("WallDoor", StringComparison.OrdinalIgnoreCase) >= 0) { door = tr; break; }
         if (door == null) return $"door_probe[{tag}] NO_DOOR_WALL";
-        float best = -1f;
+        float best = -1f, near = float.MaxValue;
         float[] offs = { -0.8f, -0.4f, 0f, 0.4f, 0.8f };
         foreach (var dir in new[] { door.forward, -door.forward })
             foreach (var o in offs)
             {
                 Vector3 org = door.position + door.right * o + dir * 0.9f + Vector3.up * 1.2f;
-                if (Physics.Raycast(org, -dir, out var hit, 8f)) { if (hit.distance > best) best = hit.distance; }
-                else if (8f > best) best = 8f;
+                float c = 8f;
+                if (Physics.Raycast(org, -dir, out var hit, 8f)) c = hit.distance;
+                if (c > best) best = c;
+                if (c < near) near = c;
             }
         bool pass = best >= 1.8f;
-        return $"door_probe[{tag}] {(pass ? "PASS" : "FAIL")} clear={best:F2}m（扇形5点×双向·≥1.8m=门洞可通）";
+        // near=最窄那条射线的净空（main#73）：clear 取的是最宽射线（单条通畅即 8.00 m），
+        // 位置不同步时它照样能读到 8.00 m，故同帧给出 near 作同步/遮挡的诊断读数。
+        return $"door_probe[{tag}] {(pass ? "PASS" : "FAIL")} clear={best:F2}m near={near:F2}m（扇形5点×双向·≥1.8m=门洞可通）";
     }
 
     static void ShowcaseShots(Camera cam, GameObject showcase)

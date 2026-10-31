@@ -18,7 +18,10 @@ colliders_added=30
 measure R2_AD-021_SM_Bld_House_Preset_01: 6.4x5.8x8.9 m
 measure R2_AD-021_SM_Bld_House_Preset_02: 5.7x4.1x5.7 m
 measure R2_AD-021_SM_Bld_House_Preset_03: 13.9x6.5x13.9 m
-door_probe[showcase] PASS clear=8.00m（扇形5点×双向·≥1.8m=门洞可通）
+physics_sync: calls=3 skipped=0 at=props-colliders,street-dress,pre-probes（单一必经点·位移段后·main#73）
+sync_liveness: stale_before=0 old_pose=1 after_sync=1 PASS（夹具：未同步读旧位姿·同步后读新位姿·main#73）
+physics_pose: probe=10 hit_self=10 hit_other=0 no_hit=0 skipped=53 PASS（射线自证·物理面 vs 渲染面同位·main#73）
+door_probe[showcase] PASS clear=8.00m near=0.70m（扇形5点×双向·≥1.8m=门洞可通）
 preset_door_note: 官方 Preset=单体组合 Mesh（无门件子节点）→门洞机检归解剖房承载·preset 街面层不承担走进建筑判据（如实标注）
 shot: R2_L0_overview.png
 shot: R2_L1_gamedistrict.png
@@ -27,4 +30,4 @@ shot: R2_house_front.png
 shot: R2_showcase_front.png
 shot: R2_interior_cutaway.png
 scene_saved=Assets/Scenes/CityRebuild_R2.unity（CityWhitebox.unity 原样保留）
-elapsed_ms=1387
+elapsed_ms=1190

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T14:27:14Z",
-    "current_activity":  "r733 收口：main#72 街面行道树——设计判断定谳「街面帧要近树列」，不碰底板正典（占位树隐身 53 件）改 ithappy Megacity 真树 10 株（6.0/6.75/7.5 m 三档归一、冠幅 ≤0.7×高、14 m 错列）＋路灯 5 盏（26 m 错半格）。本轮真增量=`PlaceStreetDress` 加「路缘净距守卫」：写 pos 的 2.6 m 只算意图，prefab pivot 不在包围盒中心、收冠幅又绕 pivot 做，实测近树 `lane_gap` 掉到 0.01 m（冠幅压路缘）；改为摆完按实测 AABB 与路带净距沿 z 外推到 ≥0.6 m。另加 `AxisBlockers()` 灭点窗归因行（10×10 采样按首个命中件点名，实测 `clear hits=0/100`），证明上一版 0.234 的读数来自中央 20% 窗而非「树顶掉灭点」本义；判据窗口定死中央 10%×10%（`prop_cover`），20% 窗记 `prop_w2` 参考，两个数同帧公示。实景 `street_pose: x=-119.7 facade=0.357 street_cover=0.284 prop_cover=0.000 prop_ray=0.464 prop_w2=0.172 near_pen=1.03 cand_ok=1/135 ok`；重建 `curb_min_gap=0.60`、`props_in_road=0`、`door_probe PASS clear=8.00m`、`showcase_bounds over=(0.00,0.00)`；`test-verify-r2-site` 30/30。改动面=City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs＋City3D-staging/r2-{report,shots}.md＋qa 六帧。",
-    "artifact":  "qa/city3d-shots-20261031-2225-bm-a-street.jpg、qa/city3d-shots-20261031-2225-bm-a-gamedistrict.jpg、qa/city3d-shots-20261031-2225-bm-a-showcase.jpg、City3D-staging/r2-shots.md、City3D-staging/r2-report.md",
-    "artifact_utc":  "2026-10-31T14:25:00Z",
-    "milestone":  "下一个 main#73：把重建里的物理同步收成「必经单点」——`Physics.SyncTransforms()` 现藏在 `AddPropColliders()` 内部，它今天走 added=0 空路径，一旦短路，`DoorProbe`/`IsBlocked` 的射线会悄悄退回位移前位姿而报告数字看起来正常；判据=报告新增 `physics_sync: calls=N at=`，人为短路同步点后 `door_probe` 必须从「有命中」退回 8.00 m 满程、恢复后逐位复原。改动面=City3D/Assets/Editor/CityRebuild/CityRebuildR2.cs（Run 位移段之后）。",
-    "milestone_eta_utc":  "2026-11-01T06:00:00Z"
+    "updated_utc":  "2026-10-31T14:40:05Z",
+    "current_activity":  "r734 收口：main#73 物理同步单一必经点。`Physics.SyncTransforms()` 从 `AddPropColliders`／`DressStreet` 内部散点收成 `SyncPhysics(at)`，位移段全部之后、探针之前落必经点 `pre-probes`，报告逐点记账 `physics_sync: calls=3 at=props-colliders,street-dress,pre-probes`。判据落地两条自证：`sync_liveness`（空域盒建完挪 6 m，`stale_before=0 old_pose=1 after_sync=1 PASS`；`FLUXVERSE_R2_SKIP_SYNC=1` 短路后 `calls=0 skipped=3`＋`after_sync=0 FAIL`，恢复逐位复原）与 `physics_pose`（射线自证 `probe=10 hit_self=10 no_hit=0 skipped=53 PASS`，隐身占位树 53 件剔除）。两条勘正：`Collider.bounds` 在编辑态跟随 Transform 读不出未同步（改射线）；`door_probe clear` 取最宽射线天然 8.00、不是同步指示（增 `near=` 诊断列，判据不破）。实景 `door_probe PASS clear=8.00m near=0.70m`、`VERIFY PASS`、`test-verify-r2-site` 30/30、面板 `PANEL OK`＋29 套 ALL PASS、`narrow-shot 390 offenders=0`。",
+    "artifact":  "qa/city3d-shots-20261031-2238-bm-a-street.jpg、qa/city3d-shots-20261031-2238-bm-a-gamedistrict.jpg、qa/city3d-shots-20261031-2238-bm-a-showcase.jpg、City3D-staging/r2-report.md（含 physics_sync／sync_liveness／physics_pose 三行）、City3D-staging/r2-shots.md",
+    "artifact_utc":  "2026-10-31T14:38:00Z",
+    "milestone":  "下一轮=main#70：`Tools/devloop/r2-scale-study.py` 的 SHOWCASE_W/D 现在还是手填常量（7.5/5.0），与重建报告的 `showcase_bounds:` 实测行脱钩；改成有报告行就按它画框并在摘要打 `SHOWCASE_SRC=report`，缺行退回常量打 `SHOWCASE_SRC=const`，`--self-check` 增一条断言，A1/A2/A3 三联图仍须 `SELF_CHECK OK`。",
+    "milestone_eta_utc":  "2026-11-01T02:00:00Z"
 }

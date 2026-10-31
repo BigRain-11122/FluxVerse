@@ -24,7 +24,12 @@ function Chk
 function Invoke-Writer
 {
     param([string[]]$ArgList)
-    $out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $writer @ArgList
+    # r737 (main#33): the writer now verifies every explicit sha against the
+    # LIVE file by default. This sandbox tests write/format/KEEP semantics with
+    # synthetic values, so it opts out; the live binding has its own sandbox
+    # (Tools\devloop\test-fastpath-state-live.ps1).
+    $full = @($ArgList) + @('-NoLiveCheck')
+    $out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $writer @full
     return @{ Exit = $LASTEXITCODE; Out = ($out -join ' | ') }
 }
 

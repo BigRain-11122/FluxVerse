@@ -37,7 +37,9 @@ function Run-Writer {
   param([string]$Tech, [string]$Led, [string]$Dec, [string]$Ord, [string]$StPath)
   $psi = New-Object System.Diagnostics.ProcessStartInfo
   $psi.FileName = 'powershell.exe'
-  $psi.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "' + $writer + '" -TechSha12 ' + $Tech + ' -LedgerSha12 ' + $Led + ' -DecSha12 ' + $Dec + ' -OrdersSha12 ' + $Ord + ' -StatePath "' + $StPath + '"'
+  # r737 (main#33): writer defaults to live-hash verification; this sandbox
+  # drills KEEP/negative-control semantics with synthetic shas, so it opts out.
+  $psi.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "' + $writer + '" -TechSha12 ' + $Tech + ' -LedgerSha12 ' + $Led + ' -DecSha12 ' + $Dec + ' -OrdersSha12 ' + $Ord + ' -StatePath "' + $StPath + '" -NoLiveCheck'
   $psi.UseShellExecute = $false
   $psi.RedirectStandardOutput = $true
   $psi.RedirectStandardError = $true

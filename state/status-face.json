@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T15:00:05Z",
-    "current_activity":  "r736 收口（main#40）：面板对比卡的两件冻结 fixture 由「2026-10-20 的旧构建」改为可用当前模板一键重生成——新增重生成脚本，按「一份冻结快照 + 两份合成历史」重出 logs/panel-fixture-prev.html 与 logs/panel-fixture-regress.html，并自带两道门（内联脚本自检项数必须等于当前模板、占位符零残留；历史日志必须仍是 2 条且末条=快照自身时刻，防 builder 追加第三条）。r671 断言随之从形状级升为实义级：行数等于模板项数、对比锚点核对到本地钟点、增量与回落数值全部从 fixture 自己的历史里算（不再硬编码 28843）。同轮修红：里程碑文案里一处裸写的 regress 文件名被实况路径解析器当成路径，4 套面板沙盒转红——改写成完整相对路径后 29 套回绿。",
-    "artifact":  "logs/panel-fixture-prev.html, logs/panel-fixture-regress.html, Tools/devloop/rebuild-panel-fixtures.ps1, logs/devloop-r671-panel-history-test.js",
-    "artifact_utc":  "2026-10-31T15:00:05Z",
-    "milestone":  "下一个=main#33 状态档写入硬化（Tools/devloop/write-fastpath-state.ps1 收 sha 前先与 Tools/devloop/resolve-group-root.ps1 解析出的 live 文件实算值对账，故意传错值必须 exit≠0 且不落盘），随后 main#74 尺度研究对「报告比场景旧」降级为 SHOWCASE_SRC=stale 并退回常量画框；两者都不动场景。",
+    "updated_utc":  "2026-10-31T15:09:38Z",
+    "current_activity":  "r737 收口（main#33）：状态档写入硬化——四个 sha 入盘前必须等于 live 文件实算值（live 根由与七查执法件同一份 resolve-group-root.ps1 解析），不符即 exit 1 且落盘前中止；KEEP 两键刻意豁免（续领/传棒律要的正是旧值）。本轮是写侧硬化，面板/场景/取景零改动，如实记 1 分。",
+    "artifact":  "Tools/devloop/write-fastpath-state.ps1, Tools/devloop/test-fastpath-state-live.ps1, logs/devloop-r197-writer-test.ps1, logs/devloop-r271-keep-negcon.ps1",
+    "artifact_utc":  "2026-10-31T15:09:38Z",
+    "milestone":  "下一轮 main#74：尺度研究报告过期降级——r2-scale-study.py 的 --report 读到「报告比场景旧」时把 SHOWCASE_SRC 从 report 降为 stale 并退回常量画框（r735 只打了一行提示，仍会静默沿用旧值）；随后 main#8 城市线附卷（10-19 逾期）。",
     "milestone_eta_utc":  "2026-11-01T10:00:00Z"
 }

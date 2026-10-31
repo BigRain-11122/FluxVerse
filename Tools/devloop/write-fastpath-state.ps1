@@ -33,6 +33,25 @@
 #   -StatePath   optional override (sandbox / production smoke). Default:
 #                 <repo>\logs\devloop-fastpath-state.txt (self-located).
 #
+# v1.2 (r737, main#33): LIVE-CHECK. Until now the writer trusted whatever
+# SHA12 the caller handed it. r693 measured the mirror path D:\FluxGroup
+# handing four WRONG values in one round; a wrong value written here is worse
+# than no value: the next round's c3/c4/c6/c7 compare state against disk,
+# find a mismatch and fire a fake FULL-ROUND forever (or, worse, match by
+# accident and silence a real change). Every explicit 12-hex input is now
+# compared against the SHA256 of the LIVE file before anything touches disk:
+#   tech   = <repo>\TECH.md
+#   ledger = <live group>\cph4\evolution-ledger.md
+#   dec    = <live group>\docs\decisions.md
+#   orders = <live group>\docs\orders.md
+# "live group" comes from resolve-group-root.ps1 (same resolver the seven-
+# check judge uses, so writer and judge can never disagree about which tree
+# is authoritative). KEEP is exempt on purpose: the continuation-wake / baton
+# laws reuse an OLD value deliberately, and that old value is by definition
+# not the live hash. A missing live file fails loud (unattended law: never
+# write a signal we cannot verify). -NoLiveCheck exists for sandbox drills
+# only; no production round may pass it.
+#
 # Write path: line list built per-line via List.Add (r95 write law - no @()
 # comma-position concat), atomic .new then Move (r98 pattern), full read-back
 # assertion of all 4 keys after BOTH the .new write and the move into place.
@@ -47,7 +66,14 @@ param(
     [string]$LedgerSha12 = '',
     [string]$DecSha12 = '',
     [string]$OrdersSha12 = '',
-    [string]$StatePath = ''
+    [string]$StatePath = '',
+    [string]$RepoRoot = '',
+    [string]$GroupRoot = '',
+    [string]$TechPath = '',
+    [string]$LedgerPath = '',
+    [string]$DecPath = '',
+    [string]$OrdersPath = '',
+    [switch]$NoLiveCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -119,6 +145,59 @@ if ($OrdersSha12 -eq 'KEEP') {
     $ordVal = $OrdersSha12.ToUpper()
 } else {
     Fail ('bad -OrdersSha12 (need 12-hex or KEEP): [' + $OrdersSha12 + ']')
+}
+
+# --- v1.2 live check: every explicit input must equal the LIVE file hash ---
+# Resolver and judge share one notion of "live group" (resolve-group-root.ps1)
+# so a mirror path can never inject a stale-but-plausible value here.
+function Get-LiveSha12
+{
+    param([string]$Path)
+    if ([string]::IsNullOrEmpty($Path)) { return '' }
+    if (-not (Test-Path -LiteralPath $Path)) { return '' }
+    try { return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.Substring(0,12).ToUpper() }
+    catch { return '' }
+}
+
+$liveChecked = 'off'
+if (-not $NoLiveCheck) {
+    $liveChecked = 'on'
+    if ([string]::IsNullOrEmpty($RepoRoot)) {
+        $here = Split-Path -Parent $PSScriptRoot
+        $RepoRoot = Split-Path -Parent $here
+    }
+    if ([string]::IsNullOrEmpty($GroupRoot)) {
+        $upTwo = Split-Path -Parent (Split-Path -Parent $RepoRoot)
+        $resolver = Join-Path $PSScriptRoot 'resolve-group-root.ps1'
+        if (-not (Test-Path -LiteralPath $resolver)) { Fail ('live check: resolver missing: ' + $resolver) }
+        . $resolver
+        $GroupRoot = Resolve-GroupRoot -RepoRoot $RepoRoot -LegacyRoot $upTwo
+    }
+    if ([string]::IsNullOrEmpty($TechPath)) { $TechPath = Join-Path $RepoRoot 'TECH.md' }
+    if ([string]::IsNullOrEmpty($LedgerPath)) { $LedgerPath = Join-Path $GroupRoot 'cph4\evolution-ledger.md' }
+    if ([string]::IsNullOrEmpty($DecPath)) { $DecPath = Join-Path $GroupRoot 'docs\decisions.md' }
+    if ([string]::IsNullOrEmpty($OrdersPath)) { $OrdersPath = Join-Path $GroupRoot 'docs\orders.md' }
+
+    # KEEP is deliberately old (continuation-wake v2.0 / baton v2.1 laws):
+    # comparing it to the live file would reject the one case it exists for.
+    if ($TechSha12 -ne 'KEEP') {
+        $liveTech = Get-LiveSha12 -Path $TechPath
+        if ([string]::IsNullOrEmpty($liveTech)) { Fail ('live check: tech file missing or unreadable: ' + $TechPath) }
+        if ($liveTech -ne $techVal) { Fail ('live check: tech given=' + $techVal + ' live=' + $liveTech + ' (' + $TechPath + ')') }
+    }
+    $liveLed = Get-LiveSha12 -Path $LedgerPath
+    if ([string]::IsNullOrEmpty($liveLed)) { Fail ('live check: ledger file missing or unreadable: ' + $LedgerPath) }
+    if ($liveLed -ne $ledVal) { Fail ('live check: ledger given=' + $ledVal + ' live=' + $liveLed + ' (' + $LedgerPath + ')') }
+
+    $liveDec = Get-LiveSha12 -Path $DecPath
+    if ([string]::IsNullOrEmpty($liveDec)) { Fail ('live check: dec file missing or unreadable: ' + $DecPath) }
+    if ($liveDec -ne $decVal) { Fail ('live check: dec given=' + $decVal + ' live=' + $liveDec + ' (' + $DecPath + ')') }
+
+    if ($OrdersSha12 -ne 'KEEP') {
+        $liveOrd = Get-LiveSha12 -Path $OrdersPath
+        if ([string]::IsNullOrEmpty($liveOrd)) { Fail ('live check: orders file missing or unreadable: ' + $OrdersPath) }
+        if ($liveOrd -ne $ordVal) { Fail ('live check: orders given=' + $ordVal + ' live=' + $liveOrd + ' (' + $OrdersPath + ')') }
+    }
 }
 
 $stateDir = Split-Path -Parent $StatePath

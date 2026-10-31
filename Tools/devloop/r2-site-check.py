@@ -3,7 +3,8 @@
 
 Reads the City3D whitebox scene as text (no Unity needed) and answers:
   1. where is the water mesh really (exact triangles, not just an AABB)
-  2. where does the R2_AD-021 block really sit (from CityRebuildR2.cs constants)
+  2. where does the R2_AD-021 block really sit (house grid from CityRebuildR2.cs
+     constants + the district's own local position read from the built scene)
   3. how much of the block hangs over water
   4. which nearby square patches of the same size are fully dry
 
@@ -33,6 +34,12 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SCENE = os.path.join(ROOT, "City3D", "Assets", "Scenes", "CityWhitebox.unity")
 REBUILD = os.path.join(ROOT, "City3D", "Assets", "Editor", "CityRebuild", "CityRebuildR2.cs")
+# main#54: the district no longer stands on the City_GAME origin, so its local
+# position has to come from an artifact, not from an assumption. The built
+# scene is the truth (it is what the frames are taken from); the anchor file is
+# the decision record and the fallback when no built scene is on disk.
+BUILT_SCENE = os.path.join(ROOT, "City3D", "Assets", "Scenes", "CityRebuild_R2.unity")
+ANCHOR_FILE = os.path.join(ROOT, "City3D-staging", "rehearsal-anchor.txt")
 PLATE_CELL = 1.0          # metres per sampling cell
 ANCHOR_STEP = 2.0         # metres between candidate anchors
 PLATE_MARGIN = 8.0        # keep candidate rects this far inside the ground plate
@@ -266,6 +273,53 @@ def parse_block(path):
     return xs, zs, showcase_z, lot_pad
 
 
+# ---------------------------------------------------------- district placement
+DOC_RE = re.compile(r"^--- !u!(\d+) &(-?\d+)\n", re.M)
+
+
+def district_local_from_scene(path):
+    """R2_AD-021_District's Transform.m_LocalPosition in a saved scene, or None.
+
+    Text parse of the Unity YAML (no editor): the district is a plain GameObject
+    with one Transform, so its id -> component id -> local position is enough.
+    Returns (x, z); None when the scene is absent or holds no such GameObject.
+    """
+    if not path or not os.path.isfile(path):
+        return None
+    txt = io.open(path, encoding="utf-8", errors="replace").read()
+    marks = list(DOC_RE.finditer(txt))
+    docs = {}
+    for i, m in enumerate(marks):
+        end = marks[i + 1].start() if i + 1 < len(marks) else len(txt)
+        docs[m.group(2)] = (m.group(1), txt[m.end():end])
+    for _, (cls, body) in docs.items():
+        if cls != "1":
+            continue
+        if not re.search(r"^  m_Name: R2_AD-021_District\s*$", body, re.M):
+            continue
+        for comp in re.findall(r"- component: \{fileID: (-?\d+)\}", body):
+            got = docs.get(comp)
+            if not got or got[0] != "4":
+                continue
+            pos = re.search(r"m_LocalPosition: \{x: ([-\d.eE+]+), y: ([-\d.eE+]+), z: ([-\d.eE+]+)\}", got[1])
+            if pos:
+                return (float(pos.group(1)), float(pos.group(3)))
+        return (0.0, 0.0)  # district present but transform unreadable -> origin
+    return None
+
+
+def anchor_local_from_file():
+    """City3D-staging/rehearsal-anchor.txt first line 'x,z[,tag]' -> (x, z)."""
+    try:
+        if not os.path.isfile(ANCHOR_FILE):
+            return None
+        first = io.open(ANCHOR_FILE, encoding="ascii", errors="replace").read().splitlines()[0]
+        parts = first.split(",")
+        return (float(parts[0]), float(parts[1]))
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------- raster
 class Raster(object):
     def __init__(self, x0, z0, x1, z1, cell):
@@ -338,6 +392,7 @@ def main(argv):
     rebuild_path = REBUILD
     artifacts = True
     offset = (0.0, 0.0)
+    scene_overridden = False
     for i, a in enumerate(argv):
         if a == "--stamp" and i + 1 < len(argv):
             stamp = argv[i + 1]
@@ -347,6 +402,7 @@ def main(argv):
             artifacts = False
         elif a == "--scene" and i + 1 < len(argv):
             scene_path = os.path.abspath(os.path.join(ROOT, argv[i + 1]))
+            scene_overridden = True
         elif a == "--rebuild" and i + 1 < len(argv):
             rebuild_path = os.path.abspath(os.path.join(ROOT, argv[i + 1]))
         elif a == "--offset" and i + 1 < len(argv):
@@ -396,10 +452,28 @@ def main(argv):
 
     house_span = 13.9  # widest preset measured in r2-report.md (Preset_03)
     hx = house_span * 0.5 + lot_pad
-    bx0 = origin[0] + min(xs) - hx + offset[0]
-    bx1 = origin[0] + max(xs) + hx + offset[0]
-    bz0 = origin[1] + min(zs) - hx + offset[1]
-    bz1 = origin[1] + max(showcase_z, max(zs)) + hx + offset[1]
+    # main#54: district placement. The measured scene carries the district when it
+    # is the built one; the live CityWhitebox does not, so fall back to the built
+    # scene (what the frames come from) and then to the anchor decision record.
+    # A fixture scene (--scene) that has no district keeps the historical origin.
+    dl, dsrc = (0.0, 0.0), "origin"
+    got = district_local_from_scene(scene_path)
+    if got is not None:
+        dl, dsrc = got, "scene"
+    elif not scene_overridden:
+        got = district_local_from_scene(BUILT_SCENE)
+        if got is not None:
+            dl, dsrc = got, "built-scene"
+        else:
+            got = anchor_local_from_file()
+            if got is not None:
+                dl, dsrc = got, "anchor-file"
+    bxo = origin[0] + dl[0]
+    bzo = origin[1] + dl[1]
+    bx0 = bxo + min(xs) - hx + offset[0]
+    bx1 = bxo + max(xs) + hx + offset[0]
+    bz0 = bzo + min(zs) - hx + offset[1]
+    bz1 = bzo + max(showcase_z, max(zs)) + hx + offset[1]
 
     # obstruction raster: water + standing towers + pavement pad
     ras = Raster(min(plate_aabb[0], bx0) - 4, min(plate_aabb[1], bz0) - 4,
@@ -492,6 +566,7 @@ def main(argv):
     print("water objects=%s aabb=x[%.1f..%.1f] z[%.1f..%.1f] tris=%d"
           % (",".join(water_names), water_aabb[0], water_aabb[2], water_aabb[1], water_aabb[3], len(tris)))
     print("plate aabb=x[%.1f..%.1f] z[%.1f..%.1f]" % (plate_aabb[0], plate_aabb[2], plate_aabb[1], plate_aabb[3]))
+    print("district_local=(%.2f,%.2f) src=%s" % (dl[0], dl[1], dsrc))
     print("city_origin=(%.2f,%.2f) block=%.1fx%.1fm world=x[%.1f..%.1f] z[%.1f..%.1f]"
           % (origin[0], origin[1], width, depth, bx0, bx1, bz0, bz1))
     print("block_water_coverage=%.1f%%" % (cur_cov * 100.0))

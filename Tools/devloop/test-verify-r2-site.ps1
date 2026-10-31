@@ -79,8 +79,22 @@ Check 'r2-site lines never say FAIL'   (@($r2Lines | Where-Object { $_ -match 'F
 $live = (& powershell -NoProfile -ExecutionPolicy Bypass -File $verify) -join "`n"
 $mLive = [regex]::Match($live, 'r2-site: block_water=([\d.]+)% dry_candidates=(\d+)')
 Check 'live: site line present'        $mLive.Success
-Check 'live: block still over water'   ($mLive.Success -and [double]$mLive.Groups[1].Value -gt 50)
+Check 'live: block on dry ground'      ($mLive.Success -and [double]$mLive.Groups[1].Value -le 5)
 Check 'live: candidates reported'      ($mLive.Success -and [int]$mLive.Groups[2].Value -gt 0)
+
+# ---------- e) district placement reader (main#54) ----------
+# The checker used to assume the block stood on the City_GAME origin. main#54
+# moved it, so the local position must come from an artifact: the built scene
+# first, the anchor decision record second. A fixture scene without a district
+# keeps the historical origin (cases a/b above prove that did not shift).
+Write-Output '--- e) district placement ---'
+$checker = Join-Path $PSScriptRoot 'r2-site-check.py'
+$siteTxt = (& python $checker --no-artifacts) -join "`n"
+Check 'site: district local reported'  ($siteTxt -match 'district_local=\([\d.\-]+,[\d.\-]+\) src=built-scene')
+$pyTest = Join-Path $PSScriptRoot 'test-r2-district-local.py'
+$pyOut = (& python $pyTest) -join "`n"
+if ($LASTEXITCODE -ne 0) { Write-Output $pyOut }
+Check 'site: placement unit test green' ($LASTEXITCODE -eq 0)
 
 Remove-Item -LiteralPath $missing -Force -ErrorAction SilentlyContinue
 Write-Output ('test-verify-r2-site: ' + $pass + ' passed, ' + $fail + ' failed (of ' + ($pass + $fail) + ')')

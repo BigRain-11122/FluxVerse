@@ -128,6 +128,38 @@ public static class CityRebuildR2
         UnityEngine.Debug.Log("CITY3D_REHEARSAL_DONE shots=" + Report.Count + " tag=" + tag);
     }
 
+    // ===== 街区落位锚点（main#54）=====
+    static readonly Vector3 DistrictAnchorFallback = new Vector3(0.3f, 0f, 83.2f);
+    static string AnchorSource = "fallback";
+
+    // 读 City3D-staging/rehearsal-anchor.txt（首行 "x,z[,tag]"）→ 街区局部落位；
+    // 缺档/解析失败一律回落常量（fail-soft：重建不该被一份可选的决策记录拖死）。
+    static Vector3 ResolveDistrictAnchor()
+    {
+        var f = Path.Combine(Staging, "rehearsal-anchor.txt");
+        try
+        {
+            if (File.Exists(f))
+            {
+                var raw = File.ReadAllLines(f);
+                if (raw.Length > 0 && raw[0].Trim().Length > 0)
+                {
+                    var parts = raw[0].Split(',');
+                    var inv = System.Globalization.CultureInfo.InvariantCulture;
+                    float x = float.Parse(parts[0].Trim(), inv);
+                    float z = float.Parse(parts[1].Trim(), inv);
+                    AnchorSource = "anchor:" + (parts.Length > 2 && parts[2].Trim().Length > 0 ? parts[2].Trim().ToUpperInvariant() : "?");
+                    return new Vector3(x, 0f, z);
+                }
+            }
+        }
+        catch (Exception e) { UnityEngine.Debug.LogWarning("anchor read failed, using fallback: " + e.Message); }
+        AnchorSource = "fallback";
+        return DistrictAnchorFallback;
+    }
+
+    static string F(float v) { return v.ToString("F2", System.Globalization.CultureInfo.InvariantCulture); }
+
     static void Run()
     {
         var sw = Stopwatch.StartNew();
@@ -153,6 +185,15 @@ public static class CityRebuildR2
 
         var r2root = new GameObject("R2_AD-021_District");
         r2root.transform.SetParent(cityGame.transform, false);
+
+        // main#54 落位：原落点（局部原点）正好压在湖面——r714 实测街区 84.7x70.7 m 压水 91.7%，
+        // 最近全干锚点=城市局部 (0.3, 83.2)（r718 预演出对照图后定谳「搬」）。
+        // 锚点正典=City3D-staging/rehearsal-anchor.txt（ASCII "x,z,tag"）——与预演共用一份，
+        // 换锚点（A2/A3）只改这份文件再重建；缺档/不可解析回落内置常量并如实记 source。
+        var anchor = ResolveDistrictAnchor();
+        r2root.transform.localPosition = new Vector3(anchor.x, 0f, anchor.z);
+        Report.Add("district_anchor_local=(" + F(anchor.x) + "," + F(anchor.z) + ") source=" + AnchorSource
+            + "（原落点压水 91.7%·main#54 搬离湖面）");
 
         // ① 官方整房阵列（街面层）
         string[] presetNames = {

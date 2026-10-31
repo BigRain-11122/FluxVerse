@@ -1,4 +1,5 @@
 whitebox_removed=8（City_GAME B0-B7·v2 幂等重建）
+district_anchor_local=(0.30,83.20) source=anchor:A1（原落点压水 91.7%·main#54 搬离湖面）
 houses=8（AD-021 官方 Preset 01-08·4x2·门朝城心）
 module_measure: straight 2.50x0.20xH3.94 · door 2.50x0.20 · corner 0.24x0.24 · floor 2.50x2.50
 showcase: 模块壳拼装 3x2 段（L=2.50m footprint=7.5x5.0m）+地板 3x2+楼梯+内墙·无顶=剖面展示（走进建筑 v2 真证面）
@@ -18,4 +19,4 @@ shot: R2_house_front.png
 shot: R2_showcase_front.png
 shot: R2_interior_cutaway.png
 scene_saved=Assets/Scenes/CityRebuild_R2.unity（CityWhitebox.unity 原样保留）
-elapsed_ms=1265
+elapsed_ms=1370

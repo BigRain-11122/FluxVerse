@@ -457,7 +457,14 @@ function Write-PsSuitesVerdict {
   $line = Format-PsSuitesLine $Res
   $line = $line -replace '^ps-suites:', ($Label + ':')
   if (Test-PsSuitesHealthy $Res) {
-    Write-Output ('VERIFY HEALTH: ' + $line)
+    # A passing family can still be eating most of the tick budget (main#96):
+    # say so, and say what to do about it, before the first timeout says it.
+    if ($Res.budget_over -eq $true) {
+      $capNs = Get-PsSuitesFamilyTimeout -Family ([string]$Res.family)
+      Write-Output ('VERIFY WARN: ' + $line + ' - family baseline over 2/3 of the ' + $capNs + 's cap; split the family or run it every other tick')
+    } else {
+      Write-Output ('VERIFY HEALTH: ' + $line)
+    }
   } elseif ($Res.status -eq 'timeout') {
     Write-Output ('VERIFY WARN: ' + $line + ' - ' + $Res.note + '; re-run: ' + $Rerun)
   } elseif ($Res.status -eq 'missing' -or $Res.status -eq 'unreadable') {
@@ -518,7 +525,9 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
           try { $vRes = Invoke-PsSuitesTick @vArgs } catch { $vRes = $null }
           Write-PsSuitesVerdict -Label 'ps-suites-verify' -Res $vRes -Rerun 'Tools\devloop\run-ps-suites.ps1 -Verify'
         } elseif ($psWriteRan) {
-          Write-Output ('VERIFY HEALTH: ps-suites-verify: deferred (write-side ran ' + $psWriteMs + 'ms this tick) sha=' + $vChk.sha)
+          $deferLine = 'VERIFY HEALTH: ps-suites-verify: deferred (write-side ran ' + $psWriteMs + 'ms this tick) sha=' + $vChk.sha
+          if ([int]$vChk.base_ms -gt 0) { $deferLine = $deferLine + ' base=' + [int]$vChk.base_ms + 'ms' }
+          Write-Output $deferLine
         } else {
           $vRes = $null
           try { $vRes = Invoke-PsSuitesTick @vArgs } catch { $vRes = $null }

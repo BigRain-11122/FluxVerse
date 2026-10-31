@@ -46,9 +46,21 @@
 # entry `Tools\devloop\fixtures\*\*` expands to an explicit file list), so a
 # suite that reads a fixture cannot rot while the hash stands still.
 #
+# BASELINE (main#96 r757): a content-addressed ticket answers "did this change"
+# but not "how much of the tick budget is this family eating". The verify family
+# grew from 8 to 9 suites and its measured run went 101 s -> 112 s against a
+# 180 s cap - nobody could see the remaining headroom without opening the log.
+# So every real run appends its measured `ms` to `runs` (last three, oldest
+# first, comma-joined string) and the ticket/result carry `base_ms` (their mean)
+# plus `budget_over` (> 2/3 of the family cap). The printed line carries
+# `base=`, and verify turns that into a WARN that says what to do about it.
+# Cached PASS tickets are still never rewritten: history only moves on real runs.
+#
 # Honest boundaries:
 #   - auto-retry heals the environment case, not a real defect: a genuine red
 #     re-runs every N ticks (write 19 s, verify ~100 s) instead of every tick.
+#   - the baseline is elapsed wall clock on THIS box under whatever load it had;
+#     it answers "is the family near its cap", not "how fast is the code".
 #   - 45 s cap (write) / 180 s cap (verify): the write run measured 19.5 s, the
 #     verify family 101 s on a loaded box (r752 live run, 8 suites). A hit means
 #     the machine is loaded or a suite hangs; we report `timeout`, never a
@@ -208,6 +220,7 @@ function Write-PsSuitesTicket {
         ts_utc     = [string]$Result.ts_utc
         tries      = [int]$Result.tries
         reds       = [string]$Result.reds
+        runs       = [string]$Result.runs
     }
     $dir = Split-Path -Parent $Path
     if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
@@ -253,6 +266,54 @@ function Get-PsSuitesTicketTries {
     return 0
 }
 
+function Add-PsSuitesRunHistory {
+    # Appends one real run's duration and keeps the last $Keep (oldest first).
+    # Kept as its own function so the trim rule is testable without timing a
+    # child process.
+    param([int[]]$Runs = @(), [int]$NewMs = -1, [int]$Keep = 3)
+    $out = @()
+    foreach ($v in @($Runs)) { if ($v -ge 0) { $out += [int]$v } }
+    if ($NewMs -ge 0) { $out += [int]$NewMs }
+    while ($out.Count -gt $Keep) { $out = @($out[1..($out.Count - 1)]) }
+    return [int[]]$out
+}
+
+function Get-PsSuitesRunHistory {
+    # The ticket stores the history as a comma-joined string ("11,22,33") - a
+    # one-element JSON array is the kind of shape PS5.1 ConvertTo-Json likes to
+    # flatten, and a flattened field would silently read as "no history".
+    param($Ticket, [int]$Keep = 3)
+    if ($null -eq $Ticket) { return @() }
+    if (-not $Ticket.PSObject.Properties['runs']) { return @() }
+    $vals = @()
+    foreach ($part in ([string]$Ticket.runs -split ',')) {
+        $n = 0
+        if ([int]::TryParse($part.Trim(), [ref]$n) -and $n -ge 0) { $vals += $n }
+    }
+    return [int[]](Add-PsSuitesRunHistory -Runs $vals -Keep $Keep)
+}
+
+function Get-PsSuitesBaseline {
+    # Mean of the recorded real runs. 0 = no history yet (never a fake number).
+    param([int[]]$Runs = @())
+    $vals = @(@($Runs) | Where-Object { $_ -gt 0 })
+    if ($vals.Count -eq 0) { return 0 }
+    $sum = 0
+    foreach ($v in $vals) { $sum += [int]$v }
+    return [int][math]::Round($sum / $vals.Count)
+}
+
+function Test-PsSuitesBudgetOver {
+    # 2/3 of the family cap is the point where the next suite (or the next slow
+    # box) turns the whole family into a `timeout` verdict, so that is where we
+    # want to hear about it - not after it happens.
+    param([int]$BaseMs = 0, [int]$TimeoutSec = 0)
+    if ($BaseMs -le 0 -or $TimeoutSec -le 0) { return $false }
+    # Units: BaseMs is milliseconds, TimeoutSec seconds. Comparing the two
+    # directly made every family "over budget" (119000 > 120) - caught by y9.
+    return ($BaseMs -gt ($TimeoutSec * 1000 * 2 / 3))
+}
+
 function Test-PsSuitesHealDue {
     # Only a NON-PASS verdict may age out. A passing ticket stays cached for
     # ever, which is the entire point of content addressing: unchanged code
@@ -280,6 +341,12 @@ function Copy-PsSuitesTicketFields {
     $Result.tries = Get-PsSuitesTicketTries $Ticket
     $Result.reds = ''
     if ($Ticket.PSObject.Properties['reds']) { $Result.reds = [string]$Ticket.reds }
+    # Baseline rides with the verdict so a cached tick can still say how close
+    # the family is to its cap (main#96).
+    $Result.runs = ''
+    if ($Ticket.PSObject.Properties['runs']) { $Result.runs = [string]$Ticket.runs }
+    $Result.base_ms = Get-PsSuitesBaseline -Runs (Get-PsSuitesRunHistory -Ticket $Ticket)
+    $Result.budget_over = Test-PsSuitesBudgetOver -BaseMs ([int]$Result.base_ms) -TimeoutSec (Get-PsSuitesFamilyTimeout -Family ([string]$Result.family))
     $Result.age_min = 0
     try {
         $when = [datetime]::Parse($Result.ts_utc, [System.Globalization.CultureInfo]::InvariantCulture,
@@ -351,6 +418,9 @@ function Invoke-PsSuitesTick {
         needs_run  = $false
         tries      = 0
         reds       = ''
+        runs       = ''
+        base_ms    = 0
+        budget_over = $false
         heal       = $false
         note       = ''
         ts_utc     = ''
@@ -480,6 +550,17 @@ function Invoke-PsSuitesTick {
         $res.exit = -1
     }
 
+    # ---- family baseline (main#96) ----
+    # Only real runs move the history; a timeout contributes nothing (its ms is
+    # just the cap, and a hang already reports its own verdict).
+    $priorRuns = @(Get-PsSuitesRunHistory -Ticket $ticket)
+    $newMs = -1
+    if ($res.status -ne 'timeout') { $newMs = [int]$res.ms }
+    $keepRuns = @(Add-PsSuitesRunHistory -Runs $priorRuns -NewMs $newMs)
+    $res.runs = (($keepRuns | ForEach-Object { [string][int]$_ }) -join ',')
+    $res.base_ms = Get-PsSuitesBaseline -Runs $keepRuns
+    $res.budget_over = Test-PsSuitesBudgetOver -BaseMs ([int]$res.base_ms) -TimeoutSec $TimeoutSec
+
     $text = ''
     if (Test-Path -LiteralPath $tmpOut) {
         try { $text = [System.IO.File]::ReadAllText($tmpOut, [System.Text.Encoding]::UTF8) } catch { $text = '' }
@@ -554,6 +635,9 @@ function Format-PsSuitesLine {
         $head = $head + ' reds=' + [string]$Result.reds
     }
     if ([int]$Result.tries -gt 0) { $head = $head + ' tries=' + [int]$Result.tries }
+    # Family baseline (main#96): printed for cached ticks too, because the whole
+    # point is to see the headroom between real runs.
+    if ([int]$Result.base_ms -gt 0) { $head = $head + ' base=' + [int]$Result.base_ms + 'ms' }
     if ($Result.heal -eq $true) { $head = $head + ' auto=1' }
     return $head
 }

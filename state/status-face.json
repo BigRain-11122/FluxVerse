@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T20:58:15Z",
-    "current_activity":  "r756 收口（main#97）：看门票据第一次说得出 runner 的真实退出码——Tools/devloop/ps-suites-tick.ps1 的子进程段改走 ProcessStartInfo＋cmd.exe /c，票据 exit 与 runner 真码一致（读不到记 -1 仍判非绿，超时 taskkill 杀进程树）。沙盒 Tools/devloop/test-verify-ps-suites.ps1 97→107/107（x 组 10 条钉住「汇总行绿＋exit 2 不得记 pass」）。",
-    "artifact":  "Tools/devloop/ps-suites-tick.ps1, Tools/devloop/test-verify-ps-suites.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
-    "artifact_utc":  "2026-10-31T20:58:15Z",
-    "milestone":  "下一轮：main#96（verify 族基线 112.2 s＝180 s 上限 62%，断言 283 → 落族基线列与 2/3 WARN 判据）→ main#92 → main#90 → main#98，队列见 state/queue/main.md",
+    "updated_utc":  "2026-10-31T21:10:14Z",
+    "current_activity":  "r757 收口：main#96——verify 族第一次说得吃 tick 预算多少。票据新增 runs（最近三次真实 run 的耗时）与 base_ms／budget_over，每 tick 行尾印 base=，判绿但越族上限 2/3 即转 WARN 并写明「拆族或隔轮」两条出路；沙盒 Tools/devloop/test-verify-ps-suites.ps1 107→124/124（y 组 17 条），活跑上线第一分钟就抓到自己越线：ran=121650ms／180s＝68%。",
+    "artifact":  "Tools/devloop/ps-suites-tick.ps1, Tools/perceptor/verify.ps1, Tools/devloop/test-verify-ps-suites.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
+    "artifact_utc":  "2026-10-31T21:10:14Z",
+    "milestone":  "下一棒：main#99——verify 族已越 2/3 线（121.6 s／180 s），拆族或提上限二选一并说明理由，须由沙盒钉住；随后 main#92 → main#90 → main#98。指针 state/queue/main.md",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

@@ -74,6 +74,9 @@ $script:vforce = $false
 $script:vtimeout = $null
 $script:voff = $false
 $script:child = $false
+# Case y points the verify family at a second ticket to prove the budget WARN
+# end to end; everything else uses the shared one.
+$script:vticketpath = $vticket
 
 # Seed the verify-family ticket before the write-side cases: those assert that
 # a cached tick stays under 3 s, and a due verify run would spend that budget
@@ -101,7 +104,7 @@ function Run-Verify {
     # The verify family must never reach the real suites from a sandbox: it is
     # an ~80 s run and its suites call this gate themselves. Always point it at
     # a fixture runner and its own temp ticket.
-    $env:FLUXVERSE_PS_SUITES_VERIFY_TICKET = $vticket
+    $env:FLUXVERSE_PS_SUITES_VERIFY_TICKET = $script:vticketpath
     $env:FLUXVERSE_PS_SUITES_VERIFY_RUNNER = $script:vrunner
     if ($script:vtimeout) { $env:FLUXVERSE_PS_SUITES_VERIFY_TIMEOUT = [string]$script:vtimeout }
     if ($script:voff) { $env:FLUXVERSE_PS_SUITES_VERIFY = 'off' }
@@ -499,6 +502,61 @@ $tickCode = @(($tickSrc -split "`r?`n") | Where-Object { -not ($_.TrimStart().St
 $tickCodeText = ($tickCode -join "`n")
 Check 'x9 module launches the runner through cmd.exe' ($tickSrc -match 'cmd\.exe') 'no cmd.exe in module'
 Check 'x10 no live code reads an ExitCode off Start-Process' (-not ($tickCodeText -match 'Start-Process')) 'Start-Process still in executable code'
+
+# ---------- case y: family baseline + budget warning (main#96 r757) ----------
+# The verify family grew to 9 suites and 112 s against a 180 s cap (62%) and
+# nobody could see that without opening the log. Every real run now appends its
+# duration to `runs`, the ticket exposes `base_ms` (mean of the last three) and
+# `budget_over` (past 2/3 of the family cap), and a passing-but-heavy family
+# turns into a WARN that names the two ways out.
+$yDefs = @(Get-PsSuitesTickDefaults -Family verify)
+$yTicket = Join-Path $sandbox 'y.json'
+$y1 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $yTicket -RunnerPath $runnerGreen -TimeoutSec 8
+$y1parts = @(("$($y1.runs)" -split ',') | Where-Object { $_ -ne '' })
+Check 'y1 a real run records its duration in the history' ($y1parts.Count -eq 1) ("$($y1.runs)")
+Check 'y2 the first run yields a baseline equal to it' ([int]$y1.base_ms -eq [int]$y1.ms -and [int]$y1.base_ms -gt 0) ('base=' + $y1.base_ms + ' ms=' + $y1.ms)
+$y2 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $yTicket -RunnerPath $runnerGreen -TimeoutSec 8 -Force
+$y2parts = @(("$($y2.runs)" -split ',') | Where-Object { $_ -ne '' })
+Check 'y3 a second real run appends instead of replacing' ($y2parts.Count -eq 2) ("$($y2.runs)")
+Check 'y4 the trim helper keeps the last three runs, oldest dropped' ((@(Add-PsSuitesRunHistory -Runs @(1, 2, 3) -NewMs 4) -join ',') -eq '2,3,4') ((@(Add-PsSuitesRunHistory -Runs @(1, 2, 3) -NewMs 4) -join ','))
+Check 'y5 the baseline helper averages the recorded runs' ((Get-PsSuitesBaseline -Runs @(60000, 90000, 120000)) -eq 90000) ([string](Get-PsSuitesBaseline -Runs @(60000, 90000, 120000)))
+Check 'y6 the baseline helper ignores a zero placeholder' ((Get-PsSuitesBaseline -Runs @(0, 90000)) -eq 90000) ([string](Get-PsSuitesBaseline -Runs @(0, 90000)))
+Check 'y7 no history means no baseline, not a zero' ((Get-PsSuitesBaseline -Runs @()) -eq 0) ([string](Get-PsSuitesBaseline -Runs @()))
+Check 'y8 past 2/3 of the cap is over budget' ((Test-PsSuitesBudgetOver -BaseMs 121000 -TimeoutSec 180) -eq $true) 'base=121000 cap=180'
+Check 'y9 below 2/3 of the cap is not' ((Test-PsSuitesBudgetOver -BaseMs 119000 -TimeoutSec 180) -eq $false) 'base=119000 cap=180'
+Check 'y10 the printed line carries the baseline column' ((Format-PsSuitesLine $y1) -match 'base=\d+ms') (Format-PsSuitesLine $y1)
+$yRaw = ''
+try { $yRaw = [System.IO.File]::ReadAllText($yTicket, [System.Text.Encoding]::UTF8) } catch { $yRaw = '' }
+Check 'y11 the persisted ticket carries the history' ($yRaw -match '"runs":"[0-9,]+"') $yRaw
+# Seed an overweight history on a fresh (matching-sha) ticket: no spawn, but the
+# cached verdict must still report how close the family is to its cap. NOTE: the
+# ticket must be seeded against the REAL repo root, because verify.ps1 resolves
+# that itself - seeding against $root (this sandbox's Tools dir) produced a
+# different fingerprint and the gate legitimately re-ran (first draft of y15).
+$yRepo = Split-Path $root -Parent
+$ybTicket = Join-Path $sandbox 'y-budget.json'
+$null = Invoke-PsSuitesTick -RepoDir $yRepo -Family verify -TicketPath $ybTicket -RunnerPath $runnerGreen -TimeoutSec 8
+$ybObj = $null
+try { $ybObj = [System.IO.File]::ReadAllText($ybTicket, [System.Text.Encoding]::UTF8) | ConvertFrom-Json } catch { $ybObj = $null }
+if ($null -ne $ybObj) {
+  $ybObj.runs = '130000,130000,130000'
+  [System.IO.File]::WriteAllText($ybTicket, ($ybObj | ConvertTo-Json -Compress), $utf8)
+}
+$ybChk = Invoke-PsSuitesTick -RepoDir $yRepo -Family verify -TicketPath $ybTicket -RunnerPath $runnerGreen -TimeoutSec 180 -CheckOnly
+Check 'y12 a cached ticket still exposes the baseline' ([int]$ybChk.base_ms -eq 130000) ('base=' + $ybChk.base_ms)
+Check 'y13 a heavy cached family is flagged over budget' ($ybChk.budget_over -eq $true) ([string]$ybChk.budget_over)
+Check 'y14 the budget flag does not turn a cached ticket into a spawn' ($ybChk.needs_run -eq $false) ([string]$ybChk.needs_run)
+# End to end through the gate: write family off, verify family cached + heavy.
+$script:owner = $script:off
+$script:off = $true
+$script:vticketpath = $ybTicket
+$ry = Run-Verify
+$vy = @(Get-VerifyLine $ry)
+Check 'y15 a heavy but green family prints WARN, not HEALTH' ("$($vy[0])" -like 'VERIFY WARN:*') "$($vy[0])"
+Check 'y16 the WARN says 2/3 of the cap and offers both ways out' ("$($vy[0])" -match 'over 2/3 of the 180s cap' -and "$($vy[0])" -match 'split the family or run it every other tick') "$($vy[0])"
+Check 'y17 the budget WARN does not fail the gate' ($ry.code -eq 0) ('exit=' + $ry.code)
+$script:off = $script:owner
+$script:vticketpath = $vticket
 
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 

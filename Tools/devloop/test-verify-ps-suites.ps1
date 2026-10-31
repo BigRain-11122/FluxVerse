@@ -38,6 +38,7 @@ New-Item -ItemType Directory -Path $sandbox -Force | Out-Null
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 $ticket = Join-Path $sandbox 'ticket.json'
 $vticket = Join-Path $sandbox 'ticket-verify.json'
+$v2ticket = Join-Path $sandbox 'ticket-verify2.json'
 
 function New-Runner([string]$name, [string]$body) {
     $p = Join-Path $sandbox $name
@@ -77,19 +78,30 @@ $script:child = $false
 # Case y points the verify family at a second ticket to prove the budget WARN
 # end to end; everything else uses the shared one.
 $script:vticketpath = $vticket
+# Heavy verify family (main#99). Same rules: a fixture runner and a temp ticket,
+# never the real 51 s sandbox.
+$script:v2runner = $runnerGreen
+$script:v2force = $false
+$script:v2timeout = $null
+$script:v2off = $false
+$script:v2ticketpath = $v2ticket
 
 # Seed the verify-family ticket before the write-side cases: those assert that
 # a cached tick stays under 3 s, and a due verify run would spend that budget
 # on a fixture spawn. The family gets its own cases (k..r) below.
 . $module
 $null = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $vticket -RunnerPath $runnerGreen -TimeoutSec 8
+$null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $v2ticket -RunnerPath $runnerGreen -TimeoutSec 8
 
 function Clear-PsEnv {
     foreach ($k in @('FLUXVERSE_PS_SUITES', 'FLUXVERSE_PS_SUITES_RUNNER', 'FLUXVERSE_PS_SUITES_TICKET',
                      'FLUXVERSE_PS_SUITES_TIMEOUT', 'FLUXVERSE_PS_SUITES_FORCE',
                      'FLUXVERSE_PS_SUITES_VERIFY', 'FLUXVERSE_PS_SUITES_VERIFY_RUNNER',
                      'FLUXVERSE_PS_SUITES_VERIFY_TICKET', 'FLUXVERSE_PS_SUITES_VERIFY_TIMEOUT',
-                     'FLUXVERSE_PS_SUITES_VERIFY_FORCE', 'FLUXVERSE_PS_SUITES_CHILD')) {
+                     'FLUXVERSE_PS_SUITES_VERIFY_FORCE',
+                     'FLUXVERSE_PS_SUITES_VERIFY2', 'FLUXVERSE_PS_SUITES_VERIFY2_RUNNER',
+                     'FLUXVERSE_PS_SUITES_VERIFY2_TICKET', 'FLUXVERSE_PS_SUITES_VERIFY2_TIMEOUT',
+                     'FLUXVERSE_PS_SUITES_VERIFY2_FORCE', 'FLUXVERSE_PS_SUITES_CHILD')) {
         Remove-Item ('Env:\' + $k) -ErrorAction SilentlyContinue
     }
 }
@@ -109,6 +121,14 @@ function Run-Verify {
     if ($script:vtimeout) { $env:FLUXVERSE_PS_SUITES_VERIFY_TIMEOUT = [string]$script:vtimeout }
     if ($script:voff) { $env:FLUXVERSE_PS_SUITES_VERIFY = 'off' }
     if ($script:vforce) { $env:FLUXVERSE_PS_SUITES_VERIFY_FORCE = '1' }
+    # Same treatment for the heavy verify sandbox (main#99): it must never reach
+    # the real test-verify-ps-suites.ps1 from here, or the sandbox would run
+    # itself at ~51 s a pop.
+    $env:FLUXVERSE_PS_SUITES_VERIFY2_TICKET = $script:v2ticketpath
+    $env:FLUXVERSE_PS_SUITES_VERIFY2_RUNNER = $script:v2runner
+    if ($script:v2timeout) { $env:FLUXVERSE_PS_SUITES_VERIFY2_TIMEOUT = [string]$script:v2timeout }
+    if ($script:v2off) { $env:FLUXVERSE_PS_SUITES_VERIFY2 = 'off' }
+    if ($script:v2force) { $env:FLUXVERSE_PS_SUITES_VERIFY2_FORCE = '1' }
     if ($script:child) { $env:FLUXVERSE_PS_SUITES_CHILD = '1' }
     $sw = New-Object System.Diagnostics.Stopwatch
     $sw.Start()
@@ -129,6 +149,12 @@ function Get-PsLine($out) {
 # write-side line (and the write-side assertions above keep their exact shape).
 function Get-VerifyLine($out) {
     return @($out.lines | Where-Object { $_ -match '^VERIFY (HEALTH|WARN): ps-suites-verify:' })
+}
+
+# The heavy family has its own label; the light-family regex above must never
+# swallow it (asserted in case z).
+function Get-Verify2Line($out) {
+    return @($out.lines | Where-Object { $_ -match '^VERIFY (HEALTH|WARN): ps-suites-verify2:' })
 }
 
 # ---------- case a: green runner runs, ticket written ------------------------
@@ -557,6 +583,108 @@ Check 'y16 the WARN says 2/3 of the cap and offers both ways out' ("$($vy[0])" -
 Check 'y17 the budget WARN does not fail the gate' ($ry.code -eq 0) ('exit=' + $ry.code)
 $script:off = $script:owner
 $script:vticketpath = $vticket
+
+# ---------- case z: the heavy sandbox gets its own family and its own turn ----
+# main#99: nine suites in one family measured 121.6 s against a 180 s cap (68%,
+# past the 2/3 budget line). The ~51 s gate-of-the-gate sandbox now lives alone
+# in `verify2`, and a single tick never pays two families.
+$zDefs = @(Get-PsSuitesTickDefaults -Family verify2)
+$zLight = @(Get-PsSuitesTickDefaults -Family verify)
+Check 'z1 the heavy family guards the sandbox it runs' ($zDefs -contains 'Tools\devloop\test-verify-ps-suites.ps1') ($zDefs -join ',')
+Check 'z2 the heavy family is a small, targeted set' ($zDefs.Count -eq 5) ('count=' + $zDefs.Count)
+Check 'z3 the light family no longer carries the heavy sandbox' (-not ($zLight -contains 'Tools\devloop\test-verify-ps-suites.ps1')) ($zLight -join ',')
+Check 'z4 the heavy family keeps its own ticket file' ((Get-PsSuitesFamilyTicketName -Family verify2) -eq 'logs\.ps-suites-verify2-last.json') (Get-PsSuitesFamilyTicketName -Family verify2)
+Check 'z5 the heavy cap is 120 s, under the light 180 s' ((Get-PsSuitesFamilyTimeout -Family verify2) -eq 120) ([string](Get-PsSuitesFamilyTimeout -Family verify2))
+Check 'z6 the two verify labels cannot be mistaken for each other' ((Get-VerifyLine ([pscustomobject]@{ lines = @('VERIFY HEALTH: ps-suites-verify2: x') })).Count -eq 0) 'regex overlap'
+
+# Deterministic three-tick ladder from empty tickets: write runs -> verify runs
+# -> verify2 runs, and each verify-side family defers while something else ran.
+Remove-Item -LiteralPath $ticket -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $vticket -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $v2ticket -Force -ErrorAction SilentlyContinue
+$script:runner = $runnerGreen; $script:vrunner = $runnerGreen; $script:v2runner = $runnerGreen
+$script:timeout = $null; $script:force = $false; $script:vforce = $false; $script:v2force = $false
+$script:vtimeout = $null; $script:v2timeout = $null
+$script:off = $false; $script:voff = $false; $script:v2off = $false; $script:child = $false
+$z1 = Run-Verify
+$z1w = @(Get-PsLine $z1); $z1v = @(Get-VerifyLine $z1); $z1h = @(Get-Verify2Line $z1)
+Check 'z7 a write-side run also defers the heavy verify family' ("$($z1w[0])" -match 'ran=\d+ms' -and "$($z1h[0])" -match 'deferred \(write-side ran \d+ms this tick\)') "$($z1w[0]) | $($z1h[0])"
+Check 'z8 the deferred heavy family wrote no ticket' (-not (Test-Path -LiteralPath $v2ticket)) $v2ticket
+$z2 = Run-Verify
+$z2v = @(Get-VerifyLine $z2); $z2h = @(Get-Verify2Line $z2)
+Check 'z9 the light family runs first and defers the heavy one' ("$($z2v[0])" -match 'ran=\d+ms' -and "$($z2h[0])" -match 'deferred \(verify-side ran \d+ms this tick\)') "$($z2v[0]) | $($z2h[0])"
+$z3 = Run-Verify
+$z3h = @(Get-Verify2Line $z3)
+Check 'z10 the heavy family gets its turn once nothing else ran' ("$($z3h[0])" -match 'ran=\d+ms') "$($z3h[0])"
+Check 'z11 the heavy ticket is written' (Test-Path -LiteralPath $v2ticket) $v2ticket
+$v2obj = $null
+try { $v2obj = [System.IO.File]::ReadAllText($v2ticket, [System.Text.Encoding]::UTF8) | ConvertFrom-Json } catch { $v2obj = $null }
+Check 'z12 the heavy ticket records its own baseline' ($null -ne $v2obj -and "$($v2obj.runs)" -match '^[0-9]+') ([string]$v2obj)
+$z4 = Run-Verify
+$z4h = @(Get-Verify2Line $z4)
+Check 'z13 a quiet tick caches the heavy family instead of spawning' ("$($z4h[0])" -match 'cached=' -and "$($z4h[0])" -notmatch 'ran=\d+ms') "$($z4h[0])"
+Check 'z14 a fully cached tick stays cheap (<4000ms)' ($z4.ms -lt 4000) ('ms=' + $z4.ms)
+
+$script:v2runner = $runnerRed; $script:v2force = $true
+$z5 = Run-Verify
+$z5h = @(Get-Verify2Line $z5)
+Check 'z15 a heavy-family red is WARN with its own re-run hint' ("$($z5h[0])" -like 'VERIFY WARN:*' -and "$($z5h[0])" -match 'test-verify-ps-suites\.ps1') "$($z5h[0])"
+Check 'z16 a heavy-family red does not fail the gate' ($z5.code -eq 0) ('exit=' + $z5.code)
+$script:v2runner = $runnerSlow; $script:v2timeout = 2; $script:v2force = $true
+$z6 = Run-Verify
+$z6h = @(Get-Verify2Line $z6)
+Check 'z17 a heavy-family hang is a timeout, never a verdict' ("$($z6h[0])" -match 'did not finish in 2s' -and "$($z6h[0])" -notmatch 'parity=ok') "$($z6h[0])"
+$script:v2timeout = $null; $script:v2force = $false; $script:v2runner = $runnerGreen
+$script:v2off = $true
+$z7 = Run-Verify
+$z7h = @(Get-Verify2Line $z7)
+Check 'z18 the heavy family has its own off switch' ("$($z7h[0])" -match 'disabled by FLUXVERSE_PS_SUITES_VERIFY2=off') "$($z7h[0])"
+$script:v2off = $false
+$script:child = $true
+$z8 = Run-Verify
+$z8h = @(Get-Verify2Line $z8)
+Check 'z19 a nested run skips the heavy family' ("$($z8h[0])" -match 'skipped \(nested sandbox run\)') "$($z8h[0])"
+$script:child = $false
+$zLines = @()
+foreach ($r in @($z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8)) { $zLines += @(Get-Verify2Line $r) }
+$zLines = @($zLines | Where-Object { "$_" -ne '' })
+Check 'z20 every heavy-family tick printed exactly one line' ($zLines.Count -eq 8) ('count=' + $zLines.Count)
+$zBad = @($zLines | Where-Object { "$_" -match '(?i)fail' })
+Check 'z21 no heavy-family line leaks the red token, any case' ($zBad.Count -eq 0) (($zBad -join ' | '))
+
+# The split only holds if each family ASKS the runner for its own suites. A
+# `-Verify` here would drag the heavy sandbox back into the light family and
+# undo main#99 while every line above still looked right.
+$runnerArgs = New-Runner 'runner-args.ps1' @'
+[System.IO.File]::WriteAllText($env:FV_ARGS_OUT, ($args -join ' '), (New-Object System.Text.UTF8Encoding($false)))
+Write-Output 'PS SUITES suites=1 assertions=1 counted=1 failing=0 parity=skipped'
+exit 0
+'@
+$zArgFile = Join-Path $sandbox 'zargs.txt'
+$env:FV_ARGS_OUT = $zArgFile
+$null = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath (Join-Path $sandbox 'z-v.json') -RunnerPath $runnerArgs -Force
+$zSec = ''
+try { $zSec = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zSec = '' }
+Check 'z22 the light family asks for eight suites, never -Verify' ($zSec -match '-Suites' -and $zSec -notmatch '(?:^|\s)-Verify(?:\s|$)' -and @(($zSec -split '[,;\s]+') | Where-Object { $_ -match 'test-.*\.ps1$' }).Count -eq 8) $zSec
+$env:FV_ARGS_OUT = $zArgFile
+$null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath (Join-Path $sandbox 'z-v2.json') -RunnerPath $runnerArgs -Force
+$zSec2 = ''
+try { $zSec2 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zSec2 = '' }
+Check 'z23 the heavy family asks for exactly its one sandbox' ($zSec2 -match '-Suites' -and @(($zSec2 -split '[,;\s]+') | Where-Object { $_ -match 'test-.*\.ps1$' }).Count -eq 1 -and $zSec2 -match 'test-verify-ps-suites\.ps1') $zSec2
+Remove-Item 'Env:\FV_ARGS_OUT' -ErrorAction SilentlyContinue
+
+# A family whose suite count changed (main#99: 9 -> 8) must not average the old
+# durations into the new baseline, or the budget WARN keeps ringing for three
+# runs after the fix that caused it.
+$zrRunner = New-Runner 'runner-9suites.ps1' @'
+Write-Output 'PS SUITES suites=9 assertions=1 counted=9 failing=0 parity=skipped'
+exit 0
+'@
+$zrTicket = Join-Path $sandbox 'z-reset.json'
+$null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrTicket -RunnerPath $zrRunner -Force
+$null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrTicket -RunnerPath $zrRunner -Force
+$zrThird = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrTicket -RunnerPath $runnerGreen -Force
+Check 'z24 a changed suite count restarts the baseline' (@(("$($zrThird.runs)" -split ',')).Count -eq 1) ("runs=" + $zrThird.runs)
 
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 

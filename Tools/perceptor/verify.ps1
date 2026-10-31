@@ -437,16 +437,22 @@ if (-not (Test-Path -LiteralPath $qdueMod)) {
 # fingerprint and its own ticket (logs\.ps-suites-last.json vs
 # logs\.ps-suites-verify-last.json), so a write-side red cannot overwrite a
 # verify-side verdict and vice versa.
-# WALL CLOCK: write ~19 s, verify ~80 s. One round must not pay both, so the
-# verify family asks `-CheckOnly` first and defers to the next tick when the
-# write family really ran this round. Deferral costs at most one 5-minute tick
-# and is printed, never silent.
+# WALL CLOCK: write ~19 s, verify ~70 s, verify2 ~51 s. One round must not pay
+# two of them, so each verify-side family asks `-CheckOnly` first and defers to
+# the next tick when something already really ran this round. Deferral costs at
+# most one 5-minute tick and is printed, never silent.
+# main#99 split the old nine-suite verify family (121.6 s = 68% of the 180 s cap,
+# past the 2/3 budget line) into verify (eight light suites) and verify2 (the one
+# ~51 s sandbox that boots this gate). The heavy one takes its turn only on a
+# tick where neither the write family nor the light verify family ran.
 # NESTED: a sandbox that runs this gate in process must not spawn another
 # family run, so the runner's children carry FLUXVERSE_PS_SUITES_CHILD=1.
 # WARN, not FAIL - same stance as 2b..2g: an observation, not a broken city.
 # No 'FAIL' token in these messages (the tick red-scan keys on that word).
 $psWriteRan = $false
 $psWriteMs = 0
+$psVerifyRan = $false
+$psVerifyMs = 0
 
 function Write-PsSuitesVerdict {
   param([string]$Label, $Res, [string]$Rerun)
@@ -477,11 +483,13 @@ function Write-PsSuitesVerdict {
 if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
   Write-Output 'VERIFY HEALTH: ps-suites: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-verify: skipped (nested sandbox run)'
+  Write-Output 'VERIFY HEALTH: ps-suites-verify2: skipped (nested sandbox run)'
 } else {
   $psMod = Join-Path $repoRoot 'Tools\devloop\ps-suites-tick.ps1'
   if (-not (Test-Path -LiteralPath $psMod)) {
     Write-Output 'VERIFY WARN: ps-suites: ps-suites-tick.ps1 missing - write-side sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-verify: ps-suites-tick.ps1 missing - verify-side sandboxes not run this tick'
+    Write-Output 'VERIFY WARN: ps-suites-verify2: ps-suites-tick.ps1 missing - heavy verify sandbox not run this tick'
   } else {
     $psLoaded = $true
     try { . $psMod } catch { $psLoaded = $false }
@@ -523,6 +531,7 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
         } elseif (-not $vChk.needs_run) {
           $vRes = $null
           try { $vRes = Invoke-PsSuitesTick @vArgs } catch { $vRes = $null }
+          if ($null -ne $vRes -and $vRes.ran) { $psVerifyRan = $true; $psVerifyMs = [int]$vRes.ms }
           Write-PsSuitesVerdict -Label 'ps-suites-verify' -Res $vRes -Rerun 'Tools\devloop\run-ps-suites.ps1 -Verify'
         } elseif ($psWriteRan) {
           $deferLine = 'VERIFY HEALTH: ps-suites-verify: deferred (write-side ran ' + $psWriteMs + 'ms this tick) sha=' + $vChk.sha
@@ -531,7 +540,44 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
         } else {
           $vRes = $null
           try { $vRes = Invoke-PsSuitesTick @vArgs } catch { $vRes = $null }
+          if ($null -ne $vRes -and $vRes.ran) { $psVerifyRan = $true; $psVerifyMs = [int]$vRes.ms }
           Write-PsSuitesVerdict -Label 'ps-suites-verify' -Res $vRes -Rerun 'Tools\devloop\run-ps-suites.ps1 -Verify'
+        }
+      }
+
+      # ---- 2j. heavy verify sandbox (main#99: own family, own turn) ----
+      # test-verify-ps-suites.ps1 boots this whole gate and measured ~51 s; the
+      # eight light verify suites ~70 s. Sharing one family made a single round
+      # pay 121.6 s (68% of the cap) and every edit to this module bought it.
+      if ($env:FLUXVERSE_PS_SUITES_VERIFY2 -eq 'off') {
+        Write-Output 'VERIFY HEALTH: ps-suites-verify2: disabled by FLUXVERSE_PS_SUITES_VERIFY2=off'
+      } else {
+        $v2Args = @{ RepoDir = $repoRoot; Family = 'verify2' }
+        if ($env:FLUXVERSE_PS_SUITES_VERIFY2_RUNNER) { $v2Args['RunnerPath'] = $env:FLUXVERSE_PS_SUITES_VERIFY2_RUNNER }
+        if ($env:FLUXVERSE_PS_SUITES_VERIFY2_TICKET) { $v2Args['TicketPath'] = $env:FLUXVERSE_PS_SUITES_VERIFY2_TICKET }
+        if ($env:FLUXVERSE_PS_SUITES_VERIFY2_TIMEOUT) {
+          $v2To = 0
+          if ([int]::TryParse($env:FLUXVERSE_PS_SUITES_VERIFY2_TIMEOUT, [ref]$v2To) -and $v2To -gt 0) { $v2Args['TimeoutSec'] = $v2To }
+        }
+        if ($env:FLUXVERSE_PS_SUITES_VERIFY2_FORCE -eq '1') { $v2Args['Force'] = $true }
+        $v2Chk = $null
+        try { $v2Chk = Invoke-PsSuitesTick @v2Args -CheckOnly } catch { $v2Chk = $null }
+        if ($null -eq $v2Chk) {
+          Write-Output 'VERIFY WARN: ps-suites-verify2: ps-suites-tick.ps1 threw - heavy verify sandbox not measured this tick'
+        } elseif (-not $v2Chk.needs_run) {
+          $v2Res = $null
+          try { $v2Res = Invoke-PsSuitesTick @v2Args } catch { $v2Res = $null }
+          Write-PsSuitesVerdict -Label 'ps-suites-verify2' -Res $v2Res -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-verify-ps-suites.ps1'
+        } elseif ($psWriteRan -or $psVerifyRan) {
+          $why = 'write-side ran ' + $psWriteMs + 'ms'
+          if (-not $psWriteRan) { $why = 'verify-side ran ' + $psVerifyMs + 'ms' }
+          $deferLine2 = 'VERIFY HEALTH: ps-suites-verify2: deferred (' + $why + ' this tick) sha=' + $v2Chk.sha
+          if ([int]$v2Chk.base_ms -gt 0) { $deferLine2 = $deferLine2 + ' base=' + [int]$v2Chk.base_ms + 'ms' }
+          Write-Output $deferLine2
+        } else {
+          $v2Res = $null
+          try { $v2Res = Invoke-PsSuitesTick @v2Args } catch { $v2Res = $null }
+          Write-PsSuitesVerdict -Label 'ps-suites-verify2' -Res $v2Res -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-verify-ps-suites.ps1'
         }
       }
     } else {

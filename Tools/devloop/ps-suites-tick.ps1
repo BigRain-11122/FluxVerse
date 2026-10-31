@@ -61,11 +61,16 @@
 #     re-runs every N ticks (write 19 s, verify ~100 s) instead of every tick.
 #   - the baseline is elapsed wall clock on THIS box under whatever load it had;
 #     it answers "is the family near its cap", not "how fast is the code".
-#   - 45 s cap (write) / 180 s cap (verify): the write run measured 19.5 s, the
-#     verify family 101 s on a loaded box (r752 live run, 8 suites). A hit means
-#     the machine is loaded or a suite hangs; we report `timeout`, never a
-#     verdict. 180 s keeps ~1.8x headroom and still bounds a hang inside one
-#     5-minute tick.
+#   - 45 s cap (write) / 180 s cap (verify) / 120 s cap (verify2): the write run
+#     measured 19.5 s, the eight light verify suites ~70 s, and the single
+#     gate-of-the-gate sandbox ~51 s. A hit means the machine is loaded or a
+#     suite hangs; we report `timeout`, never a verdict. 180 s keeps ~2.5x
+#     headroom and still bounds a hang inside one 5-minute tick.
+#   - main#99 split the verify family in two: together the nine suites measured
+#     121.6 s (68% of the cap, past the 2/3 budget line r757 added) and every
+#     edit to this module bought that run. verify (eight light suites) and
+#     verify2 (the one heavy sandbox) keep separate tickets, and verify.ps1 runs
+#     at most one of them per tick.
 #   - the ticket's `exit` is the RUNNER's real exit code (main#97). Until r756
 #     it was always 0 because `Start-Process -PassThru` yields an empty
 #     ExitCode, so only `failing>0` could turn a ticket red; `-1` now means
@@ -75,10 +80,24 @@
 # ---------------------------------------------------------------------------
 
 function Get-PsSuitesTickDefaults {
-    # Guarded sources, per family. The two sets are deliberately disjoint:
-    # editing build-city-panel.ps1 must not buy an 80 s verify-family run, and
-    # editing site-verdict.ps1 must not buy a write-side run.
-    param([ValidateSet('write','verify')][string]$Family = 'write')
+    # Guarded sources, per family. The three sets are deliberately kept apart:
+    # editing build-city-panel.ps1 must not buy a verify-family run, editing
+    # site-verdict.ps1 must not buy a write-side run, and the ~51 s
+    # gate-of-the-gate sandbox must not ride along with the eight light verify
+    # suites (main#99: together they measured 121.6 s = 68% of the 180 s cap).
+    param([ValidateSet('write','verify','verify2')][string]$Family = 'write')
+    if ($Family -eq 'verify2') {
+        # Only what can flip test-verify-ps-suites.ps1's verdict: the sandbox
+        # itself, the tick module it dot-sources, the runner it drives, the
+        # state-promote module the gate now calls, and the gate itself.
+        return @(
+            'Tools\devloop\test-verify-ps-suites.ps1',
+            'Tools\devloop\ps-suites-tick.ps1',
+            'Tools\devloop\run-ps-suites.ps1',
+            'Tools\devloop\state-promote.ps1',
+            'Tools\perceptor\verify.ps1'
+        )
+    }
     if ($Family -eq 'verify') {
         return @(
             'Tools\devloop\test-verify-r2-site.ps1',
@@ -87,7 +106,6 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\test-verify-queue-due.ps1',
             'Tools\devloop\test-queue-due.ps1',
             'Tools\devloop\test-log-archive-duty.ps1',
-            'Tools\devloop\test-verify-ps-suites.ps1',
             'Tools\devloop\test-probe-path-census.ps1',
             'Tools\devloop\test-state-promote.ps1',
             'Tools\devloop\state-promote.ps1',
@@ -242,16 +260,19 @@ function Write-PsSuitesTicket {
 }
 
 function Get-PsSuitesFamilyTicketName {
-    param([ValidateSet('write','verify')][string]$Family = 'write')
+    param([ValidateSet('write','verify','verify2')][string]$Family = 'write')
+    if ($Family -eq 'verify2') { return 'logs\.ps-suites-verify2-last.json' }
     if ($Family -eq 'verify') { return 'logs\.ps-suites-verify-last.json' }
     return 'logs\.ps-suites-last.json'
 }
 
 function Get-PsSuitesFamilyTimeout {
-    # Measured: write family 19.5 s, verify family ~80 s (0.6 s .. 18.9 s per
-    # suite). The caps keep ~2x headroom over a real run and still bound a hang.
-    param([ValidateSet('write','verify')][string]$Family = 'write')
+    # Measured: write family 19.5 s, verify family ~70 s (eight light suites,
+    # 0.6 s .. 18.9 s each), verify2 ~51 s (one sandbox that boots the gate).
+    # The caps keep ~2x headroom over a real run and still bound a hang.
+    param([ValidateSet('write','verify','verify2')][string]$Family = 'write')
     if ($Family -eq 'verify') { return 180 }
+    if ($Family -eq 'verify2') { return 120 }
     return 45
 }
 
@@ -372,7 +393,7 @@ function Get-PsSuitesRedNames {
 function Invoke-PsSuitesTick {
     param(
         [Parameter(Mandatory=$true)][string]$RepoDir,
-        [ValidateSet('write','verify')][string]$Family = 'write',
+        [ValidateSet('write','verify','verify2')][string]$Family = 'write',
         [string]$TicketPath = '',
         [string[]]$Paths = @(),
         [string]$RunnerPath = '',
@@ -397,7 +418,15 @@ function Invoke-PsSuitesTick {
             if ([int]::TryParse($envRetry, [ref]$parsedRetry) -and $parsedRetry -ge 0) { $AutoRetryAfter = $parsedRetry }
         }
     }
-    if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify') { $ExtraArgs = @('-Verify') }
+    # Each family names its own suites. `-Verify` would run all nine (including
+    # the ~51 s heavy sandbox), which is exactly the coupling main#99 removed:
+    # the light family runs the eight test-*.ps1 entries of its guarded set.
+    if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify') {
+        $lightSuites = @(Get-PsSuitesTickDefaults -Family 'verify' | Where-Object { $_ -match 'test-[^\\]+\.ps1$' })
+        $ExtraArgs = @('-Suites', ($lightSuites -join ','))
+    }
+    # verify2 runs exactly one suite: the sandbox that boots the gate.
+    if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify2') { $ExtraArgs = @('-Suites', 'Tools\devloop\test-verify-ps-suites.ps1') }
     # Resolve the family's guarded source set here, not inside the fingerprint
     # helper (its no-path fallback is the write list, which silently made both
     # families share one fingerprint - caught by the r752 sandbox case l5).
@@ -597,6 +626,15 @@ function Invoke-PsSuitesTick {
     $res.assertions = [int]$m.Groups[2].Value
     $res.failing = [int]$m.Groups[4].Value
     $res.parity = [string]$m.Groups[5].Value
+    # Scope change (main#99 moved the heavy sandbox out: 9 suites -> 8): the old
+    # durations measured a different family, so averaging across the change
+    # would keep the budget WARN ringing for three runs after the fix. Restart
+    # the history with this run instead.
+    if ($null -ne $ticket -and [int]$ticket.suites -gt 0 -and [int]$ticket.suites -ne [int]$res.suites -and $res.status -ne 'timeout') {
+        $res.runs = [string][int]$res.ms
+        $res.base_ms = [int]$res.ms
+        $res.budget_over = Test-PsSuitesBudgetOver -BaseMs ([int]$res.base_ms) -TimeoutSec $TimeoutSec
+    }
     # Two independent halves, and neither may be skipped: a red suite list, or a
     # runner that did not exit 0 (crash after its summary, missing suite file ->
     # exit 3, an unreadable code -> -1). Before main#97 the second half could

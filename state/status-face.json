@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T21:10:14Z",
-    "current_activity":  "r757 收口：main#96——verify 族第一次说得吃 tick 预算多少。票据新增 runs（最近三次真实 run 的耗时）与 base_ms／budget_over，每 tick 行尾印 base=，判绿但越族上限 2/3 即转 WARN 并写明「拆族或隔轮」两条出路；沙盒 Tools/devloop/test-verify-ps-suites.ps1 107→124/124（y 组 17 条），活跑上线第一分钟就抓到自己越线：ran=121650ms／180s＝68%。",
+    "updated_utc":  "2026-10-31T21:37:11Z",
+    "current_activity":  "r758 收口：main#99——拆族。重沙盒 Tools/devloop/test-verify-ps-suites.ps1 单立第三族 verify2（独立票据、上限 120 s），light verify 族缩回八套并改用 -Suites 显式点名，Tools/perceptor/verify.ps1 新 §2j 令一 tick 至多一族重活；活跑三行全 HEALTH（light 67.9 s／180 s＝38%，heavy 71.8 s／120 s＝60%），r757 那条越线 WARN 当天下线。沙盒 124→148/148。",
     "artifact":  "Tools/devloop/ps-suites-tick.ps1, Tools/perceptor/verify.ps1, Tools/devloop/test-verify-ps-suites.ps1, state/queue/main.md, state/runbook.md, ./TECH.md",
-    "artifact_utc":  "2026-10-31T21:10:14Z",
-    "milestone":  "下一棒：main#99——verify 族已越 2/3 线（121.6 s／180 s），拆族或提上限二选一并说明理由，须由沙盒钉住；随后 main#92 → main#90 → main#98。指针 state/queue/main.md",
+    "artifact_utc":  "2026-10-31T21:37:11Z",
+    "milestone":  "下一棒：main#92——把 Tools/devloop/test-verify-path-census.ps1 的「verify 不 spawn shell」从字面 grep 升成 dot-source 链白名单式断言，白名单显式登记 Tools/devloop/ps-suites-tick.ps1 并写理由；随后 main#90 → main#98。指针 state/queue/main.md",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

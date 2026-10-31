@@ -34,7 +34,8 @@ param(
     [string]$TickLogPath = '',
     [string]$ShotDir = 'qa',
     [string]$ProofRoot = '',
-    [string]$DecisionsPath = ''
+    [string]$DecisionsPath = '',
+    [switch]$SiteSkip
 )
 
 $ErrorActionPreference = 'Stop'
@@ -47,6 +48,16 @@ if (-not (Test-Path -LiteralPath $shotShapeModule)) {
     exit 1
 }
 . $shotShapeModule
+
+# Same single-definition move for the R2 site verdict (queue main#57): the page
+# prints the block-water reading from the checker's own summary lines and uses
+# the module's red line, so verify and the panel can never quote different lakes.
+$siteVerdictModule = Join-Path $PSScriptRoot 'site-verdict.ps1'
+if (-not (Test-Path -LiteralPath $siteVerdictModule)) {
+    Write-Output ('FAIL: site-verdict.ps1 missing: ' + $siteVerdictModule)
+    exit 1
+}
+. $siteVerdictModule
 
 function Fail
 {
@@ -622,6 +633,27 @@ function Resolve-CityProof
     }
     $code = [ordered]@{ exists = $false; sha = ''; ts_utc = '' }
 
+    # R2 site verdict (queue main#57): the district stands 91.7% over the water
+    # mesh and that fact only lived in a hand-run report plus a tick log line.
+    # Same checker, same parsing, same red line as verify (site-verdict.ps1) -
+    # the builder must never own a second threshold.
+    $site = [ordered]@{
+        ran = $false; block_water = -1.0; block_water_text = ''
+        dry_candidates = -1; nearest_dry_m = -1.0; nearest_dry_text = ''
+        verdict = ''; over_water = $false; reason = 'skipped'
+    }
+    if (-not $SiteSkip) {
+        try {
+            $sv = Get-SiteVerdict -Root $Root
+            foreach ($k in @('ran','block_water','block_water_text','dry_candidates',
+                             'nearest_dry_m','nearest_dry_text','verdict','over_water','reason')) {
+                $site[$k] = $sv[$k]
+            }
+        } catch {
+            $site.reason = 'site check threw: ' + $_.Exception.Message
+        }
+    }
+
     $donePath = Join-Path $Root 'City3D-staging\r2-ignite.done'
     $doneInfo = Get-ProofFileInfo -Path $donePath
     $repInfo  = Get-ProofFileInfo -Path (Join-Path $Root 'City3D-staging\r2-report.md')
@@ -708,7 +740,7 @@ function Resolve-CityProof
         }
     } catch { }
 
-    return [ordered]@{ build = $build; soak = $soak; code = $code }
+    return [ordered]@{ build = $build; soak = $soak; code = $code; site = $site }
 }
 
 # ---------------------------------------------------------------------------
@@ -1025,5 +1057,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' built=' + $built + ' path=' + $OutPath)
 exit 0

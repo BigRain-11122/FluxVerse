@@ -95,7 +95,12 @@ function proof(o) {
       exists: true, fps_avg: 608.536, errors: 0, exceptions: 0,
       ts_utc: hoursAgo(41), rel: 'qa/smoke-r680-bm-a-soak.json', url: 'file:///D:/f/soak.json'
     },
-    code: { exists: true, sha: '5a7ae301', ts_utc: hoursAgo(41) }
+    code: { exists: true, sha: '5a7ae301', ts_utc: hoursAgo(41) },
+    site: {
+      ran: true, block_water: 91.7, block_water_text: '91.7',
+      dry_candidates: 28274, nearest_dry_m: 83, nearest_dry_text: '83',
+      verdict: 'OVER_WATER', over_water: true, reason: ''
+    }
   }, o || {});
 }
 
@@ -110,11 +115,12 @@ chk('compile.ok', compiled);
 {
   const real = runPanelHtml(realHtml, 'real');
   const rows = proofRows(real);
-  chk('real.row-count=3', rows.length === 3, 'rows=' + rows.length);
-  chk('real.order', rows.length === 3 &&
+  chk('real.row-count=4', rows.length === 4, 'rows=' + rows.length);
+  chk('real.order', rows.length === 4 &&
     rows[0].text.indexOf('R2 批建') >= 0 && rows[1].text.indexOf('10 分钟浸泡') >= 0 &&
-    rows[2].text.indexOf('城市代码') >= 0, JSON.stringify(rows.map(r => r.text)));
-  chk('real.build-numbers', rows.length === 3 &&
+    rows[2].text.indexOf('城市代码') >= 0 && rows[3].text.indexOf('街区落位') >= 0,
+    JSON.stringify(rows.map(r => r.text)));
+  chk('real.build-numbers', rows.length === 4 &&
     /exit 0 · 帧 5\/5/.test(rows[0].text), rows[0] ? rows[0].text : 'no row');
   // r710: the soak is re-runnable (main#17 window), so the expected numbers come
   // from the newest probe output on disk -- a pinned receipt would go red on every
@@ -128,9 +134,9 @@ chk('compile.ok', compiled);
   const soakFps = soakJson && soakJson.render ? Number(soakJson.render.fps_avg) : NaN;
   const soakErr = soakJson && typeof soakJson.errors === 'number' ? soakJson.errors : 0;
   const fpsRe = new RegExp('render ' + (isFinite(soakFps) ? soakFps.toFixed(1) : '?') + ' fps \\u00b7 \\u9519\\u8bef ' + soakErr);
-  chk('real.soak-numbers', rows.length === 3 && fpsRe.test(rows[1].text),
+  chk('real.soak-numbers', rows.length === 4 && fpsRe.test(rows[1].text),
     (rows[1] ? rows[1].text : 'no row') + ' from ' + soakName);
-  chk('real.code-sha', rows.length === 3 &&
+  chk('real.code-sha', rows.length === 4 &&
     rows[2].text.indexOf(require('child_process').execSync('git log -1 --format=%h -- City3D/',
       { encoding: 'utf8' }).trim()) >= 0,
     rows[2] ? rows[2].text : 'no row');
@@ -143,18 +149,25 @@ chk('compile.ok', compiled);
     ? ((soakFps - baseFps) / baseFps) * 100 : null;
   const badDrift = driftPct !== null && driftPct <= -20;
   const soakWarn = soakErr !== 0 || badDrift;
-  chk('real.all-green', rows.length === 3 && !rows[0].warn && !rows[2].warn &&
+  chk('real.all-green', rows.length === 4 && !rows[0].warn && !rows[2].warn &&
     rows[1].warn === soakWarn, JSON.stringify(rows.map(r => r.warn)) + ' drift=' + driftPct);
-  chk('real.soak-drift', rows.length === 3 && (!isFinite(baseFps) ||
+  chk('real.soak-drift', rows.length === 4 && (!isFinite(baseFps) ||
     (rows[1].text.indexOf('基线 ' + Number(baseFps).toFixed(1)) >= 0 &&
      rows[1].text.indexOf(Number(driftPct).toFixed(1) + '%') >= 0)) &&
     rows[1].text.indexOf('p95 ') >= 0, rows[1] ? rows[1].text : 'no row');
   chk('real.no-nan', rows.every(r => !/undefined|NaN/.test(r.raw)));
-  chk('real.has-links', rows.length === 3 && rows[0].raw.indexOf('r2-report.md') >= 0 &&
+  chk('real.has-links', rows.length === 4 && rows[0].raw.indexOf('r2-report.md') >= 0 &&
     rows[1].raw.indexOf(soakName) >= 0);
 
   // --- 4) self-check row inside the 48h window ---
   const row = rowOf(real, '城市证据');
+  // main#57: the site reading is part of this self-check now, and the real city
+  // still stands over water -- expectation is read from the shipped page, not
+  // pinned to "green" (a fixed city would flip the assertion for the right reason).
+  const realProof = JSON.parse((realHtml.match(/const PROOF = ([\s\S]*?);\n/) || [, '{}'])[1]);
+  const realSite = realProof.site || {};
+  const siteWarnReal = !!(realSite.ran && realSite.over_water);
+  const siteMissReal = !realSite.ran;
   chk('real.sc-present', !!row, 'no 城市证据 row');
   chk('real.sc-ok', !!row && row.ok === !badDrift,
     (row ? 'vd=' + row.vd : 'no row') + ' badDrift=' + badDrift);
@@ -162,6 +175,20 @@ chk('compile.ok', compiled);
     (badDrift ? (/漂移/.test(row.vd) && /main#52/.test(row.vd))
               : (row.vd.indexOf('批建 exit 0') >= 0 && /48 小时/.test(row.vd))),
     row ? 'vd=' + row.vd : 'no row');
+  // main#57: 街区落位 is its own self-check row so it cannot mask the soak debt.
+  const srow = rowOf(real, '街区落位');
+  chk('real.site-sc', !!srow && srow.ok === !(siteWarnReal || siteMissReal),
+    (srow ? 'vd=' + srow.vd : 'no row') + ' siteWarn=' + siteWarnReal + ' siteMiss=' + siteMissReal);
+  chk('real.site-sc-text', !!srow &&
+    (siteMissReal ? /未出结论/.test(srow.vd)
+      : siteWarnReal ? (/压水 [\d.]+%/.test(srow.vd) && /main#54/.test(srow.vd))
+        : /压水 [\d.]+%/.test(srow.vd)),
+    srow ? 'vd=' + srow.vd : 'no row');
+  chk('real.site-row', rows.length === 4 && (siteWarnReal || siteMissReal ? rows[3].warn : !rows[3].warn) &&
+    (siteWarnReal ? /压水 [\d.]+%/.test(rows[3].text) && /最近干地 \d+ m/.test(rows[3].text)
+      : siteMissReal ? /读数缺失/.test(rows[3].text)
+        : /压水 [\d.]+%/.test(rows[3].text)),
+    rows[3] ? rows[3].text : 'no row');
 
   // --- 9) row count matches the template ---
   const expected = (template.match(/selfcheck\.push\(/g) || []).length;
@@ -174,8 +201,8 @@ chk('compile.ok', compiled);
 {
   const p = runProof(proof({ build: { exists: false, exit_code: -1, ts_utc: '', wall_s: -1, shots_present: -1, shots_expected: -1, rel: '', url: '', report_rel: '', report_url: '' } }), 'nobuild');
   const rows = proofRows(p);
-  chk('nobuild.row-warns', rows.length === 3 && rows[0].warn, JSON.stringify(rows.map(r => r.warn)));
-  chk('nobuild.row-text', rows.length === 3 && rows[0].text.indexOf('收据缺失') >= 0, rows[0].text);
+  chk('nobuild.row-warns', rows.length === 4 && rows[0].warn, JSON.stringify(rows.map(r => r.warn)));
+  chk('nobuild.row-text', rows.length === 4 && rows[0].text.indexOf('收据缺失') >= 0, rows[0].text);
   const row = rowOf(p, '城市证据');
   chk('nobuild.sc-warns', !!row && row.warn, row ? 'vd=' + row.vd : 'no row');
   chk('nobuild.sc-names-receipt', !!row && row.vd.indexOf('r2-ignite.done') >= 0, row ? 'vd=' + row.vd : 'no row');
@@ -191,8 +218,8 @@ chk('compile.ok', compiled);
     }
   }), 'exit7');
   const rows = proofRows(p);
-  chk('exit7.row-warns', rows.length === 3 && rows[0].warn, JSON.stringify(rows.map(r => r.warn)));
-  chk('exit7.row-code', rows.length === 3 && /exit 7 · 帧 2\/5/.test(rows[0].text), rows[0].text);
+  chk('exit7.row-warns', rows.length === 4 && rows[0].warn, JSON.stringify(rows.map(r => r.warn)));
+  chk('exit7.row-code', rows.length === 4 && /exit 7 · 帧 2\/5/.test(rows[0].text), rows[0].text);
   const row = rowOf(p, '城市证据');
   chk('exit7.sc-warns', !!row && row.warn, row ? 'vd=' + row.vd : 'no row');
   chk('exit7.sc-code', !!row && row.vd.indexOf('exit 7') >= 0, row ? 'vd=' + row.vd : 'no row');
@@ -204,7 +231,7 @@ chk('compile.ok', compiled);
     soak: { exists: true, fps_avg: 120.5, errors: 2, exceptions: 1, ts_utc: hoursAgo(41), rel: 's', url: 'file:///D:/f/s' }
   }), 'soakerr');
   const rows = proofRows(p);
-  chk('soakerr.row-warns', rows.length === 3 && rows[1].warn, JSON.stringify(rows.map(r => r.warn)));
+  chk('soakerr.row-warns', rows.length === 4 && rows[1].warn, JSON.stringify(rows.map(r => r.warn)));
   const row = rowOf(p, '城市证据');
   chk('soakerr.sc-warns', !!row && row.warn, row ? 'vd=' + row.vd : 'no row');
   chk('soakerr.sc-numbers', !!row && row.vd.indexOf('errors=2') >= 0 && row.vd.indexOf('exceptions=1') >= 0,
@@ -231,8 +258,39 @@ chk('compile.ok', compiled);
     }
   }), 'unreadable');
   const rows = proofRows(p);
-  chk('unreadable.row-warns', rows.length === 3 && rows[0].warn, JSON.stringify(rows.map(r => r.warn)));
-  chk('unreadable.row-text', rows.length === 3 && rows[0].text.indexOf('不可解析') >= 0, rows[0].text);
+  chk('unreadable.row-warns', rows.length === 4 && rows[0].warn, JSON.stringify(rows.map(r => r.warn)));
+  chk('unreadable.row-text', rows.length === 4 && rows[0].text.indexOf('不可解析') >= 0, rows[0].text);
+}
+
+// --- 10) site row: dry ground / missing reading (main#57) ---
+{
+  const dry = runProof(proof({
+    site: {
+      ran: true, block_water: 0.0, block_water_text: '0.0', dry_candidates: 0,
+      nearest_dry_m: 0, nearest_dry_text: '0', verdict: 'DRY', over_water: false, reason: ''
+    }
+  }), 'sitedry');
+  const rows = proofRows(dry);
+  chk('sitedry.row-ok', rows.length === 4 && !rows[3].warn, JSON.stringify(rows.map(r => r.warn)));
+  chk('sitedry.row-text', rows.length === 4 && /压水 0\.0%/.test(rows[3].text),
+    rows[3] ? rows[3].text : 'no row');
+  const row = rowOf(dry, '街区落位');
+  chk('sitedry.sc-ok', !!row && row.ok, row ? 'vd=' + row.vd : 'no row');
+}
+{
+  const miss = runProof(proof({
+    site: {
+      ran: false, block_water: -1, block_water_text: '', dry_candidates: -1,
+      nearest_dry_m: -1, nearest_dry_text: '', verdict: '', over_water: false, reason: 'no python'
+    }
+  }), 'sitemiss');
+  const rows = proofRows(miss);
+  chk('sitemiss.row-warns', rows.length === 4 && rows[3].warn, JSON.stringify(rows.map(r => r.warn)));
+  chk('sitemiss.row-text', rows.length === 4 && /读数缺失/.test(rows[3].text),
+    rows[3] ? rows[3].text : 'no row');
+  const row = rowOf(miss, '街区落位');
+  chk('sitemiss.sc-warns', !!row && row.warn && /未出结论/.test(row.vd),
+    row ? 'vd=' + row.vd : 'no row');
 }
 
 console.log('');

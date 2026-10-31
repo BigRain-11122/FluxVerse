@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-10-31T07:55:55Z",
-    "current_activity":  "r716：r714 测出的「街区压水 91.7%」不再是一份手跑死报告——接进巡检每 10 分钟自己播报。Tools/devloop/r2-site-check.py 增 --no-artifacts（只出摘要行、不出图、不依赖 Pillow，否则一天 144 张图埋掉 qa/site）与 --scene/--rebuild 夹具开关；Tools/perceptor/verify.ps1 新增 §2d，每 tick 打一行 VERIFY HEALTH: r2-site: block_water=…% dry_candidates=…，压水 \u003e50% 或栅格/点—三角互校不一致翻 WARN 点名，场景或 python 缺失一律 WARN 不 FAIL。真机读数 block_water=91.7% dry_candidates=28274（与 r714 逐位一致），verify PASS、整轮 2 秒。",
-    "artifact":  "Tools/perceptor/verify.ps1 （新 §2d·每 tick 出 r2-site 读数） ＋ Tools/devloop/r2-site-check.py （--no-artifacts 巡检模式） ＋ Tools/devloop/test-verify-r2-site.ps1 （沙盒 16/16·跑真 verify 对三夹具） ＋ Tools/devloop/fixtures/r2-site/scene-dry.unity ＋ Tools/devloop/fixtures/r2-site/scene-wet.unity ＋ Tools/devloop/fixtures/r2-site/rebuild-fixture.cs ＋ world-public/city-panel.html （file:// 直接打开）",
-    "artifact_utc":  "2026-10-31T07:55:55Z",
-    "milestone":  "下一件＝main#57 把落位结论印到面板城市取景卡（压水 91.7%｜最近干地 83 m，读数与 verify 同一判据，禁另写阈值）；随后 main#56 归档周期化。main#54 搬街区/铺基台仍待 City3D 模块壳线裁定——现在它每 tick 都有实时读数可依。",
+    "updated_utc":  "2026-10-31T08:06:28Z",
+    "current_activity":  "r717 毕：街区压水不再只藏在 tick 日志里——面板取景卡多了「街区落位」一行，直接印「压水 91.7%｜最近干地 83 m」，房子还在湖上就红标。判据只有一份：新增 Tools/devloop/site-verdict.ps1，Tools/perceptor/verify.ps1 与 Tools/devloop/build-city-panel.ps1 同时引用，页面不自己写阈值；读数缺失如实写「未出结论」，不装没事。",
+    "artifact":  "Tools/devloop/site-verdict.ps1 · Tools/devloop/build-city-panel.ps1 · Tools/devloop/city-panel-template.html · Tools/perceptor/verify.ps1 · Tools/devloop/test-city-panel-proof.ps1 · logs/devloop-r708-panel-proof-test.js · Tools/devloop/test-verify-r2-site.ps1 · world-public/city-panel.html",
+    "artifact_utc":  "2026-10-31T08:06:28Z",
+    "milestone":  "下一步 main#54 落位修正（街区整体搬到干地，归 City3D 模块壳线）：判据=Tools/devloop/r2-site-check.py 复跑 block_water≤5% ＋ overview/gamedistrict/street 三帧证房在干地；随后 main#56 日志归档周期化（Tools/devloop/archive-logs.ps1 接 tick，失败只 WARN）。",
     "milestone_eta_utc":  "2026-11-01T14:00:00Z"
 }

@@ -627,6 +627,21 @@ function artTitle(it){
     } else {
       push('城市代码', c.sha + ' · ' + fmtAge(ago(c.ts_utc)), true, c.ts_utc, '', '');
     }
+    // 街区落位（queue main#57）：r713/r714 测出 R2 街区 91.7% 压在水面网格上，
+    // 但那个结论只活在一次手跑报告和 tick 日志里。builder 用与 verify 同一个模块
+    // （Tools/devloop/site-verdict.ps1）在构建时取一次，「压水%｜最近干地 m」直接
+    // 印在这里；红标线同样来自那个模块——页面绝不自己判阈值，也不在读数缺失时
+    // 装作「没事」。
+    const st = p.site || {};
+    const dryTxt = st.nearest_dry_text ? (st.nearest_dry_text + ' m') : '未知';
+    if (!st.ran) {
+      push('街区落位', '读数缺失：r2-site 检查未出结论（python / 场景 / 脚本缺失）', false, '', '', '');
+    } else if (st.over_water) {
+      push('街区落位', '压水 ' + st.block_water_text + '%｜最近干地 ' + dryTxt +
+        ' — 街区还在湖上（main#54）', false, '', '', '');
+    } else {
+      push('街区落位', '压水 ' + st.block_water_text + '%｜最近干地 ' + dryTxt, true, '', '', '');
+    }
     box.innerHTML = out.join('');
   })();
 
@@ -1200,7 +1215,7 @@ function artTitle(it){
   // 有错误，页头还显示全绿就又是一次「漂亮但失真」。浸泡超过 48 小时复跑窗
   // （main#17 判据）同样标注意——那正是下一轮浸泡的欠账，不是可以藏的细节。
   const pf = PROOF || {};
-  const pfb = pf.build || {}, pfs = pf.soak || {}, pfc = pf.code || {};
+  const pfb = pf.build || {}, pfs = pf.soak || {}, pfc = pf.code || {}, pfsite = pf.site || {};
   let cd;
   if (!pfb.exists) {
     cd = { ok: false, vd: 'R2 批建收据缺失（City3D-staging/r2-ignite.done）' };
@@ -1243,6 +1258,21 @@ function artTitle(it){
   }
   cd.title = pfs.exists ? absClock(pfs.ts_utc) : undefined;
   selfcheck.push({ ok: cd.ok, nm: '城市证据', vd: cd.vd, title: cd.title });
+
+  // 街区落位（queue main#57）：独立成项——压水 91.7% 压不掉「浸泡已过 48 小时」
+  // 这类欠账，两笔债必须各占一行。读数与红标线全部来自 site-verdict.ps1（verify
+  // 同源），读数缺失也点名，绝不当成「没事」。
+  const siteDry = pfsite.nearest_dry_text ? (pfsite.nearest_dry_text + ' m') : '未知';
+  let cds;
+  if (!pfsite.ran) {
+    cds = { ok: false, vd: 'r2-site 检查未出结论（python / 场景 / 脚本缺失）— 压水率当前不可见' };
+  } else if (pfsite.over_water) {
+    cds = { ok: false, vd: '压水 ' + pfsite.block_water_text + '% · 最近干地 ' + siteDry +
+      ' — R2 街区仍在湖上，归 main#54 落位修正' };
+  } else {
+    cds = { ok: true, vd: '压水 ' + pfsite.block_water_text + '% · 最近干地 ' + siteDry + '，街区在干地上' };
+  }
+  selfcheck.push({ ok: cds.ok, nm: '街区落位', vd: cds.vd });
 
   // 应办令（queue main#50）：本司应办令卡一旦有逾期项，页头还算「全绿」就是又
   // 一次漂亮但失真。决策面缺档同样标注意——那意味着这张卡当前是瞎的，不等于

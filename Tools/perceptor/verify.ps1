@@ -227,65 +227,37 @@ if (Test-Path -LiteralPath $shotModule) {
 # WARN, not FAIL - same stance as 2b/2c: an observation, not a broken city. A
 # missing scene / missing python is a WARN too; a moved read path must never
 # take the whole city scan down with it.
+# The checker call, its parsing and its red line now live in ONE module that the
+# panel builder dot-sources too (queue main#57) - two copies of the threshold
+# would let the page and the tick disagree about the same lake.
 $siteScript = Join-Path $repoRoot 'Tools\devloop\r2-site-check.py'
-if (Test-Path -LiteralPath $siteScript) {
-  $pyExe = $env:FLUXVERSE_PYTHON
-  if (-not $pyExe) {
-    foreach ($cand in @('python', 'py')) {
-      $cmd = Get-Command $cand -ErrorAction SilentlyContinue
-      if ($cmd) { $pyExe = $cmd.Source; break }
-    }
-  }
-  if (-not $pyExe) {
-    Write-Output 'VERIFY WARN: r2-site: no python interpreter on PATH - site check skipped'
-  } else {
-    $siteArgs = @(('"' + $siteScript + '"'), '--no-artifacts')
-    if ($env:FLUXVERSE_SITE_SCENE) { $siteArgs += @('--scene', ('"' + $env:FLUXVERSE_SITE_SCENE + '"')) }
-    if ($env:FLUXVERSE_SITE_REBUILD) { $siteArgs += @('--rebuild', ('"' + $env:FLUXVERSE_SITE_REBUILD + '"')) }
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = $pyExe
-    $psi.Arguments = ($siteArgs -join ' ')
-    $psi.UseShellExecute = $false
-    $psi.CreateNoWindow = $true
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.WorkingDirectory = $repoRoot
-    $siteOut = ''
-    $siteErr = ''
-    $siteExit = -1
-    $proc = $null
-    try {
-      $proc = [System.Diagnostics.Process]::Start($psi)
-      $outTask = $proc.StandardOutput.ReadToEndAsync()
-      $errTask = $proc.StandardError.ReadToEndAsync()
-      if ($proc.WaitForExit(120000)) { $siteExit = $proc.ExitCode } else { try { $proc.Kill() } catch { }; $siteExit = -2 }
-      $siteOut = [string]$outTask.Result
-      $siteErr = [string]$errTask.Result
-    } catch {
-      $siteExit = -3
-    } finally {
-      if ($proc) { try { $proc.Dispose() } catch { } }
-    }
-    $mCov = [regex]::Match($siteOut, 'block_water_coverage=([\d.]+)%')
-    $mDry = [regex]::Match($siteOut, 'dry_candidates=(\d+)')
-    $mVerdict = [regex]::Match($siteOut, 'SITE_VERDICT=([A-Z_]+)')
-    if ($mCov.Success -and $mDry.Success -and $mVerdict.Success -and $mVerdict.Groups[1].Value -eq 'INCONSISTENT') {
-      Write-Output ('VERIFY WARN: r2-site: block_water=' + $mCov.Groups[1].Value + '% dry_candidates=' + $mDry.Groups[1].Value + ' - raster and point-in-triangle disagree; read the checker, not the number')
-    } elseif ($siteExit -ne 0 -or -not $mCov.Success -or -not $mDry.Success) {
-      # No 'FAIL' token in this message: the tick red-scan keys on that word.
-      $reason = 'exit ' + $siteExit
-      if ($siteErr.Trim()) { $reason = $reason + ': ' + (($siteErr.Trim() -split "`n")[0]) }
-      $reason = $reason -replace 'FAIL', 'ERR'
-      Write-Output ('VERIFY WARN: r2-site: the district site check produced no verdict (' + $reason + ') - scene or rebuild script moved?')
+$siteMod = Join-Path $repoRoot 'Tools\devloop\site-verdict.ps1'
+if ((-not (Test-Path -LiteralPath $siteScript)) -or (-not (Test-Path -LiteralPath $siteMod))) {
+  Write-Output 'VERIFY WARN: r2-site: checker or site-verdict.ps1 missing - site check skipped'
+} else {
+  $siteLoaded = $true
+  try { . $siteMod } catch { $siteLoaded = $false }
+  if ($siteLoaded -and (Get-Command Get-SiteVerdict -ErrorAction SilentlyContinue)) {
+    $sv = Get-SiteVerdict -Root $repoRoot
+    if (-not $sv.ran) {
+      if (-not (Get-SitePython)) {
+        Write-Output 'VERIFY WARN: r2-site: no python interpreter on PATH - site check skipped'
+      } else {
+        # No 'FAIL' token in this message: the tick red-scan keys on that word.
+        Write-Output ('VERIFY WARN: r2-site: the district site check produced no verdict (' + $sv.reason + ') - scene or rebuild script moved?')
+      }
+    } elseif ($sv.verdict -eq 'INCONSISTENT') {
+      Write-Output ('VERIFY WARN: r2-site: block_water=' + $sv.block_water_text + '% dry_candidates=' + $sv.dry_candidates_text + ' - raster and point-in-triangle disagree; read the checker, not the number')
     } else {
-      $siteLine = 'r2-site: block_water=' + $mCov.Groups[1].Value + '% dry_candidates=' + $mDry.Groups[1].Value
-      $cov = [double]$mCov.Groups[1].Value
-      if ($cov -gt 50.0) {
+      $siteLine = 'r2-site: block_water=' + $sv.block_water_text + '% dry_candidates=' + $sv.dry_candidates_text
+      if (Test-SiteOverWater -Verdict $sv) {
         Write-Output ('VERIFY WARN: ' + $siteLine + ' - the R2 district stands over water; run Tools\devloop\r2-site-check.py for the nearest dry patch')
       } else {
         Write-Output ('VERIFY HEALTH: ' + $siteLine)
       }
     }
+  } else {
+    Write-Output 'VERIFY WARN: site-verdict.ps1 did not provide Get-SiteVerdict'
   }
 }
 

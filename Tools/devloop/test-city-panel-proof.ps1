@@ -82,7 +82,7 @@ foreach ($k in @('A', 'B', 'C')) {
     $outHtml = Join-Path $sandbox ('panel-' + $k + '.html')
     $hist = Join-Path $sandbox ('hist-' + $k + '.jsonl')
     $log = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
-            -ProofRoot $root -OutPath $outHtml -HistoryPath $hist) -join "`n"
+            -ProofRoot $root -OutPath $outHtml -HistoryPath $hist -SiteSkip) -join "`n"
     $html = ''
     if (Test-Path -LiteralPath $outHtml) { $html = [IO.File]::ReadAllText($outHtml) }
     $results[$k] = [pscustomobject]@{ log = $log; html = $html }
@@ -117,6 +117,26 @@ Check 'C: exit code surfaces in the page' ($C.html.Contains('"exit_code":7'))
 Check 'C: soak errors carried, not laundered' ($C.html.Contains('"errors":2') -and $C.html.Contains('"exceptions":1'))
 
 Check 'no unreadable receipt crashes a build' ((@($A.log, $B.log, $C.log) | Where-Object { $_ -match 'FAIL:' }).Count -eq 0)
+
+# --- main#57: site verdict rows ---------------------------------------------
+# The builder runs the site checker itself; -SiteSkip keeps this sandbox free of
+# python calls. A skipped reading must be reported as missing, never as dry.
+Check 'A: site reading absent is honest' ($A.log -match 'site=missing')
+Check 'A: site_over=0 when unread' ($A.log -match 'site_over=0')
+Check 'A: page carries site ran=false' ($A.html.Contains('"ran":false') -and $A.html.Contains('"over_water":false'))
+Check 'B: skipped site read still builds' ($B.log -match 'PANEL OK' -and $B.log -match 'site=missing')
+
+# Parsing + red line come from the SAME module verify.ps1 dot-sources.
+. (Join-Path $PSScriptRoot 'site-verdict.ps1')
+$dryText = "block_water_coverage=0.0%`ndry_candidates=3`nSITE_VERDICT=DRY block_water=0.0% nearest_dry=0m"
+$dryV = ConvertFrom-SiteCheckText -Text $dryText -ExitCode 0
+Check 'site: dry parses and is not over water' ($dryV.ran -and $dryV.verdict -eq 'DRY' -and (-not (Test-SiteOverWater -Verdict $dryV)))
+$wetText = "block_water_coverage=91.7%`ndry_candidates=28274`nSITE_VERDICT=OVER_WATER block_water=91.7% nearest_dry=83m"
+$wetV = ConvertFrom-SiteCheckText -Text $wetText -ExitCode 0
+Check 'site: over water carries both numbers' ($wetV.ran -and $wetV.block_water_text -eq '91.7' -and $wetV.nearest_dry_text -eq '83' -and (Test-SiteOverWater -Verdict $wetV))
+$noneV = ConvertFrom-SiteCheckText -Text 'boom' -ExitCode 3
+Check 'site: no verdict is never read as dry' ((-not $noneV.ran) -and (-not (Test-SiteOverWater -Verdict $noneV)))
+Check 'site: missing nearest_dry does not crash' ((ConvertFrom-SiteCheckText -Text $dryText.Replace(' nearest_dry=0m','') -ExitCode 0).nearest_dry_text -eq '')
 
 try { Remove-Item -LiteralPath $sandbox -Recurse -Force } catch { }
 

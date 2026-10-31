@@ -52,10 +52,11 @@ chk('good.sum=consistent', good.sum === (expectedChecks + ' 项通过') ||
 // one). r709 adds a second legitimate warn source: 应办令, which goes red when the
 // group's ledger itself carries an overdue order addressed to us. r712 adds a
 // third: 城市证据 goes red while the soak sits >20% under the accepted baseline
-// (main#52 open). Any warn on a different row is still a defect, so assert by
-// exclusion instead of "no warn".
+// (main#52 open). r717 (main#57) adds a fourth: 街区落位 goes red while the R2
+// block still stands over the water mesh -- an explained, in-register debt.
+// Any warn on a different row is still a defect, so assert by exclusion.
 const warnRows = good.body.split('<div class="chk">').slice(1).filter(c => c.indexOf('>注意<') >= 0);
-const WARN_OK = ['<span class="nm">取景帧</span>', '<span class="nm">应办令</span>', '<span class="nm">城市证据</span>'];
+const WARN_OK = ['<span class="nm">取景帧</span>', '<span class="nm">应办令</span>', '<span class="nm">城市证据</span>', '<span class="nm">街区落位</span>'];
 const strayWarn = warnRows.filter(c => !WARN_OK.some(nm => c.indexOf(nm) >= 0));
 chk('good.no-unexplained-warn', strayWarn.length === 0,
   'warn=' + warnRows.length + ' stray=' + strayWarn.length);

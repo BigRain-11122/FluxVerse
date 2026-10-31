@@ -410,6 +410,57 @@ if (-not (Test-Path -LiteralPath $qdueMod)) {
   }
 }
 
+# ---------- 2h. write-side sandboxes actually run (main#88, r750) ----------
+# r748 built one entry for the PowerShell sandboxes (run-ps-suites.ps1) and
+# r749 wired the queue census into this gate - but the write-side suites still
+# only ran when a round remembered to call the runner. This is the arm that
+# makes forgetting impossible: content-addressed, so an unchanged source set
+# costs one hash and no child process, and a changed set runs the runner once
+# as a child (suites end with `exit N`, so they can never run in-process).
+# The verdict of the last real run lives in logs\.ps-suites-last.json and stays
+# readable on every later tick, so a red stays visible instead of evaporating.
+# WARN, not FAIL - same stance as 2b..2g: an observation, not a broken city.
+# No 'FAIL' token in these messages (the tick red-scan keys on that word).
+if ($env:FLUXVERSE_PS_SUITES -eq 'off') {
+  Write-Output 'VERIFY HEALTH: ps-suites: disabled by FLUXVERSE_PS_SUITES=off'
+} else {
+  $psMod = Join-Path $repoRoot 'Tools\devloop\ps-suites-tick.ps1'
+  if (-not (Test-Path -LiteralPath $psMod)) {
+    Write-Output 'VERIFY WARN: ps-suites: ps-suites-tick.ps1 missing - write-side sandboxes not run this tick'
+  } else {
+    $psLoaded = $true
+    try { . $psMod } catch { $psLoaded = $false }
+    if ($psLoaded -and (Get-Command Invoke-PsSuitesTick -ErrorAction SilentlyContinue)) {
+      $psArgs = @{ RepoDir = $repoRoot }
+      if ($env:FLUXVERSE_PS_SUITES_RUNNER) { $psArgs['RunnerPath'] = $env:FLUXVERSE_PS_SUITES_RUNNER }
+      if ($env:FLUXVERSE_PS_SUITES_TICKET) { $psArgs['TicketPath'] = $env:FLUXVERSE_PS_SUITES_TICKET }
+      if ($env:FLUXVERSE_PS_SUITES_TIMEOUT) {
+        $psTo = 0
+        if ([int]::TryParse($env:FLUXVERSE_PS_SUITES_TIMEOUT, [ref]$psTo) -and $psTo -gt 0) { $psArgs['TimeoutSec'] = $psTo }
+      }
+      if ($env:FLUXVERSE_PS_SUITES_FORCE -eq '1') { $psArgs['Force'] = $true }
+      $psRes = $null
+      try { $psRes = Invoke-PsSuitesTick @psArgs } catch { $psRes = $null }
+      if ($null -eq $psRes) {
+        Write-Output 'VERIFY WARN: ps-suites: ps-suites-tick.ps1 threw - write-side sandboxes not measured this tick'
+      } else {
+        $psLine = Format-PsSuitesLine $psRes
+        if (Test-PsSuitesHealthy $psRes) {
+          Write-Output ('VERIFY HEALTH: ' + $psLine)
+        } elseif ($psRes.status -eq 'timeout') {
+          Write-Output ('VERIFY WARN: ' + $psLine + ' - ' + $psRes.note + '; re-run: Tools\devloop\run-ps-suites.ps1')
+        } elseif ($psRes.status -eq 'missing' -or $psRes.status -eq 'unreadable') {
+          Write-Output ('VERIFY WARN: ' + $psLine + ' - ' + $psRes.note)
+        } else {
+          Write-Output ('VERIFY WARN: ' + $psLine + ' - write-side sandbox red; re-run: Tools\devloop\run-ps-suites.ps1')
+        }
+      }
+    } else {
+      Write-Output 'VERIFY WARN: ps-suites-tick.ps1 did not provide Invoke-PsSuitesTick'
+    }
+  }
+}
+
 # ---------- verdict ----------
 if ($fail.Count -gt 0) {
   $fail | ForEach-Object { Write-Output ('VERIFY FAIL: ' + $_) }

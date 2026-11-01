@@ -480,17 +480,28 @@ if (-not (Test-Path -LiteralPath $qdueMod)) {
     } elseif (-not $qd.exists) {
       Write-Output ('VERIFY WARN: qdue: queue dir not readable (' + $qdir + ') - open/late/bad unknown, not zero')
     } else {
-      $qLine = 'qdue: open=' + $qd.open + ' dated=' + $qd.dated + ' late=' + $qd.late + ' max=' + $qd.max_days + 'd bad=' + $qd.bad + ' code=' + $qd.code
+      $qLine = 'qdue: open=' + $qd.open + ' dated=' + $qd.dated + ' late=' + $qd.late + ' max=' + $qd.max_days + 'd bad=' + $qd.bad + ' code=' + $qd.code + ' long=' + $qd.long + ' longmax=' + $qd.long_max
+      # Row width (main#110): a row longer than the module's cap is structural
+      # debt ("one row is one item"), NOT a mis-written marker - it never joins
+      # the bad account. The suffix is printed whenever it exists, so an overdue
+      # or badly-written row cannot hide it, and it never turns the gate red.
+      $qLongHint = ''
+      if ($qd.long -gt 0) {
+        $qLongIds = @($qd.long_items | ForEach-Object { '#' + $_.id + ' ' + $_.chars })
+        $qLongHint = '; overlong queue rows (' + $qd.long_limit + ' char cap, one row is one item): ' + ($qLongIds -join ', ')
+      }
       if ($qd.bad -gt 0) {
         $qBad = @($qd.bad_items | ForEach-Object { '#' + $_.id + '(' + $_.token + ' ' + $_.reason + ')' })
         $qHint = '; the remark cell wants due=YYYY-MM-DD'
         if (@($qd.bad_items | Where-Object { $_.reason -eq 'row' }).Count -gt 0) {
           $qHint = $qHint + '; a row missing its trailing | mis-shifts which cell is last'
         }
-        Write-Output ('VERIFY WARN: ' + $qLine + ' - badly written due markers: ' + ($qBad -join ', ') + $qHint)
+        Write-Output ('VERIFY WARN: ' + $qLine + ' - badly written due markers: ' + ($qBad -join ', ') + $qHint + $qLongHint)
       } elseif ($qd.late -gt 0) {
         $qLate = @($qd.items | ForEach-Object { '#' + $_.id + ' ' + $_.days + 'd' })
-        Write-Output ('VERIFY WARN: ' + $qLine + ' - overdue queue rows: ' + ($qLate -join ', '))
+        Write-Output ('VERIFY WARN: ' + $qLine + ' - overdue queue rows: ' + ($qLate -join ', ') + $qLongHint)
+      } elseif ($qd.long -gt 0) {
+        Write-Output ('VERIFY WARN: ' + $qLine + $qLongHint)
       } else {
         Write-Output ('VERIFY HEALTH: ' + $qLine)
       }

@@ -56,6 +56,16 @@
 #    a non-zero number is not a verdict, it is the queue saying "these dates are
 #    quoted, look at them yourself". Quoted markers in other cells stay silent -
 #    they are citations by construction, and every doc row would be a hit.
+#  - ROW WIDTH (main#110). Nothing watched how LONG a row was, so the 45,413
+#    character monster that r773 had to split could grow back one "let me append
+#    one more sentence" at a time, and the only machine that would ever notice is
+#    the trailing-pipe check - at the very end, after the damage. A row longer
+#    than MaxRowChars (default 3000 = about three screens; deliberately far below
+#    45,413 so growth gets caught early, not at the wall) is counted in `long`
+#    and named with its character count. `long` is NOT `bad`: a long row is a
+#    structural debt (one row is supposed to be one item), not a mis-written
+#    marker, so the two accounts stay separate. Closed (struck) rows are counted
+#    too and carry `closed=true` - a struck 45 KB row still breaks the table.
 #  - WHICH CELL IS LAST (main#102). "The remark cell is the last cell" assumed a
 #    trailing `|`, so a row that forgot it had its marker judged against the
 #    POINTER cell and the remark cell was never scanned - silently (main#100
@@ -150,7 +160,8 @@ function Get-QueueDue
     param(
         [string]$Dir,
         [datetime]$Today = (Get-Date).Date,
-        [string]$RepoRoot = ''
+        [string]$RepoRoot = '',
+        [int]$MaxRowChars = 3000
     )
 
     $r = [ordered]@{
@@ -165,10 +176,15 @@ function Get-QueueDue
         max_id   = ''
         bad      = 0
         code     = 0
+        long     = 0
+        long_max = 0
+        long_max_id = ''
+        long_limit = $MaxRowChars
         as_of    = $Today.Date.ToString('yyyy-MM-dd')
         items    = @()
         bad_items = @()
         code_items = @()
+        long_items = @()
     }
     if ([string]::IsNullOrEmpty($Dir)) { return $r }
     if (-not (Test-Path -LiteralPath $Dir)) { return $r }
@@ -189,10 +205,13 @@ function Get-QueueDue
     $items = New-Object System.Collections.ArrayList
     $badItems = New-Object System.Collections.ArrayList
     $codeItems = New-Object System.Collections.ArrayList
+    $longItems = New-Object System.Collections.ArrayList
     $files = 0
     $rows = 0
     $opens = 0
     $dated = 0
+    $longMax = 0
+    $longMaxId = ''
 
     $found = @()
     try {
@@ -211,6 +230,18 @@ function Get-QueueDue
             $idTxt = $cells[1].Trim()
             if ($idTxt -notmatch '^\d+$') { continue }
             $rows++
+            # Row width (main#110): measured on EVERY data row, closed ones
+            # included - a struck 45 KB row still wrecks the table - and before
+            # the closed-row skip so a finished monster cannot hide.
+            if ($t.Length -gt $longMax) { $longMax = $t.Length; $longMaxId = $idTxt }
+            if ($t.Length -gt $MaxRowChars) {
+                $null = $longItems.Add([ordered]@{
+                    id     = $idTxt
+                    file   = $f.Name
+                    chars  = $t.Length
+                    closed = [bool]$t.Contains('~~')
+                })
+            }
             # The queue's closed convention is a struck-through subject cell.
             if ($t.Contains('~~')) { continue }
             $opens++
@@ -320,7 +351,11 @@ function Get-QueueDue
     $r.late = $items.Count
     $r.bad = $badItems.Count
     $r.code = $codeItems.Count
+    $r.long = $longItems.Count
+    $r.long_max = $longMax
+    $r.long_max_id = $longMaxId
     if ($badItems.Count -gt 0) { $r.bad_items = @($badItems) }
+    if ($longItems.Count -gt 0) { $r.long_items = @($longItems) }
     if ($codeItems.Count -gt 0) { $r.code_items = @($codeItems) }
     if ($items.Count -gt 0) {
         $r.items = @($items | Sort-Object -Property @{ Expression = { $_.days } } -Descending)

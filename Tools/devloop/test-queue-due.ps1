@@ -166,6 +166,40 @@ $rowJ = @"
 "@
 Write-TextFile (Join-Path $qdirJ 'queue-j.md') $rowJ
 
+# --- K) row width (main#110) -------------------------------------------------
+# One row is one item, but nothing watched how long a row was: the 45,413
+# character monster r773 had to split could grow back one sentence at a time and
+# the only machine that would ever notice is the trailing-pipe check, at the very
+# end. Rows over the cap are counted (`long`) and named with their length, in an
+# account SEPARATE from `bad` (an overlong row is one-item-per-row debt, not a
+# mis-written marker). Closed (struck) rows are counted too: a struck 45 KB row
+# still wrecks the table.
+$qdirK = Join-Path $sandbox 'queueK'
+New-Item -ItemType Directory -Path $qdirK -Force | Out-Null
+$padK = 'x' * 3500
+$rowK = @"
+# fixture queue: row width
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | short row | p | nothing here |
+| 2 | long row that is also overdue | p | due=2026-10-20 $padK |
+| 3 | ~~closed long row~~ | p | $padK |
+| 4 | long but undated row | p | $padK |
+"@
+Write-TextFile (Join-Path $qdirK 'queue-k.md') $rowK
+
+# Boundary: the cap is a strict `>`, proved by injecting the row's own length
+# (exactly at the cap = fine, one character over = long). Never widen the
+# production cap to make a fixture pass.
+$qdirL = Join-Path $sandbox 'queueL'
+New-Item -ItemType Directory -Path $qdirL -Force | Out-Null
+$padL = 'y' * 40
+$rowL1 = '| 1 | boundary row | p | ' + $padL + ' |'
+$lenL = $rowL1.Length
+$rowL = "# fixture queue: width boundary`r`n`r`n| # | task | ptr | note |`r`n|---|---|---|---|`r`n" + $rowL1 + "`r`n"
+Write-TextFile (Join-Path $qdirL 'queue-l.md') $rowL
+
 # --- results ---------------------------------------------------------------
 $A = Get-QueueDue -Dir $qdirA -Today $today
 $B = Get-QueueDue -Dir $qdirB -Today $today
@@ -174,6 +208,28 @@ $QG = Get-QueueDue -Dir $qdirG -Today $today
 $QH = Get-QueueDue -Dir $qdirH -Today $today
 $QI = Get-QueueDue -Dir $qdirI -Today $today
 $QJ = Get-QueueDue -Dir $qdirJ -Today $today
+$QK = Get-QueueDue -Dir $qdirK -Today $today
+$QLat = Get-QueueDue -Dir $qdirL -Today $today -MaxRowChars $lenL
+$QLover = Get-QueueDue -Dir $qdirL -Today $today -MaxRowChars ($lenL - 1)
+
+# independent recount of the K fixture: which data rows are over the cap
+$kExpectIds = @()
+$kMaxChars = 0
+$kStruckIds = @()
+$kLenById = @{}
+foreach ($line in ($rowK -split "`r?`n")) {
+    $t = $line.Trim()
+    if (-not $t.StartsWith('|')) { continue }
+    $cells = $t.Split('|')
+    if ($cells.Count -lt 5) { continue }
+    $id = $cells[1].Trim()
+    if ($id -notmatch '^\d+$') { continue }
+    $kLenById[$id] = $t.Length
+    if ($t.Length -gt $kMaxChars) { $kMaxChars = $t.Length }
+    if ($t.Length -gt 3000) { $kExpectIds += $id }
+    if ($t.Length -gt 3000 -and $t.Contains('~~')) { $kStruckIds += $id }
+}
+$kMaxId = (@($kLenById.GetEnumerator() | Sort-Object -Property Value -Descending)[0].Key)
 
 # --- C) live queue, independent recount ------------------------------------
 $qdirLive = Join-Path $repoDir 'state\queue'
@@ -181,6 +237,8 @@ $C = Get-QueueDue -Dir $qdirLive -Today $today -RepoRoot $repoDir
 $liveOpen = 0
 $liveDated = 0
 $liveLate = 0
+$liveLong = 0
+$liveLongMax = 0
 $liveLateIds = @()
 foreach ($f in @(Get-ChildItem -LiteralPath $qdirLive -Filter '*.md' -File | Sort-Object Name)) {
     $txt = [IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8)
@@ -191,6 +249,8 @@ foreach ($f in @(Get-ChildItem -LiteralPath $qdirLive -Filter '*.md' -File | Sor
         if ($cells.Count -lt 5) { continue }
         $id = $cells[1].Trim()
         if ($id -notmatch '^\d+$') { continue }
+        if ($t.Length -gt $liveLongMax) { $liveLongMax = $t.Length }
+        if ($t.Length -gt 3000) { $liveLong++ }
         if ($t.Contains('~~')) { continue }
         $liveOpen++
         $m = [regex]::Match($t, 'due=(\d{4})-(\d{2})-(\d{2})')
@@ -233,6 +293,13 @@ $logI = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
 $htmlI = ''
 if (Test-Path -LiteralPath $outI) { $htmlI = [IO.File]::ReadAllText($outI) }
 
+$outK = Join-Path $sandbox 'panel-k.html'
+$logK = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
+        -ProofRoot $repoDir -QueueDir $qdirK `
+        -OutPath $outK -HistoryPath (Join-Path $sandbox 'hist-k.jsonl')) -join "`n"
+$htmlK = ''
+if (Test-Path -LiteralPath $outK) { $htmlK = [IO.File]::ReadAllText($outK) }
+
 $pass = 0
 $fail = 0
 function Check([string]$name, [bool]$cond) {
@@ -262,6 +329,10 @@ Check 'C: live overdue ids match recount' ((@($C.items | ForEach-Object { $_.id 
 Check 'C: max_days is the largest late day count' ($C.max_days -eq (@($C.items | ForEach-Object { $_.days } | Measure-Object -Maximum).Maximum))
 Check 'C: bad items agree with the bad count' (@($C.bad_items).Count -eq $C.bad)
 Check 'C: no live marker sits outside the remark cell' (@($C.bad_items | Where-Object { $_.reason -eq 'cell' }).Count -eq 0)
+Check 'C: long count matches recount' ($C.long -eq $liveLong)
+Check 'C: long items agree with the long count' (@($C.long_items).Count -eq $C.long)
+Check 'C: long_max matches the longest live row' ($C.long_max -eq $liveLongMax)
+Check 'C: the long cap is shipped with the census' ($C.long_limit -eq 3000)
 
 Check 'F: eight rows scanned' ($QF.scanned -eq 8)
 Check 'F: five bad markers' ($QF.bad -eq 5)
@@ -317,6 +388,25 @@ Check 'J: a malformed row is reported, not silent' ($QJ.bad -eq 2)
 Check 'J: the malformed rows are named with reason row' (((@($QJ.bad_items | Where-Object { $_.reason -eq 'row' } | ForEach-Object { $_.id }) | Sort-Object) -join ',') -eq '1,2')
 Check 'J: the well-formed row is not accused' (@($QJ.bad_items | Where-Object { $_.id -eq '3' }).Count -eq 0)
 
+Check 'K: four rows scanned' ($QK.scanned -eq 4)
+Check 'K: three over-cap rows counted (one closed)' ($QK.long -eq 3)
+Check 'K: long count matches an independent recount' ($QK.long -eq $kExpectIds.Count)
+Check 'K: long ids match an independent recount' (((@($QK.long_items | ForEach-Object { $_.id }) | Sort-Object) -join ',') -eq (($kExpectIds | Sort-Object) -join ','))
+Check 'K: long items agree with the long count' (@($QK.long_items).Count -eq $QK.long)
+Check 'K: the short row is not long' (@($QK.long_items | Where-Object { $_.id -eq '1' }).Count -eq 0)
+Check 'K: long_max is the longest row overall (census agrees with recount)' ($QK.long_max -eq $kMaxChars)
+Check 'K: long_max_id names the longest row' ($QK.long_max_id -eq $kMaxId)
+Check 'K: a struck over-cap row is counted (a struck monster still wrecks the table)' (((@($QK.long_items | Where-Object { $_.closed } | ForEach-Object { $_.id }) | Sort-Object) -join ',') -eq (($kStruckIds | Sort-Object) -join ','))
+Check 'K: a closed over-cap row is still not "open work"' (@($QK.long_items | Where-Object { $_.closed } | Measure-Object).Count -eq 1)
+Check 'K: row length in chars is reported per item' (((@($QK.long_items | Where-Object { $_.id -eq '2' })[0].chars) -eq $kLenById['2']) -and ((@($QK.long_items | Where-Object { $_.id -eq '2' })[0].chars) -gt 3000))
+Check 'K: long rows never join the bad account' ($QK.bad -eq 0)
+Check 'K: a long overdue row is still counted as late' ($QK.late -eq 1 -and $QK.max_id -eq '2')
+Check 'K: the default cap is 3000 characters' ($QK.long_limit -eq 3000)
+Check 'K: a row exactly at the cap is not long' ($QLat.long -eq 0)
+Check 'K: one character over the cap is long' ($QLover.long -eq 1)
+Check 'K: the boundary row reports its own length' ((@($QLover.long_items)[0].chars) -eq $lenL)
+Check 'K: an injected cap is echoed back' ($QLat.long_limit -eq $lenL)
+
 Check 'D: builder reported PANEL OK' ($logD -match 'PANEL OK')
 Check 'D: fixture queue reports one late' ($logD -match 'qdue=1(?!\d)')
 Check 'D: fixture queue reports 12 days' ($logD -match 'qdue_max=12(?!\d)')
@@ -324,15 +414,24 @@ Check 'D: page carries the queue row' ($htmlD.Contains('id="f-queue"'))
 Check 'D: page carries the counter' ($htmlD.Contains('const QUEUE ='))
 Check 'D: an unreadable date is reported as bad, not dropped' ($logD -match 'qdue_bad=1(?!\d)')
 Check 'D: a queue with no quoted deadline reports code=0' ($logD -match 'qdue_code=0(?!\d)')
+Check 'D: a queue with no over-cap row reports long=0' ($logD -match 'qdue_long=0(?!\d)')
+Check 'D: the longest row is reported even when nothing is over the cap' ($logD -match 'qdue_longmax=[1-9]\d*(?!\d)')
 
 Check 'E: missing queue dir still builds' ($logE -match 'PANEL OK')
 Check 'E: missing queue dir says missing, not zero' ($logE -match 'qdue=missing')
 Check 'E: missing queue dir says bad=missing too' ($logE -match 'qdue_bad=missing')
 Check 'E: missing queue dir says code=missing too' ($logE -match 'qdue_code=missing')
+Check 'E: missing queue dir says long=missing too' ($logE -match 'qdue_long=missing')
+Check 'E: missing queue dir says longmax=missing too' ($logE -match 'qdue_longmax=missing')
 Check 'E: page still carries the row element' ($htmlE.Contains('id="f-queue"'))
 
 Check 'I: builder reports the quoted count' ($logI -match 'PANEL OK' -and $logI -match 'qdue_code=1(?!\d)')
 Check 'I: the quoted count reaches the page data' ($htmlI.Contains('code_items'))
+
+Check 'K: builder reports the over-cap row count' ($logK -match 'PANEL OK' -and $logK -match ('qdue_long=' + $QK.long + '(?!\d)'))
+Check 'K: builder reports the longest row' ($logK -match ('qdue_longmax=' + $kMaxChars + '(?!\d)'))
+Check 'K: the over-cap rows reach the page data' ($htmlK.Contains('long_items'))
+Check 'K: the page carries the shipped cap' ($htmlK.Contains('"long_limit":3000'))
 
 if (Test-Path -LiteralPath $sandbox) { Remove-Item -LiteralPath $sandbox -Recurse -Force }
 

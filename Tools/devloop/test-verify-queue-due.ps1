@@ -102,6 +102,18 @@ $dirCode = New-Queue 'code' @'
 | 1 | quoted real deadline | p | `due=2026-01-05` |
 '@
 
+# long (main#110): a row over the width cap is structural debt, not a marker
+# bug - the tick must name it without turning it into a bad-marker account
+$padLong = 'z' * 3500
+$dirLong = New-Queue 'long' @"
+# fixture queue: over-cap row
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | short row | p | nothing here |
+| 2 | long row | p | $padLong |
+"@
+
 # ---------- 1. live machine --------------------------------------------------
 $out = Run-Verify ''
 $text = $out -join "`n"
@@ -114,6 +126,8 @@ if ($live.Count -eq 1) {
   Check 'live line carries max=' ($live[0] -match 'max=\d+d') $live[0]
   Check 'live line carries bad=' ($live[0] -match 'bad=\d+') $live[0]
   Check 'live line carries code=' ($live[0] -match 'code=\d+') $live[0]
+  Check 'live line carries long=' ($live[0] -match 'long=\d+') $live[0]
+  Check 'live line carries longmax=' ($live[0] -match 'longmax=\d+') $live[0]
 }
 Check 'live gate still passes with the census wired' ($text -match 'VERIFY PASS') $text
 Check 'live census text contains no FAIL token' (-not ($text -match 'FAIL')) $text
@@ -176,6 +190,20 @@ if ($h5b.Count -eq 1) {
   Check 'quoted fixture counts no deadline' ($h5b[0] -match 'dated=0(?!\d)') $h5b[0]
 }
 Check 'quoted fixture text contains no FAIL token' (-not ($text5b -match 'FAIL')) $text5b
+
+# ---------- 5c. over-cap row -> WARN naming it, separate from bad (main#110)
+$out5c = Run-Verify $dirLong
+$text5c = $out5c -join "`n"
+$w5c = @($out5c | Where-Object { $_ -match '^VERIFY WARN: qdue:' })
+Check 'over-cap fixture flips the line to WARN' ($w5c.Count -eq 1) $text5c
+if ($w5c.Count -eq 1) {
+  Check 'over-cap fixture reports long=1' ($w5c[0] -match 'long=1(?!\d)') $w5c[0]
+  Check 'over-cap fixture keeps bad=0 (two separate accounts)' ($w5c[0] -match 'bad=0(?!\d)') $w5c[0]
+  Check 'over-cap WARN names the row and its length' ($w5c[0] -match '#2 \d{4,}') $w5c[0]
+  Check 'over-cap WARN says which rule it broke' ($w5c[0] -match 'one row is one item') $w5c[0]
+}
+Check 'over-cap fixture does not fail the gate' ($text5c -match 'VERIFY PASS') $text5c
+Check 'over-cap fixture text contains no FAIL token' (-not ($text5c -match 'FAIL')) $text5c
 
 # ---------- 6. missing directory -> WARN "unknown", never zero --------------
 $missing = Join-Path $sandbox 'no-such-queue'

@@ -200,5 +200,37 @@ chk('row.mixed-splits-counts', e12.innerHTML.indexOf('标记坏 1 处') >= 0 &&
 chk('row.mixed-names-both', e12.innerHTML.indexOf('（#4）') >= 0 &&
   e12.innerHTML.indexOf('（#12）') >= 0, e12.innerHTML);
 
+// --- 11) over-cap rows (queue main#110) -----------------------------------
+// One row is one item, but nothing watched row LENGTH: the 45,413-character row
+// r773 had to split could grow back. The page shows how many rows are past the
+// cap, which ones and how long, and keeps that account apart from `bad` (an
+// overlong row is structural debt, not a mis-written marker).
+const longOnly = {
+  exists: true, dir_rel: 'state/queue', files: 1, scanned: 3, open: 3, dated: 0, late: 0,
+  max_days: 0, max_id: '', bad: 0, code: 0, long: 1, long_max: 8062, long_max_id: '4',
+  long_limit: 3000, as_of: '2026-11-01', items: [],
+  long_items: [{ id: '4', file: 'main.md', chars: 8062, closed: false }]
+};
+const e13 = runPanel(withQueue(longOnly), 'longonly')('f-queue');
+chk('long.chip', e13.innerHTML.indexOf('超长行 1 行') >= 0, e13.innerHTML);
+chk('long.id-and-chars', e13.innerHTML.indexOf('#4 8062 字符') >= 0, e13.innerHTML);
+chk('long.says-cap', e13.innerHTML.indexOf('一行一件（上限 3000 字符）') >= 0, e13.innerHTML);
+chk('long.keeps-ok-chip', e13.innerHTML.indexOf('在队 3 件') >= 0, e13.innerHTML);
+chk('long.not-called-due-shape', e13.innerHTML.indexOf('标记坏') < 0, e13.innerHTML);
+
+const longLate = {
+  exists: true, dir_rel: 'state/queue', files: 1, scanned: 3, open: 3, dated: 1, late: 1,
+  max_days: 5, max_id: '23', bad: 0, code: 0, long: 1, long_max: 8062, long_max_id: '4',
+  long_limit: 3000, as_of: '2026-11-01',
+  items: [{ id: '23', file: 'main.md', due: '2026-10-27', days: 5 }],
+  long_items: [{ id: '4', file: 'main.md', chars: 8062, closed: false }]
+};
+const e14 = runPanel(withQueue(longLate), 'longlate')('f-queue');
+chk('long.not-hidden-by-late', e14.innerHTML.indexOf('超长行 1 行') >= 0 &&
+  e14.innerHTML.indexOf('逾期 1 件') >= 0, e14.innerHTML);
+
+const e15 = runPanel(withQueue(calm), 'calm3')('f-queue');
+chk('long.absent-when-zero', e15.innerHTML.indexOf('超长行') < 0, e15.innerHTML);
+
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 if (fail > 0) process.exit(1);

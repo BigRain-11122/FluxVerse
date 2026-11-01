@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T03:25:12Z",
-    "current_activity":  "r773 收口：面板队列行的那条红旗没了——`qdue_bad` 从 1 变 0。explore#12 那行 45,413 字符、66 个内嵌 `|` 的巨行被按「末笔=rNNN」段界拆成 65 段一行一件，全档落附录（原文一个字没丢，拼回去逐字节相同），原表 #12 换成 309 字符的索引行（正身=`./state/queue/_log/explore-12-log.md`）",
-    "artifact":  "`./state/queue/_log/explore-12-log.md`, `./state/queue/explore.md`, `./state/queue/main.md`, `./TECH.md`, `./world-public/city-panel.html`",
-    "artifact_utc":  "2026-11-01T03:25:12Z",
-    "milestone":  "下一轮=main#23 司级基准刷新（10-27 到期，已逾期 5 天；三向检索 WFC 前沿/城市孪生开源/引擎侧，判据=④表新增一行+③表源分级，指针=`./state/queue/main.md`）；另有 main#110 队列行宽守卫待领",
+    "updated_utc":  "2026-11-01T03:39:57Z",
+    "current_activity":  "r774 收口：队列行宽第一次有机器看着——面板「队列逾期」行多一枚红标并点了名（超长行 1 行 · #4 8062 字符 · 一行一件（上限 3000 字符）），verify 每 tick 也印 long=/longmax=；首跑就抓到 `./state/queue/main.md` #4 那条 8,062 字符的逐轮 PASS 长卷（立 main#111 待拆）。超长与「due 写法坏」分两本账，都不开红灯",
+    "artifact":  "`./Tools/devloop/queue-due.ps1`, `./Tools/devloop/city-panel-template.html`, `./Tools/perceptor/verify.ps1`, `./state/queue/main.md`, `./TECH.md`, `./world-public/city-panel.html`, `./qa/city-panel-narrow.png`",
+    "artifact_utc":  "2026-11-01T03:39:57Z",
+    "milestone":  "下一轮=main#111 拆 `./state/queue/main.md` #4 的 8,062 字符长卷（按 r773 同法每轮一笔落附录目录 `./state/queue/_log/`，拆后拼回逐字节等于原行，活队列 long=0）；其后 main#23 司级基准刷新（10-27 到期已逾期 6 天）",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

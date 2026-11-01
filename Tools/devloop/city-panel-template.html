@@ -260,11 +260,15 @@ const TICK = __TICK_JSON__;
 // the remain= field, so the page says "not recorded" rather than 0).
 const ARCH = __ARCH_JSON__;
 // QUEUE = the self-drive queues' overdue counter ({exists,files,scanned,open,
-// dated,late,max_days,max_id,as_of,bad,code,items:[{id,file,due,days}]}), computed
+// dated,late,max_days,max_id,as_of,bad,code,long,long_max,long_max_id,long_limit,
+// items:[{id,file,due,days}]}), computed
 // by Tools/devloop/queue-due.ps1 from the rows' own `due=YYYY-MM-DD` markers.
 // `bad` counts markers written in a shape the counter cannot read; `code` counts
 // strict markers hidden inside backticks in the remark cell (a quotation is not
 // a declaration, so it dates nothing - the number is shown so it is not silent).
+// `long` counts DATA rows longer than `long_limit` characters (long_items:
+// {id,file,chars,closed}); it is a separate account from `bad` - an overlong row
+// is one-item-per-row debt, not a mis-written marker.
 // The page never recounts: builder is the single number source (queue main#83).
 const QUEUE = __QUEUE_JSON__;
 // SHOTS = builder-resolved City3D evidence frames from qa/ ({items:[{name,rel,
@@ -620,6 +624,24 @@ function artTitle(it){
         (codeIds.length ? ('（' + codeIds.join(' · ') + '）') : '') +
         ' 不计期限</span>')
       : '';
+    // 超长行（queue main#110）：一行一件是队列自己的写法约定，但此前根本没有机器
+    // 看一行有多长——r773 拆掉的那条 45,413 字符巨行可以一分不加地再长回来，而
+    // 唯一会喊的机检是「行尾少一根竖线」，等到那时表格早就烂了。这里只给读数与
+    // 点名（几行、哪几行、多少字符、上限多少），**与「due 写法坏」分两本账**：
+    // 超长是结构债，不是标记写错；也不凭它开红灯——判不判由读的人定。
+    const long = (typeof Q.long === 'number') ? Q.long : 0;
+    const longLimit = (typeof Q.long_limit === 'number') ? Q.long_limit : 0;
+    const longItems = (Array.isArray(Q.long_items) ? Q.long_items : []);
+    const longIds = longItems
+      .map(function (it) { return (it && it.id) ? ('#' + it.id + ' ' + it.chars + ' 字符') : ''; })
+      .filter(function (s) { return s !== ''; })
+      .slice(0, 3);
+    const longTxt = long > 0
+      ? ('<span class="tag warn">超长行 ' + long + ' 行</span>' +
+        '<span class="muted"> ' + esc(longIds.join(' · ')) +
+        (long > longIds.length ? ' …' : '') +
+        ' · 一行一件（上限 ' + longLimit + ' 字符）</span>')
+      : '';
     if (late > 0) {
       // r749（main#87）：点名「哪几行」逾期，而不只是「几件」。此前只有最久
       // 一行的 id，读者还得自己翻文件去数；标记面本就带每一行，直接印前五条。
@@ -635,13 +657,13 @@ function artTitle(it){
         (lateIds.length
           ? ('<span class="muted"> · 逾期行 ' + esc(lateIds.join(' · ')) +
             (late > lateIds.length ? ' …' : '') + '</span>')
-          : '') + rowTxt + badTxt + codeTxt;
+          : '') + rowTxt + badTxt + codeTxt + longTxt;
     } else if (dueBad > 0 || rowTxt !== '') {
-      el.innerHTML = rowTxt + badTxt + codeTxt;
+      el.innerHTML = rowTxt + badTxt + codeTxt + longTxt;
     } else {
       el.innerHTML = '<span class="tag ok">无逾期</span>' +
         '<span class="muted"> 在队 ' + open + ' 件（带期限 ' + dated + '）</span>' +
-        codeTxt;
+        codeTxt + longTxt;
     }
   })();
 

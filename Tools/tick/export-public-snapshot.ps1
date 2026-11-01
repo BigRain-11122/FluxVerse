@@ -99,47 +99,17 @@ function Assert-List {
     Assert-Obj $el $allowed $path
   }
 }
-function CJK {
-  param([int[]]$cps)
-  $s = ''
-  foreach ($c in $cps) { $s += [char]$c }
-  $s
-}
-
-# secret patterns (P0 class): cloud keys, private key headers, platform tokens
-$SECRET_PATTERNS = @(
-  'AKIA[0-9A-Z]{16}',
-  '-----BEGIN [A-Z ]*PRIVATE KEY',
-  'ghp_[A-Za-z0-9]{20,}',
-  'github_pat_[A-Za-z0-9_]{20,}',
-  'sk-[A-Za-z0-9]{20,}',
-  'xox[baprs]-[A-Za-z0-9-]{10,}',
-  'AIza[0-9A-Za-z_-]{35}'
-)
-# sensitive-face words (structure net is primary; this is the content net)
-$FW_ASCII = @('password','passwd','secret','token','apikey','api_key','private_key','smtp','credential','access_key','net_value','netvalue','profit','drawdown','strategy','factor','balance','equity')
-$FW_CJK = @(
-  (CJK @(0x5BC6,0x94A5)),      # mi-yao (secret key)
-  (CJK @(0x5BC6,0x7801)),      # mi-ma (password)
-  (CJK @(0x6388,0x6743,0x7801)), # shou-quan-ma (auth code)
-  (CJK @(0x76C8,0x4E8F)),      # ying-kui (profit and loss)
-  (CJK @(0x51C0,0x503C)),      # jing-zhi (net value)
-  (CJK @(0x4ED3,0x4F4D)),      # cang-wei (position)
-  (CJK @(0x7B56,0x7565)),      # ce-lue (strategy)
-  (CJK @(0x884C,0x60C5))       # hang-qing (market quotes)
-)
-# local machine path + username leak patterns (G5, P-66 release-gate section
-# 3.3 metadata check): 'C:\Users' and 'Desktop\FluxGroup' are listed twice -
-# once with single backslashes (raw values text) and once with doubled
-# backslashes (the JSON-escaped serialized text). 'sjs20' = username net.
-$META_PATTERNS = @(
-  'C:\Users',
-  'C:\\Users',
-  'Desktop\FluxGroup',
-  'Desktop\\FluxGroup',
-  '/home/',
-  'sjs20'
-)
+# r787: the content screen (G1/G3/G5 lists + matcher) lives in ONE module so
+# this release gate and the birth gate in Tools\devloop\write-status-face.ps1
+# cannot drift apart - same pattern as face-path-lint.ps1 (r746). Local aliases
+# keep the gate loops below reading the same names they always did.
+$screenPath = Join-Path $repoRoot 'Tools\devloop\status-face-screen.ps1'
+if (-not (Test-Path -LiteralPath $screenPath)) { throw ('status-face screen module missing: ' + $screenPath) }
+. $screenPath
+$SECRET_PATTERNS = $SF_SECRET_PATTERNS
+$FW_ASCII        = $SF_FW_ASCII
+$FW_CJK          = $SF_FW_CJK
+$META_PATTERNS   = $SF_META_PATTERNS
 
 $outLines = New-Object System.Collections.ArrayList
 $newPath = ''
@@ -195,11 +165,9 @@ try {
     try {
       $sf = ConvertFrom-Json ([System.IO.File]::ReadAllText($StatusFile, [System.Text.Encoding]::UTF8))
       $ok = $true
-      $sfVals = @()
       foreach ($k in $WL_STATUS) {
         $v = Get-Val $sf $k
         if ($null -eq $v -or -not ($v -is [string]) -or $v.Length -eq 0) { $ok = $false; break }
-        $sfVals += $v
       }
       if ($ok) {
         foreach ($tk in @('updated_utc', 'artifact_utc', 'milestone_eta_utc')) {
@@ -208,18 +176,14 @@ try {
         }
       }
       if ($ok) {
-        $bad = ''
-        foreach ($v in $sfVals) {
-          if ($bad) { break }
-          foreach ($pat in $SECRET_PATTERNS) { if ($v -match $pat) { $bad = 'G1'; break } }
-          if ($bad) { break }
-          foreach ($w in $FW_ASCII) { if ($v -match [regex]::Escape($w)) { $bad = 'G3'; break } }
-          if ($bad) { break }
-          foreach ($w in $FW_CJK) { if ($v.Contains($w)) { $bad = 'G3cjk'; break } }
-          if ($bad) { break }
-          foreach ($w in $META_PATTERNS) { if ($v -match [regex]::Escape($w)) { $bad = 'G5'; break } }
+        # r787: a skip now names the key and the token (was: the face only), so
+        # an absent section is bisectable straight from the tick log.
+        $hit = ''
+        foreach ($k in $WL_STATUS) {
+          $h = Get-StatusFaceScreenHit -Value ([string](Get-Val $sf $k)) -Key $k
+          if (-not [string]::IsNullOrEmpty($h)) { $hit = $h; break }
         }
-        if ($bad) { $statusNote = 'skip-' + $bad } else {
+        if ($hit) { $statusNote = 'skip-' + $hit } else {
           $statusFace = Copy-Keys $sf $WL_STATUS
           $statusNote = 'included'
         }

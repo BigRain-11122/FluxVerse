@@ -128,11 +128,24 @@ Check 'd: names decisions.md'         ($rd.out -match 'decisions\.md \(current_a
 Check 'd: names TECH.md'              ($rd.out -match 'TECH\.md \(artifact\)')
 
 # ---------- e) absolute path token is a path ----------
+# r787: the original fixture used C:/Users/<username>/... and now stops at the
+# public-screen gate (G5 username net) before bare-name lint ever runs - which
+# is correct, that path is a leak. The rule under test here is "a path is a
+# path", so the fixture carries an absolute path with no machine identity.
 Write-Output '--- e) absolute path ---'
-$ce = New-Case 'e' (New-Content 'r746 see C:/Users/sjs20/Desktop/FluxGroup/cph4/evolution-ledger.md' './state/status-face.json' './state/queue/main.md' $eta)
+$ce = New-Case 'e' (New-Content 'r746 see C:/Agent/legacy/evolution-ledger.md' './state/status-face.json' './state/queue/main.md' $eta)
 $re = Invoke-Writer @('-ContentPath', $ce.content, '-FacePath', $ce.face, '-SimNowUtc', $simNow)
 Check 'e: exit 0'                     ($re.code -eq 0)
 Check 'e: FACE OK reported'           ($re.out -match 'FACE OK')
+
+# ---------- e2) local username path is a leak, not a path (r787) ----------
+Write-Output '--- e2) username path refused ---'
+$ce2 = New-Case 'e2' (New-Content 'r746 see C:/Users/sjs20/Desktop/FluxGroup/x.md' './state/status-face.json' './state/queue/main.md' $eta)
+$beforeE2 = Read-Bytes $ce2.face
+$re2 = Invoke-Writer @('-ContentPath', $ce2.content, '-FacePath', $ce2.face, '-SimNowUtc', $simNow)
+Check 'e2: exit != 0'                 ($re2.code -ne 0)
+Check 'e2: names G5'                  ($re2.out -match 'public-screen G5:')
+Check 'e2: face untouched'            (Same-Bytes $beforeE2 (Read-Bytes $ce2.face))
 
 # ---------- f) dot-slash and directory paths accepted ----------
 Write-Output '--- f) ./-prefixed and dir paths ---'

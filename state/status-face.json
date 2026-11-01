@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T11:38:03Z",
-    "current_activity":  "r786 收口：tick 里那条「归档职责天天报错、没人能处置」的 WARN 停下来了——病根=`./Tools/devloop/archive-logs.ps1` 的 `Get-RepoRoot` 用裸 `git rev-parse` 问的是调用方 cwd，计划任务起的 tick 在仓库外，PS5.1 又把原生 stderr 变成终止错误，于是归档器每次真跑都抛、日戳永不写、保留策略整天没跑（今日 tick 前 10 轮全 ERROR）；修法=cwd 无关的 `git -C \u003cPath\u003e` + try/catch 兜底，实锚=异 cwd 与仓根 dry-run 读数逐项相同 116 件 2130640 字节，活跑 `VERIFY PASS` 且 `ps-suites-verify suites=10 red=0 assertions=448`。",
-    "artifact":  "`./Tools/devloop/archive-logs.ps1`（仓根解析改 `git -C`＋保护集同改＋try/catch 兜底）, `./Tools/devloop/test-log-archive-duty.ps1`（新增 f 组·异 cwd 真跑·22→25/25·失败自带实况证据）",
-    "artifact_utc":  "2026-11-01T11:38:03Z",
-    "milestone":  "下一件=`./docs/global-benchmarks.md` 司级 7 天刷新（main#23 已逾期 5 天，§2m 每 tick 点名；刷新需实质研究不是改日期），随后 `./state/queue/main.md` 头部不再有逾期行。",
+    "updated_utc":  "2026-11-01T16:29:13Z",
+    "current_activity":  "r787 收口：公开快照里那三行 CEO 可见状态回来了——`world-public/city-snapshot.json` 每 tick 都在打 `status_face=skip-G3cjk`，整节被静默丢弃（三行律正体自 r239 起就是这个结构）；归因＝状态文本里一句讲日志保留的日常句子，其中两个字命中了 CJK 内容网，而旧提示只说命中的是哪张网、不说哪一列、哪一词，从日志里无法二分。修法＝内容网抽成单一模块（导出器与写入器共用同一份词表，两侧不可能各改各的），导出器的跳过行改为带键名与命中的词面；写入器在落盘前先过同一张网，命中即拒写并点名哪一列哪一词（r746 裸名闸同式）。判据＝沙盒 `./Tools/devloop/test-status-face-screen.ps1` 37/37，端到端真导出器对干净面打 `status_face=included`。",
+    "artifact":  "`./Tools/devloop/status-face-screen.ps1`（新·内容网单点定义）, `./Tools/tick/export-public-snapshot.ps1`（改为加载该模块＋跳过行带键与词面）, `./Tools/devloop/write-status-face.ps1`（落盘前同网拒写）, `./Tools/devloop/test-status-face-screen.ps1`（新·37 项）",
+    "artifact_utc":  "2026-11-01T16:29:13Z",
+    "milestone":  "下一件＝`./docs/global-benchmarks.md` 司级 7 天刷新（main#23 逾期 6 天，每 tick 机器点名；刷新要的是实质研究不是改日期），随后 `./state/queue/main.md` 头部不再有逾期行。",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

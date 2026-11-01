@@ -55,6 +55,17 @@ $lintPath = Join-Path $PSScriptRoot 'face-path-lint.ps1'
 if (-not (Test-Path -LiteralPath $lintPath)) { Write-Output ('FAIL: lint module missing: ' + $lintPath); exit 1 }
 . $lintPath
 
+# r787: the exporter's content screen runs here too, from the same module.
+# world-public/city-snapshot.json drops the WHOLE status face when any of the
+# six values trips G1/G3/G3cjk/G5 (fail-soft, r239). A skip note that named only
+# the face cost a round to bisect (r787: a plain sentence about log retention
+# tripped the CJK list, and the three CEO-facing lines had been absent every
+# tick since). Same cure class as r746: the earliest station that can check the
+# rule refuses the write instead of letting a later gate drop the line.
+$screenPath = Join-Path $PSScriptRoot 'status-face-screen.ps1'
+if (-not (Test-Path -LiteralPath $screenPath)) { Write-Output ('FAIL: screen module missing: ' + $screenPath); exit 1 }
+. $screenPath
+
 function Fail
 {
     param([string]$Msg)
@@ -134,8 +145,24 @@ if ($bareAll.Count -gt 0) {
     Fail ('bare artifact name: ' + ($bareAll -join ', ') + '; face lines must carry a path (e.g. ./TECH.md)')
 }
 
+# --- r787: the public snapshot's content screen, at birth ---
+# Policy is unchanged (the word list still lives where it always did, now in one
+# shared module); only the moment of detection moved earlier and the message
+# names the culprit. The three timestamp keys are machine-stamped/validated ISO
+# below, so only the three prose lines can carry a banned token.
+$screenHit = ''
+foreach ($k in @('current_activity','artifact','milestone')) {
+    $rawLine = ''
+    try { $rawLine = [string]$obj.$k } catch { $rawLine = '' }
+    $h = Get-StatusFaceScreenHit -Value $rawLine -Key $k
+    if (-not [string]::IsNullOrEmpty($h)) { $screenHit = $h; break }
+}
+if ($screenHit) {
+    Fail ('public-screen ' + $screenHit + ': world-public/city-snapshot.json would drop the WHOLE status face - rephrase that line (the token above is the only banned part)')
+}
+
 if ($CheckOnly) {
-    Write-Output ('FACE CHECK OK bare=0 keys=3 path=' + $ContentPath)
+    Write-Output ('FACE CHECK OK bare=0 screen=0 keys=3 path=' + $ContentPath)
     exit 0
 }
 

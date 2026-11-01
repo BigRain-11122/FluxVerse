@@ -95,19 +95,21 @@ function Get-PsSuitesTickDefaults {
         # no single suite eats the bulk, ~2.5-3 s per suite is PowerShell
         # process start. So the honest fix is to split by what each suite
         # guards and let one tick pay one half. This half is the face writer
-        # plus the two census/QA tools whose sandboxes live beside it.
+        # plus the QA tool whose sandbox lives beside it. (r787: the nolivecheck
+        # census suite moved to the other half - it guards the state writer's
+        # escape hatch, and this half crossed its 2/3 line at 30.2 s of 45 s.)
         return @(
             'Tools\devloop\test-write-status-face-bare.ps1',
             'logs\devloop-r247-facewriter-test.ps1',
-            'Tools\devloop\test-nolivecheck-census.ps1',
             'Tools\devloop\test-qa-rotation.ps1',
             'Tools\devloop\test-runbook-sync.ps1',
+            'Tools\devloop\test-status-face-screen.ps1',
             'Tools\devloop\run-ps-suites.ps1',
             'Tools\devloop\build-city-panel.ps1',
             'Tools\devloop\face-path-lint.ps1',
+            'Tools\devloop\status-face-screen.ps1',
+            'Tools\tick\export-public-snapshot.ps1',
             'Tools\devloop\write-status-face.ps1',
-            'Tools\devloop\nolivecheck-census.ps1',
-            'Tools\devloop\census-cost.ps1',
             'Tools\devloop\qa-rotation.ps1',
             'Tools\devloop\check-runbook-sync.ps1',
             'Tools\devloop\fixtures\*\*'
@@ -152,15 +154,23 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\fixtures\*\*'
         )
     }
-    # The other half of main#117: the state-file writer and the three suites
-    # that prove it. Editing write-fastpath-state.ps1 must not buy the face
+    # The other half of main#117: the state-file writer and the suites that
+    # prove it. Editing write-fastpath-state.ps1 must not buy the face
     # suites anymore (and vice versa).
+    # r787: the nolivecheck census moved here - it guards the state writer's
+    # unverified-write escape hatch, not the face, and the face half
+    # crossed its own 2/3 line (30.2 s of a 45 s cap) when the public-screen
+    # suite joined it. Rebalancing halves is the same discipline as splitting
+    # one: no budget was raised.
     return @(
         'Tools\devloop\test-fastpath-state-live.ps1',
         'logs\devloop-r197-writer-test.ps1',
         'logs\devloop-r271-keep-negcon.ps1',
+        'Tools\devloop\test-nolivecheck-census.ps1',
         'Tools\devloop\run-ps-suites.ps1',
         'Tools\devloop\write-fastpath-state.ps1',
+        'Tools\devloop\nolivecheck-census.ps1',
+        'Tools\devloop\census-cost.ps1',
         'Tools\devloop\fixtures\*\*'
     )
 }
@@ -566,10 +576,10 @@ function Invoke-PsSuitesTick {
     # main#117: the write side is split the same way, so the runner's default
     # list (all seven) can never make one family pay for both halves.
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write') {
-        $ExtraArgs = @('-Suites', 'Tools\devloop\test-fastpath-state-live.ps1,logs\devloop-r197-writer-test.ps1,logs\devloop-r271-keep-negcon.ps1')
+        $ExtraArgs = @('-Suites', 'Tools\devloop\test-fastpath-state-live.ps1,logs\devloop-r197-writer-test.ps1,logs\devloop-r271-keep-negcon.ps1,Tools\devloop\test-nolivecheck-census.ps1')
     }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write2') {
-        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-nolivecheck-census.ps1,Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-runbook-sync.ps1')
+        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-runbook-sync.ps1,Tools\devloop\test-status-face-screen.ps1')
     }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify') {
         $lightSuites = @(Get-PsSuitesTickDefaults -Family 'verify' | Where-Object { $_ -match 'test-[^\\]+\.ps1$' })

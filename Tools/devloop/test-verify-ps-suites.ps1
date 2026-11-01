@@ -435,7 +435,8 @@ $w2Suites = @(
     'logs\devloop-r247-facewriter-test.ps1',
     'Tools\devloop\test-qa-rotation.ps1',
     'Tools\devloop\test-runbook-sync.ps1',
-    'Tools\devloop\test-status-face-screen.ps1'
+    'Tools\devloop\test-status-face-screen.ps1',
+    'Tools\devloop\test-simple-param-census.ps1'
 )
 $leak1 = @($wDefs | Where-Object { $w2Suites -contains $_ })
 Check 'r4b the state half carries none of the face suites' ($leak1.Count -eq 0) ($leak1 -join ',')
@@ -829,7 +830,7 @@ Check 'z30 the state half asks for exactly its four suites' ($zW -match '-Suites
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write2 -TicketPath (Join-Path $sandbox 'z-w2.json') -RunnerPath $runnerArgs -Force
 $zW2 = ''
 try { $zW2 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW2 = '' }
-Check 'z31 the face half asks for its five suites only' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 5 -and $zW2 -match 'test-qa-rotation\.ps1' -and $zW2 -match 'test-runbook-sync\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
+Check 'z31 the face half asks for its six suites only, census included' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 6 -and $zW2 -match 'test-qa-rotation\.ps1' -and $zW2 -match 'test-runbook-sync\.ps1' -and $zW2 -match 'test-simple-param-census\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
 Remove-Item 'Env:\FV_ARGS_OUT' -ErrorAction SilentlyContinue
 
 # main#117 turn rule: when both write halves are due, the state half runs and

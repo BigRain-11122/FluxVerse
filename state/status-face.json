@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T20:09:19Z",
-    "current_activity":  "r794 收口：面板上「队列目录不在盘」不再只有一种说法——r793 在 `./Tools/devloop/queue-due.ps1` 里把「路径从没解析出来」与「路径不在盘」分开之后，tick 已分岔说话，页面却仍一律印 `qdue=missing` 并硬写 state/queue。现在 `./Tools/devloop/build-city-panel.ps1` 的 `PANEL OK` 增 `qdue_note=`，`./Tools/devloop/city-panel-template.html` 按 note 三分并点名真实路径；相对 `-QueueDir` 也按仓库根归一化（否则同一棵树换个 cwd 重建就换一种拼写）。",
-    "artifact":  "`./world-public/city-panel.html`（重建后 · qdue_note=none）、`./Tools/devloop/city-panel-template.html`（缺失支三态）、`./Tools/devloop/build-city-panel.ps1`（`PANEL OK` 加 `qdue_note=` ＋ 相对队列目录归一化）、`./logs/devloop-r745-panel-queue-test.js`（61→71/71）",
-    "artifact_utc":  "2026-11-01T20:09:19Z",
-    "milestone":  "下一步：领 main#127（从 `./Tools/devloop/queue-due.ps1` 起扫一族「简单函数＋裸参数」静默吞参面），把 r793 那一类坑一次扫清；面板侧末项已闭。",
-    "milestone_eta_utc":  "2026-11-04T00:00:00Z"
+    "updated_utc":  "2026-11-01T20:27:41Z",
+    "current_activity":  "r795 收口上半：「裸参数函数」这一族第一次有了机械清单，跑一次就点名 15 条（`./Tools/devloop/simple-param-census.ps1` 走 PowerShell 自己的 AST 静态清点，零跑零写）。r792 那个「-QueueDir 不报错、直接落 open=0」不是孤例——PowerShell 只对 advanced 函数拒绝未知具名参数，普通函数把整对 -Name value 收进 $args、真参数留默认，于是错参调用与「真零」逐字同形。",
+    "artifact":  "`./Tools/devloop/simple-param-census.ps1`（活跑 simple=123 risky=15，逐条点名 15 条）＋`./Tools/devloop/test-simple-param-census.ps1`（37/37，含 r792 原形负控与 r793 两处修的回归锚）＋接线 `./Tools/devloop/ps-suites-tick.ps1` 的 write2 族（suites=6 assertions=269 failing=0）",
+    "artifact_utc":  "2026-11-01T20:27:41Z",
+    "milestone":  "下一步＝main#128 清零这 15 条（`./Tools/devloop/simple-param-census.ps1 -FailOnRisk` 必须 exit 0），按批先改每 tick 都在用的 `./Tools/devloop/build-city-panel.ps1` 与 `./Tools/devloop/city-shot-shape.ps1`；due=2026-11-16。",
+    "milestone_eta_utc":  "2026-11-16T00:00:00Z"
 }

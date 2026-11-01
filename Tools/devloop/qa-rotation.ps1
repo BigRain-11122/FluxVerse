@@ -32,6 +32,16 @@
 # moved 69 such files and nothing said so. If the citation index cannot be
 # built the tool refuses to plan or apply (fail-closed): archiving cited
 # evidence is exactly the damage this step exists to stop.
+# Step 6 (r778, queue main#114): step 5 could see the damage (69 cited names
+# sitting in _archive, every one of them a path a committed document points at)
+# but could only report it. A report that never turns into a repair is its own
+# kind of silence, so -Restore walks the same dangling list backwards: cited
+# names come out of _archive and back into the pool, one ledger line each in
+# _archive\RESTORED.tsv. It is fail-closed the same way -Apply is (any name
+# missing from the archive, or already present in the pool, and nothing moves at
+# all): a half-restored pool is exactly the state this order forbids. A restore
+# cannot fight the rotation: restored files are cited by definition, and cited
+# files are never planned for a move.
 # Read-only, no network, ASCII-only (PS5.1 GBK law).
 [CmdletBinding()]
 param(
@@ -53,7 +63,11 @@ param(
     # Machine-readable one-json-line output (used by the sandbox).
     [switch]$Json,
     # Actually move the planned files into <pool>\_archive (never deletes).
-    [switch]$Apply
+    [switch]$Apply,
+    # Move cited names that sit in <pool>\_archive back into the pool (the
+    # reverse of -Apply, and the repair for a dangling citation). Never
+    # overwrites: a name that already exists in the pool aborts the whole run.
+    [switch]$Restore
 )
 
 $ErrorActionPreference = 'Stop'
@@ -396,11 +410,90 @@ function Invoke-QaApply
     return $res
 }
 
+# ---------------------------------------------------------------------------
+# Step 6: the inverse move. Takes the dangling list as its plan (cited names that
+# sit in _archive) and puts them back in the pool. Same two-phase shape as
+# Invoke-QaApply: pre-flight over the whole plan first, so a missing source or an
+# occupied destination leaves the pool untouched rather than half-restored.
+# ---------------------------------------------------------------------------
+function Invoke-QaRestore
+{
+    param([string]$Pool, [string[]]$Names)
+
+    $res = New-Object PSObject -Property ([ordered]@{
+        archive = (Join-Path $Pool '_archive')
+        restored = 0
+        bytes = [int64]0
+        conflicts = @()
+        missing = @()
+        failed = @()
+        ledger_error = ''
+        ok = $false
+    })
+
+    $plan = @($Names | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object)
+    if ($plan.Count -eq 0) { $res.ok = $true; return $res }
+
+    foreach ($n in $plan) {
+        if (-not (Test-Path -LiteralPath (Join-Path $res.archive $n))) { $res.missing += $n }
+        elseif (Test-Path -LiteralPath (Join-Path $Pool $n)) { $res.conflicts += $n }
+    }
+    if (($res.missing.Count -gt 0) -or ($res.conflicts.Count -gt 0)) { return $res }
+
+    $ledger = Join-Path $res.archive 'RESTORED.tsv'
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    if (-not (Test-Path -LiteralPath $ledger)) {
+        [System.IO.File]::WriteAllText($ledger, "# utc`tname`tbytes`tmtime_utc`r`n", $utf8)
+    }
+
+    $now = [DateTime]::UtcNow
+    $bytesMoved = [int64]0
+    $lines = New-Object System.Collections.ArrayList
+    foreach ($n in $plan) {
+        $src = Join-Path $res.archive $n
+        $dest = Join-Path $Pool $n
+        try {
+            $fi = Get-Item -LiteralPath $src -ErrorAction Stop
+            $len = [int64]$fi.Length
+            $mtime = $fi.LastWriteTimeUtc
+            Move-Item -LiteralPath $src -Destination $dest -ErrorAction Stop
+            $res.restored++
+            $bytesMoved = $bytesMoved + $len
+            [void]$lines.Add($now.ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" + $n + "`t" + $len + "`t" +
+                $mtime.ToString('yyyy-MM-ddTHH:mm:ssZ'))
+        } catch {
+            $res.failed += ($n + ' :: ' + $_.Exception.Message)
+        }
+    }
+    $res.bytes = $bytesMoved
+    if ($lines.Count -gt 0) {
+        try {
+            [System.IO.File]::AppendAllText($ledger, (($lines -join "`r`n") + "`r`n"), $utf8)
+        } catch {
+            # The files are back in the pool; the run is still not clean.
+            $res.ledger_error = $_.Exception.Message
+        }
+    }
+    $res.ok = (($res.failed.Count -eq 0) -and ($res.ledger_error -eq ''))
+    return $res
+}
+
 if (-not $Dir) {
     $Dir = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'qa'
 }
 if (-not $CiteRoot) {
     $CiteRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+}
+
+# One direction per run: -Apply moves out, -Restore moves back. Asking for both
+# is a contradiction, not a sequence, so it is refused before anything is read.
+if ($Apply -and $Restore) {
+    Write-Host 'QA SWITCH FAIL: -Apply and -Restore are mutually exclusive (one moves out, one moves back)'
+    exit 2
+}
+if ($Restore -and $Json) {
+    Write-Host 'QA SWITCH FAIL: -Restore is a move, -Json is a read-out; run them separately'
+    exit 2
 }
 
 $poolFiles = Get-QaPoolFiles -Pool $Dir
@@ -512,10 +605,66 @@ if (@($dangling).Count -gt 0) {
     Write-Host ('QA DANGLING: ' + @($dangling).Count + ' cited name(s) sit in _archive - ' +
         'a tracked document names a path that is no longer in the pool')
     if ($List) {
-        foreach ($n in @($dangling | Sort-Object | Select-Object -First 20)) {
+        foreach ($n in @($dangling | Sort-Object)) {
             Write-Host ('    DANGLING ' + $n)
         }
     }
+}
+
+# ---------------------------------------------------------------------------
+# Step 6: repair. The dangling list is the plan; nothing else is touched, and a
+# single missing source or occupied destination cancels the whole run.
+# ---------------------------------------------------------------------------
+if ($Restore) {
+    $planCount = @($dangling).Count
+    Write-Host ('QA RESTORE PLAN: n=' + $planCount + ' cited name(s) in ' + $archiveDir +
+        ' (fail-closed: one missing or occupied name moves nothing)')
+    $rs = Invoke-QaRestore -Pool $Dir -Names $dangling
+    if ($rs.missing.Count -gt 0) {
+        Write-Host ('QA RESTORE FAIL: ' + $rs.missing.Count + ' planned name(s) are not in ' +
+            $rs.archive + ' - nothing moved (the plan and the archive disagree)')
+        foreach ($n in $rs.missing) { Write-Host ('    MISSING ' + $n) }
+        exit 2
+    }
+    if ($rs.conflicts.Count -gt 0) {
+        Write-Host ('QA RESTORE FAIL: ' + $rs.conflicts.Count + ' planned name(s) already exist in ' +
+            $Dir + ' - nothing moved (never overwrite the pool copy)')
+        foreach ($n in $rs.conflicts) { Write-Host ('    OCCUPIED ' + $n) }
+        exit 2
+    }
+    if ($rs.failed.Count -gt 0) {
+        Write-Host ('QA RESTORE FAIL: restored=' + $rs.restored + ' bytes=' +
+            (Format-QaBytes -Bytes $rs.bytes) + ' failed=' + $rs.failed.Count)
+        foreach ($f in $rs.failed) { Write-Host ('    FAILED ' + $f) }
+        exit 2
+    }
+    if ($rs.ledger_error) {
+        Write-Host ('QA RESTORE FAIL: restored=' + $rs.restored +
+            ' but the restore ledger could not be written: ' + $rs.ledger_error)
+        exit 2
+    }
+    Write-Host ('QA RESTORE: restored=' + $rs.restored + ' bytes=' + (Format-QaBytes -Bytes $rs.bytes) +
+        ' pool=' + $Dir + ' (moved back, nothing overwritten; ledger=RESTORED.tsv)')
+    # Re-read the file system instead of doing arithmetic on the plan: the only
+    # number worth printing is the one a second, independent read agrees with.
+    $afterFiles = Get-QaPoolFiles -Pool $Dir
+    $afterCensus = Get-QaPoolCensus -Pool $Dir -Files $afterFiles.files -Cited $citedSet
+    Write-Host ('QA POOL: images=' + $afterCensus.images + ' bytes=' +
+        (Format-QaBytes -Bytes $afterCensus.bytes) + ' oldest=' + $afterCensus.oldest_days + 'd')
+    $stillDangling = @()
+    if (Test-Path -LiteralPath $archiveDir) {
+        foreach ($f in @(Get-ChildItem -LiteralPath $archiveDir -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' })) {
+            if ($citedSet.ContainsKey([string]$f.Name) -and $citedSet[[string]$f.Name] -and
+                -not ($afterFiles.files | Where-Object { $_.Name -eq $f.Name })) {
+                $stillDangling += [string]$f.Name
+            }
+        }
+    }
+    Write-Host ('QA DANGLING: ' + $stillDangling.Count + ' cited name(s) still sit in _archive')
+    foreach ($n in @($stillDangling | Sort-Object)) { Write-Host ('    DANGLING ' + $n) }
+    if ($stillDangling.Count -gt 0) { exit 2 }
+    exit 0
 }
 
 if ($Apply) {

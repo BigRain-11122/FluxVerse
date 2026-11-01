@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T04:04:30Z",
-    "current_activity":  "r776 收口：队列撞号第一次被机器点名——`./Tools/devloop/queue-due.ps1` 新增第三本账（`dupe`／`dupe_rows`／`dupe_items`，按文件分组、逐条给 1 基行号），面板「队列逾期」行印「重复 id N 组 · M 行同号」，verify §2g 印 `dupe=`／`duperows=`；活队列首跑点出那对 `#110`（`./state/queue/main.md` 91／92 行），活跃那条当场改号 #113，改后 `qdue_dupe=0`、逾期／坏标记／超长三账一字未动",
-    "artifact":  "`./world-public/city-panel.html`, `./Tools/devloop/queue-due.ps1`, `./Tools/devloop/test-queue-due.ps1`, `./state/queue/main.md`, `./TECH.md`",
-    "artifact_utc":  "2026-11-01T04:04:30Z",
-    "milestone":  "下一步=main#23 司级 7 天基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期 5 天）→ main#20 浸泡 ABORT 观察位；维护面=main#113 qa 保留窗口判据（`./Tools/devloop/qa-rotation.ps1`）",
+    "updated_utc":  "2026-11-01T06:33:07Z",
+    "current_activity":  "r778 收口：台账里 69 处「文档指着一个不存在的路径」一次修好——`./Tools/devloop/qa-rotation.ps1` 新增 `-Restore`（把 `_archive` 里被受跟踪文档点名的证据件搬回池子，逐件写 `RESTORED.tsv`；一件缺源或撞名即整批不动）；活跑 `restored=69 bytes=24.2MB`，池子 `images=24→93`，`QA DANGLING: 69→0`，沙盒 58→80",
+    "artifact":  "`./Tools/devloop/qa-rotation.ps1`, `./Tools/devloop/test-qa-rotation.ps1`, `./world-public/city-panel.html`, `./TECH.md`",
+    "artifact_utc":  "2026-11-01T06:33:07Z",
+    "milestone":  "下一件 main#23 司级 7 天基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期）；main#115（`./Tools/devloop/check-runbook-sync.ps1` 无沙盒且未进写侧族清单）待领",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

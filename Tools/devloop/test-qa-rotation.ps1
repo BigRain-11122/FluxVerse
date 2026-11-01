@@ -268,6 +268,80 @@ try { $j3 = $json3 | ConvertFrom-Json } catch { $j3 = $null }
 Check 'json carries cited and cited_kept' ($null -ne $j3 -and [int]$j3.cited -eq 1 -and [int]$j3.cited_kept -eq 1)
 Check 'json carries the archive citation readout' ($null -ne $j3 -and [int]$j3.archive_cited -ge 0)
 
+# ---------------------------------------------------------------------------
+# Restore group (r778, main#114): a dangling citation is now repairable. The
+# plan is exactly the cited names sitting in _archive; nothing else comes back,
+# nothing is overwritten, and one ledger line per restored file makes a second
+# reversal a copy rather than a guess. Everything below re-reads the file system.
+# ---------------------------------------------------------------------------
+Check 'a dangling citation is still dangling without -Restore' (
+    Test-Path -LiteralPath (Join-Path $pool3 ('_archive' + [System.IO.Path]::DirectorySeparatorChar +
+        'city3d-shots-20261001-1000-bm-a-overview.jpg')))
+
+$restLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool3 -Restore -CiteFiles $citeDang) -join "`n"
+$restRc = $LASTEXITCODE
+Check 'restore exits 0' ($restRc -eq 0)
+Check 'restore states its plan first' ($restLog -match 'QA RESTORE PLAN: n=1\b')
+Check 'restore reports the one file and its bytes' ($restLog -match 'QA RESTORE: restored=1 bytes=100B')
+Check 'the cited file is back in the pool' (
+    Test-Path -LiteralPath (Join-Path $pool3 'city3d-shots-20261001-1000-bm-a-overview.jpg'))
+Check 'the cited file left the archive' (
+    -not (Test-Path -LiteralPath (Join-Path $pool3 ('_archive' + [System.IO.Path]::DirectorySeparatorChar +
+        'city3d-shots-20261001-1000-bm-a-overview.jpg'))))
+Check 'the pool count is re-read, not computed (20 images now)' ($restLog -match 'QA POOL: images=20\b')
+Check 'no citation dangles after the repair' ($restLog -match 'QA DANGLING: 0 cited name')
+# The four uncited views of the same session must NOT come back: a citation is a
+# per-file criterion, not a reason to undo the whole session.
+Check 'uncited archived views stay archived' (
+    (Test-Path -LiteralPath (Join-Path $pool3 ('_archive' + [System.IO.Path]::DirectorySeparatorChar +
+        'city3d-shots-20261001-1000-bm-a-gamedistrict.jpg'))) -and
+    -not (Test-Path -LiteralPath (Join-Path $pool3 'city3d-shots-20261001-1000-bm-a-gamedistrict.jpg')))
+
+$restLedger = Join-Path (Join-Path $pool3 '_archive') 'RESTORED.tsv'
+$restRows = @()
+if (Test-Path -LiteralPath $restLedger) {
+    $restRows = @(Get-Content -LiteralPath $restLedger -Encoding UTF8 | Where-Object { $_ -and -not $_.StartsWith('#') })
+}
+Check 'the restore ledger has one row' ($restRows.Count -eq 1)
+Check 'the restore row records name and size' (
+    [bool](@($restRows) -match 'city3d-shots-20261001-1000-bm-a-overview\.jpg\t100\t'))
+
+# Second restore is a no-op: nothing dangles any more, so nothing moves.
+$rest2 = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool3 -Restore -CiteFiles $citeDang) -join "`n"
+$rest2Rc = $LASTEXITCODE
+Check 're-restore exits 0' ($rest2Rc -eq 0)
+Check 're-restore moves zero' ($rest2 -match 'QA RESTORE: restored=0\b')
+Check 're-restore adds no ledger row' (
+    @(Get-Content -LiteralPath $restLedger -Encoding UTF8 | Where-Object { $_ -and -not $_.StartsWith('#') }).Count -eq 1)
+
+# Fail-closed: the same name present in pool AND archive means pool and archive
+# disagree - restore must move nothing and never overwrite the pool copy.
+$pool4 = Join-Path $sandbox 'qa4'
+New-Item -ItemType Directory -Path $pool4 -Force | Out-Null
+$arch4 = Join-Path $pool4 '_archive'
+New-Item -ItemType Directory -Path $arch4 -Force | Out-Null
+New-Fix2 (Join-Path $pool4 'city-panel-r700-bm-a.png') 300
+New-Fix2 (Join-Path $arch4 'city-panel-r700-bm-a.png') 100
+$citeConflict = Join-Path $sandbox 'cite-conflict.md'
+[System.IO.File]::WriteAllText($citeConflict, "Evidence: qa/city-panel-r700-bm-a.png`r`n")
+$cfLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool4 -Restore -CiteFiles $citeConflict) -join "`n"
+$cfRc = $LASTEXITCODE
+Check 'an occupied destination exits 2' ($cfRc -eq 2)
+Check 'the refusal names the occupied file' ($cfLog -match 'QA RESTORE FAIL: 1 planned name\(s\) already exist in')
+Check 'the refusal names the file itself' ($cfLog -match 'OCCUPIED city-panel-r700-bm-a\.png')
+Check 'nothing moved (archive copy still 100 bytes)' (
+    (Get-Item -LiteralPath (Join-Path $arch4 'city-panel-r700-bm-a.png')).Length -eq 100)
+Check 'nothing overwritten (pool copy still 300 bytes)' (
+    (Get-Item -LiteralPath (Join-Path $pool4 'city-panel-r700-bm-a.png')).Length -eq 300)
+
+# One direction per run.
+$swLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool4 -Apply -Restore -CiteFiles $citeConflict) -join "`n"
+$swRc = $LASTEXITCODE
+Check 'apply+restore in one run exits 2' ($swRc -eq 2)
+Check 'the contradiction is named' ($swLog -match 'QA SWITCH FAIL')
+$swJson = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool4 -Restore -Json -CiteFiles $citeConflict) -join "`n"
+Check 'restore+json in one run is refused too' ($LASTEXITCODE -eq 2 -and $swJson -match 'QA SWITCH FAIL')
+
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 Write-Output ('test-qa-rotation: ' + $pass + ' passed, ' + $fail + ' failed (of ' + ($pass + $fail) + ')')
 if ($fail -gt 0) { exit 1 }

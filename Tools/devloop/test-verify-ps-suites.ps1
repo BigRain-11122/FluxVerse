@@ -815,7 +815,7 @@ $env:FV_ARGS_OUT = $zArgFile
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family verify -TicketPath (Join-Path $sandbox 'z-v.json') -RunnerPath $runnerArgs -Force
 $zSec = ''
 try { $zSec = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zSec = '' }
-Check 'z22 the light family asks for ten suites, never -Verify' ($zSec -match '-Suites' -and $zSec -notmatch '(?:^|\s)-Verify(?:\s|$)' -and @(($zSec -split '[,;\s]+') | Where-Object { $_ -match 'test-.*\.ps1$' }).Count -eq 10) $zSec
+Check 'z22 the light family asks for eleven suites, never -Verify' ($zSec -match '-Suites' -and $zSec -notmatch '(?:^|\s)-Verify(?:\s|$)' -and @(($zSec -split '[,;\s]+') | Where-Object { $_ -match 'test-.*\.ps1$' }).Count -eq 11 -and $zSec -match 'test-run-ps-suites\.ps1') $zSec
 $env:FV_ARGS_OUT = $zArgFile
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family verify2 -TicketPath (Join-Path $sandbox 'z-v2.json') -RunnerPath $runnerArgs -Force
 $zSec2 = ''

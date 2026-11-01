@@ -238,16 +238,24 @@ Write-Fixture $slowPath $counted
 # skips the families (otherwise a direct -Verify run recursed one level and
 # took minutes). The runner must also restore its own environment afterwards.
 Write-Output '--- n) nested-run marker ---'
+# main#123: this suite now runs as a verify-family suite, i.e. the runner sets
+# FLUXVERSE_PS_SUITES_CHILD=1 in our own environment before starting us. The
+# first version asserted "nothing in the parent env" - true standalone, red
+# under the runner forever (r767 hit exactly that). What the guard actually
+# means is "the runner gives back whatever it found", so we compare against
+# the incoming value and restore it at the end.
+$incomingChild = $env:FLUXVERSE_PS_SUITES_CHILD
 $markerSuite = Join-Path $repo1 'Tools\devloop\test-marker.ps1'
 Write-Fixture $markerSuite ("Write-Output 'starting'`r`nWrite-Output ('RESULT pass=1 fail=0 marker=' + `$env:FLUXVERSE_PS_SUITES_CHILD)`r`nexit 0`r`n")
 $rn = Invoke-Runner @('-RepoDir', $repo1, '-Suites', $markerSuite)
 Check 'n: child sees the marker'   ($rn.out -match 'marker=1')
 Check 'n: suite still passes'      ($rn.code -eq 0)
-Check 'n: parent env restored'     ([string]::IsNullOrEmpty($env:FLUXVERSE_PS_SUITES_CHILD))
+Check 'n: parent env restored'     ($env:FLUXVERSE_PS_SUITES_CHILD -eq $incomingChild) ('incoming=' + [string]$incomingChild + ' now=' + [string]$env:FLUXVERSE_PS_SUITES_CHILD)
 $env:FLUXVERSE_PS_SUITES_CHILD = 'keep'
 $null = Invoke-Runner @('-RepoDir', $repo1, '-Suites', $markerSuite)
 Check 'n: pre-set marker restored' ($env:FLUXVERSE_PS_SUITES_CHILD -eq 'keep')
-Remove-Item ('Env:\FLUXVERSE_PS_SUITES_CHILD') -ErrorAction SilentlyContinue
+if ([string]::IsNullOrEmpty($incomingChild)) { Remove-Item ('Env:\FLUXVERSE_PS_SUITES_CHILD') -ErrorAction SilentlyContinue }
+else { $env:FLUXVERSE_PS_SUITES_CHILD = $incomingChild }
 
 # ---------- v) third count dialect (queue main#100) ----------
 # Suites that print one line per check and never summarise in `pass=N` or

@@ -138,6 +138,13 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\test-qa-cite-duty.ps1',
             'Tools\devloop\test-benchmark-duty.ps1',
             'Tools\devloop\test-probe-path-census.ps1',
+            # main#123: the runner's own sandbox had no per-tick entry - r787
+            # raised the default list to nine suites while this one still
+            # asserted eight, and it stayed red for a full round unseen. It is
+            # a light suite (measured 27.2 s standalone, incl. the l-group
+            # sleeps) so it rides here, not with the 165 s heavy family
+            # (life + 27 s would sit at 65% of that cap).
+            'Tools\devloop\test-run-ps-suites.ps1',
             'Tools\devloop\test-state-promote.ps1',
             'Tools\devloop\state-promote.ps1',
             'Tools\devloop\run-ps-suites.ps1',

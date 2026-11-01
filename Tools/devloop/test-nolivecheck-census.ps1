@@ -170,6 +170,53 @@ else { No 'm4 the overstated cost is a real elapsed figure' ($body -split "`n")[
 Has 'm5 the over-budget line names the sanctioned remedy' $body 'ride check-fastpath.ps1'
 Eq 'm6 over budget is informational, not a failure' ([string]$script:lastCode) '0'
 
+# ---------------- n. one sample is not a trend (main#118, r780)
+# A lone ms=2854 among 24 ticks at 93-191 ms was promoted to a standing
+# "somebody must decide this" WARN. The policy is drilled directly here because
+# a rule that can only be observed through whichever sample a run happened to
+# get is not testable: a real regression reproduces in BOTH passes, a busy disk
+# does not. The budget number itself is untouched (main#104).
+$costModule = Join-Path $RepoDir 'Tools\devloop\census-cost.ps1'
+if (-not (Test-Path -LiteralPath $costModule)) { No 'n0 cost policy module exists' $costModule }
+else {
+    Ok 'n0 cost policy module exists'
+    . $costModule
+    Eq 'n1 an under-budget first sample buys no re-measure' ([string](Test-CensusCostRetry -Ms 103 -BudgetMs 250)) 'False'
+    Eq 'n2 an over-budget first sample buys one re-measure' ([string](Test-CensusCostRetry -Ms 2854 -BudgetMs 250)) 'True'
+    Eq 'n3 exactly at the budget is not over' ([string](Test-CensusCostRetry -Ms 250 -BudgetMs 250)) 'False'
+    $v = Get-CensusCostVerdict -Samples @(2854, 103) -BudgetMs 250
+    Eq 'n4 a spike followed by a normal pass is judged on the lower sample' ([string]$v.Ms) '103'
+    Eq 'n5 and it is not reported as over budget' ([string]$v.Over) 'False'
+    Eq 'n6 the discarded sample is still carried' ([string]$v.FirstMs) '2854'
+    Eq 'n7 the retry is recorded' ([string]$v.Retried) 'True'
+    Eq 'n8 the judgement says it was a best-of-2' $v.Reason 'best-of-2'
+    $v = Get-CensusCostVerdict -Samples @(400, 380) -BudgetMs 250
+    Eq 'n9 a regression that reproduces in both passes is still over' ([string]$v.Over) 'True'
+    Eq 'n10 and it reports the lower of the two, not the worst' ([string]$v.Ms) '380'
+    $v = Get-CensusCostVerdict -Samples @(103) -BudgetMs 250
+    Eq 'n11 a single sample is judged as a single sample' $v.Reason 'single'
+    Eq 'n12 a single under-budget sample is not over' ([string]$v.Over) 'False'
+    Eq 'n13 a single over-budget sample is over' ([string](Get-CensusCostVerdict -Samples @(900) -BudgetMs 250).Over) 'True'
+    $v = Get-CensusCostVerdict -Samples @() -BudgetMs 250
+    Eq 'n14 no sample is a named state, not a silent zero' $v.Reason 'no-sample'
+    Eq 'n15 no sample is not the same as cheap-but-unknown' ([string]$v.Over) 'False'
+    Eq 'n16 the verdict echoes the budget it judged against' ([string]$v.BudgetMs) '250'
+    $ct = [System.IO.File]::ReadAllText($costModule, [System.Text.Encoding]::UTF8)
+    Has 'n17 the policy names the evidence it was built from' $ct 'ms=2854'
+    Has 'n18 and states that the budget is not raised' $ct 'does not raise the budget'
+    Has 'n19 and states the cost bound of the retry' $ct 'at most two scans'
+}
+# End-to-end shape: a forced over-budget run still reports one summary line with
+# both numbers, and a healthy tree stays HEALTH (no retry word) - so the new key
+# cannot leak into a normal tick and grow into noise of its own.
+$body = Invoke-Census $RepoDir -Fail
+if ($body -match 'nolivecheck-census:.*\sms=\d+\sbudget=250\r?\n' -and $body -notmatch 'retry=') {
+    Ok 'n20 a healthy live run carries no retry key'
+} else { No 'n20 a healthy live run carries no retry key' ($body -split "`n")[0] }
+$body = Invoke-Census $RepoDir -Fail -Extra @('-BudgetMs', '0')
+if ($body -match 'retry=1\sms1=\d+') { Ok 'n21 a forced over-budget run keeps the discarded sample' }
+else { No 'n21 a forced over-budget run keeps the discarded sample' ($body -split "`n")[0] }
+
 # ---------------- k. ASCII-only audit for both new files
 foreach ($pair in @(@{ N = 'census'; P = $census }, @{ N = 'sandbox'; P = $PSCommandPath })) {
     $bytes = [System.IO.File]::ReadAllBytes($pair['P'])

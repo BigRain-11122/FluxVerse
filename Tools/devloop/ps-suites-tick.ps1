@@ -106,6 +106,7 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\face-path-lint.ps1',
             'Tools\devloop\write-status-face.ps1',
             'Tools\devloop\nolivecheck-census.ps1',
+            'Tools\devloop\census-cost.ps1',
             'Tools\devloop\qa-rotation.ps1',
             'Tools\devloop\fixtures\*\*'
         )

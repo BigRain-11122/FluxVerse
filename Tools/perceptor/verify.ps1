@@ -755,10 +755,19 @@ if (Test-Path -LiteralPath $nlcScript) {
     $mNlcStale = [regex]::Match($nlcSum, 'stale=(\d+)')
     $mNlcMs = [regex]::Match($nlcSum, 'ms=(\d+)')
     $mNlcBudget = [regex]::Match($nlcSum, 'budget=(\d+)')
+    $mNlcRetry = [regex]::Match($nlcSum, 'retry=(\d+)')
+    $mNlcMs1 = [regex]::Match($nlcSum, 'ms1=(\d+)')
     $nlcLine = 'nolivecheck-census: files=' + $mNlcFiles.Groups[1].Value + ' hits=' + $mNlcHits.Groups[1].Value +
                ' unexpected=' + $mNlcUnexp.Groups[1].Value + ' stale=' + $mNlcStale.Groups[1].Value
     if ($mNlcMs.Success) { $nlcLine = $nlcLine + ' ms=' + $mNlcMs.Groups[1].Value }
     if ($mNlcBudget.Success) { $nlcLine = $nlcLine + ' budget=' + $mNlcBudget.Groups[1].Value }
+    # r780: an over-budget first sample is re-measured once, and the discarded
+    # sample travels as ms1 so a spike stays visible on a HEALTH line instead of
+    # being either hidden or promoted to a decision.
+    if ($mNlcRetry.Success) {
+      $nlcLine = $nlcLine + ' retry=' + $mNlcRetry.Groups[1].Value
+      if ($mNlcMs1.Success) { $nlcLine = $nlcLine + ' ms1=' + $mNlcMs1.Groups[1].Value }
+    }
     $nlcOver = $false
     if ($mNlcMs.Success -and $mNlcBudget.Success) {
       $nlcOver = ([int]$mNlcMs.Groups[1].Value -gt [int]$mNlcBudget.Groups[1].Value)

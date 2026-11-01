@@ -35,6 +35,16 @@
 # section (ride check-fastpath.ps1) or shrink the scan. Raising the gate's 3 s
 # budget to absorb it is explicitly not the fix.
 #
+# ONE SAMPLE IS NOT A TREND (main#118, r780): on 2026-11-01 this line read
+# ms=2854 against budget=250 while the 24 ticks around it read 93-191 ms and a
+# hand run in the same minute read 103-106 ms - the disk was busy, nothing had
+# changed, and the gate turned that into "somebody must decide this" every tick.
+# So a first sample over the budget now buys exactly one re-measure and the run
+# is judged on the lower of the two (census-cost.ps1); the discarded sample is
+# still printed as ms1= so the spike stays a reading rather than a decision.
+# A genuine regression reproduces in both passes and still warns; the budget
+# itself is untouched, and the common under-budget tick pays nothing extra.
+#
 # HONEST BOUNDARY: a text scan cannot prove the switch is *reached* at runtime,
 # only that the token is or is not written down. A call assembled from pieces
 # would slip through (and the sandbox builds its fixtures that way, which is the
@@ -53,8 +63,16 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$costSw = New-Object System.Diagnostics.Stopwatch
-$costSw.Start()
+
+# The cost judgement lives in its own module (r780): whether this run's
+# milliseconds are evidence or noise is a policy question, and a policy that can
+# only be observed through a wall-clock sample cannot be tested.
+$costModule = Join-Path $PSScriptRoot 'census-cost.ps1'
+if (-not (Test-Path -LiteralPath $costModule)) {
+    Write-Output ('nolivecheck-census: files=0 hits=0 allowed=0 unexpected=0 stale=0 (cost module missing: ' + $costModule + ')')
+    exit 1
+}
+. $costModule
 
 $hitText = '-' + 'NoLiveCheck'
 
@@ -92,105 +110,146 @@ $pruneRel = @(
 )
 $scanExts = @('.ps1', '.cmd', '.bat', '.vbs')
 
-$allFiles = New-Object System.Collections.ArrayList
-$stack = New-Object System.Collections.Stack
-$stack.Push($rootNorm)
-while ($stack.Count -gt 0) {
-    $dir = [string]$stack.Pop()
-    $subs = @()
-    try { $subs = @([System.IO.Directory]::GetDirectories($dir)) } catch { $subs = @() }
-    foreach ($sub in $subs) {
-        $leaf = [System.IO.Path]::GetFileName($sub)
-        if ($skipNames -contains $leaf) { continue }
-        # Full scratch trees (r743: .codely-cli\tmp holds hand-run throwaway
-        # scripts that are never part of a production chain).
-        if ($sub -match '\\\.codely-cli\\tmp$') { continue }
-        $subRel = $sub.Substring($rootNorm.Length).TrimStart('\')
-        $pruned = $false
-        foreach ($pr in $pruneRel) {
-            if ($subRel -eq $pr -or $subRel.StartsWith($pr + '\')) { $pruned = $true; break }
+# One measuring pass = walk + classify. It is a function rather than inline code
+# because a sample that looks expensive gets re-measured (r780); both passes run
+# the identical read-only work and the second is thrown away if the first was
+# already inside the budget, so the common tick pays nothing for this.
+function Invoke-CensusPass {
+    param(
+        [string]$RootDir,
+        [string]$TokenText,
+        [string[]]$Allow,
+        [string[]]$Skips,
+        [string[]]$Prune,
+        [string[]]$Exts
+    )
+    $passSw = New-Object System.Diagnostics.Stopwatch
+    $passSw.Start()
+
+    $fileList = New-Object System.Collections.ArrayList
+    $dirStack = New-Object System.Collections.Stack
+    $dirStack.Push($RootDir)
+    while ($dirStack.Count -gt 0) {
+        $dir = [string]$dirStack.Pop()
+        $subs = @()
+        try { $subs = @([System.IO.Directory]::GetDirectories($dir)) } catch { $subs = @() }
+        foreach ($sub in $subs) {
+            $leaf = [System.IO.Path]::GetFileName($sub)
+            if ($Skips -contains $leaf) { continue }
+            # Full scratch trees (r743: .codely-cli\tmp holds hand-run throwaway
+            # scripts that are never part of a production chain).
+            if ($sub -match '\\\.codely-cli\\tmp$') { continue }
+            $subRel = $sub.Substring($RootDir.Length).TrimStart('\')
+            $pruned = $false
+            foreach ($pr in $Prune) {
+                if ($subRel -eq $pr -or $subRel.StartsWith($pr + '\')) { $pruned = $true; break }
+            }
+            if ($pruned) { continue }
+            $dirStack.Push($sub)
         }
-        if ($pruned) { continue }
-        $stack.Push($sub)
-    }
-    $files = @()
-    try { $files = @([System.IO.Directory]::GetFiles($dir)) } catch { $files = @() }
-    foreach ($f in $files) {
-        $ext = [System.IO.Path]::GetExtension($f).ToLower()
-        if ($scanExts -contains $ext) { [void]$allFiles.Add($f) }
-    }
-}
-
-$allowedRows = New-Object System.Collections.ArrayList
-$unexpectedRows = New-Object System.Collections.ArrayList
-$hitFiles = @{}
-$hitCount = 0
-
-foreach ($f in $allFiles) {
-    $rel = $f.Substring($rootNorm.Length).TrimStart('\')
-    # Read once as text and ask for the token BEFORE splitting into lines: the
-    # overwhelming majority of files do not name the switch at all, and paying a
-    # line array plus one IndexOf per line for all of them cost ~0.43 s per run
-    # - enough to push the tick's cached-verify round past its own 3 s budget
-    # (the gate-of-the-gate sandbox caught it, r765).
-    $text = ''
-    try { $text = [System.IO.File]::ReadAllText($f, [System.Text.Encoding]::UTF8) } catch { continue }
-    if ($text.IndexOf($hitText, [System.StringComparison]::Ordinal) -lt 0) { continue }
-    $lines = @($text -split "`r?`n")
-    $allowed = $false
-    foreach ($a in $allowList) {
-        if ($rel -eq $a) { $allowed = $true; break }
-    }
-    $lineno = 0
-    foreach ($ln in $lines) {
-        $lineno++
-        if ($ln.IndexOf($hitText, [System.StringComparison]::Ordinal) -lt 0) { continue }
-        $hitCount++
-        $hitFiles[$rel] = $true
-        $trimmed = $ln.Trim()
-        $kind = 'code'
-        if ($trimmed.StartsWith('#')) { $kind = 'comment' }
-        if ($trimmed.Length -gt 120) { $trimmed = $trimmed.Substring(0, 120) + '...' }
-        $row = [pscustomobject]@{
-            Rel = $rel; Line = $lineno; Kind = $kind; Text = $trimmed; Ok = $allowed
+        $files = @()
+        try { $files = @([System.IO.Directory]::GetFiles($dir)) } catch { $files = @() }
+        foreach ($f in $files) {
+            $ext = [System.IO.Path]::GetExtension($f).ToLower()
+            if ($Exts -contains $ext) { [void]$fileList.Add($f) }
         }
-        if ($allowed) { [void]$allowedRows.Add($row) } else { [void]$unexpectedRows.Add($row) }
+    }
+
+    $allowedOut = New-Object System.Collections.ArrayList
+    $unexOut = New-Object System.Collections.ArrayList
+    $seenFiles = @{}
+    $hitTotal = 0
+
+    foreach ($f in $fileList) {
+        $rel = $f.Substring($RootDir.Length).TrimStart('\')
+        # Read once as text and ask for the token BEFORE splitting into lines: the
+        # overwhelming majority of files do not name the switch at all, and paying a
+        # line array plus one IndexOf per line for all of them cost ~0.43 s per run
+        # - enough to push the tick's cached-verify round past its own 3 s budget
+        # (the gate-of-the-gate sandbox caught it, r765).
+        $text = ''
+        try { $text = [System.IO.File]::ReadAllText($f, [System.Text.Encoding]::UTF8) } catch { continue }
+        if ($text.IndexOf($TokenText, [System.StringComparison]::Ordinal) -lt 0) { continue }
+        $lines = @($text -split "`r?`n")
+        $isAllowed = $false
+        foreach ($a in $Allow) {
+            if ($rel -eq $a) { $isAllowed = $true; break }
+        }
+        $lineno = 0
+        foreach ($ln in $lines) {
+            $lineno++
+            if ($ln.IndexOf($TokenText, [System.StringComparison]::Ordinal) -lt 0) { continue }
+            $hitTotal++
+            $seenFiles[$rel] = $true
+            $trimmed = $ln.Trim()
+            $kind = 'code'
+            if ($trimmed.StartsWith('#')) { $kind = 'comment' }
+            if ($trimmed.Length -gt 120) { $trimmed = $trimmed.Substring(0, 120) + '...' }
+            $row = [pscustomobject]@{
+                Rel = $rel; Line = $lineno; Kind = $kind; Text = $trimmed; Ok = $isAllowed
+            }
+            if ($isAllowed) { [void]$allowedOut.Add($row) } else { [void]$unexOut.Add($row) }
+        }
+    }
+
+    $staleOut = New-Object System.Collections.ArrayList
+    foreach ($a in $Allow) {
+        if (-not $seenFiles.ContainsKey($a)) { [void]$staleOut.Add($a) }
+    }
+
+    $passSw.Stop()
+    return [pscustomobject]@{
+        Files = $fileList.Count
+        Hits = $hitTotal
+        Allowed = $allowedOut
+        Unexpected = $unexOut
+        Stale = $staleOut
+        Ms = [int]$passSw.ElapsedMilliseconds
     }
 }
 
-$staleRows = New-Object System.Collections.ArrayList
-foreach ($a in $allowList) {
-    if (-not $hitFiles.ContainsKey($a)) { [void]$staleRows.Add($a) }
+$passOne = Invoke-CensusPass -RootDir $rootNorm -TokenText $hitText -Allow $allowList -Skips $skipNames -Prune $pruneRel -Exts $scanExts
+$costSamples = @([int]$passOne.Ms)
+$passFinal = $passOne
+# One spike is not a trend: r780 found a lone ms=2854 among 24 ticks at 93-191 ms.
+# A first sample over the line buys exactly one re-measure (cost policy lives in
+# census-cost.ps1 so it can be drilled directly instead of observed by luck).
+if (Test-CensusCostRetry -Ms $passOne.Ms -BudgetMs $BudgetMs) {
+    $passTwo = Invoke-CensusPass -RootDir $rootNorm -TokenText $hitText -Allow $allowList -Skips $skipNames -Prune $pruneRel -Exts $scanExts
+    $costSamples += [int]$passTwo.Ms
+    $passFinal = $passTwo
 }
+$costVerdict = Get-CensusCostVerdict -Samples $costSamples -BudgetMs $BudgetMs
 
-$costSw.Stop()
-$costMs = [int]$costSw.ElapsedMilliseconds
-$overBudget = ($costMs -gt $BudgetMs)
-
-Write-Output ('nolivecheck-census: files=' + $allFiles.Count + ' hits=' + $hitCount +
-    ' allowed=' + $allowedRows.Count + ' unexpected=' + $unexpectedRows.Count +
-    ' stale=' + $staleRows.Count +
-    ' ms=' + $costMs + ' budget=' + $BudgetMs)
-if ($overBudget) {
-    Write-Output ('BUDGET OVER: ' + $costMs + 'ms > ' + $BudgetMs + 'ms - this census runs on every tick, so its cost is part of the gate''s cached-round budget (3 s). Move it out of the per-tick section (ride check-fastpath.ps1) or shrink the scan; do not raise that budget to absorb it.')
+$summary = 'nolivecheck-census: files=' + $passFinal.Files + ' hits=' + $passFinal.Hits +
+    ' allowed=' + $passFinal.Allowed.Count + ' unexpected=' + $passFinal.Unexpected.Count +
+    ' stale=' + $passFinal.Stale.Count +
+    ' ms=' + $costVerdict.Ms + ' budget=' + $costVerdict.BudgetMs
+if ($costVerdict.Retried) {
+    # The discarded sample still travels: the spike is a reading, not a verdict.
+    $summary = $summary + ' retry=1 ms1=' + $costVerdict.FirstMs
+}
+Write-Output $summary
+if ($costVerdict.Over) {
+    Write-Output ('BUDGET OVER: ' + $costVerdict.Ms + 'ms > ' + $costVerdict.BudgetMs + 'ms - this census runs on every tick, so its cost is part of the gate''s cached-round budget (3 s). Move it out of the per-tick section (ride check-fastpath.ps1) or shrink the scan; do not raise that budget to absorb it.')
 }
 Write-Output ('scan root: ' + $rootNorm)
 Write-Output ('pruned: ' + ($pruneRel -join ', '))
 Write-Output ''
-foreach ($r in $allowedRows) {
+foreach ($r in $passFinal.Allowed) {
     Write-Output ('  allowed  {0}:{1}  [{2}]  {3}' -f $r.Rel, $r.Line, $r.Kind, $r.Text)
 }
-foreach ($s in $staleRows) {
+foreach ($s in $passFinal.Stale) {
     Write-Output ('  stale    ' + $s + '  (whitelisted, names the switch nowhere)')
 }
-if ($unexpectedRows.Count -gt 0) {
+if ($passFinal.Unexpected.Count -gt 0) {
     Write-Output ''
     Write-Output 'UNEXPECTED (must be 0 - the switch skips the live-hash check, so a'
     Write-Output 'production caller would write an unverified signal into the state file):'
-    foreach ($r in $unexpectedRows) {
+    foreach ($r in $passFinal.Unexpected) {
         Write-Output ('  ' + $r.Rel + ':' + $r.Line + '  [' + $r.Kind + ']  ' + $r.Text)
     }
 }
 
-if ($FailOnUnexpected -and $unexpectedRows.Count -gt 0) { exit 2 }
+if ($FailOnUnexpected -and $passFinal.Unexpected.Count -gt 0) { exit 2 }
 exit 0

@@ -37,6 +37,16 @@ function chk(name, cond, detail) {
   else { fail++; console.log('FAIL ' + name + ' :: ' + detail); }
 }
 
+// Fixtures first (queue main#76): logs\ is gitignored, so the bad build is a
+// build product. Without it this suite used to die on a bare ENOENT stack.
+const guard = require('../Tools/devloop/panel-fixture-guard.js');
+const missingFix = guard.missingFixtures((p) => fs.existsSync(p), 'selfcheck');
+if (missingFix.length > 0) {
+  guard.formatGuardMessage(missingFix, 'selfcheck').forEach((l) => console.log(l));
+  console.log(guard.formatGuardVerdict(missingFix));
+  process.exit(3);
+}
+
 // Expected check count comes from the template itself: a frozen number turns
 // every added self-check into a false red in this old suite.
 const tpl = fs.readFileSync('Tools/devloop/city-panel-template.html', 'utf8');

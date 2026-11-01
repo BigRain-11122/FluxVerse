@@ -41,6 +41,47 @@ function chk(name, cond, detail) {
   else { fail++; console.log('FAIL ' + name + ' :: ' + detail); }
 }
 
+// 0) fixtures first (queue main#76): the panel fixtures are gitignored build
+// products, so a fresh tree used to die here with a bare ENOENT stack that read
+// like "the panel broke". Ask the guard which files are missing and print the
+// one-line fix instead. Exit 3 = cannot judge (runner still fails this suite).
+const guard = require('../Tools/devloop/panel-fixture-guard.js');
+const realExists = (p) => fs.existsSync(p);
+
+// the guard is pure, so its own logic is testable without touching disk
+chk('guard.none-missing', guard.missingFixtures(() => true, 'history').length === 0,
+  'got ' + JSON.stringify(guard.missingFixtures(() => true, 'history')));
+const oneOut = guard.missingFixtures((p) => p !== 'logs/panel-fixture-regress.html', 'history');
+chk('guard.pinpoints', oneOut.length === 1 && oneOut[0] === 'logs/panel-fixture-regress.html',
+  'got ' + JSON.stringify(oneOut));
+const guardMsg = guard.formatGuardMessage(['logs/x.html'], 'history');
+chk('guard.message.carries-rebuild', guardMsg.indexOf('REBUILD: ' + guard.REBUILD) >= 0,
+  'msg=' + JSON.stringify(guardMsg));
+const verdict = guard.formatGuardVerdict(['a.html', 'b.jsonl']);
+chk('guard.verdict.one-line', verdict.indexOf('missing=2') >= 0 && verdict.indexOf(guard.REBUILD) >= 0,
+  'verdict=' + verdict);
+// groups must not share files: the self-check suite must never be told to
+// rebuild the history pair it does not read (and vice versa).
+const histPaths = guard.HISTORY.map((f) => f.path);
+const selfPaths = guard.SELFCHECK.map((f) => f.path);
+chk('guard.groups.disjoint',
+  histPaths.filter((p) => selfPaths.indexOf(p) >= 0).length === 0,
+  'hist=' + JSON.stringify(histPaths) + ' self=' + JSON.stringify(selfPaths));
+
+const missingFix = guard.missingFixtures(realExists, 'history');
+if (missingFix.length > 0) {
+  guard.formatGuardMessage(missingFix, 'history').forEach((l) => console.log(l));
+  console.log(guard.formatGuardVerdict(missingFix));
+  process.exit(3);
+}
+// contract: every fixture this suite reads is named in the guard group, so a new
+// file added below cannot silently reintroduce the bare-ENOENT path.
+['logs/panel-fixture-snap.json', 'logs/panel-fixture-prev.html',
+  'logs/panel-fixture-prev-hist.jsonl', 'logs/panel-fixture-regress.html',
+  'logs/panel-fixture-regress-hist.jsonl'].forEach((p) => {
+  chk('guard.covers ' + p, histPaths.indexOf(p) >= 0, 'guard=' + JSON.stringify(histPaths));
+});
+
 // 1) real build: assertions must be re-runnable at any later round, so the
 // expected check count comes from the template itself (not a frozen number),
 // and the prev/note assertions accept both the "first record" and the

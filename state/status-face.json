@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T07:50:36Z",
-    "current_activity":  "r780 收口：每 tick 那条「要人做决定」的普查成本告警下线——2026-11-01 15:41 的 `ms=2854` 是孤立 IO 抖动（同一批 24 个 tick 读 93–191 ms，手跑 103 ms），单次采样不该升成决策请求；判决改 best-of-2（`./Tools/devloop/census-cost.ps1`），抖动以 `retry=1 ms1=` 留在 HEALTH 行里当读数看，预算未动。活跑 `VERIFY HEALTH: nolivecheck-census: files=234 hits=3 unexpected=0 stale=1 ms=112 budget=250`。",
-    "artifact":  "`./Tools/devloop/census-cost.ps1`, `./Tools/devloop/nolivecheck-census.ps1`, `./Tools/perceptor/verify.ps1`, `./Tools/devloop/test-nolivecheck-census.ps1`, `./world-public/city-panel.html`",
-    "artifact_utc":  "2026-11-01T07:50:36Z",
-    "milestone":  "下一步 main#23 司级基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期 5 天）与 main#115（`./Tools/devloop/check-runbook-sync.ps1` 补沙盒并入族清单，due=2026-11-08）。",
+    "updated_utc":  "2026-11-01T08:59:12Z",
+    "current_activity":  "r781 收口：runbook 与 TECH §九 的轮号同步从「一次性修补」变成「每次改都能重跑」——新沙盒 `./Tools/devloop/test-runbook-sync.ps1` 34/34 建在注入夹具上（SYNC rc0／DRIFT rc2／五种 FAIL rc1，并钉住 r777 那个「取最旧块」的 bug 本身），同时接进 runner 默认清单与 write2 族的受保护源集。活跑 `ps-suites-write2: suites=5 red=0 assertions=238 parity=ok ran=26220ms`（45 s 上限的 58%），四族行全 HEALTH、`VERIFY PASS`。",
+    "artifact":  "`./Tools/devloop/test-runbook-sync.ps1`（新，34 项判据）, `./Tools/devloop/run-ps-suites.ps1`, `./Tools/devloop/ps-suites-tick.ps1`, `./world-public/city-panel.html`",
+    "artifact_utc":  "2026-11-01T08:59:12Z",
+    "milestone":  "下一轮口径：main#23 司级基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期 5 天）在队列头；其后 main#116（cited 引用只保不查、池子 93 张，due=2026-11-15）",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

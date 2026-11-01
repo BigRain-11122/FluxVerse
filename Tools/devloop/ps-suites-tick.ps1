@@ -101,6 +101,7 @@ function Get-PsSuitesTickDefaults {
             'logs\devloop-r247-facewriter-test.ps1',
             'Tools\devloop\test-nolivecheck-census.ps1',
             'Tools\devloop\test-qa-rotation.ps1',
+            'Tools\devloop\test-runbook-sync.ps1',
             'Tools\devloop\run-ps-suites.ps1',
             'Tools\devloop\build-city-panel.ps1',
             'Tools\devloop\face-path-lint.ps1',
@@ -108,6 +109,7 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\nolivecheck-census.ps1',
             'Tools\devloop\census-cost.ps1',
             'Tools\devloop\qa-rotation.ps1',
+            'Tools\devloop\check-runbook-sync.ps1',
             'Tools\devloop\fixtures\*\*'
         )
     }
@@ -503,7 +505,7 @@ function Invoke-PsSuitesTick {
         $ExtraArgs = @('-Suites', 'Tools\devloop\test-fastpath-state-live.ps1,logs\devloop-r197-writer-test.ps1,logs\devloop-r271-keep-negcon.ps1')
     }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write2') {
-        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-nolivecheck-census.ps1,Tools\devloop\test-qa-rotation.ps1')
+        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-nolivecheck-census.ps1,Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-runbook-sync.ps1')
     }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify') {
         $lightSuites = @(Get-PsSuitesTickDefaults -Family 'verify' | Where-Object { $_ -match 'test-[^\\]+\.ps1$' })

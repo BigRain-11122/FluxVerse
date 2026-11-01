@@ -47,6 +47,12 @@ function Get-PlayModeBaseline {
 function Restore-PlayModeSettings {
   param([string]$Path, [string]$BaselinePath)
 
+  # Same verdicts, decided before any read: an absent settings file is MISSING
+  # and an absent baseline is ABORT - neither may become a silent reset, and an
+  # omitted argument must not read as the other one either (queue main#128).
+  if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) { return 'MISSING' }
+  if ([string]::IsNullOrWhiteSpace($BaselinePath) -or -not (Test-Path -LiteralPath $BaselinePath)) { return 'ABORT baseline_unreadable' }
+
   $st = Get-PlayModeState -Path $Path
   if ($null -eq $st) { return 'MISSING' }
 

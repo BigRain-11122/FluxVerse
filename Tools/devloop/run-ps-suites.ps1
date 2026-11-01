@@ -227,6 +227,13 @@ if (-not $SkipParity -and $mode -ne 'verify') {
 function Invoke-SuiteChild {
     param([string]$Path, [int]$CapSec)
     $res = [ordered]@{ text = ''; exit = 0; timeout = $false }
+    # A suite path that does not exist must read as red, not as an empty capture
+    # that looks like a passing suite (queue main#128).
+    if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) {
+        $res.text = 'suite missing: ' + $Path
+        $res.exit = 1
+        return [pscustomobject]$res
+    }
     # Marker: a suite may run the gate in process (verify.ps1), and the gate now
     # owns a sandbox family for each side. Those nested runs must not start
     # another family run - we ARE the family run. Without this, a direct

@@ -123,6 +123,14 @@ function Invoke-CensusPass {
         [string[]]$Prune,
         [string[]]$Exts
     )
+    # An empty pass is the honest answer for a root that does not exist; walking
+    # a missing root used to return files=0 with no way to tell it from an empty
+    # tree (queue main#128).
+    if ([string]::IsNullOrWhiteSpace($RootDir) -or -not (Test-Path -LiteralPath $RootDir)) {
+        return [pscustomobject]@{
+            Files = 0; Hits = 0; Allowed = @(); Unexpected = @(); Stale = @(); Ms = 0
+        }
+    }
     $passSw = New-Object System.Diagnostics.Stopwatch
     $passSw.Start()
 

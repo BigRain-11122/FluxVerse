@@ -48,6 +48,9 @@ function Check([string]$name, [bool]$cond) {
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 function Write-Record {
     param([string]$Path, [datetime]$Utc, [hashtable]$Extra = @{})
+    # A record written to an empty path is a record nobody can find; that used to
+    # surface later as a missing reading, far from the cause (queue main#128).
+    if ([string]::IsNullOrWhiteSpace($Path)) { throw 'Write-Record: Path is required' }
     $obj = [ordered]@{
         utc = $Utc.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
         images = 93; cited = 74; stale_days = 90
@@ -250,6 +253,9 @@ $hNow = [DateTime]::SpecifyKind([DateTime]::Parse('2026-11-01T12:00:00Z'), [Date
 $hNowUtc = $hNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
 function Invoke-PanelBuild {
     param([string]$AuditPath, [string]$Tag)
+    # An absent audit file is a legitimate case (h5); an absent argument is not.
+    # Say so instead of building a panel from nothing (queue main#128).
+    if ([string]::IsNullOrWhiteSpace($AuditPath)) { throw 'Invoke-PanelBuild: AuditPath is required' }
     $outHtml = Join-Path $sandbox ('h\panel-' + $Tag + '.html')
     $hist = Join-Path $sandbox ('h\hist-' + $Tag + '.jsonl')
     $hdir = Join-Path $sandbox 'h'

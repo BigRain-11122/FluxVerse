@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T20:27:41Z",
-    "current_activity":  "r795 收口上半：「裸参数函数」这一族第一次有了机械清单，跑一次就点名 15 条（`./Tools/devloop/simple-param-census.ps1` 走 PowerShell 自己的 AST 静态清点，零跑零写）。r792 那个「-QueueDir 不报错、直接落 open=0」不是孤例——PowerShell 只对 advanced 函数拒绝未知具名参数，普通函数把整对 -Name value 收进 $args、真参数留默认，于是错参调用与「真零」逐字同形。",
-    "artifact":  "`./Tools/devloop/simple-param-census.ps1`（活跑 simple=123 risky=15，逐条点名 15 条）＋`./Tools/devloop/test-simple-param-census.ps1`（37/37，含 r792 原形负控与 r793 两处修的回归锚）＋接线 `./Tools/devloop/ps-suites-tick.ps1` 的 write2 族（suites=6 assertions=269 failing=0）",
-    "artifact_utc":  "2026-11-01T20:27:41Z",
-    "milestone":  "下一步＝main#128 清零这 15 条（`./Tools/devloop/simple-param-census.ps1 -FailOnRisk` 必须 exit 0），按批先改每 tick 都在用的 `./Tools/devloop/build-city-panel.ps1` 与 `./Tools/devloop/city-shot-shape.ps1`；due=2026-11-16。",
-    "milestone_eta_utc":  "2026-11-16T00:00:00Z"
+    "updated_utc":  "2026-11-01T21:47:07Z",
+    "current_activity":  "r796 收口：15 条「裸参数风险」一次清零。判据 `./Tools/devloop/simple-param-census.ps1 -FailOnRisk` 首次 exit 0（risky=15→0），闸法按每个函数的真实契约补：缺文件就自己说出是哪种空（点名缺档／disk-missing／no-dir／ok=false／MISSING／ABORT），锚点不存在就回退绝对 URL，测试 helper 只拦空路径不拦缺档。",
+    "artifact":  "`./Tools/devloop/build-city-panel.ps1`＋`./Tools/devloop/city-shot-shape.ps1`＋`./Tools/devloop/check-fastpath.ps1`＋`./Tools/devloop/panel-url.ps1`＋`./Tools/devloop/run-ps-suites.ps1`＋`./Tools/devloop/nolivecheck-census.ps1`＋`./Tools/devloop/playmode-settings-guard.ps1`＋`./Tools/devloop/test-log-archive-duty.ps1`＋`./Tools/devloop/test-qa-cite-duty.ps1`（九件补闸，活面重建 `PANEL OK bytes=208907`）",
+    "artifact_utc":  "2026-11-01T21:47:07Z",
+    "milestone":  "下一步＝队列头 main#52 空载浸泡复测（实读 2 个 Tuanjie 进程在跑，条件未满足）→ 领 tech#18 基准面 C·待证两件深潜（due=2026-11-19）；48 小时内出一件。",
+    "milestone_eta_utc":  "2026-11-04T00:00:00Z"
 }

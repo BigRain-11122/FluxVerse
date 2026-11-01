@@ -153,7 +153,10 @@ foreach ($p in @($SnapPath, $FacePath, $TemplatePath)) {
 
 function Read-JsonFile
 {
-    param([string]$Path, [string]$Label)
+    # An omitted or mistyped path used to reach ReadAllText and surface as a
+    # generic read error; name the missing file instead (queue main#128).
+    param([Parameter(Mandatory = $true)][string]$Path, [string]$Label)
+    if (-not (Test-Path -LiteralPath $Path)) { Fail ($Label + ' missing: ' + $Path) }
     $raw = ''
     try { $raw = [IO.File]::ReadAllText($Path, [Text.Encoding]::UTF8) }
     catch { Fail ($Label + ' read failed: ' + $_.Exception.Message) }
@@ -554,6 +557,10 @@ function Get-ShotDataUri
     param([string]$Path, [int]$Width = 620, [long]$Quality = 76)
     $img = $null; $bmp = $null; $g = $null; $ms = $null; $ps = $null; $codec = $null
     $res = New-Object PSObject -Property ([ordered]@{ ok = $false; uri = ''; w = 0; h = 0; bytes = [int64]0 })
+    # Missing or unreadable candidate = no picture, not a crash: the page then
+    # prints a plain link. Probing existence first keeps the exception path for
+    # real decode faults (queue main#128).
+    if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) { return $res }
     try {
         Add-Type -AssemblyName System.Drawing -ErrorAction Stop
         $img = [System.Drawing.Image]::FromFile($Path)
@@ -701,7 +708,9 @@ function Get-ProofFileInfo
 
 function Resolve-CityProof
 {
-    param([string]$Root)
+    # Mandatory: an omitted root used to produce an all-empty proof block that
+    # read exactly like "nothing has been built yet" (queue main#128).
+    param([Parameter(Mandatory = $true)][string]$Root)
 
     $build = [ordered]@{
         exists = $false; exit_code = -1; ts_utc = ''; wall_s = -1

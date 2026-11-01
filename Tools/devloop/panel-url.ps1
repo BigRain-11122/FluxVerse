@@ -20,6 +20,10 @@ function Get-RelPanelPath
 {
     param([string]$BaseDir, [string]$TargetFull)
     if ([string]::IsNullOrWhiteSpace($BaseDir) -or [string]::IsNullOrWhiteSpace($TargetFull)) { return '' }
+    # The relative link is anchored at the panel's real directory: a missing
+    # anchor cannot be re-checked by the reader, so answer '' and let the caller
+    # fall back to the absolute url (queue main#128).
+    if (-not (Test-Path -LiteralPath $BaseDir)) { return '' }
     $b = $BaseDir.Replace('/', '\')
     $t = $TargetFull.Replace('/', '\')
     $bRoot = ''
@@ -49,7 +53,12 @@ function New-PanelUrl
     param([string]$Full, [string]$PanelDir, [string]$RepoDir)
     if ([string]::IsNullOrWhiteSpace($Full)) { return '' }
     $f = $Full.Replace('/', '\')
-    if (-not [string]::IsNullOrWhiteSpace($PanelDir) -and -not [string]::IsNullOrWhiteSpace($RepoDir)) {
+    # Both anchors have to exist for a relative link to mean anything. An absent
+    # anchor (including the deliberate "no repo anchor" empty request) still has
+    # a correct answer: the absolute url (queue main#128).
+    $panelOk = (-not [string]::IsNullOrWhiteSpace($PanelDir)) -and (Test-Path -LiteralPath $PanelDir)
+    $repoOk = (-not [string]::IsNullOrWhiteSpace($RepoDir)) -and (Test-Path -LiteralPath $RepoDir)
+    if ($panelOk -and $repoOk) {
         $rr = $RepoDir.Replace('/', '\')
         if (-not $rr.EndsWith('\')) { $rr = $rr + '\' }
         $inRepo = ($f.Length -gt $rr.Length -and

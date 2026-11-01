@@ -304,6 +304,13 @@ function Compare-ShaCheck
         Write-Output ($Label + ': TRIGGER state-bad')
         return
     }
+    # A missing target must name itself as disk-missing rather than arriving as
+    # an empty hash from the reader (queue main#128).
+    if ([string]::IsNullOrWhiteSpace($DiskPath) -or -not (Test-Path -LiteralPath $DiskPath)) {
+        $script:trig.Add($Label)
+        Write-Output ($Label + ': TRIGGER disk-missing')
+        return
+    }
     $diskSha = Get-Sha12 -Path $DiskPath
     if ([string]::IsNullOrEmpty($diskSha)) {
         $script:trig.Add($Label)

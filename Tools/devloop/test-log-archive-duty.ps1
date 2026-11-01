@@ -54,12 +54,18 @@ function Add-LogFile([string]$dir, [string]$name, [int]$ageDays, [string]$text =
 function Invoke-VerifyWithArchive {
     param(
         [string]$LogsDir,
-        [string]$StateFile,
+        [Parameter(Mandatory = $true)][string]$StateFile,
         [int]$MaxRemain = 0,
         [switch]$Force,
         [switch]$SimulateMismatch,
         [string]$WorkingDirectory = ''
     )
+    # The sandbox log dir has to exist for the run to mean anything; the state
+    # file is created by the run itself, so only its argument is required
+    # (queue main#128).
+    if (-not (Test-Path -LiteralPath $LogsDir)) {
+        return @{ log = 'sandbox logs dir missing: ' + $LogsDir; code = 9 }
+    }
     $env:FLUXVERSE_ARCHIVE_DIR = $LogsDir
     $env:FLUXVERSE_ARCHIVE_STATE = $StateFile
     if ($MaxRemain -gt 0) { $env:FLUXVERSE_ARCHIVE_MAX_REMAIN = [string]$MaxRemain } else { Remove-Item Env:\FLUXVERSE_ARCHIVE_MAX_REMAIN -ErrorAction SilentlyContinue }

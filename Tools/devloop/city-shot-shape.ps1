@@ -34,6 +34,10 @@ function Get-ShotSize
     param([string]$Path)
     $img = $null
     $res = New-Object PSObject -Property ([ordered]@{ ok = $false; w = 0; h = 0 })
+    # ok=false is the documented "unreadable" answer, so it is returned on
+    # purpose - but a missing path is decided here instead of by an exception
+    # (queue main#128).
+    if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) { return $res }
     try {
         Add-Type -AssemblyName System.Drawing -ErrorAction Stop
         $img = [System.Drawing.Image]::FromFile($Path)
@@ -79,7 +83,12 @@ function Get-CityShotVerdict
     })
     if ($Name -match $script:CityShotPanelToken) { $row.panel = $true }
     $row.family_ok = (Test-CityShotFamily -Name $Name)
-    $size = Get-ShotSize -Path $Path
+    # Same verdicts as before (a missing file is still 'unreadable', still
+    # ranked after 'panel'/'unnamed'), but the answer is decided here instead of
+    # by an exception probe per candidate (queue main#128).
+    $pathOk = (-not [string]::IsNullOrWhiteSpace($Path)) -and (Test-Path -LiteralPath $Path)
+    $size = [pscustomobject]@{ ok = $false; w = 0; h = 0 }
+    if ($pathOk) { $size = Get-ShotSize -Path $Path }
     $row.w = [int]$size.w
     $row.h = [int]$size.h
     if ($size.ok) { $row.shape_ok = (Test-CityShotShape -W $size.w -H $size.h) }
@@ -160,6 +169,15 @@ function Get-CityShotAuditCached
     $res = New-Object PSObject -Property ([ordered]@{
         rows = @(); cached = $false; fp = ''; wrote = $false; reason = ''
     })
+    # no-dir is the documented answer for a missing directory; deciding it here
+    # keeps the rest of the function from walking a path that does not exist,
+    # and the shape (rows + reason) is exactly what the old path produced
+    # (queue main#128).
+    if ([string]::IsNullOrWhiteSpace($Dir) -or -not (Test-Path -LiteralPath $Dir)) {
+        $res.reason = 'no-dir'
+        $res.rows = @(Get-CityShotAudit -Dir $Dir)
+        return $res
+    }
     $fp = Get-CityShotFingerprint -Dir $Dir -ModulePath $ModulePath
     $res.fp = $fp
     if ($fp -and -not [string]::IsNullOrWhiteSpace($CachePath) -and (Test-Path -LiteralPath $CachePath)) {

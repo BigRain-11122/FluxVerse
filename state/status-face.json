@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T08:59:12Z",
-    "current_activity":  "r781 收口：runbook 与 TECH §九 的轮号同步从「一次性修补」变成「每次改都能重跑」——新沙盒 `./Tools/devloop/test-runbook-sync.ps1` 34/34 建在注入夹具上（SYNC rc0／DRIFT rc2／五种 FAIL rc1，并钉住 r777 那个「取最旧块」的 bug 本身），同时接进 runner 默认清单与 write2 族的受保护源集。活跑 `ps-suites-write2: suites=5 red=0 assertions=238 parity=ok ran=26220ms`（45 s 上限的 58%），四族行全 HEALTH、`VERIFY PASS`。",
-    "artifact":  "`./Tools/devloop/test-runbook-sync.ps1`（新，34 项判据）, `./Tools/devloop/run-ps-suites.ps1`, `./Tools/devloop/ps-suites-tick.ps1`, `./world-public/city-panel.html`",
-    "artifact_utc":  "2026-11-01T08:59:12Z",
-    "milestone":  "下一轮口径：main#23 司级基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期 5 天）在队列头；其后 main#116（cited 引用只保不查、池子 93 张，due=2026-11-15）",
+    "updated_utc":  "2026-11-01T09:13:06Z",
+    "current_activity":  "r782 收口：被引件第一次有了「还指着同一件事吗」的读数——`./Tools/devloop/qa-rotation.ps1` 新增只读复核账（`stale_cited`／`superseded_cited`／`newer_sibling_cited`，带 60 分钟同会话边际），活跑 `stale_cited=0/74 superseded_cited=72 newer_sibling_cited=0`；面板「运行维护」行多一段带年龄的引用复核读数（`qacite=ok qacite_stale=0 qacite_cited=74`）。搬不搬仍是人的决定，本轮一个文件都没搬。",
+    "artifact":  "`./Tools/devloop/qa-rotation.ps1`（复核账＋`-Record`）, `./Tools/devloop/test-qa-rotation.ps1`（101/101）, `./world-public/city-panel.html`（引用复核行）, `./qa/city-panel-narrow.png`（390×6630 offenders=0）",
+    "artifact_utc":  "2026-11-01T09:13:06Z",
+    "milestone":  "下一轮口径：main#23 司级基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期 5 天）仍在队列头；新债 main#119（引用复核读数没有刷新义务，due=2026-11-22）",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

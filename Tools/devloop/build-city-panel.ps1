@@ -36,6 +36,8 @@ param(
     [string]$ProofRoot = '',
     [string]$DecisionsPath = '',
     [string]$ArchiveStatePath = '',
+    # Citation audit reading written by qa-rotation.ps1 -Record (queue main#116).
+    [string]$QaCiteAuditPath = '',
     [string]$QueueDir = '',
     [switch]$SiteSkip
 )
@@ -1088,9 +1090,62 @@ function Resolve-ArchiveDuty
     return $r
 }
 
+# ---------------------------------------------------------------------------
+# Citation audit (queue main#116): qa-rotation.ps1 can now say whether a frozen
+# citation still points at something current, but that reading costs ~2.4 s
+# (it indexes 383 tracked documents) and the panel is rebuilt every ten minutes.
+# So the tool writes the numbers once with its own UTC stamp (-Record) and this
+# reads them back: the page shows the reading WITH its age. Honest edges: a
+# missing record means "not recorded", never "zero stale"; a malformed record
+# means "unreadable", never zero; nothing on this page rotates a file.
+function Resolve-QaCiteAudit
+{
+    param([string]$Path)
+
+    $r = [ordered]@{
+        exists = $false; path_rel = ''; url = ''; error = ''
+        utc = ''; images = -1; cited = -1; stale_days = -1
+        stale_cited = -1; superseded_cited = -1; newer_sibling_cited = -1
+    }
+    if ([string]::IsNullOrEmpty($Path)) { return $r }
+    if (-not (Test-Path -LiteralPath $Path)) { return $r }
+
+    $raw = ''
+    try { $raw = [IO.File]::ReadAllText($Path, [Text.Encoding]::UTF8) } catch {
+        $r.error = 'unreadable'
+        return $r
+    }
+    $o = $null
+    try { $o = $raw | ConvertFrom-Json } catch { $o = $null }
+    if ($null -eq $o) { $r.error = 'unparsable'; return $r }
+
+    $r.exists = $true
+    $r.utc = [string]$o.utc
+    foreach ($k in @('images', 'cited', 'stale_days', 'stale_cited', 'superseded_cited', 'newer_sibling_cited')) {
+        $v = $o.PSObject.Properties[$k]
+        if ($null -ne $v -and $null -ne $v.Value) { $r[$k] = [int]$v.Value }
+    }
+
+    $full = [IO.Path]::GetFullPath($Path)
+    $rel = $full
+    if ($rel.StartsWith($repoDir, [StringComparison]::OrdinalIgnoreCase)) {
+        $rel = $rel.Substring($repoDir.Length)
+    }
+    $r.path_rel = $rel.TrimStart('\', '/').Replace('\', '/')
+    $r.url = Get-PanelUrl $full
+    return $r
+}
+
 if ([string]::IsNullOrEmpty($DecisionsPath)) {
     $DecisionsPath = Join-Path $groupRoot 'docs\decisions.md'
 }
+
+if ([string]::IsNullOrEmpty($QaCiteAuditPath)) {
+    $QaCiteAuditPath = Join-Path $repoDir 'logs\.qa-cite-audit.json'
+}
+$qacite = Resolve-QaCiteAudit -Path $QaCiteAuditPath
+$qaciteJs = To-JsLiteral -Obj $qacite -Label 'qacite'
+
 $duty = Resolve-Duty -Path $DecisionsPath
 $dutyJs = To-JsLiteral -Obj $duty -Label 'duty'
 
@@ -1140,7 +1195,7 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__DUTY_JSON__','__ARCH_JSON__','__QUEUE_JSON__','__ART_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__DUTY_JSON__','__ARCH_JSON__','__QACITE_JSON__','__QUEUE_JSON__','__ART_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
@@ -1165,10 +1220,11 @@ $phMap = @{
     '__PROOF_JSON__'    = $proofJs
     '__DUTY_JSON__'     = $dutyJs
     '__ARCH_JSON__'     = $archJs
+    '__QACITE_JSON__'   = $qaciteJs
     '__QUEUE_JSON__'    = $qdueJs
     '__ART_JSON__'      = $artJs
 }
-$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|DUTY|ARCH|QUEUE|ART)_JSON__')
+$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|DUTY|ARCH|QACITE|QUEUE|ART)_JSON__')
 $evaluator = [System.Text.RegularExpressions.MatchEvaluator]{
     param($m)
     if (-not $phMap.ContainsKey($m.Value)) { return $m.Value }
@@ -1212,5 +1268,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' art_bare=' + [int]$artBare.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' qdue=' + $(if ($qdue.exists) { [string]$qdue.late } else { 'missing' }) + ' qdue_bad=' + $(if ($qdue.exists) { [string]$qdue.bad } else { 'missing' }) + ' qdue_code=' + $(if ($qdue.exists) { [string]$qdue.code } else { 'missing' }) + ' qdue_long=' + $(if ($qdue.exists) { [string]$qdue.long } else { 'missing' }) + ' qdue_longmax=' + $(if ($qdue.exists) { [string]$qdue.long_max } else { 'missing' }) + ' qdue_dupe=' + $(if ($qdue.exists) { [string]$qdue.dupe } else { 'missing' }) + ' qdue_dupe_rows=' + $(if ($qdue.exists) { [string]$qdue.dupe_rows } else { 'missing' }) + ' qdue_max=' + [int]$qdue.max_days + ' qdue_open=' + [int]$qdue.open + ' qdue_dated=' + [int]$qdue.dated + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' art_bare=' + [int]$artBare.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' qacite=' + $(if ($qacite.exists) { 'ok' } elseif ($qacite.error) { $qacite.error } else { 'missing' }) + ' qacite_stale=' + $(if ($qacite.exists) { [string]$qacite.stale_cited } else { 'missing' }) + ' qacite_cited=' + $(if ($qacite.exists) { [string]$qacite.cited } else { 'missing' }) + ' qdue=' + $(if ($qdue.exists) { [string]$qdue.late } else { 'missing' }) + ' qdue_bad=' + $(if ($qdue.exists) { [string]$qdue.bad } else { 'missing' }) + ' qdue_code=' + $(if ($qdue.exists) { [string]$qdue.code } else { 'missing' }) + ' qdue_long=' + $(if ($qdue.exists) { [string]$qdue.long } else { 'missing' }) + ' qdue_longmax=' + $(if ($qdue.exists) { [string]$qdue.long_max } else { 'missing' }) + ' qdue_dupe=' + $(if ($qdue.exists) { [string]$qdue.dupe } else { 'missing' }) + ' qdue_dupe_rows=' + $(if ($qdue.exists) { [string]$qdue.dupe_rows } else { 'missing' }) + ' qdue_max=' + [int]$qdue.max_days + ' qdue_open=' + [int]$qdue.open + ' qdue_dated=' + [int]$qdue.dated + ' built=' + $built + ' path=' + $OutPath)
 exit 0

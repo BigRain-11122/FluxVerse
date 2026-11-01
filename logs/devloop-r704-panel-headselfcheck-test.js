@@ -134,6 +134,13 @@ const GREEN = {
     exists: true, path_rel: 'logs/.archive-duty-last-run.txt', url: 'file:///D:/l/stamp.txt',
     stamp: YMD(), stamp_day: YMD('-'), today: YMD(), is_today: true, remain: 0, ran_utc: nowIso(1)
   },
+  // r782 added the citation-audit reading (queue main#116). A healthy page has a
+  // recorded reading in which no cited file is past the age line.
+  QACITE: {
+    exists: true, path_rel: 'logs/.qa-cite-audit.json', url: 'file:///D:/l/qa-cite.json',
+    error: '', utc: nowIso(2), images: 20, cited: 8, stale_days: 90,
+    stale_cited: 0, stale_cited_bytes: 0, superseded_cited: 0, newer_sibling_cited: 0
+  },
   // r745 added the queue-overdue row (queue main#83). A calm fixture = readable
   // queues with deadlines declared but none of them late, so an "all green" page
   // stays green for the right reason.
@@ -227,6 +234,41 @@ chk('template.card-anchor', /id="selfcheck-card"/.test(template), 'self-check ca
   try { run = runPanel(greenHtml, 'nohead', { dropId: 'sc-head' }); } catch (e) { err = e.message; }
   chk('nohead.no-crash', !err, err);
   chk('nohead.still-checks', !!run && (String(run.get('selfcheck').innerHTML || '').match(/<span class="nm">/g) || []).length > 0);
+}
+
+// --- 7) citation-audit row (r782, queue main#116) ---
+// The row is a READOUT with its own age, so the honest shapes are: a recorded
+// reading, "not recorded" (never zero stale), "unreadable", and a stale warning.
+// The stub DOM keeps appended children unrendered, so text is read off them.
+function maintText(html, label) {
+  const run = runPanel(html, label);
+  return (run.get('f-maint').children || []).map(c => String(c.textContent || '')).join(' | ');
+}
+{
+  const t = maintText(injectAll(GREEN), 'qacite-ok');
+  chk('qacite.healthy-row', t.indexOf('引用复核') >= 0 && t.indexOf('8 件均未超 90 天') >= 0,
+    'text=' + JSON.stringify(t));
+  chk('qacite.healthy-age', t.indexOf('读数') >= 0, 'text=' + JSON.stringify(t));
+}
+{
+  const noRec = Object.assign({}, GREEN);
+  noRec.QACITE = { exists: false, error: '', path_rel: 'logs/.qa-cite-audit.json' };
+  const t = maintText(injectAll(noRec), 'qacite-missing');
+  chk('qacite.missing-row', t.indexOf('未记录') >= 0, 'text=' + JSON.stringify(t));
+  chk('qacite.missing-never-zero', t.indexOf('均未超') < 0, 'text=' + JSON.stringify(t));
+}
+{
+  const bad = Object.assign({}, GREEN);
+  bad.QACITE = { exists: false, error: 'unparsable', path_rel: 'logs/.qa-cite-audit.json' };
+  const t = maintText(injectAll(bad), 'qacite-bad');
+  chk('qacite.unreadable-row', t.indexOf('读数不可读') >= 0, 'text=' + JSON.stringify(t));
+}
+{
+  const stale = Object.assign({}, GREEN);
+  stale.QACITE = Object.assign({}, GREEN.QACITE, { stale_cited: 3, cited: 8, superseded_cited: 5 });
+  const t = maintText(injectAll(stale), 'qacite-stale');
+  chk('qacite.stale-row', t.indexOf('3/8 件超 90 天') >= 0, 'text=' + JSON.stringify(t));
+  chk('qacite.superseded-row', t.indexOf('同族已有更新帧 5 件') >= 0, 'text=' + JSON.stringify(t));
 }
 
 console.log('RESULT pass=' + pass + ' fail=' + fail);

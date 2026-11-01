@@ -107,6 +107,13 @@ const FIXTURE = {
   },
   // r745 added the queue-overdue row (queue main#83); calm fixture = readable,
   // dated rows present, nothing late.
+  // r782 added the citation-audit reading (queue main#116); calm fixture =
+  // recorded, nothing past the age line, cited files still current.
+  QACITE: {
+    exists: true, path_rel: 'logs/.qa-cite-audit.json', url: 'file:///D:/l/qa-cite.json',
+    error: '', utc: nowIso(2), images: 20, cited: 8, stale_days: 90,
+    stale_cited: 0, stale_cited_bytes: 0, superseded_cited: 0, newer_sibling_cited: 0
+  },
   QUEUE: {
     exists: true, dir_rel: 'state/queue', files: 3, scanned: 12, open: 12,
     dated: 3, late: 0, max_days: 0, max_id: '', as_of: YMD(), items: []

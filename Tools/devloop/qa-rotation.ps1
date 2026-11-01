@@ -42,6 +42,19 @@
 # all): a half-restored pool is exactly the state this order forbids. A restore
 # cannot fight the rotation: restored files are cited by definition, and cited
 # files are never planned for a move.
+# Step 7 (r782, queue main#116): a citation was a one-way shield - cited files
+# never rotate (correct), but nobody ever asked whether the citation still points
+# at the same thing. With 69 cited files frozen the whole rotation is a no-op
+# (plan moves=0). This step adds a REPORT-ONLY audit, three readings, no new
+# moves: (a) stale_cited = cited files older than -StaleDays (default 90);
+# (b) superseded_cited = cited files whose capture session is not the newest one
+# in its group (a newer frame of the same family already exists in the pool);
+# (c) newer_sibling_cited = cited files that share their session with a strictly
+# newer file (the "newer frame inside one session" relation, quantified before
+# any rule is written). Moving is still a human decision: nothing here changes a
+# plan. -Record writes the numbers to logs\.qa-cite-audit.json so a reader (the
+# panel) can show them with their own age instead of re-scanning 383 documents
+# per tick - the audit costs ~2.4 s and is not a per-tick job.
 # Read-only, no network, ASCII-only (PS5.1 GBK law).
 [CmdletBinding()]
 param(
@@ -51,6 +64,20 @@ param(
     [int]$KeepFamily = 3,
     # Rolling window for panel self-shots (never inlined), counted in FILES.
     [int]$KeepPanel = 3,
+    # Age line for the cited-evidence audit (queue main#116). A cited file older
+    # than this many days is reported as stale - reported, never moved.
+    [int]$StaleDays = 90,
+    # Margin (minutes) before a newer file in the SAME capture session counts as
+    # a re-shoot rather than write order. Measured: the six views of one session
+    # land within seconds of each other, so a strict compare counts write order
+    # as "replaced" (first cut reported 5 such files, all from one 10-28 capture).
+    [int]$SiblingMarginMin = 60,
+    # Write the citation audit reading to a small JSON file (empty = no record).
+    # Default location = <repo>/logs/.qa-cite-audit.json, which the panel reads
+    # as a readout only; nothing rotates on the strength of this record.
+    [string]$RecordPath = '',
+    # Write the record to the default logs path (shortcut for -RecordPath).
+    [switch]$Record,
     # Repo root used to build the citation index (tracked *.md / *.txt).
     # Empty = two levels above this script (the repo root).
     [string]$CiteRoot = '',
@@ -211,6 +238,8 @@ function Get-QaPoolCensus
     $res = New-Object PSObject -Property ([ordered]@{
         dir = $Pool; exists = $false; images = 0; bytes = 0; oldest_days = -1
         groups = @(); cited = 0; cited_kept = 0
+        stale_cited = 0; stale_cited_bytes = [int64]0
+        superseded_cited = 0; newer_sibling_cited = 0
     })
     if ([string]::IsNullOrWhiteSpace($Pool)) { return $res }
     if (-not (Test-Path -LiteralPath $Pool)) { return $res }
@@ -287,6 +316,42 @@ function Get-QaPoolCensus
         foreach ($f in $sorted) {
             if ($Cited.ContainsKey([string]$f.Name)) { $citedNames += [string]$f.Name }
         }
+
+        # Citation audit (main#116): independent of the retention window, and
+        # computed for every group (including keep=all) so the reading does not
+        # depend on where a file happens to sit relative to the window.
+        $stampNewest = @{}
+        foreach ($f in $sorted) {
+            $sk = Get-QaSessionKey -Name $f.Name
+            if (-not $stampNewest.ContainsKey($sk) -or $f.LastWriteTimeUtc -gt $stampNewest[$sk]) {
+                $stampNewest[$sk] = $f.LastWriteTimeUtc
+            }
+        }
+        $newestStamp = $null
+        if ($stampNewest.Count -gt 0) {
+            $newestStamp = @($stampNewest.Keys | Sort-Object { $stampNewest[$_] } -Descending)[0]
+        }
+        $staleNames = @()
+        $staleBytes = [int64]0
+        $supNames = @()
+        $sibNames = @()
+        foreach ($n in @($citedNames | Sort-Object)) {
+            $fi = @($sorted | Where-Object { [string]$_.Name -eq [string]$n })[0]
+            if ($null -eq $fi) { continue }
+            if (($now - $fi.LastWriteTimeUtc).TotalDays -gt $StaleDays) {
+                $staleNames += [string]$n
+                $staleBytes += [int64]$fi.Length
+            }
+            $sk = Get-QaSessionKey -Name $fi.Name
+            if ($null -ne $newestStamp -and $sk -ne $newestStamp) { $supNames += [string]$n }
+            $hasNewer = $false
+            foreach ($o in $sorted) {
+                if ([string]$o.Name -eq [string]$fi.Name) { continue }
+                if ((Get-QaSessionKey -Name $o.Name) -ne $sk) { continue }
+                if (($o.LastWriteTimeUtc - $fi.LastWriteTimeUtc).TotalMinutes -gt $SiblingMarginMin) { $hasNewer = $true; break }
+            }
+            if ($hasNewer) { $sibNames += [string]$n }
+        }
         if ($keep -ge 0 -and $sessions.Count -gt $keep) {
             foreach ($s in @($sessions[$keep..($sessions.Count - 1)])) {
                 foreach ($n in @($s.names | Sort-Object)) {
@@ -318,10 +383,21 @@ function Get-QaPoolCensus
             cited = [int]$citedNames.Count
             cited_kept = [int]$citedKept.Count
             cited_names = @($citedNames)
+            stale_cited = [int]$staleNames.Count
+            stale_cited_bytes = [int64]$staleBytes
+            stale_cited_names = @($staleNames)
+            superseded_cited = [int]$supNames.Count
+            superseded_cited_names = @($supNames)
+            newer_sibling_cited = [int]$sibNames.Count
+            newer_sibling_cited_names = @($sibNames)
             move_names = @($moveList)
         }))
         $res.cited = [int]$res.cited + $citedNames.Count
         $res.cited_kept = [int]$res.cited_kept + $citedKept.Count
+        $res.stale_cited = [int]$res.stale_cited + $staleNames.Count
+        $res.stale_cited_bytes = [int64]$res.stale_cited_bytes + $staleBytes
+        $res.superseded_cited = [int]$res.superseded_cited + $supNames.Count
+        $res.newer_sibling_cited = [int]$res.newer_sibling_cited + $sibNames.Count
     }
     $res.groups = @($groups)
     return $res
@@ -539,6 +615,50 @@ $census = Get-QaPoolCensus -Pool $Dir -Files $poolFiles.files -Cited $citedSet
 $dangling = @()
 foreach ($n in $archNames) { if ($citedSet.ContainsKey([string]$n)) { $dangling += [string]$n } }
 
+# The audit record: a reader (the panel) shows these numbers with their own age
+# instead of rebuilding the citation index on every tick (~2.4 s per run). The
+# record is a reading, not a decision - nothing rotates because of it.
+if ($Record -and [string]::IsNullOrWhiteSpace($RecordPath)) {
+    $RecordPath = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'logs\.qa-cite-audit.json'
+}
+if (-not [string]::IsNullOrWhiteSpace($RecordPath)) {
+    # NOT $record: the -Record switch param and a local $record are the same
+    # slot (PowerShell variable names are case-insensitive). First cut assigned
+    # the hashtable onto the switch and PS refused to set 'utc' on a
+    # SwitchParameter - the same trap as $files/$Files in r777.
+    $recObj = [ordered]@{
+        utc = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
+        images = [int]$census.images
+        bytes = [int64]$census.bytes
+        cited = [int]$census.cited
+        stale_days = [int]$StaleDays
+        stale_cited = [int]$census.stale_cited
+        stale_cited_bytes = [int64]$census.stale_cited_bytes
+        superseded_cited = [int]$census.superseded_cited
+        newer_sibling_cited = [int]$census.newer_sibling_cited
+        sibling_margin_min = [int]$SiblingMarginMin
+        archive_cited = @($dangling).Count
+        cite_mode = [string]$cite.mode
+        cite_scanned = [int]$cite.scanned
+    }
+    $recJson = ConvertTo-Json -InputObject $recObj -Depth 4 -Compress
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    $tmp = $RecordPath + '.new-' + $PID
+    try {
+        $recDir = Split-Path -Parent $RecordPath
+        if ($recDir -and -not (Test-Path -LiteralPath $recDir)) { New-Item -ItemType Directory -Path $recDir -Force | Out-Null }
+        [System.IO.File]::WriteAllText($tmp, $recJson, $utf8NoBom)
+        Move-Item -LiteralPath $tmp -Destination $RecordPath -Force
+        if (-not $Json) { Write-Host ('QA RECORD: ' + $RecordPath + ' (reading only; nothing rotated)') }
+    } catch {
+        if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
+        if (-not $Json) {
+            Write-Host ('QA RECORD FAIL: ' + $RecordPath + ' :: ' + $_.Exception.Message)
+        }
+        if (-not $Json) { exit 2 }
+    }
+}
+
 if ($Json) {
     $payload = [ordered]@{
         exists = $census.exists
@@ -549,6 +669,11 @@ if ($Json) {
         keep_panel = $KeepPanel
         cited = $census.cited
         cited_kept = $census.cited_kept
+        stale_days = $StaleDays
+        stale_cited = $census.stale_cited
+        stale_cited_bytes = $census.stale_cited_bytes
+        superseded_cited = $census.superseded_cited
+        newer_sibling_cited = $census.newer_sibling_cited
         cite_scanned = $cite.scanned
         cite_mode = $cite.mode
         archive_cited = @($dangling).Count
@@ -558,6 +683,10 @@ if ($Json) {
                 sessions = $_.sessions; move = $_.move; reclaim = $_.reclaim
                 oldest_days = $_.oldest_days; move_names = @($_.move_names)
                 cited = $_.cited; cited_kept = $_.cited_kept; cited_names = @($_.cited_names)
+                stale_cited = $_.stale_cited; superseded_cited = $_.superseded_cited
+                newer_sibling_cited = $_.newer_sibling_cited
+                stale_cited_names = @($_.stale_cited_names)
+                superseded_cited_names = @($_.superseded_cited_names)
             }
         })
     }
@@ -575,6 +704,12 @@ $head = 'QA POOL: images=' + $census.images + ' bytes=' + (Format-QaBytes -Bytes
 Write-Host ($head + ' dir=' + $Dir)
 Write-Host ('QA CITE: cited=' + $census.cited + '/' + $census.images + ' in pool, archive_cited=' +
     @($dangling).Count + ' (index=' + $cite.mode + ' scanned=' + $cite.scanned + ' md/txt)')
+Write-Host ('QA STALE: stale_cited=' + $census.stale_cited + '/' + $census.cited +
+    ' older_than=' + $StaleDays + 'd bytes=' + (Format-QaBytes -Bytes $census.stale_cited_bytes) +
+    ' superseded_cited=' + $census.superseded_cited +
+    ' newer_sibling_cited=' + $census.newer_sibling_cited +
+    ' sibling_margin=' + $SiblingMarginMin + 'min' +
+    ' (report only: a cited file is never moved)')
 
 $moves = 0
 $reclaim = [int64]0
@@ -584,7 +719,7 @@ foreach ($g in $census.groups) {
     $line = '  ' + $g.name.PadRight(7) + ' n=' + $g.count + ' sessions=' + $sessTxt +
         ' bytes=' + (Format-QaBytes -Bytes $g.bytes) +
         ' keep=' + $keepTxt + ' move=' + $g.move + ' reclaim=' + (Format-QaBytes -Bytes $g.reclaim) +
-        ' oldest=' + $g.oldest_days + 'd' + ' cited=' + $g.cited
+        ' oldest=' + $g.oldest_days + 'd' + ' cited=' + $g.cited + ' stale=' + $g.stale_cited
     Write-Host $line
     $moves += $g.move
     $reclaim += $g.reclaim
@@ -595,6 +730,8 @@ foreach ($g in $census.groups) {
             if ($cite.sources.ContainsKey([string]$n)) { $src = (@($cite.sources[[string]$n]) | Select-Object -First 1) }
             Write-Host ('    KEEP ' + $n + ' (cited: ' + $src + ')')
         }
+        foreach ($n in @($g.stale_cited_names)) { Write-Host ('    STALE ' + $n) }
+        foreach ($n in @($g.superseded_cited_names)) { Write-Host ('    SUPERSEDED ' + $n) }
     }
 }
 $planTail = $(if ($Apply) { ' (apply follows)' } else { ' (dry-run, nothing touched)' })

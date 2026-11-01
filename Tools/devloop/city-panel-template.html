@@ -259,6 +259,16 @@ const TICK = __TICK_JSON__;
 // sweep and `remain` is the backlog that sweep measured (-1 = that stamp predates
 // the remain= field, so the page says "not recorded" rather than 0).
 const ARCH = __ARCH_JSON__;
+// QACITE = the citation audit written by Tools/devloop/qa-rotation.ps1 -Record
+// ({exists,utc,images,cited,stale_days,stale_cited,superseded_cited,
+// newer_sibling_cited,path_rel,url,error}). A citation freezes a qa/ file
+// forever (correct), so the pool cannot rotate unless somebody checks whether a
+// frozen citation still points at something current. stale_cited = cited files
+// older than stale_days; superseded_cited = cited files whose capture session is
+// not the newest of its family (a newer frame already exists). It is a reading
+// with its own age, never a decision, and it costs ~2.4s to take - so it is
+// recorded once and shown here with its age, not recomputed every tick.
+const QACITE = __QACITE_JSON__;
 // QUEUE = the self-drive queues' overdue counter ({exists,files,scanned,open,
 // dated,late,max_days,max_id,as_of,bad,code,long,long_max,long_max_id,long_limit,
 // items:[{id,file,due,days}]}), computed
@@ -567,6 +577,42 @@ function artTitle(it){
         '<span class="muted"> ' + esc(last) + ' · ' + esc(remainTxt) + '</span>';
     }
     ageTitle(el, A.ran_utc);
+  })();
+
+  // 引用复核（queue main#116）：被文档点名的 qa/ 图永不轮转（这是对的），于是
+  // 池子能不能动，取决于「这条引用还指着同一件事吗」——此前没人问过。这里读
+  // qa-rotation.ps1 -Record 写下的读数，并连它的年龄一起显示（那份读数要索引
+  // 383 份文档、约 2.4 s，不能每 tick 重算）。口径三条：①没有记录写「未记录」，
+  // 绝不等于「零过期」；②记录读不出来写「读数不可读」；③本页永不动任何文件——
+  // 搬不搬是人的决定。
+  (function () {
+    const el = $('f-maint');
+    if (!el) return;
+    const Q = QACITE || {};
+    const sp = document.createElement('span');
+    if (!Q.exists) {
+      const why = (Q.error === 'unparsable' || Q.error === 'unreadable') ? '读数不可读' : '未记录';
+      sp.className = 'muted';
+      sp.textContent = '引用复核 ' + why;
+      el.appendChild(sp);
+      return;
+    }
+    let age = '';
+    if (Q.utc) {
+      const t = new Date(Q.utc);
+      if (!isNaN(t.getTime())) {
+        const h = (Date.now() - t.getTime()) / 3600000;
+        age = h < 1 ? ('读数 ' + Math.round(h * 60) + ' 分钟前')
+          : h < 48 ? ('读数 ' + Math.round(h) + ' 小时前')
+            : ('读数 ' + Math.round(h / 24) + ' 天前');
+      }
+    }
+    sp.className = (typeof Q.stale_cited === 'number' && Q.stale_cited > 0) ? 'tag warn' : 'muted';
+    const head = (typeof Q.stale_cited === 'number' && Q.stale_cited > 0)
+      ? ('引用复核 ' + Q.stale_cited + '/' + Q.cited + ' 件超 ' + Q.stale_days + ' 天')
+      : ('引用复核 ' + Q.cited + ' 件均未超 ' + Q.stale_days + ' 天');
+    sp.textContent = head + ' · 同族已有更新帧 ' + Q.superseded_cited + ' 件' + (age ? ' · ' + age : '');
+    el.appendChild(sp);
   })();
 
   // 队列逾期（queue main#83）：队列里的期限原先只写在备注散文里，main#8 晚 13 天、

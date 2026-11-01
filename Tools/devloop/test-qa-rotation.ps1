@@ -342,6 +342,88 @@ Check 'the contradiction is named' ($swLog -match 'QA SWITCH FAIL')
 $swJson = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool4 -Restore -Json -CiteFiles $citeConflict) -join "`n"
 Check 'restore+json in one run is refused too' ($LASTEXITCODE -eq 2 -and $swJson -match 'QA SWITCH FAIL')
 
+# ---------------------------------------------------------------------------
+# Citation audit group (r782, main#116): a citation is a shield, not a verdict.
+# These leave the plan alone and only report three relations - files older than
+# -StaleDays, files whose session is not the newest in the group, and files with
+# a strictly newer sibling inside the same session (with a margin, because the
+# six views of one capture land seconds apart and write order is not a re-shoot).
+# ---------------------------------------------------------------------------
+$pool5 = Join-Path $sandbox 'qa5'
+New-Item -ItemType Directory -Path $pool5 -Force | Out-Null
+$nowUtc = [datetime]::UtcNow
+$oldStamp = '20260101-1000'
+$midStamp = '20260201-1000'
+$newStamp = '20260301-1000'
+foreach ($v in $views) {
+    New-Fix2 (Join-Path $pool5 ('city3d-shots-' + $oldStamp + '-bm-a-' + $v + '.jpg')) 100
+    [System.IO.File]::SetLastWriteTimeUtc((Join-Path $pool5 ('city3d-shots-' + $oldStamp + '-bm-a-' + $v + '.jpg')), $nowUtc.AddDays(-100))
+    New-Fix2 (Join-Path $pool5 ('city3d-shots-' + $midStamp + '-bm-a-' + $v + '.jpg')) 100
+    [System.IO.File]::SetLastWriteTimeUtc((Join-Path $pool5 ('city3d-shots-' + $midStamp + '-bm-a-' + $v + '.jpg')), $nowUtc.AddDays(-5))
+}
+# Newest session, two files 30 minutes apart: under the 60 min default margin the
+# younger one is write order, under a 10 min margin it is a re-shoot.
+New-Fix2 (Join-Path $pool5 ('city3d-shots-' + $newStamp + '-bm-a-overview.jpg')) 100
+[System.IO.File]::SetLastWriteTimeUtc((Join-Path $pool5 ('city3d-shots-' + $newStamp + '-bm-a-overview.jpg')), $nowUtc.AddDays(-1))
+New-Fix2 (Join-Path $pool5 ('city3d-shots-' + $newStamp + '-bm-a-street.jpg')) 100
+[System.IO.File]::SetLastWriteTimeUtc((Join-Path $pool5 ('city3d-shots-' + $newStamp + '-bm-a-street.jpg')), $nowUtc.AddDays(-1).AddMinutes(30))
+
+$citeAudit = Join-Path $sandbox 'cite-audit.md'
+[System.IO.File]::WriteAllText($citeAudit, (
+    "Old evidence: qa/city3d-shots-" + $oldStamp + "-bm-a-overview.jpg`r`n" +
+    "Old evidence: qa/city3d-shots-" + $oldStamp + "-bm-a-street.jpg`r`n" +
+    "Newest overview: qa/city3d-shots-" + $newStamp + "-bm-a-overview.jpg`r`n"))
+
+$auditLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool5 -List -CiteFiles $citeAudit) -join "`n"
+$auditRc = $LASTEXITCODE
+Check 'audit run exits 0' ($auditRc -eq 0)
+Check 'audit counts the three cited files' ($auditLog -match 'QA CITE: cited=3/14 in pool')
+Check 'two cited files are past the 90 day line' ($auditLog -match 'QA STALE: stale_cited=2/3 older_than=90d')
+Check 'stale bytes are the two 100 byte fixtures' ($auditLog -match 'older_than=90d bytes=200B')
+Check 'two cited files sit in a session older than the newest one' ($auditLog -match 'superseded_cited=2\b')
+Check 'a 30 minute sibling is write order under the 60 min margin' ($auditLog -match 'newer_sibling_cited=0\b')
+Check 'the margin is printed so the number is interpretable' ($auditLog -match 'sibling_margin=60min')
+Check 'the stale files are named in the list' (
+    $auditLog -match ('STALE city3d-shots-' + $oldStamp + '-bm-a-overview\.jpg') -and
+    $auditLog -match ('STALE city3d-shots-' + $oldStamp + '-bm-a-street\.jpg'))
+Check 'the stale file in the newest session is not named' (
+    -not ($auditLog -match ('STALE city3d-shots-' + $newStamp + '-bm-a-overview\.jpg')))
+Check 'the audit still moves nothing cited' (
+    -not ($auditLog -match ('MOVE city3d-shots-' + $oldStamp + '-bm-a-overview\.jpg')))
+
+# The margin is a real boundary, not decoration: 10 minutes makes the same pair
+# a re-shoot.
+$tightLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool5 -CiteFiles $citeAudit -SiblingMarginMin 10) -join "`n"
+Check 'a tighter margin sees the 30 minute sibling as a re-shoot' ($tightLog -match 'newer_sibling_cited=1\b')
+
+# Json carries the audit fields.
+$json5 = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool5 -Json -CiteFiles $citeAudit) -join "`n"
+$j5 = $null
+try { $j5 = $json5 | ConvertFrom-Json } catch { $j5 = $null }
+Check 'json carries the audit counters' (
+    $null -ne $j5 -and [int]$j5.stale_cited -eq 2 -and [int]$j5.superseded_cited -eq 2 -and
+    [int]$j5.newer_sibling_cited -eq 0 -and [int]$j5.stale_days -eq 90)
+
+# The record is a reading with its own timestamp, so a consumer can show its age
+# instead of re-scanning 383 documents. Absent switch = no record at all.
+$recPath = Join-Path $sandbox 'audit-record.json'
+Check 'no record without the switch' (-not (Test-Path -LiteralPath $recPath))
+$recLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool5 -CiteFiles $citeAudit -RecordPath $recPath) -join "`n"
+Check 'record run exits 0' ($LASTEXITCODE -eq 0)
+Check 'the record path is reported' ($recLog -match 'QA RECORD: ')
+Check 'the record file exists' (Test-Path -LiteralPath $recPath)
+$rec = $null
+try { $rec = (Get-Content -LiteralPath $recPath -Encoding UTF8 -Raw) | ConvertFrom-Json } catch { $rec = $null }
+Check 'the record parses' ($null -ne $rec)
+if ($rec) {
+    Check 'the record carries the counters' (
+        [int]$rec.stale_cited -eq 2 -and [int]$rec.superseded_cited -eq 2 -and [int]$rec.cited -eq 3)
+    Check 'the record carries a UTC stamp' ([string]$rec.utc -match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$')
+    Check 'the record carries the margin it judged with' ([int]$rec.sibling_margin_min -eq 60)
+}
+Check 'the record run left every fixture in place' (
+    @(Get-ChildItem -LiteralPath $pool5 -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' }).Count -eq 14)
+
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 Write-Output ('test-qa-rotation: ' + $pass + ' passed, ' + $fail + ' failed (of ' + ($pass + $fail) + ')')
 if ($fail -gt 0) { exit 1 }

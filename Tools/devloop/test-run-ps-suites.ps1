@@ -134,12 +134,13 @@ $defRel = @(
     'logs\devloop-r247-facewriter-test.ps1',
     'logs\devloop-r197-writer-test.ps1',
     'logs\devloop-r271-keep-negcon.ps1',
-    'Tools\devloop\test-nolivecheck-census.ps1'
+    'Tools\devloop\test-nolivecheck-census.ps1',
+    'Tools\devloop\test-qa-rotation.ps1'
 )
 foreach ($rel in $defRel) { Write-Fixture (Join-Path $repo2 $rel) $green }
 $rh = Invoke-Runner @('-RepoDir', $repo2)
 Check 'h: exit 0'                ($rh.code -eq 0)
-Check 'h: six default suites'    ($rh.out -match 'PS SUITES suites=6 ')
+Check 'h: seven default suites'  ($rh.out -match 'PS SUITES suites=7 ')
 Check 'h: r247 in default set'   ($rh.out -match 'devloop-r247-facewriter-test\.ps1')
 Check 'h: r271 in default set'   ($rh.out -match 'devloop-r271-keep-negcon\.ps1')
 Check 'h: nlc census in default set' ($rh.out -match 'test-nolivecheck-census\.ps1')

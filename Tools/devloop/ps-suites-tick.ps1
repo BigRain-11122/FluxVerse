@@ -139,6 +139,8 @@ function Get-PsSuitesTickDefaults {
         'Tools\devloop\write-fastpath-state.ps1',
         'Tools\devloop\nolivecheck-census.ps1',
         'Tools\devloop\test-nolivecheck-census.ps1',
+        'Tools\devloop\qa-rotation.ps1',
+        'Tools\devloop\test-qa-rotation.ps1',
         'Tools\devloop\fixtures\*\*'
     )
 }

@@ -18,6 +18,11 @@
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
+# NOTE: $root is the Tools dir, not the repository root, so a family call that
+# wants its guarded sources resolved has to pass its parent (r754 w6). r788 made
+# that mistake loud - an absent source fingerprints as a stable `=MISSING` - so
+# passing $root here would now report a source gap instead of a green run.
+$repo = Split-Path $root -Parent
 $verify = Join-Path $root 'perceptor\verify.ps1'
 $module = Join-Path $PSScriptRoot 'ps-suites-tick.ps1'
 foreach ($p in @($verify, $module)) {
@@ -100,9 +105,9 @@ $script:w2ticketpath = $w2ticket
 # a cached tick stays under 3 s, and a due verify run would spend that budget
 # on a fixture spawn. The family gets its own cases (k..r) below.
 . $module
-$null = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $vticket -RunnerPath $runnerGreen -TimeoutSec 8
-$null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $v2ticket -RunnerPath $runnerGreen -TimeoutSec 8
-$null = Invoke-PsSuitesTick -RepoDir $root -Family write2 -TicketPath $w2ticket -RunnerPath $runnerGreen -TimeoutSec 8
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family verify -TicketPath $vticket -RunnerPath $runnerGreen -TimeoutSec 8
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family verify2 -TicketPath $v2ticket -RunnerPath $runnerGreen -TimeoutSec 8
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family write2 -TicketPath $w2ticket -RunnerPath $runnerGreen -TimeoutSec 8
 
 function Clear-PsEnv {
     foreach ($k in @('FLUXVERSE_PS_SUITES', 'FLUXVERSE_PS_SUITES_RUNNER', 'FLUXVERSE_PS_SUITES_TICKET',
@@ -284,11 +289,11 @@ foreach ($ln in $allLines) { foreach ($ch in $ln.ToCharArray()) { if ([int][char
 Check 'h4 ps-suites lines are ascii-only' ($ascii -eq 0) ('non-ascii=' + $ascii)
 
 # ---------- case i: module callable without verify -----------------------
-$direct = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'direct.json') -RunnerPath $runnerGreen -TimeoutSec 8
+$direct = Invoke-PsSuitesTick -RepoDir $repo -TicketPath (Join-Path $sandbox 'direct.json') -RunnerPath $runnerGreen -TimeoutSec 8
 Check 'i1 direct call runs and passes' ($direct.status -eq 'pass' -and $direct.failing -eq 0) ([string]$direct.status)
-$again = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'direct.json') -RunnerPath $runnerGreen -TimeoutSec 8
+$again = Invoke-PsSuitesTick -RepoDir $repo -TicketPath (Join-Path $sandbox 'direct.json') -RunnerPath $runnerGreen -TimeoutSec 8
 Check 'i2 direct call reuses the ticket' ($again.ran -eq $false) ([string]$again.ran)
-$forced = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'direct.json') -RunnerPath $runnerGreen -TimeoutSec 8 -Force
+$forced = Invoke-PsSuitesTick -RepoDir $repo -TicketPath (Join-Path $sandbox 'direct.json') -RunnerPath $runnerGreen -TimeoutSec 8 -Force
 Check 'i3 -Force overrides the cache' ($forced.ran -eq $true) ([string]$forced.ran)
 
 # ---------- case j: two verify instances must not fight over the ticket ---
@@ -444,12 +449,12 @@ Check 'r4f the face cap stays at the same 45 s as the state half' ((Get-PsSuites
 $overlap2 = @($w2Defs | Where-Object { $vDefs -contains $_ })
 Check 'r4g the face half overlaps verify only on the runner and the fixture tree' ($overlap2.Count -eq 2 -and ($overlap2 -contains 'Tools\devloop\run-ps-suites.ps1') -and ($overlap2 -contains 'Tools\devloop\fixtures\*\*')) (($overlap2 -join ','))
 $chkTicket = Join-Path $sandbox 'chk.json'
-$chk1 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen -CheckOnly
+$chk1 = Invoke-PsSuitesTick -RepoDir $repo -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen -CheckOnly
 Check 'r5 CheckOnly reports a due run without spawning' ($chk1.needs_run -eq $true -and $chk1.status -eq 'stale' -and -not (Test-Path -LiteralPath $chkTicket)) ([string]$chk1.status)
-$chk2 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen
-$chk3 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen -CheckOnly
+$chk2 = Invoke-PsSuitesTick -RepoDir $repo -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen
+$chk3 = Invoke-PsSuitesTick -RepoDir $repo -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen -CheckOnly
 Check 'r6 after a run CheckOnly says nothing is due' ($chk2.ran -eq $true -and $chk3.needs_run -eq $false -and "$($chk3.sha)" -eq "$($chk2.sha)") ($chk3.needs_run)
-$chk4 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $chkTicket -RunnerPath (Join-Path $sandbox 'nope.ps1') -CheckOnly
+$chk4 = Invoke-PsSuitesTick -RepoDir $repo -Family verify -TicketPath $chkTicket -RunnerPath (Join-Path $sandbox 'nope.ps1') -CheckOnly
 Check 'r7 CheckOnly still reports a missing runner' ($chk4.status -eq 'missing' -and $chk4.needs_run -eq $true) ([string]$chk4.status)
 
 # ---------- case s: verdict lines stay scanner-safe -----------------------
@@ -475,13 +480,13 @@ Write-Output 'PS SUITES suites=3 assertions=9 counted=2 failing=1 parity=ok'
 exit 2
 '@
 $tTicket = Join-Path $sandbox 't.json'
-$tr = Invoke-PsSuitesTick -RepoDir $root -TicketPath $tTicket -RunnerPath $runnerRedNamed -TimeoutSec 8
+$tr = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $tTicket -RunnerPath $runnerRedNamed -TimeoutSec 8
 Check 't1 red run names the red suite' ("$($tr.reds)" -match 'suite-b\.ps1') ("$($tr.reds)")
 Check 't2 a hung suite is named with :timeout' ("$($tr.reds)" -match 'suite-c\.ps1:timeout') ("$($tr.reds)")
 Check 't3 the ticket keeps the names for later ticks' ((Test-Path -LiteralPath $tTicket) -and ([System.IO.File]::ReadAllText($tTicket, [System.Text.Encoding]::UTF8) -match 'suite-b\.ps1')) $tTicket
 $tLine = Format-PsSuitesLine $tr
 Check 't4 the printed line carries reds=' ($tLine -match 'reds=suite-b\.ps1,suite-c\.ps1:timeout') $tLine
-$tg = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 't-green.json') -RunnerPath $runnerGreen -TimeoutSec 8
+$tg = Invoke-PsSuitesTick -RepoDir $repo -TicketPath (Join-Path $sandbox 't-green.json') -RunnerPath $runnerGreen -TimeoutSec 8
 Check 't5 a green run records no reds' ("$($tg.reds)" -eq '') ("$($tg.reds)")
 Check 't6 a green line does not carry reds=' ((Format-PsSuitesLine $tg) -notmatch 'reds=') (Format-PsSuitesLine $tg)
 
@@ -504,22 +509,22 @@ Write-Output 'PS SUITES suites=2 assertions=6 counted=2 failing=2 parity=ok'
 exit 2
 '@
 $taTicket = Join-Path $sandbox 'ta.json'
-$ta1 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $taTicket -RunnerPath $runnerOneRed -TimeoutSec 8
+$ta1 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $taTicket -RunnerPath $runnerOneRed -TimeoutSec 8
 Check 'ta1 a single red records the tail sentence' ("$($ta1.redtail)" -match 'expected 3 got 4') ("$($ta1.redtail)")
 Check 'ta2 the tail keeps no census red root, any case' ("$($ta1.redtail)" -notmatch '(?i)fail') ("$($ta1.redtail)")
 Check 'ta3 the printed line carries redtail=' ((Format-PsSuitesLine $ta1) -match 'redtail=.*expected 3 got 4') (Format-PsSuitesLine $ta1)
-$ta2 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $taTicket -RunnerPath $runnerOneRed -TimeoutSec 8
+$ta2 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $taTicket -RunnerPath $runnerOneRed -TimeoutSec 8
 Check 'ta4 a cached red still says what it said' ($ta2.ran -eq $false -and "$($ta2.redtail)" -match 'expected 3 got 4' -and (Format-PsSuitesLine $ta2) -match 'redtail=') (Format-PsSuitesLine $ta2)
 $taRaw = ''
 if (Test-Path -LiteralPath $taTicket) { $taRaw = [System.IO.File]::ReadAllText($taTicket, [System.Text.Encoding]::UTF8) }
 Check 'ta5 the ticket persists the tail for later ticks' ($taRaw -match 'redtail') $taTicket
-$ta3 = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'ta-long.json') -RunnerPath $runnerLongTail -TimeoutSec 8
+$ta3 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath (Join-Path $sandbox 'ta-long.json') -RunnerPath $runnerLongTail -TimeoutSec 8
 Check 'ta6 a runaway tail is cut at 200 chars' ("$($ta3.redtail)".Length -le 200 -and "$($ta3.redtail)".Length -gt 100) ('len=' + "$($ta3.redtail)".Length)
 Check 'ta7 the tail never carries a newline' ("$($ta3.redtail)" -notmatch '[\r\n]') ("$($ta3.redtail)")
 $taNonAscii = 0
 foreach ($ch in "$($ta3.redtail)".ToCharArray()) { if ([int][char]$ch -gt 127) { $taNonAscii++ } }
 Check 'ta8 the tail is ascii-only' ($taNonAscii -eq 0) ('non-ascii=' + $taNonAscii)
-$ta4 = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'ta-two.json') -RunnerPath $runnerTwoRed -TimeoutSec 8
+$ta4 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath (Join-Path $sandbox 'ta-two.json') -RunnerPath $runnerTwoRed -TimeoutSec 8
 Check 'ta9 two culprits keep the names and drop the tail' ("$($ta4.reds)" -match 'suite-a\.ps1' -and "$($ta4.reds)" -match 'suite-b\.ps1' -and "$($ta4.redtail)" -eq '') ("reds=$($ta4.reds) redtail=$($ta4.redtail)")
 
 # ---------- case tb: a red run KEEPS the output that showed what died -------
@@ -537,7 +542,7 @@ exit 2
 '@
 $tbTicket = Join-Path $sandbox 'tb.json'
 $tbLog = Join-Path $sandbox 'tb-red.txt'
-$tb1 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $tbTicket -RunnerPath $runnerRedAssertions -TimeoutSec 8
+$tb1 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $tbTicket -RunnerPath $runnerRedAssertions -TimeoutSec 8
 Check 'tb1 a red run leaves its output next to the ticket' (Test-Path -LiteralPath $tbLog) $tbLog
 $tbBody = ''
 if (Test-Path -LiteralPath $tbLog) { $tbBody = [System.IO.File]::ReadAllText($tbLog, [System.Text.Encoding]::UTF8) }
@@ -547,15 +552,15 @@ Check 'tb3 the printed line names redlog=' ($tbLine -match 'redlog=') $tbLine
 $tbShown = ''
 if ($tbLine -match 'redlog=(\S+)') { $tbShown = $Matches[1] }
 Check 'tb4 the named redlog is the file that exists' ($tbShown -ne '' -and (Test-Path -LiteralPath (Join-Path $sandbox $tbShown))) $tbShown
-$tb2 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $tbTicket -RunnerPath $runnerRedAssertions -TimeoutSec 8
+$tb2 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $tbTicket -RunnerPath $runnerRedAssertions -TimeoutSec 8
 Check 'tb5 a cached red still points at the evidence' ($tb2.ran -eq $false -and "$($tb2.redlog)" -ne '' -and (Test-Path -LiteralPath $tbLog)) (Format-PsSuitesLine $tb2)
-$tb3 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $tbTicket -RunnerPath $runnerGreen -TimeoutSec 8 -Force
+$tb3 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $tbTicket -RunnerPath $runnerGreen -TimeoutSec 8 -Force
 Check 'tb6 a green run removes the stale evidence' (-not (Test-Path -LiteralPath $tbLog)) $tbLog
 Check 'tb7 a green line carries no redlog=' ((Format-PsSuitesLine $tb3) -notmatch 'redlog=') (Format-PsSuitesLine $tb3)
 $tbNonAscii = 0
 foreach ($ch in $tbShown.ToCharArray()) { if ([int][char]$ch -gt 127) { $tbNonAscii++ } }
 Check 'tb8 the redlog name is ascii-only' ($tbNonAscii -eq 0) $tbShown
-$ta5 = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'ta-green.json') -RunnerPath $runnerGreen -TimeoutSec 8
+$ta5 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath (Join-Path $sandbox 'ta-green.json') -RunnerPath $runnerGreen -TimeoutSec 8
 Check 'ta10 a green run records no tail' ("$($ta5.redtail)" -eq '' -and (Format-PsSuitesLine $ta5) -notmatch 'redtail=') ("$($ta5.redtail)")
 
 # ---------- case u: a non-pass verdict ages out, a pass never does ----------
@@ -563,22 +568,22 @@ Check 'ta10 a green run records no tail' ("$($ta5.redtail)" -eq '' -and (Format-
 # was content addressed: only a human with -Force could clear it. Now a non-pass
 # ticket re-runs itself after N cached citations.
 $uTicket = Join-Path $sandbox 'u.json'
-$u1 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
+$u1 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
 Check 'u1 first call really runs the red runner' ($u1.ran -eq $true -and $u1.status -eq 'red') ([string]$u1.status)
-$u2 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
+$u2 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
 Check 'u2 first cached citation keeps the verdict and counts' ($u2.ran -eq $false -and $u2.status -eq 'red' -and $u2.tries -eq 1) ([string]$u2.tries)
-$u3 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
+$u3 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
 Check 'u3 second cached citation still counts' ($u3.ran -eq $false -and $u3.tries -eq 2) ([string]$u3.tries)
-$u4 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
+$u4 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $uTicket -RunnerPath $runnerRed -TimeoutSec 8 -AutoRetryAfter 3
 Check 'u4 third citation re-runs by itself' ($u4.ran -eq $true) ([string]$u4.ran)
 Check 'u5 the self-retry is marked on the result' ($u4.heal -eq $true) ([string]$u4.heal)
 Check 'u6 the counter resets after a real run' ($u4.tries -eq 0) ([string]$u4.tries)
-$u5 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerGreen -TimeoutSec 8 -AutoRetryAfter 3 -Force
+$u5 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $uTicket -RunnerPath $runnerGreen -TimeoutSec 8 -AutoRetryAfter 3 -Force
 Check 'u7 a forced green run clears the red' ($u5.status -eq 'pass') ([string]$u5.status)
-$u6 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerGreen -TimeoutSec 8 -AutoRetryAfter 1
-$u7 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerGreen -TimeoutSec 8 -AutoRetryAfter 1
+$u6 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $uTicket -RunnerPath $runnerGreen -TimeoutSec 8 -AutoRetryAfter 1
+$u7 = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $uTicket -RunnerPath $runnerGreen -TimeoutSec 8 -AutoRetryAfter 1
 Check 'u8 a passing ticket never ages out (no spawn even at N=1)' ($u6.ran -eq $false -and $u7.ran -eq $false -and $u7.status -eq 'pass') ([string]$u7.status)
-$uChk = Invoke-PsSuitesTick -RepoDir $root -TicketPath $uTicket -RunnerPath $runnerGreen -AutoRetryAfter 1 -CheckOnly
+$uChk = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $uTicket -RunnerPath $runnerGreen -AutoRetryAfter 1 -CheckOnly
 Check 'u9 CheckOnly agrees that nothing is due for a green ticket' ($uChk.needs_run -eq $false) ([string]$uChk.needs_run)
 
 # ---------- case w: fixtures are content, not a hash bystander -------------
@@ -628,7 +633,7 @@ Write-Output 'PS SUITES ERROR: 2 suite file(s) missing'
 exit 3
 '@
 $xLiarTicket = Join-Path $sandbox 'x-liar.json'
-$xl = Invoke-PsSuitesTick -RepoDir $root -TicketPath $xLiarTicket -RunnerPath $runnerLiar -TimeoutSec 8
+$xl = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $xLiarTicket -RunnerPath $runnerLiar -TimeoutSec 8
 Check 'x1 a green-looking summary with a non-zero exit is not cached as pass' ($xl.status -eq 'red') ([string]$xl.status)
 Check 'x2 the ticket records the real exit code' ($xl.exit -eq 2) ('exit=' + $xl.exit)
 $xLiarRaw = ''
@@ -638,17 +643,17 @@ try { $xlTk = $xLiarRaw | ConvertFrom-Json } catch { $xlTk = $null }
 Check 'x3 the persisted ticket carries exit=2, not 0' ($null -ne $xlTk -and [int]$xlTk.exit -eq 2) ([string]$xlTk)
 
 $xGreenTicket = Join-Path $sandbox 'x-green.json'
-$xg = Invoke-PsSuitesTick -RepoDir $root -TicketPath $xGreenTicket -RunnerPath $runnerGreen -TimeoutSec 8
+$xg = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $xGreenTicket -RunnerPath $runnerGreen -TimeoutSec 8
 Check 'x4 a real pass records exit=0' ($xg.status -eq 'pass' -and $xg.exit -eq 0) ([string]$xg.status + ' exit=' + $xg.exit)
 
 $xNoSumTicket = Join-Path $sandbox 'x-nosummary.json'
-$xn = Invoke-PsSuitesTick -RepoDir $root -TicketPath $xNoSumTicket -RunnerPath $runnerNoSummary -TimeoutSec 8
+$xn = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $xNoSumTicket -RunnerPath $runnerNoSummary -TimeoutSec 8
 Check 'x5 a runner without a summary is unreadable, not green' ($xn.status -eq 'unreadable') ([string]$xn.status)
 Check 'x6 the unreadable ticket keeps the exit code' ($xn.exit -eq 3) ('exit=' + $xn.exit)
 Check 'x7 the unreadable note names the exit for humans' ("$($xn.note)" -match 'exit=3') ("$($xn.note)")
 
 $xSlowTicket = Join-Path $sandbox 'x-slow.json'
-$xs = Invoke-PsSuitesTick -RepoDir $root -TicketPath $xSlowTicket -RunnerPath $runnerSlow -TimeoutSec 2
+$xs = Invoke-PsSuitesTick -RepoDir $repo -TicketPath $xSlowTicket -RunnerPath $runnerSlow -TimeoutSec 2
 Check 'x8 a timeout records exit=-1 (no fake zero)' ($xs.status -eq 'timeout' -and $xs.exit -eq -1) ([string]$xs.status + ' exit=' + $xs.exit)
 
 # Static half of the same fix: the module must get its code from cmd.exe, never
@@ -668,11 +673,11 @@ Check 'x10 no live code reads an ExitCode off Start-Process' (-not ($tickCodeTex
 # turns into a WARN that names the two ways out.
 $yDefs = @(Get-PsSuitesTickDefaults -Family verify)
 $yTicket = Join-Path $sandbox 'y.json'
-$y1 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $yTicket -RunnerPath $runnerGreen -TimeoutSec 8
+$y1 = Invoke-PsSuitesTick -RepoDir $repo -Family verify -TicketPath $yTicket -RunnerPath $runnerGreen -TimeoutSec 8
 $y1parts = @(("$($y1.runs)" -split ',') | Where-Object { $_ -ne '' })
 Check 'y1 a real run records its duration in the history' ($y1parts.Count -eq 1) ("$($y1.runs)")
 Check 'y2 the first run yields a baseline equal to it' ([int]$y1.base_ms -eq [int]$y1.ms -and [int]$y1.base_ms -gt 0) ('base=' + $y1.base_ms + ' ms=' + $y1.ms)
-$y2 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $yTicket -RunnerPath $runnerGreen -TimeoutSec 8 -Force
+$y2 = Invoke-PsSuitesTick -RepoDir $repo -Family verify -TicketPath $yTicket -RunnerPath $runnerGreen -TimeoutSec 8 -Force
 $y2parts = @(("$($y2.runs)" -split ',') | Where-Object { $_ -ne '' })
 Check 'y3 a second real run appends instead of replacing' ($y2parts.Count -eq 2) ("$($y2.runs)")
 Check 'y4 the trim helper keeps the last three runs, oldest dropped' ((@(Add-PsSuitesRunHistory -Runs @(1, 2, 3) -NewMs 4) -join ',') -eq '2,3,4') ((@(Add-PsSuitesRunHistory -Runs @(1, 2, 3) -NewMs 4) -join ','))
@@ -807,21 +812,21 @@ exit 0
 '@
 $zArgFile = Join-Path $sandbox 'zargs.txt'
 $env:FV_ARGS_OUT = $zArgFile
-$null = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath (Join-Path $sandbox 'z-v.json') -RunnerPath $runnerArgs -Force
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family verify -TicketPath (Join-Path $sandbox 'z-v.json') -RunnerPath $runnerArgs -Force
 $zSec = ''
 try { $zSec = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zSec = '' }
 Check 'z22 the light family asks for ten suites, never -Verify' ($zSec -match '-Suites' -and $zSec -notmatch '(?:^|\s)-Verify(?:\s|$)' -and @(($zSec -split '[,;\s]+') | Where-Object { $_ -match 'test-.*\.ps1$' }).Count -eq 10) $zSec
 $env:FV_ARGS_OUT = $zArgFile
-$null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath (Join-Path $sandbox 'z-v2.json') -RunnerPath $runnerArgs -Force
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family verify2 -TicketPath (Join-Path $sandbox 'z-v2.json') -RunnerPath $runnerArgs -Force
 $zSec2 = ''
 try { $zSec2 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zSec2 = '' }
 Check 'z23 the heavy family asks for exactly its one sandbox' ($zSec2 -match '-Suites' -and @(($zSec2 -split '[,;\s]+') | Where-Object { $_ -match 'test-.*\.ps1$' }).Count -eq 1 -and $zSec2 -match 'test-verify-ps-suites\.ps1') $zSec2
 $env:FV_ARGS_OUT = $zArgFile
-$null = Invoke-PsSuitesTick -RepoDir $root -Family write -TicketPath (Join-Path $sandbox 'z-w.json') -RunnerPath $runnerArgs -Force
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family write -TicketPath (Join-Path $sandbox 'z-w.json') -RunnerPath $runnerArgs -Force
 $zW = ''
 try { $zW = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW = '' }
 Check 'z30 the state half asks for exactly its four suites' ($zW -match '-Suites' -and @(($zW -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 4 -and $zW -match 'test-fastpath-state-live\.ps1') $zW
-$null = Invoke-PsSuitesTick -RepoDir $root -Family write2 -TicketPath (Join-Path $sandbox 'z-w2.json') -RunnerPath $runnerArgs -Force
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family write2 -TicketPath (Join-Path $sandbox 'z-w2.json') -RunnerPath $runnerArgs -Force
 $zW2 = ''
 try { $zW2 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW2 = '' }
 Check 'z31 the face half asks for its five suites only' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 5 -and $zW2 -match 'test-qa-rotation\.ps1' -and $zW2 -match 'test-runbook-sync\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
@@ -846,9 +851,9 @@ Write-Output 'PS SUITES suites=9 assertions=1 counted=9 failing=0 parity=skipped
 exit 0
 '@
 $zrTicket = Join-Path $sandbox 'z-reset.json'
-$null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrTicket -RunnerPath $zrRunner -Force
-$null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrTicket -RunnerPath $zrRunner -Force
-$zrThird = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrTicket -RunnerPath $runnerGreen -Force
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family verify2 -TicketPath $zrTicket -RunnerPath $zrRunner -Force
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family verify2 -TicketPath $zrTicket -RunnerPath $zrRunner -Force
+$zrThird = Invoke-PsSuitesTick -RepoDir $repo -Family verify2 -TicketPath $zrTicket -RunnerPath $runnerGreen -Force
 Check 'z24 a changed suite count restarts the baseline' (@(("$($zrThird.runs)" -split ',')).Count -eq 1) ("runs=" + $zrThird.runs)
 
 # r766: a ticket whose last run never produced a summary records suites=0, and
@@ -860,9 +865,9 @@ Write-Output 'boom: no summary line'
 exit 3
 '@
 $zrBadTicket = Join-Path $sandbox 'z-reset0.json'
-$null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrBadTicket -RunnerPath $zrBad -Force
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family verify2 -TicketPath $zrBadTicket -RunnerPath $zrBad -Force
 $zrZero = Get-PsSuitesTicket -Path $zrBadTicket
-$zrAfter = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrBadTicket -RunnerPath $runnerGreen -Force
+$zrAfter = Invoke-PsSuitesTick -RepoDir $repo -Family verify2 -TicketPath $zrBadTicket -RunnerPath $runnerGreen -Force
 Check 'z25 an unreadable run leaves suites=0 in the ticket' ($null -ne $zrZero -and [int]$zrZero.suites -eq 0) ("suites=" + [int]$zrZero.suites)
 Check 'z26 a real run after it restarts the baseline' (@(("$($zrAfter.runs)" -split ',')).Count -eq 1) ("runs=" + $zrAfter.runs)
 
@@ -890,6 +895,65 @@ Check 'za3 the parts reconcile with the total' ($zaTotalM.Success -and $zaSum -e
 Check 'za4 the cost line is not a section verdict' (-not ($zaText -like 'VERIFY HEALTH:*') -and -not ($zaText -like 'VERIFY WARN:*')) $zaText
 Check 'za5 the sections and their order are named' ($zaText -match 'state=\d+ms' -and $zaText -match 'shot-census=\d+ms' -and $zaText -match 'families=\d+ms' -and $zaText -match 'rest=\d+ms') $zaText
 Check 'za6 the cost line never leaks the red token' (-not ($zaText -match '(?i)fail')) $zaText
+
+# ---------- zd: a guarded source that was never on disk must not read as ok ---
+# main#122. The fingerprint hashes an absent path to the literal `=MISSING`,
+# which is exactly as stable as a real hash: a source that is gone produces the
+# same fingerprint every tick, so nothing changes, nothing spawns, and nothing
+# is printed - the family would guard an empty set forever while every line
+# stayed green. "Unchanged" may therefore never be taken as "guarded": the
+# registry is asked directly on every pass, before the cache can answer.
+$zRepo = Join-Path $sandbox 'zrepo'
+New-Item -ItemType Directory -Path $zRepo -Force | Out-Null
+[System.IO.File]::WriteAllText((Join-Path $zRepo 'keep.txt'), 'live source', $utf8)
+$runnerMark = New-Runner 'runner-mark.ps1' @'
+[System.IO.File]::WriteAllText($env:FV_MARK_OUT, 'ran', (New-Object System.Text.UTF8Encoding($false)))
+Write-Output 'PS SUITES suites=1 assertions=1 counted=1 failing=0 parity=skipped'
+exit 0
+'@
+$zMark = Join-Path $sandbox 'zmark.txt'
+function Reset-Mark { Remove-Item -LiteralPath $zMark -Force -ErrorAction SilentlyContinue }
+$env:FV_MARK_OUT = $zMark
+$zdTicket = Join-Path $sandbox 'zd-gap.json'
+$zdPaths = @('keep.txt', 'gone.ps1')
+
+Reset-Mark
+$zd1 = Invoke-PsSuitesTick -RepoDir $zRepo -TicketPath $zdTicket -RunnerPath $runnerMark -TimeoutSec 8 -Paths $zdPaths
+Check 'zd1 an absent guarded source is a gap, not a green run' ("$($zd1.status)" -eq 'gap' -and [int]$zd1.gap_n -eq 1) ("status=$($zd1.status) gap_n=$($zd1.gap_n)")
+Check 'zd2 the gap names the source that is missing' ("$($zd1.gaps)" -match 'gone\.ps1' -and "$($zd1.gaps)" -notmatch 'keep\.txt') ("$($zd1.gaps)")
+Check 'zd3 a gap spawns nothing' (-not (Test-Path -LiteralPath $zMark)) $zMark
+$zdObj = $null
+try { $zdObj = [System.IO.File]::ReadAllText($zdTicket, [System.Text.Encoding]::UTF8) | ConvertFrom-Json } catch { $zdObj = $null }
+Check 'zd4 the gap is recorded in the ticket' ($null -ne $zdObj -and "$($zdObj.status)" -eq 'gap' -and "$($zdObj.gaps)" -match 'gone\.ps1') ([string]$zdObj)
+$zd2c = Invoke-PsSuitesTick -RepoDir $zRepo -TicketPath $zdTicket -RunnerPath $runnerMark -TimeoutSec 8 -Paths $zdPaths
+Check 'zd5 the second pass still says gap (unchanged must not exonerate)' ("$($zd2c.status)" -eq 'gap' -and $zd2c.ran -eq $false) ("status=$($zd2c.status) ran=$($zd2c.ran)")
+Check 'zd6 the repeated gap still spawns nothing' (-not (Test-Path -LiteralPath $zMark)) $zMark
+$zdLine = Format-PsSuitesLine $zd2c
+Check 'zd7 the printed line names the missing source' ($zdLine -match 'gaps=.*gone\.ps1') $zdLine
+Check 'zd8 the printed line carries no red token, any case' (-not ($zdLine -match '(?i)fail')) $zdLine
+$zdAscii = (@($zdLine.ToCharArray()) | Where-Object { [int]$_ -gt 127 }).Count
+Check 'zd9 the printed line is ascii-only' ($zdAscii -eq 0) ('non-ascii=' + $zdAscii)
+$zdChkTicket = Join-Path $sandbox 'zd-check.json'
+$zdChk = Invoke-PsSuitesTick -RepoDir $zRepo -TicketPath $zdChkTicket -RunnerPath $runnerMark -TimeoutSec 8 -Paths $zdPaths -CheckOnly
+Check 'zd10 CheckOnly reports the gap and asks for no run' ("$($zdChk.status)" -eq 'gap' -and $zdChk.needs_run -eq $false) ("status=$($zdChk.status) needs_run=$($zdChk.needs_run)")
+Check 'zd11 CheckOnly writes no ticket' (-not (Test-Path -LiteralPath $zdChkTicket)) $zdChkTicket
+
+# A glob that matches nothing is a LEGAL state (the first fixture has not been
+# added yet) and must keep its old meaning, or this guard would cry wolf on
+# every tree that has not seeded fixtures.
+Reset-Mark
+$zdGlob = Invoke-PsSuitesTick -RepoDir $zRepo -TicketPath (Join-Path $sandbox 'zd-glob.json') -RunnerPath $runnerMark -TimeoutSec 8 -Paths @('keep.txt', 'nofixtures\**')
+Check 'zd12 an empty glob is not a gap' ("$($zdGlob.status)" -eq 'pass' -and $zdGlob.ran -eq $true) ("status=$($zdGlob.status) ran=$($zdGlob.ran)")
+Check 'zd13 the healthy pass really spawned' (Test-Path -LiteralPath $zMark) $zMark
+
+# Restoring the source has to heal on the very next pass: the preflight is a
+# live check, not a flag that latches once set.
+[System.IO.File]::WriteAllText((Join-Path $zRepo 'gone.ps1'), 'back', $utf8)
+Reset-Mark
+$zdHealed = Invoke-PsSuitesTick -RepoDir $zRepo -TicketPath $zdTicket -RunnerPath $runnerMark -TimeoutSec 8 -Paths $zdPaths
+Check 'zd14 restoring the source heals the family at once' ("$($zdHealed.status)" -eq 'pass' -and $zdHealed.ran -eq $true) ("status=$($zdHealed.status) ran=$($zdHealed.ran)")
+Check 'zd15 the healed pass spawned the runner' (Test-Path -LiteralPath $zMark) $zMark
+Remove-Item 'Env:\FV_MARK_OUT' -ErrorAction SilentlyContinue
 
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 

@@ -314,6 +314,7 @@ function Write-PsSuitesTicket {
         redtail    = [string]$Result.redtail
         redlog     = [string]$Result.redlog
         runs       = [string]$Result.runs
+        gaps       = [string]$Result.gaps
     }
     $dir = Split-Path -Parent $Path
     if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
@@ -517,6 +518,13 @@ function Copy-PsSuitesTicketFields {
     # the family is to its cap (main#96).
     $Result.runs = ''
     if ($Ticket.PSObject.Properties['runs']) { $Result.runs = [string]$Ticket.runs }
+    # A recorded source gap (main#122) has to survive the cached path too, or the
+    # warning would appear on the tick that found it and never again.
+    $Result.gaps = ''
+    if ($Ticket.PSObject.Properties['gaps']) { $Result.gaps = [string]$Ticket.gaps }
+    if ([string]$Result.status -eq 'gap' -and $Result.gaps -ne '') {
+        $Result.note = 'guarded source(s) absent: ' + $Result.gaps
+    }
     $Result.base_ms = Get-PsSuitesBaseline -Runs (Get-PsSuitesRunHistory -Ticket $Ticket)
     $Result.budget_over = Test-PsSuitesBudgetOver -BaseMs ([int]$Result.base_ms) -TimeoutSec (Get-PsSuitesFamilyTimeout -Family ([string]$Result.family))
     $Result.age_min = 0
@@ -650,10 +658,45 @@ function Invoke-PsSuitesTick {
         budget_over = $false
         heal       = $false
         note       = ''
+        gaps       = ''
+        gap_n      = 0
+        checked    = 0
         ts_utc     = ''
     }
 
     $res.sha = Get-PsSuitesFingerprint -RepoDir $RepoDir -Paths $Paths
+
+    # ---- guarded-source preflight (main#122) ----
+    # The fingerprint hashes every guarded source, and an ABSENT path hashes to
+    # the literal string `=MISSING` - which is exactly as stable as a real hash.
+    # A source that was never on disk (renamed, mis-resolved, dropped from the
+    # registry's reality) therefore yields the same fingerprint every tick, so
+    # the family never spawns, the ticket never changes, and the guard silently
+    # guards nothing. That is the same shape r788 fixed for the runner side, one
+    # layer down: "unchanged" may never be read as "guarded". So ask the
+    # registry directly on EVERY pass, before the cache is allowed to answer.
+    # A glob that matches nothing is a legal state (=NOFILES, the first fixture
+    # has not been added yet) and is not a gap; a literal entry that is absent
+    # is, because we know what it should be.
+    $preflight = Test-PsSuitesSourceList -RepoDir $RepoDir -Paths $Paths
+    $gapList = @($preflight.Gaps)
+    $res.checked = [int]$preflight.Checked
+    if ($gapList.Count -gt 0) {
+        $res.status = 'gap'
+        $res.gaps = ($gapList -join ',')
+        $res.gap_n = $gapList.Count
+        $res.needs_run = $false
+        $res.note = 'guarded source(s) absent: ' + $res.gaps
+        if (-not $CheckOnly) {
+            # Record it. Speaking once is not enough: the fingerprint of a
+            # missing source does not move again, so nothing would ever re-run.
+            $res.ts_utc = [datetime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
+            $res.tries = 0
+            Write-PsSuitesTicket -Path $TicketPath -Result ([pscustomobject]$res)
+        }
+        return [pscustomobject]$res
+    }
+
     $runnerExists = Test-Path -LiteralPath $RunnerPath
 
     $ticket = Get-PsSuitesTicket -Path $TicketPath
@@ -877,6 +920,10 @@ function Format-PsSuitesLine {
         elseif ($Result.age_min -ge 0) { $head = $head + ' cached=' + $Result.age_min + 'm' }
         else { $head = $head + ' cached=age-unknown' }
     }
+    # A guarded source that is not on disk gets named on the line, the same way
+    # a red suite is (main#122). Without the names the reader only learns
+    # "something is off", and the fingerprint cannot narrow it down.
+    if ([string]$Result.gaps -ne '') { $head = $head + ' gaps=' + [string]$Result.gaps }
     # A red that cannot name its suite is a red nobody can act on (r754: a live
     # verify-family red re-ran clean and the identity was gone for good).
     if ([string]$Result.reds -ne '' -and [string]$Result.status -ne 'pass') {

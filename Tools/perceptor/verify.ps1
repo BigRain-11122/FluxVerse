@@ -573,7 +573,7 @@ function Write-PsSuitesVerdict {
     }
   } elseif ($Res.status -eq 'timeout') {
     Write-Output ('VERIFY WARN: ' + $line + ' - ' + $Res.note + '; re-run: ' + $Rerun)
-  } elseif ($Res.status -eq 'missing' -or $Res.status -eq 'unreadable') {
+  } elseif ($Res.status -eq 'missing' -or $Res.status -eq 'unreadable' -or $Res.status -eq 'gap') {
     Write-Output ('VERIFY WARN: ' + $line + ' - ' + $Res.note)
   } else {
     Write-Output ('VERIFY WARN: ' + $line + ' - sandbox red; re-run: ' + $Rerun)

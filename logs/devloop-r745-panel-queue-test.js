@@ -9,6 +9,8 @@
 //   1. late rows  -> warn tag, "逾期 N 件", worst id + days, queue size
 //   2. no late    -> ok tag, "无逾期", still reports queue size
 //   3. unreadable -> warn tag, "队列不可读" (never a comfortable zero)
+//   3b/3c. not-found names the real path; no-path says "never resolved"
+//          (queue main#126: two different facts, and the tick already splits them)
 //   4. empty obj  -> same as unreadable, and the script never throws
 //   5. element missing -> render survives (old builds stay alive)
 'use strict';
@@ -105,6 +107,25 @@ const e3 = runPanel(withQueue({ exists: false }), 'missing')('f-queue');
 chk('missing.warn-class', e3.innerHTML.indexOf('class="tag warn"') >= 0, e3.innerHTML);
 chk('missing.text', e3.innerHTML.indexOf('队列不可读') >= 0, e3.innerHTML);
 chk('missing.no-zero-claim', e3.innerHTML.indexOf('无逾期') < 0, e3.innerHTML);
+
+// --- 3b/3c) why the directory is missing (queue main#126) -------------------
+// The row used to hardcode "state/queue 目录不在盘" no matter which directory
+// was actually asked for, and "no path was ever resolved" read exactly like
+// "the path is not on disk". The tick already splits those two; the page must
+// say the same thing - and name the real path, repo-relative as shipped.
+const e3b = runPanel(withQueue({ exists: false, note: 'not-found', dir_rel: 'state/queue-typo' }), 'notfound')('f-queue');
+chk('notfound.warn-class', e3b.innerHTML.indexOf('class="tag warn"') >= 0, e3b.innerHTML);
+chk('notfound.names-real-path', e3b.innerHTML.indexOf('state/queue-typo') >= 0, e3b.innerHTML);
+chk('notfound.says-not-on-disk', e3b.innerHTML.indexOf('不在盘') >= 0, e3b.innerHTML);
+chk('notfound.no-hardcoded-dir', e3b.innerHTML.indexOf('state/queue 目录不在盘') < 0, e3b.innerHTML);
+chk('notfound.no-zero-claim', e3b.innerHTML.indexOf('无逾期') < 0, e3b.innerHTML);
+
+const e3c = runPanel(withQueue({ exists: false, note: 'no-path', dir_rel: '<unresolved>' }), 'nopath')('f-queue');
+chk('nopath.warn-class', e3c.innerHTML.indexOf('class="tag warn"') >= 0, e3c.innerHTML);
+chk('nopath.says-never-resolved', e3c.innerHTML.indexOf('队列路径没解析出来') >= 0, e3c.innerHTML);
+chk('nopath.not-called-offdisk', e3c.innerHTML.indexOf('不在盘') < 0, e3c.innerHTML);
+chk('nopath.no-unresolved-token', e3c.innerHTML.indexOf('&lt;unresolved&gt;') < 0 && e3c.innerHTML.indexOf('<unresolved>') < 0, e3c.innerHTML);
+chk('nopath.no-zero-claim', e3c.innerHTML.indexOf('无逾期') < 0, e3c.innerHTML);
 
 // --- 4) empty object (old build / no data) ---------------------------------
 let threw = '';

@@ -644,9 +644,25 @@ function artTitle(it){
     const Q = QUEUE || {};
     const el = $('f-queue');
     if (!el) return;
+    // 目录缺失有三种来路（queue main#126）：路径从没解析出来（note='no-path'）、
+    // 给的路径不在盘（note='not-found'）、盘在但读不出（其余）。此前一律印成
+    // 「state/queue 目录不在盘」——路径是硬写的，别人传进来的目录说错了也不说，
+    // 而 tick 那一侧早已分岔说话。这里改成同一口径：说清是哪种，并点名 builder
+    // 给的真实路径（仓库相对拼写）；任何一支都不许出现「无逾期」。
     if (!Q.exists) {
-      el.innerHTML = '<span class="tag warn">队列不可读</span>' +
-        '<span class="muted"> state/queue 目录不在盘 · 逾期未知</span>';
+      const qNote = (typeof Q.note === 'string') ? Q.note : '';
+      const qShown = (typeof Q.dir_rel === 'string' && Q.dir_rel !== '' && Q.dir_rel !== '<unresolved>')
+        ? Q.dir_rel : '';
+      if (qNote === 'no-path') {
+        el.innerHTML = '<span class="tag warn">队列路径没解析出来</span>' +
+          '<span class="muted"> 没给 -Dir/-QueueDir · 逾期未知（不是零）</span>';
+      } else if (qNote === 'not-found') {
+        el.innerHTML = '<span class="tag warn">队列不可读</span>' +
+          '<span class="muted"> ' + esc(qShown || 'state/queue') + ' 不在盘 · 逾期未知（不是零）</span>';
+      } else {
+        el.innerHTML = '<span class="tag warn">队列不可读</span>' +
+          '<span class="muted"> ' + esc(qShown || 'state/queue') + ' · 逾期未知（不是零）</span>';
+      }
       return;
     }
     const open = (typeof Q.open === 'number') ? Q.open : 0;

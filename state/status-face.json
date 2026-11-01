@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T19:51:10Z",
-    "current_activity":  "r793 收口：「没有读数」不再长得像「读数是零」——`./Tools/devloop/queue-due.ps1` 的 `Get-QueueDue` 是普通函数，PowerShell 对普通函数不拒绝未知具名参数（整对塞进 `$args`、真参数留空），于是 `-QueueDir \u003cpath\u003e` 返回 `exists=false files=0 open=0`，与「队列真没有活」逐字同形（r792 白撞一轮：`-QueueDir` 读 open=0、改 `-Dir` 读 204）。现在加 `[Alias(\u0027QueueDir\u0027)]` 让 builder 的口径真绑定，并把调用方实际写的参数名回显进 `note`、路径没解析时 `dir_rel=\u0027\u003cunresolved\u003e\u0027`；`./Tools/devloop/benchmark-duty.ps1` 同补 `note`（`no-path`／`not-found`）。",
-    "artifact":  "`./Tools/devloop/queue-due.ps1`（`-QueueDir` 别名＋`\u003cunresolved\u003e`／`note` 回显＋相对化提前）、`./Tools/devloop/benchmark-duty.ps1`（note 三态＋`-BenchmarkPath` 别名）、`./Tools/devloop/test-queue-due.ps1`（136→143/143·新 P 组）、`./Tools/devloop/test-benchmark-duty.ps1`（31→35/35·新 k 组）、`./Tools/perceptor/verify.ps1`（§2g／§2m 按 note 分岔）",
-    "artifact_utc":  "2026-11-01T19:51:10Z",
-    "milestone":  "下一步：领 main#126（把 `note` 三态接到 `./Tools/devloop/build-city-panel.ps1` 的 `PANEL OK` 与页面应办位，让「参数没到」和「目录不在盘」在页面上也分开）与 main#127（`./Tools/devloop/` 下 duty 一族「简单函数＋裸参数」同族普查）；两件均在本轮 `./TECH.md` §九 r793 行的诚实边界里挂号。",
+    "updated_utc":  "2026-11-01T20:09:19Z",
+    "current_activity":  "r794 收口：面板上「队列目录不在盘」不再只有一种说法——r793 在 `./Tools/devloop/queue-due.ps1` 里把「路径从没解析出来」与「路径不在盘」分开之后，tick 已分岔说话，页面却仍一律印 `qdue=missing` 并硬写 state/queue。现在 `./Tools/devloop/build-city-panel.ps1` 的 `PANEL OK` 增 `qdue_note=`，`./Tools/devloop/city-panel-template.html` 按 note 三分并点名真实路径；相对 `-QueueDir` 也按仓库根归一化（否则同一棵树换个 cwd 重建就换一种拼写）。",
+    "artifact":  "`./world-public/city-panel.html`（重建后 · qdue_note=none）、`./Tools/devloop/city-panel-template.html`（缺失支三态）、`./Tools/devloop/build-city-panel.ps1`（`PANEL OK` 加 `qdue_note=` ＋ 相对队列目录归一化）、`./logs/devloop-r745-panel-queue-test.js`（61→71/71）",
+    "artifact_utc":  "2026-11-01T20:09:19Z",
+    "milestone":  "下一步：领 main#127（从 `./Tools/devloop/queue-due.ps1` 起扫一族「简单函数＋裸参数」静默吞参面），把 r793 那一类坑一次扫清；面板侧末项已闭。",
     "milestone_eta_utc":  "2026-11-04T00:00:00Z"
 }

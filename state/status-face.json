@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T09:48:33Z",
-    "current_activity":  "r783 收口：引用复核读数不再是「写一次就冻住」的读数——`./Tools/devloop/qa-cite-duty.ps1` 按记录自身年龄（24 小时闸）在 `./Tools/perceptor/verify.ps1` 第 2l 段就地刷新它，活跑 `qa-cite: skipped(fresh) age_before=0.18h max_age=24h basis=utc`；读数超过 48 小时时，`./world-public/city-panel.html` 的「运行维护」行改口说「未刷新·不代表今天」而不是继续拿旧数当今天的结论。本轮未搬、未删任何文件。",
-    "artifact":  "`./Tools/devloop/qa-cite-duty.ps1`（新模块）, `./Tools/devloop/test-qa-cite-duty.ps1`（60/60）, `./Tools/perceptor/verify.ps1`（第 2l 段）, `./world-public/city-panel.html`（age/overdue 两键＋超期改口）, `./qa/city-panel-narrow.png`（390×6702 offenders=0）",
-    "artifact_utc":  "2026-11-01T09:48:33Z",
-    "milestone":  "下一轮口径：队列头仍是 main#23 司级基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期）；main#119 本轮已收口，open 可领件归零，下一轮按先例自领技术债/勘注收口小步。",
+    "updated_utc":  "2026-11-01T10:14:51Z",
+    "current_activity":  "r784 收口：红票的证据不再随手扔掉——非绿的那次真跑，runner 全文留在**票据旁边的证据文件**里（只有红时才有），页面上那行带 `redlog=` 指路，绿跑会自动把它删掉；所以「证据在」恒等于「上次真跑不是绿」。开场正撞上一条说不清的红：verify 族点名 `./Tools/devloop/test-log-archive-duty.ps1`，却只剩一句「14 passed, 8 reded (of 22)」，那 8 条是哪 8 条早已随临时件删除；直跑、经 runner 跑、带子进程开关跑三次全绿，**未能重现**。本轮未搬、未删任何产出文件。",
+    "artifact":  "`./Tools/devloop/ps-suites-tick.ps1`（`Get-PsSuitesRedLogPath`／`Set-PsSuitesRedLog`＋票据 `redlog` 键）, `./Tools/devloop/test-verify-ps-suites.ps1`（188/188，新增 tb 组 8 条）, `./state/queue/main.md`（新债 #120：那 8 条仍未定位）",
+    "artifact_utc":  "2026-11-01T10:14:51Z",
+    "milestone":  "下一轮口径：队列头仍是 main#23 司级基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期）；该套下次再红时照 `VERIFY WARN … redlog=` 打开证据文件逐条归因（main#120）；否则按 r50/r51 先例自领技术债/勘注收口小步。",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

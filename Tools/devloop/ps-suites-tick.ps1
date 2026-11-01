@@ -264,6 +264,7 @@ function Write-PsSuitesTicket {
         tries      = [int]$Result.tries
         reds       = [string]$Result.reds
         redtail    = [string]$Result.redtail
+        redlog     = [string]$Result.redlog
         runs       = [string]$Result.runs
     }
     $dir = Split-Path -Parent $Path
@@ -291,6 +292,61 @@ function Get-PsSuitesFamilyTicketName {
     if ($Family -eq 'verify') { return 'logs\.ps-suites-verify-last.json' }
     if ($Family -eq 'write2') { return 'logs\.ps-suites-write2-last.json' }
     return 'logs\.ps-suites-last.json'
+}
+
+function Get-PsSuitesRedLogPath {
+    # The evidence file sits NEXT TO the ticket it belongs to. That one rule
+    # keeps a sandbox (which points the ticket at its own temp dir) out of the
+    # real logs\, and puts the production evidence in logs\ as before.
+    param([Parameter(Mandatory=$true)][string]$TicketPath)
+    $dir = Split-Path -Parent $TicketPath
+    $leaf = [System.IO.Path]::GetFileName($TicketPath)
+    if ($leaf -like '*.json') { $leaf = $leaf.Substring(0, $leaf.Length - 5) }
+    return (Join-Path $dir ($leaf + '-red.txt'))
+}
+
+function Set-PsSuitesRedLog {
+    # Red tickets could name the culprit (r754) and, when there was exactly one,
+    # quote its last sentence (r761). What they never kept was the runner's own
+    # output, which is where the assertions that actually died are printed: the
+    # text was read, mined for those two fields, and deleted. A live
+    # verify-family red then reported "14 passed, 8 reded (of 22)" with no way
+    # left to learn WHICH eight, so the same flake could only be waited for
+    # again - which is what happened (r784).
+    # Contract: a non-pass run keeps its whole output here; a pass run REMOVES
+    # the file, so "the evidence exists" always means "the last real run was not
+    # green" and never a red that has since healed.
+    param(
+        [Parameter(Mandatory=$true)][string]$TicketPath,
+        [string]$RepoDir = '',
+        [string]$Text = '',
+        [string]$Status = 'unknown'
+    )
+    $path = Get-PsSuitesRedLogPath -TicketPath $TicketPath
+    if ([string]$Status -eq 'pass') {
+        if (Test-Path -LiteralPath $path) { try { Remove-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue } catch { } }
+        return ''
+    }
+    try {
+        $dir = Split-Path -Parent $path
+        if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+        $body = [string]$Text
+        if ([string]::IsNullOrWhiteSpace($body)) { $body = '(no output)' }
+        [System.IO.File]::WriteAllText($path, $body, (New-Object System.Text.UTF8Encoding($false)))
+    } catch {
+        # Evidence we cannot write must never change a verdict.
+        return ''
+    }
+    $show = ''
+    if (-not [string]::IsNullOrEmpty($RepoDir)) {
+        try {
+            $full = [System.IO.Path]::GetFullPath($path)
+            $root = [System.IO.Path]::GetFullPath($RepoDir).TrimEnd('\') + '\'
+            if ($full.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) { $show = $full.Substring($root.Length) }
+        } catch { $show = '' }
+    }
+    if ([string]::IsNullOrEmpty($show)) { $show = [System.IO.Path]::GetFileName($path) }
+    return $show
 }
 
 function Get-PsSuitesFamilyTimeout {
@@ -405,6 +461,10 @@ function Copy-PsSuitesTicketFields {
     # to say what it said, not only who it was.
     $Result.redtail = ''
     if ($Ticket.PSObject.Properties['redtail']) { $Result.redtail = [string]$Ticket.redtail }
+    # ...and where the full output of that run was left (main#119's sibling): a
+    # cached red must still point at the evidence, not only quote one line of it.
+    $Result.redlog = ''
+    if ($Ticket.PSObject.Properties['redlog']) { $Result.redlog = [string]$Ticket.redlog }
     # Baseline rides with the verdict so a cached tick can still say how close
     # the family is to its cap (main#96).
     $Result.runs = ''
@@ -536,6 +596,7 @@ function Invoke-PsSuitesTick {
         tries      = 0
         reds       = ''
         redtail    = ''
+        redlog     = ''
         runs       = ''
         base_ms    = 0
         budget_over = $false
@@ -709,6 +770,7 @@ function Invoke-PsSuitesTick {
         $res.note = ($res.note + ' summary line not found; last output: ' + $tail + ' exit=' + $res.exit).Trim()
         $res.ts_utc = [datetime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
         $res.tries = 0
+        $res.redlog = Set-PsSuitesRedLog -TicketPath $TicketPath -RepoDir $RepoDir -Text ($text + "`n" + $errText) -Status $res.status
         Write-PsSuitesTicket -Path $TicketPath -Result ([pscustomobject]$res)
         return [pscustomobject]$res
     }
@@ -745,6 +807,7 @@ function Invoke-PsSuitesTick {
     $res.tries = 0
     $res.ts_utc = [datetime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
     $res.age_min = 0
+    $res.redlog = Set-PsSuitesRedLog -TicketPath $TicketPath -RepoDir $RepoDir -Text ($text + "`n" + $errText) -Status $res.status
     Write-PsSuitesTicket -Path $TicketPath -Result ([pscustomobject]$res)
     return [pscustomobject]$res
 }
@@ -775,6 +838,11 @@ function Format-PsSuitesLine {
     # tail is what turns "some suite is red" into "this suite died here" (main#98).
     if ([string]$Result.redtail -ne '' -and [string]$Result.status -ne 'pass') {
         $head = $head + ' redtail=' + [string]$Result.redtail
+    }
+    # Where that run's whole output was kept, so "which assertions" is answerable
+    # without waiting for the flake to happen again.
+    if ([string]$Result.redlog -ne '' -and [string]$Result.status -ne 'pass') {
+        $head = $head + ' redlog=' + [string]$Result.redlog
     }
     if ([int]$Result.tries -gt 0) { $head = $head + ' tries=' + [int]$Result.tries }
     # Family baseline (main#96): printed for cached ticks too, because the whole

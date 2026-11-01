@@ -520,6 +520,40 @@ foreach ($ch in "$($ta3.redtail)".ToCharArray()) { if ([int][char]$ch -gt 127) {
 Check 'ta8 the tail is ascii-only' ($taNonAscii -eq 0) ('non-ascii=' + $taNonAscii)
 $ta4 = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'ta-two.json') -RunnerPath $runnerTwoRed -TimeoutSec 8
 Check 'ta9 two culprits keep the names and drop the tail' ("$($ta4.reds)" -match 'suite-a\.ps1' -and "$($ta4.reds)" -match 'suite-b\.ps1' -and "$($ta4.redtail)" -eq '') ("reds=$($ta4.reds) redtail=$($ta4.redtail)")
+
+# ---------- case tb: a red run KEEPS the output that showed what died -------
+# r784 met a live verify-family red whose ticket said only "14 passed, 8 reded
+# (of 22)": the runner output carrying those eight assertion names was read,
+# mined for the culprit name + one sentence, and then deleted. This case pins
+# the fix - the whole output stays next to the ticket, and a later green run
+# takes it away so the file never outlives the red it describes.
+$runnerRedAssertions = New-Runner 'runner-red-assertions.ps1' @'
+Write-Output '  PASS a1 first thing held'
+Write-Output '  FAIL b1 sources were not deleted'
+Write-Output 'FAIL  suite-b.ps1  exit=1  RESULT: FAIL (1)'
+Write-Output 'PS SUITES suites=1 assertions=2 counted=1 failing=1 parity=ok'
+exit 2
+'@
+$tbTicket = Join-Path $sandbox 'tb.json'
+$tbLog = Join-Path $sandbox 'tb-red.txt'
+$tb1 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $tbTicket -RunnerPath $runnerRedAssertions -TimeoutSec 8
+Check 'tb1 a red run leaves its output next to the ticket' (Test-Path -LiteralPath $tbLog) $tbLog
+$tbBody = ''
+if (Test-Path -LiteralPath $tbLog) { $tbBody = [System.IO.File]::ReadAllText($tbLog, [System.Text.Encoding]::UTF8) }
+Check 'tb2 the evidence keeps the failing assertion verbatim' ($tbBody -match 'FAIL b1 sources were not deleted') $tbBody
+$tbLine = Format-PsSuitesLine $tb1
+Check 'tb3 the printed line names redlog=' ($tbLine -match 'redlog=') $tbLine
+$tbShown = ''
+if ($tbLine -match 'redlog=(\S+)') { $tbShown = $Matches[1] }
+Check 'tb4 the named redlog is the file that exists' ($tbShown -ne '' -and (Test-Path -LiteralPath (Join-Path $sandbox $tbShown))) $tbShown
+$tb2 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $tbTicket -RunnerPath $runnerRedAssertions -TimeoutSec 8
+Check 'tb5 a cached red still points at the evidence' ($tb2.ran -eq $false -and "$($tb2.redlog)" -ne '' -and (Test-Path -LiteralPath $tbLog)) (Format-PsSuitesLine $tb2)
+$tb3 = Invoke-PsSuitesTick -RepoDir $root -TicketPath $tbTicket -RunnerPath $runnerGreen -TimeoutSec 8 -Force
+Check 'tb6 a green run removes the stale evidence' (-not (Test-Path -LiteralPath $tbLog)) $tbLog
+Check 'tb7 a green line carries no redlog=' ((Format-PsSuitesLine $tb3) -notmatch 'redlog=') (Format-PsSuitesLine $tb3)
+$tbNonAscii = 0
+foreach ($ch in $tbShown.ToCharArray()) { if ([int][char]$ch -gt 127) { $tbNonAscii++ } }
+Check 'tb8 the redlog name is ascii-only' ($tbNonAscii -eq 0) $tbShown
 $ta5 = Invoke-PsSuitesTick -RepoDir $root -TicketPath (Join-Path $sandbox 'ta-green.json') -RunnerPath $runnerGreen -TimeoutSec 8
 Check 'ta10 a green run records no tail' ("$($ta5.redtail)" -eq '' -and (Format-PsSuitesLine $ta5) -notmatch 'redtail=') ("$($ta5.redtail)")
 

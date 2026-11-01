@@ -38,6 +38,10 @@
 #      `bad` or `long`. The same number in two files is not a collision (the
 #      queues number independently), and a row whose first cell is not a plain
 #      integer is not a data row at all.
+#   P) parameter reach (main#125): a plain function swallows an unknown named
+#      parameter, so a typo'd `-QueueDir` used to read as an empty queue. The
+#      builder's spelling must bind, and any other spelling must self-report
+#      "no path" (dir_rel='<unresolved>' + note) instead of a silent zero.
 # ASCII-only law: fixtures are ASCII; the live CJK rows are only counted.
 
 $ErrorActionPreference = 'Stop'
@@ -392,6 +396,22 @@ function Check([string]$name, [bool]$cond) {
     else { Write-Output ('  FAIL ' + $name); $script:fail++ }
 }
 
+# --- P) parameter reach (main#125) -----------------------------------------
+# A plain function parks an unknown named parameter in $args and leaves the real
+# one empty, so `-QueueDir` used to return open=0 - byte-identical to an empty
+# queue (r792 lost a round to it). The alias makes the caller's natural spelling
+# bind; anything else must say "no path", never ship a silent zero.
+$PAlias = Get-QueueDue -QueueDir $qdirA -Today $today
+Check 'P: -QueueDir binds like -Dir' ($PAlias.exists -and $PAlias.open -eq $A.open -and $PAlias.late -eq $A.late)
+$PWrong = Get-QueueDue -QueueRoot $qdirA -Today $today
+Check 'P: an unbound parameter name is not a silent zero' ((-not $PWrong.exists) -and $PWrong.open -eq 0)
+Check 'P: the unbound name is shipped back' ($PWrong.note -match 'QueueRoot')
+Check 'P: an unresolved path is named, not blank' ($PWrong.dir_rel -eq '<unresolved>')
+$PNone = Get-QueueDue -Today $today
+Check 'P: no path at all says so' (($PNone.note -match 'no path given') -and $PNone.dir_rel -eq '<unresolved>')
+Check 'P: a path that is not there is echoed' (($B.note -eq 'not-found') -and $B.dir_rel -ne '' -and $B.dir_rel -ne '<unresolved>')
+Check 'P: a real reading carries no note' ($A.note -eq '')
+
 Check 'A: directory read' ($A.exists -eq $true)
 Check 'A: five data rows scanned' ($A.scanned -eq 5)
 Check 'A: four open rows (closed one excluded)' ($A.open -eq 4)
@@ -411,7 +431,13 @@ Check 'C: open count matches recount' ($C.open -eq $liveOpen)
 Check 'C: dated count matches recount' ($C.dated -eq $liveDated)
 Check 'C: late count matches recount' ($C.late -eq $liveLate)
 Check 'C: live overdue ids match recount' ((@($C.items | ForEach-Object { $_.id }) -join ',') -eq ($liveLateIds -join ','))
-Check 'C: max_days is the largest late day count' ($C.max_days -eq (@($C.items | ForEach-Object { $_.days } | Measure-Object -Maximum).Maximum))
+# A queue with nothing late is the healthy state, not a missing reading: an
+# empty item list has no maximum, so measure it as 0 instead of comparing 0 to
+# $null (r793: r792 closed the last overdue row and this assertion went red).
+$liveLateDays = @($C.items | ForEach-Object { $_.days })
+$liveMaxDays = 0
+if ($liveLateDays.Count -gt 0) { $liveMaxDays = [int]($liveLateDays | Measure-Object -Maximum).Maximum }
+Check 'C: max_days is the largest late day count' ($C.max_days -eq $liveMaxDays)
 Check 'C: bad items agree with the bad count' (@($C.bad_items).Count -eq $C.bad)
 Check 'C: no live marker sits outside the remark cell' (@($C.bad_items | Where-Object { $_.reason -eq 'cell' }).Count -eq 0)
 Check 'C: long count matches recount' ($C.long -eq $liveLong)

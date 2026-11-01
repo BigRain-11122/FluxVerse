@@ -478,7 +478,17 @@ if (-not (Test-Path -LiteralPath $qdueMod)) {
     if ($null -eq $qd) {
       Write-Output 'VERIFY WARN: qdue: queue-due.ps1 threw - queue marker census skipped this tick'
     } elseif (-not $qd.exists) {
-      Write-Output ('VERIFY WARN: qdue: queue dir not readable (' + $qdir + ') - open/late/bad unknown, not zero')
+      # main#125: "no path was resolved" and "the path has nothing in it" are
+      # different facts. A caller that passed an unbound parameter name (or no
+      # path at all) gets a reading whose dir_rel is '<unresolved>'; say that,
+      # because a silent zero reads exactly like an empty queue.
+      if ($qd.note -eq 'no-path') {
+        Write-Output ('VERIFY WARN: qdue: ' + $qd.dir_rel + ' ' + $qd.note + ' - queue dir never resolved, open/late/bad unknown, not zero')
+      } else {
+        $qShown = $qdir
+        if (-not [string]::IsNullOrEmpty($qd.dir_rel) -and $qd.dir_rel -ne '<unresolved>') { $qShown = $qd.dir_rel }
+        Write-Output ('VERIFY WARN: qdue: queue dir not readable (' + $qShown + ') - open/late/bad unknown, not zero')
+      }
     } else {
       $qLine = 'qdue: open=' + $qd.open + ' dated=' + $qd.dated + ' late=' + $qd.late + ' max=' + $qd.max_days + 'd bad=' + $qd.bad + ' code=' + $qd.code + ' long=' + $qd.long + ' longmax=' + $qd.long_max + ' dupe=' + $qd.dupe + ' duperows=' + $qd.dupe_rows
       # Duplicate ids (main#112): ids are numbered by hand, so a collision is
@@ -863,7 +873,13 @@ if (-not (Test-Path -LiteralPath $bmDuty)) {
     if (-not $bm) {
       Write-Output 'VERIFY WARN: benchmarks: reading module threw - due-date reading skipped this tick'
     } elseif (-not $bm.exists) {
-      Write-Output 'VERIFY WARN: benchmarks: the benchmark face file is missing - there is no face to date'
+      # main#125: an argument typo and an absent face both land on exists=false;
+      # name which one it is instead of blaming the face for a caller mistake.
+      if ($bm.note -eq 'no-path') {
+        Write-Output 'VERIFY WARN: benchmarks: no benchmark face path was resolved (caller passed none or an unbound parameter name) - due-date reading skipped'
+      } else {
+        Write-Output 'VERIFY WARN: benchmarks: the benchmark face file is missing - there is no face to date'
+      }
     } elseif (-not $bm.ok) {
       Write-Output 'VERIFY WARN: benchmarks: no due date could be read - the face declares none and has no mtime'
     } else {

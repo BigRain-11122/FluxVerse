@@ -168,9 +168,35 @@ function Get-QueueDueBadTokens
     return @($out)
 }
 
+# PARAMETER REACH (main#125). Get-QueueDue is a plain (non-advanced) function,
+# and such a function does NOT reject an unknown named parameter: PowerShell
+# parks the pair in $args, the real parameter stays empty, and the caller gets
+# `exists=false files=0 open=0` - byte-identical to "the queue has no work".
+# r792 lost a round to exactly this: `-QueueDir` (the builder's own spelling)
+# read open=0, and `-Dir` read open=204 on the same directory. Two fixes, both
+# cheap: the alias below makes the natural spelling bind, and this helper names
+# what was actually typed when nothing bound, so the reading can never be a
+# silent zero again.
+function Get-QueueDuePathNote
+{
+    # NOTE: the parameter is NOT named $Args - PowerShell's automatic $args
+    # wins over a bound parameter of that name and the list would read empty.
+    param([object[]]$ArgList)
+    $names = @()
+    foreach ($a in @($ArgList)) {
+        $s = [string]$a
+        if ($s.Length -gt 1 -and $s.StartsWith('-') -and $s -notmatch '^-?\d') { $names += $s }
+    }
+    if ($names.Count -gt 0) {
+        return ('no path: unbound named parameter ' + ($names -join ',') + ' (accepted: -Dir or -QueueDir)')
+    }
+    return 'no path given (accepted: -Dir or -QueueDir)'
+}
+
 function Get-QueueDue
 {
     param(
+        [Alias('QueueDir')]
         [string]$Dir,
         [datetime]$Today = (Get-Date).Date,
         [string]$RepoRoot = '',
@@ -180,6 +206,7 @@ function Get-QueueDue
     $r = [ordered]@{
         exists   = $false
         dir_rel  = ''
+        note     = ''
         files    = 0
         scanned  = 0
         open     = 0
@@ -202,21 +229,34 @@ function Get-QueueDue
         long_items = @()
         dupe_items = @()
     }
-    if ([string]::IsNullOrEmpty($Dir)) { return $r }
-    if (-not (Test-Path -LiteralPath $Dir)) { return $r }
-    $r.exists = $true
+    if ([string]::IsNullOrEmpty($Dir)) {
+        # No path ever arrived. Say which parameter was rejected instead of
+        # shipping a zero that reads as "no work" (main#125).
+        $r.dir_rel = '<unresolved>'
+        $r.note = Get-QueueDuePathNote -ArgList $args
+        return $r
+    }
     # Ship the directory repo-RELATIVE when it lives under the caller's repo:
     # the same tree spelled D:\... and C:\... must produce identical page bytes
     # (r744 lesson - an absolute path here is churn on every rebuild).
-    $full = [IO.Path]::GetFullPath($Dir)
+    # Work out the shipped spelling BEFORE the existence test: a path that is
+    # simply not there must still be named in the tick line (main#125).
+    $full = $Dir
+    try { $full = [IO.Path]::GetFullPath($Dir) } catch { $full = $Dir }
     $rel = $full
     if (-not [string]::IsNullOrEmpty($RepoRoot)) {
-        $rootFull = [IO.Path]::GetFullPath($RepoRoot)
+        $rootFull = $RepoRoot
+        try { $rootFull = [IO.Path]::GetFullPath($RepoRoot) } catch { }
         if ($full.StartsWith($rootFull, [StringComparison]::OrdinalIgnoreCase)) {
             $rel = $full.Substring($rootFull.Length)
         }
     }
     $r.dir_rel = $rel.TrimStart('\', '/').Replace('\', '/')
+    if (-not (Test-Path -LiteralPath $Dir)) {
+        $r.note = 'not-found'
+        return $r
+    }
+    $r.exists = $true
 
     $items = New-Object System.Collections.ArrayList
     $badItems = New-Object System.Collections.ArrayList

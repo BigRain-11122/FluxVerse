@@ -15,6 +15,8 @@
 #      the tick family really protects both - a module nobody calls is not a fix
 #   i) the live face reads as declared (this is the reading the CEO sees)
 #   j) both new files stay ASCII (group PS5.1 encoding law)
+#   k) parameter reach (main#125): the caller's natural spelling binds, and the
+#      two kinds of empty ("no path" vs "not on disk") are told apart
 #
 # ASCII-only (no CJK typed here; the one anchor is built from code points).
 
@@ -127,6 +129,17 @@ $rLive = Get-BenchmarkReading -Path $live
 Check 'i1 live face is readable' ($rLive.exists -and $rLive.ok)
 Check 'i2 live face answers from its own declared row' ($rLive.basis -eq 'declared')
 Check 'i3 live due looks like a date' ($rLive.due -match '^\d{4}-\d{2}-\d{2}$')
+
+# ---------- k: parameter reach (main#125) ----------
+# Two different empties: a caller that never got a path to the function, and a
+# face that is simply not on disk. Both read basis=missing, so the reading has
+# to say which one it is instead of letting the tick blame the document.
+$kAlias = Get-BenchmarkReading -BenchmarkPath $faceA -Now $now
+Check 'k1 the natural spelling binds' ($kAlias.exists -and $kAlias.due -eq '2026-11-08')
+$kNone = Get-BenchmarkReading -Now $now
+Check 'k2 no path is named, not a silent missing' (($kNone.note -eq 'no-path') -and (-not $kNone.exists))
+Check 'k3 an absent face is a different empty' ($rE.note -eq 'not-found')
+Check 'k4 a real reading carries no note' ($rA.note -eq '')
 
 # ---------- j: ASCII-only for both new files ----------
 $thisFile = Join-Path $PSScriptRoot 'test-benchmark-duty.ps1'

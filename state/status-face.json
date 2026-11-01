@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T19:03:42Z",
-    "current_activity":  "r792 收口：基准面 v1.4 刷新（司级 7 天，逾期 6 天清账）——两项「C·待证」源核销：CoG 2026《Evolutionary Wave Function Collapse》按 arXiv:2607.02082 直址取件升「确认」（官方 4-page short paper + 结论原文复证「全局约束是 WFC 硬弱点」），城市数字孪生开源阵营按组织页/官网/会议日程三面升「确认」（DTCC Platform＝Chalmers·MIT·2022 起）。活跑 `Get-BenchmarkReading` → `ok=true due=2026-11-09 left=8d basis=declared`，每 tick 那行由 `VERIFY WARN … over=6d` 转 `VERIFY HEALTH: benchmarks: due=2026-11-09 left=8d`；队列逾期件 2→0。",
-    "artifact":  "`./docs/global-benchmarks.md`（v1.4：①视野面两行升 B·确认、③源表两行升确认、④更新记录新增 2026-11-02 行）、`./state/queue/main.md`（#23 销行＋新立 #125 参数名陷阱债）、`./state/queue/tech.md`（#16 采用面回访销行＋#17 陈旧行销行＋新立 #18 待证核销位）、`./logs/tick-20261102.log`（每 tick benchmark 行转 HEALTH 的实锚）",
-    "artifact_utc":  "2026-11-01T19:03:42Z",
-    "milestone":  "下一步：tech#18 深潜窗（2026-11-19）核销 ICCS 2025 混合式与 arXiv:2308.07307 两件待证源；main#121（状态面词表过宽，due=2026-11-16）交委员会；main#125 参数名静默零债待领；48 小时内不动基准面。",
-    "milestone_eta_utc":  "2026-11-19T00:00:00Z"
+    "updated_utc":  "2026-11-01T19:51:10Z",
+    "current_activity":  "r793 收口：「没有读数」不再长得像「读数是零」——`./Tools/devloop/queue-due.ps1` 的 `Get-QueueDue` 是普通函数，PowerShell 对普通函数不拒绝未知具名参数（整对塞进 `$args`、真参数留空），于是 `-QueueDir \u003cpath\u003e` 返回 `exists=false files=0 open=0`，与「队列真没有活」逐字同形（r792 白撞一轮：`-QueueDir` 读 open=0、改 `-Dir` 读 204）。现在加 `[Alias(\u0027QueueDir\u0027)]` 让 builder 的口径真绑定，并把调用方实际写的参数名回显进 `note`、路径没解析时 `dir_rel=\u0027\u003cunresolved\u003e\u0027`；`./Tools/devloop/benchmark-duty.ps1` 同补 `note`（`no-path`／`not-found`）。",
+    "artifact":  "`./Tools/devloop/queue-due.ps1`（`-QueueDir` 别名＋`\u003cunresolved\u003e`／`note` 回显＋相对化提前）、`./Tools/devloop/benchmark-duty.ps1`（note 三态＋`-BenchmarkPath` 别名）、`./Tools/devloop/test-queue-due.ps1`（136→143/143·新 P 组）、`./Tools/devloop/test-benchmark-duty.ps1`（31→35/35·新 k 组）、`./Tools/perceptor/verify.ps1`（§2g／§2m 按 note 分岔）",
+    "artifact_utc":  "2026-11-01T19:51:10Z",
+    "milestone":  "下一步：领 main#126（把 `note` 三态接到 `./Tools/devloop/build-city-panel.ps1` 的 `PANEL OK` 与页面应办位，让「参数没到」和「目录不在盘」在页面上也分开）与 main#127（`./Tools/devloop/` 下 duty 一族「简单函数＋裸参数」同族普查）；两件均在本轮 `./TECH.md` §九 r793 行的诚实边界里挂号。",
+    "milestone_eta_utc":  "2026-11-04T00:00:00Z"
 }

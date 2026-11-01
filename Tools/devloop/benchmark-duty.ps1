@@ -30,6 +30,7 @@
 #   limit_days - the fallback window, reported for context
 #   basis    - declared | mtime | missing
 #   bytes    - size of the face
+#   note     - '' | 'no-path' | 'not-found' (main#125: which kind of empty)
 #
 # ASCII-only (group PS5.1 encoding law). The one CJK anchor lives in code
 # points, never typed into this file.
@@ -57,6 +58,9 @@ function ConvertTo-BenchmarkDate {
 function Get-BenchmarkReading {
     [CmdletBinding()]
     param(
+        # main#125: the natural spelling from the caller's side is the file it
+        # wants read; accept it so a near-miss binds instead of throwing.
+        [Alias('BenchmarkPath')]
         [string]$Path = '',
         [int]$LimitDays = 7,
         [datetime]$Now = [DateTime]::UtcNow
@@ -70,9 +74,13 @@ function Get-BenchmarkReading {
         limit_days = $LimitDays
         basis      = 'missing'
         bytes      = 0
+        # '' | 'no-path' | 'not-found' - both end at basis=missing, but one is a
+        # caller mistake and the other is an absent face; the gate says which
+        # (main#125: an empty reading must never be mistaken for a real one).
+        note       = ''
     }
-    if ([string]::IsNullOrWhiteSpace($Path)) { return $r }
-    if (-not (Test-Path -LiteralPath $Path)) { return $r }
+    if ([string]::IsNullOrWhiteSpace($Path)) { $r.note = 'no-path'; return $r }
+    if (-not (Test-Path -LiteralPath $Path)) { $r.note = 'not-found'; return $r }
 
     $r.exists = $true
     $r.bytes = (Get-Item -LiteralPath $Path).Length

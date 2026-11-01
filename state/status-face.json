@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T22:00:41Z",
-    "current_activity":  "r797 收口：面板「运行维护」行多一枚裸参数普查读数——`./Tools/devloop/simple-param-census.ps1` 的 risky 数每轮上屏（缓存命中时不重解析 66 个脚本），回归一眼可见，不必有人记得去跑工具；活树 0 处、`PANEL OK … sparam_risky=0 sparam_cached=1`。",
-    "artifact":  "`./Tools/devloop/simple-param-census.ps1`（新增指纹缓存 + `Get-SimpleParamCensusCached`）·`./Tools/devloop/build-city-panel.ps1`·`./Tools/devloop/city-panel-template.html`；沙盒 `./Tools/devloop/test-simple-param-census.ps1` 49/49（新增缓存组 12 条）·30 套面板沙盒全绿·面板重建 `PANEL OK bytes=212349`。",
-    "artifact_utc":  "2026-11-01T22:00:41Z",
-    "milestone":  "48 小时内一件：tech#18 基准面两件 C·待证取全文核销（due=2026-11-19·正典 `./docs/global-benchmarks.md`）；main#52 空载浸泡复测仍需零 Tuanjie 进程窗口（02 判据 fps_avg≥486.8 且 p95≤2.58ms），不做带载凑数。",
+    "updated_utc":  "2026-11-01T22:19:20Z",
+    "current_activity":  "r798 收口：集团决策 D-20261102-05 里唯一一条逾期未回执的问在本司侧结办——应办卡「已回执」由 3 变 4（活跑 `PANEL OK … duty_late=4 duty_receipted=4`），城市视觉断供按「只审不处」记 chronic 一行，不自建抓帧任务。",
+    "artifact":  "`./HQ-FEEDBACK.md`（回执 F-20261102-01，行内携 D 号供面板计数）·`./TECH.md` §九 r798 行（chronic 观察位：最新取景帧 `./qa/city3d-shots-20261031-2238-bm-a-overview.jpg`，约 31.7 小时）·`./world-public/city-panel.html` 应办卡读数刷新。",
+    "artifact_utc":  "2026-11-01T22:19:20Z",
+    "milestone":  "48 小时内一件：tech#18 基准面两件 C·待证取全文核销（due=2026-11-19·正典 `./docs/global-benchmarks.md`）；main#52 空载浸泡复测仍需零 Tuanjie 进程窗口（判据 fps_avg≥486.8 且 p95≤2.58ms），不做带载凑数。",
     "milestone_eta_utc":  "2026-11-04T00:00:00Z"
 }

@@ -633,7 +633,21 @@ Check 'z1 the heavy family guards the sandbox it runs' ($zDefs -contains 'Tools\
 Check 'z2 the heavy family is a small, targeted set' ($zDefs.Count -eq 5) ('count=' + $zDefs.Count)
 Check 'z3 the light family no longer carries the heavy sandbox' (-not ($zLight -contains 'Tools\devloop\test-verify-ps-suites.ps1')) ($zLight -join ',')
 Check 'z4 the heavy family keeps its own ticket file' ((Get-PsSuitesFamilyTicketName -Family verify2) -eq 'logs\.ps-suites-verify2-last.json') (Get-PsSuitesFamilyTicketName -Family verify2)
-Check 'z5 the heavy cap is 120 s, under the light 180 s' ((Get-PsSuitesFamilyTimeout -Family verify2) -eq 120) ([string](Get-PsSuitesFamilyTimeout -Family verify2))
+Check 'z5 the heavy cap is 165 s, under the light 180 s' ((Get-PsSuitesFamilyTimeout -Family verify2) -eq 165) ([string](Get-PsSuitesFamilyTimeout -Family verify2))
+# main#105: a cap is a bound on a hang, so it must stay inside the tick it runs
+# in. One third of the 600 s tick is the ceiling for any single family.
+$zCaps = @(
+    (Get-PsSuitesFamilyTimeout -Family write),
+    (Get-PsSuitesFamilyTimeout -Family verify),
+    (Get-PsSuitesFamilyTimeout -Family verify2)
+)
+$zCapMax = ($zCaps | Measure-Object -Maximum).Maximum
+Check 'z5b no family cap may exceed 1/3 of the 600s tick' ($zCapMax -le 200) ('max=' + $zCapMax)
+# ...and the heavy cap must still carry the ~2x headroom it was derived from
+# (80.5 s measured at r766), or the number is just a bigger guess.
+$zHeavyCap = Get-PsSuitesFamilyTimeout -Family verify2
+Check 'z5c the heavy cap keeps at least 2x the measured run' ($zHeavyCap -ge [int][math]::Ceiling(2 * 80.5)) ('cap=' + $zHeavyCap)
+Check 'z5d the heavy cap is not padded far past that' ($zHeavyCap -le 170) ('cap=' + $zHeavyCap)
 Check 'z6 the two verify labels cannot be mistaken for each other' ((Get-VerifyLine ([pscustomobject]@{ lines = @('VERIFY HEALTH: ps-suites-verify2: x') })).Count -eq 0) 'regex overlap'
 
 # Deterministic three-tick ladder from empty tickets: write runs -> verify runs

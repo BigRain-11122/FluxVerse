@@ -61,11 +61,13 @@
 #     re-runs every N ticks (write 19 s, verify ~100 s) instead of every tick.
 #   - the baseline is elapsed wall clock on THIS box under whatever load it had;
 #     it answers "is the family near its cap", not "how fast is the code".
-#   - 45 s cap (write) / 180 s cap (verify) / 120 s cap (verify2): the write run
+#   - 45 s cap (write) / 180 s cap (verify) / 165 s cap (verify2): the write run
 #     measured 19.5 s, the eight light verify suites ~70 s, and the single
-#     gate-of-the-gate sandbox ~51 s. A hit means the machine is loaded or a
-#     suite hangs; we report `timeout`, never a verdict. 180 s keeps ~2.5x
-#     headroom and still bounds a hang inside one 5-minute tick.
+#     gate-of-the-gate sandbox 80.5 s (main#105: cap = 2x the measured run
+#     rounded up to 5 s, and no family cap may exceed 1/3 of the tick
+#     cadence). A hit means the machine is loaded or a suite hangs; we report
+#     `timeout`, never a verdict. 180 s keeps ~2.5x headroom and still bounds a
+#     hang inside one tick.
 #   - main#99 split the verify family in two: together the nine suites measured
 #     121.6 s (68% of the cap, past the 2/3 budget line r757 added) and every
 #     edit to this module bought that run. verify (eight light suites) and
@@ -272,11 +274,20 @@ function Get-PsSuitesFamilyTicketName {
 
 function Get-PsSuitesFamilyTimeout {
     # Measured: write family 19.5 s, verify family ~70 s (eight light suites,
-    # 0.6 s .. 18.9 s each), verify2 ~51 s (one sandbox that boots the gate).
+    # 0.6 s .. 18.9 s each), verify2 80.5 s (one sandbox that boots the gate).
     # The caps keep ~2x headroom over a real run and still bound a hang.
+    # main#105: verify2 was capped at 120 s when it measured 71.8 s (r758);
+    # by r766 the same sandbox carried 160 assertions and measured 80.5 s,
+    # i.e. 67% of the cap - past the 2/3 budget line r757 drew, so every tick
+    # printed a WARN nobody could act on. Re-derived instead of guessed, by a
+    # rule that can be re-run from the ticket's own `runs=` number:
+    #   cap = 2x the last measured run, rounded up to the next 5 s
+    # (80.5 s -> 161 -> 165 s, headroom 84.5 s). It stays under the light
+    # family's 180 s (one sandbox must not get more rope than eight) and inside
+    # the rule that no family cap may exceed 1/3 of the 600 s tick.
     param([ValidateSet('write','verify','verify2')][string]$Family = 'write')
     if ($Family -eq 'verify') { return 180 }
-    if ($Family -eq 'verify2') { return 120 }
+    if ($Family -eq 'verify2') { return 165 }
     return 45
 }
 

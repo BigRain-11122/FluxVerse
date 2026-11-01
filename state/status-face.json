@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T09:13:06Z",
-    "current_activity":  "r782 收口：被引件第一次有了「还指着同一件事吗」的读数——`./Tools/devloop/qa-rotation.ps1` 新增只读复核账（`stale_cited`／`superseded_cited`／`newer_sibling_cited`，带 60 分钟同会话边际），活跑 `stale_cited=0/74 superseded_cited=72 newer_sibling_cited=0`；面板「运行维护」行多一段带年龄的引用复核读数（`qacite=ok qacite_stale=0 qacite_cited=74`）。搬不搬仍是人的决定，本轮一个文件都没搬。",
-    "artifact":  "`./Tools/devloop/qa-rotation.ps1`（复核账＋`-Record`）, `./Tools/devloop/test-qa-rotation.ps1`（101/101）, `./world-public/city-panel.html`（引用复核行）, `./qa/city-panel-narrow.png`（390×6630 offenders=0）",
-    "artifact_utc":  "2026-11-01T09:13:06Z",
-    "milestone":  "下一轮口径：main#23 司级基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期 5 天）仍在队列头；新债 main#119（引用复核读数没有刷新义务，due=2026-11-22）",
+    "updated_utc":  "2026-11-01T09:48:33Z",
+    "current_activity":  "r783 收口：引用复核读数不再是「写一次就冻住」的读数——`./Tools/devloop/qa-cite-duty.ps1` 按记录自身年龄（24 小时闸）在 `./Tools/perceptor/verify.ps1` 第 2l 段就地刷新它，活跑 `qa-cite: skipped(fresh) age_before=0.18h max_age=24h basis=utc`；读数超过 48 小时时，`./world-public/city-panel.html` 的「运行维护」行改口说「未刷新·不代表今天」而不是继续拿旧数当今天的结论。本轮未搬、未删任何文件。",
+    "artifact":  "`./Tools/devloop/qa-cite-duty.ps1`（新模块）, `./Tools/devloop/test-qa-cite-duty.ps1`（60/60）, `./Tools/perceptor/verify.ps1`（第 2l 段）, `./world-public/city-panel.html`（age/overdue 两键＋超期改口）, `./qa/city-panel-narrow.png`（390×6702 offenders=0）",
+    "artifact_utc":  "2026-11-01T09:48:33Z",
+    "milestone":  "下一轮口径：队列头仍是 main#23 司级基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期）；main#119 本轮已收口，open 可领件归零，下一轮按先例自领技术债/勘注收口小步。",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

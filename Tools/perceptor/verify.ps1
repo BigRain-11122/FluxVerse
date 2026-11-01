@@ -789,6 +789,59 @@ if (Test-Path -LiteralPath $nlcScript) {
   }
 }
 
+# ---------- 2l. citation-audit reading refresh duty (main#119, r783) ----------
+# r782 gave the panel a citation-audit reading written by
+# Tools\devloop\qa-rotation.ps1 -Record, but nothing ever ran it: the record only
+# moved when a person typed the command. A frozen number rendered under a fresh
+# page is a claim about today that nobody checked. Judge question 1 was measured
+# first (a -Record run costs ~1.0 s on 383 tracked documents; the r782 ~2.4 s was
+# a cold first run), so this runs the refresh at most once a day - gated by the
+# record's own age, which needs no extra state file and retries by itself on the
+# next tick if a refresh fails (same stance as 2e).
+# WARN, not FAIL - same standoff as 2b..2k: a stale reading is an observation,
+# not a reason to take the whole city scan down. No 'FAIL' token in these lines.
+$qaCiteDuty = Join-Path $repoRoot 'Tools\devloop\qa-cite-duty.ps1'
+if (-not (Test-Path -LiteralPath $qaCiteDuty)) {
+  Write-Output 'VERIFY WARN: qa-cite: qa-cite-duty.ps1 missing - citation-audit refresh skipped'
+} else {
+  $qcdLoaded = $true
+  try { . $qaCiteDuty } catch { $qcdLoaded = $false }
+  if ($qcdLoaded -and (Get-Command Invoke-QaCiteDuty -ErrorAction SilentlyContinue)) {
+    $qcdArgs = @{ Root = $repoRoot }
+    if ($env:FLUXVERSE_QACITE_RECORD) { $qcdArgs['RecordPath'] = $env:FLUXVERSE_QACITE_RECORD }
+    if ($env:FLUXVERSE_QACITE_MAX_AGE) { $qcdArgs['MaxAgeHours'] = [double]$env:FLUXVERSE_QACITE_MAX_AGE }
+    if ($env:FLUXVERSE_QACITE_FORCE) { $qcdArgs['Force'] = $true }
+    $qcd = $null
+    try { $qcd = Invoke-QaCiteDuty @qcdArgs } catch { $qcd = $null }
+    if (-not $qcd) {
+      Write-Output 'VERIFY WARN: qa-cite: duty module threw - citation-audit refresh skipped this tick'
+    } else {
+      $qcdParts = @('qa-cite:')
+      if ($qcd.ran) { $qcdParts += 'ran' } else { $qcdParts += ('skipped(' + $qcd.reason + ')') }
+      if ($qcd.age_before_hours -lt 0) {
+        $qcdParts += 'age_before=none'
+      } else {
+        $qcdParts += ('age_before=' + $qcd.age_before_hours + 'h')
+      }
+      if ($qcd.ran) { $qcdParts += ('age_after=' + $qcd.age_after_hours + 'h') }
+      $qcdParts += ('max_age=' + $qcd.max_age_hours + 'h')
+      if ($qcd.basis) { $qcdParts += ('basis=' + $qcd.basis) }
+      $qcdLine = ($qcdParts -join ' ')
+      if ($qcd.verdict -eq 'NOTWRITTEN') {
+        Write-Output ('VERIFY WARN: ' + $qcdLine + ' - the citation audit ran but the record is still old or absent (' + $qcd.reason + '); the page keeps showing the old numbers and the next tick retries')
+      } elseif ($qcd.verdict -eq 'THROW' -or $qcd.verdict -eq 'MISSING') {
+        Write-Output ('VERIFY WARN: ' + $qcdLine + ' - the citation-audit refresh did not run (' + $qcd.verdict + '); the next tick retries')
+      } else {
+        Write-Output ('VERIFY HEALTH: ' + $qcdLine)
+      }
+    }
+  } else {
+    Write-Output 'VERIFY WARN: qa-cite-duty.ps1 did not provide Invoke-QaCiteDuty'
+  }
+}
+
+Set-CostMark 'qa-cite'
+
 # The decomposition, printed once, right before the verdict (queue main#104).
 # Sum of the parts is the measured round; the tail between the last mark and
 # here is added as 'rest' so the numbers reconcile with wall clock instead of

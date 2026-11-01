@@ -607,6 +607,26 @@ function artTitle(it){
             : ('读数 ' + Math.round(h / 24) + ' 天前');
       }
     }
+    // 读数自己会变老（queue main#119）：刷新义务接在 verify 的日更上，所以超过
+    // 一天半还没换过的读数只说明一件事——日更没跑起来。那条数就成了「某天曾经
+    // 成立」而不是「今天成立」，页面必须这么说出来，不能拿它的年龄当脚注、继续
+    // 把一次旧读数当成今天没有过期件。阈值由 builder 算（Q.max_age_hours，默认 48h）。
+    if (Q.overdue) {
+      const maxH = (typeof Q.max_age_hours === 'number' && Q.max_age_hours > 0) ? Q.max_age_hours : 48;
+      const days = (typeof Q.age_hours === 'number' && Q.age_hours > 0) ? (Q.age_hours / 24) : 0;
+      const el2 = document.createElement('span');
+      el2.className = 'tag warn';
+      el2.textContent = '引用复核读数 ' + (days >= 1 ? Math.round(days) + ' 天' : Math.round(maxH) + ' 小时') +
+        '未刷新（超过 ' + Math.round(maxH) + ' 小时）';
+      el.appendChild(el2);
+      const el3 = document.createElement('span');
+      el3.className = 'muted';
+      el3.textContent = ' 下面是那次读数，不代表今天 · 上次 ' +
+        (Q.utc ? String(Q.utc).replace('T', ' ').replace('Z', ' UTC') : '时间未知');
+      el.appendChild(el3);
+      ageTitle(el, Q.utc);
+      return;
+    }
     sp.className = (typeof Q.stale_cited === 'number' && Q.stale_cited > 0) ? 'tag warn' : 'muted';
     const head = (typeof Q.stale_cited === 'number' && Q.stale_cited > 0)
       ? ('引用复核 ' + Q.stale_cited + '/' + Q.cited + ' 件超 ' + Q.stale_days + ' 天')

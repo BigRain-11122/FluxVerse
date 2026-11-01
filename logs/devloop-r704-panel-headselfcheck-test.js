@@ -270,6 +270,31 @@ function maintText(html, label) {
   chk('qacite.stale-row', t.indexOf('3/8 件超 90 天') >= 0, 'text=' + JSON.stringify(t));
   chk('qacite.superseded-row', t.indexOf('同族已有更新帧 5 件') >= 0, 'text=' + JSON.stringify(t));
 }
+// r783 (queue main#119): a reading that has not been refreshed in longer than the
+// builder's allowance must stop being presented as a statement about today. The
+// numbers may still be shown, but the row has to say they are the reading of an
+// earlier day - "均未超 90 天" from five days ago is not today's answer.
+{
+  const over = Object.assign({}, GREEN);
+  over.QACITE = Object.assign({}, GREEN.QACITE, {
+    age_hours: 120, max_age_hours: 48, overdue: true,
+    stale_cited: 0, cited: 8, superseded_cited: 2
+  });
+  const t = maintText(injectAll(over), 'qacite-overdue');
+  chk('qacite.overdue-says-stale', t.indexOf('未刷新') >= 0 && t.indexOf('超过 48 小时') >= 0,
+    'text=' + JSON.stringify(t));
+  chk('qacite.overdue-not-today', t.indexOf('不代表今天') >= 0, 'text=' + JSON.stringify(t));
+  chk('qacite.overdue-drops-claim', t.indexOf('均未超') < 0, 'text=' + JSON.stringify(t));
+}
+{
+  const fresh = Object.assign({}, GREEN);
+  fresh.QACITE = Object.assign({}, GREEN.QACITE, {
+    age_hours: 3, max_age_hours: 48, overdue: false
+  });
+  const t = maintText(injectAll(fresh), 'qacite-fresh');
+  chk('qacite.fresh-no-stale-note', t.indexOf('未刷新') < 0 && t.indexOf('均未超 90 天') >= 0,
+    'text=' + JSON.stringify(t));
+}
 
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 process.exit(fail === 0 ? 0 : 1);

@@ -951,9 +951,18 @@ function artTitle(it){
       const a = ago(r.due_utc);
       return a != null && a > 0;
     }).length;
+    // 回执：集团台账要等集团收取面翻状态（本司禁写集团台账），所以我们唯一
+    // 的结办通道是在 ./HQ-FEEDBACK.md 写一行引用决策号的回执。没有这一列，
+    // 「逾期 3 件」就分不清「本司没做」和「本司已回执、台账还没翻」。
+    const repliedN = rows.filter(r => r.receipt_f).length;
     if (sum) {
-      sum.textContent = rows.length + ' 项待办' + (lateN ? ' · ' + lateN + ' 项逾期' : '');
+      let txt = rows.length + ' 项待办' + (lateN ? ' · ' + lateN + ' 项逾期' : '');
+      if (repliedN) txt += ' · 已回执 ' + repliedN;
+      sum.textContent = txt;
       if (lateN) sum.className = 'tag warn';
+    }
+    if (hint && D.receipts_exists === false) {
+      hint.textContent += ' 本司回执面无档（./HQ-FEEDBACK.md），回执状态未知——未知不等于未回执。';
     }
     box.innerHTML = rows.map(r => {
       const late = (() => { const a = ago(r.due_utc); return a != null && a > 0; })();
@@ -964,10 +973,16 @@ function artTitle(it){
         const st = stampLocal(r.due_utc);
         due = (late ? '已逾期 · 截止 ' : '截止 ') + st.text + (late ? '（' + fmtAge(ago(r.due_utc)) + '）' : '');
       }
+      const rf = r.receipt_f || '';
+      let chip;
+      if (rf) chip = '<span class="tag ok" title="本司已在 ./HQ-FEEDBACK.md 回执该决策">已回执 ' + esc(rf) + '</span>';
+      else if (D.receipts_exists === false) chip = '<span class="tag">回执未知</span>';
+      else chip = '<span class="tag">未回执</span>';
       const ttl = [r.action, absClock(r.due_utc)].filter(Boolean).join(' · ');
       return '<div class="prow">' +
         '<span class="tag' + (late ? ' warn' : '') + '">' + esc(r.id || '无号') + '</span>' +
         '<span class="tag">' + esc(r.status || '') + '</span>' +
+        chip +
         '<span class="pv"' + (ttl ? ' title="' + esc(ttl) + '"' : '') + '>' + esc(r.subject || '') + '</span>' +
         '<span class="pv' + (late ? ' warn' : '') + '">' + esc(due) + '</span>' +
         '</div>';

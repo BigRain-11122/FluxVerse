@@ -35,6 +35,12 @@ param(
     [string]$ShotDir = 'qa',
     [string]$ProofRoot = '',
     [string]$DecisionsPath = '',
+    # Our own receipt ledger (./HQ-FEEDBACK.md). A group order stays "dispatched"
+    # on the group ledger until the group's intake flips it, and this company may
+    # not write that ledger - so the ONLY closure channel we own is a receipt line
+    # citing the decision id. Without this the duty card reads "N overdue" and
+    # cannot tell "we did nothing" from "we replied, the ledger has not caught up".
+    [string]$FeedbackPath = '',
     [string]$ArchiveStatePath = '',
     # Citation audit reading written by qa-rotation.ps1 -Record (queue main#116).
     [string]$QaCiteAuditPath = '',
@@ -856,13 +862,61 @@ function Resolve-CityProof
 #  - a due stamp that cannot be parsed ships due_utc='' and is never counted
 #    late - an unreadable deadline is "unknown", not "on time".
 #  - missing file => exists=false, never a silent empty list pretending zero duty.
-function Resolve-Duty
+#
+# Duty receipts: the group ledger keeps an order "dispatched" until the group's
+# own intake flips it, and this repo may not write that ledger (D-20260924-05) -
+# our only closure channel is a receipt line in ./HQ-FEEDBACK.md citing the
+# decision id. So "3 overdue" on the duty card used to be indistinguishable from
+# "we ignored them", even when the receipts were already filed. Same shape as
+# r709's undated deadline: a number that cannot be read correctly is a lie.
+#  - only lines carrying BOTH an F-<date>-<nn> and a D-<date>-<nn> count as a
+#    receipt; a bare mention of a decision id is not a reply to it.
+#  - FIRST receipt wins: the earliest reply is the one that discharged it, and
+#    later rows are usually evidence, not new closure.
+#  - missing file => exists=false and the page says "回执未知", never "未回执"
+#    (an unreadable ledger is unknown, not zero).
+function Resolve-DutyReceipts
 {
     param([string]$Path)
+
+    $r = [ordered]@{ exists = $false; path_rel = ''; count = 0; index = @{} }
+    if ([string]::IsNullOrEmpty($Path)) { return $r }
+    if (-not (Test-Path -LiteralPath $Path)) { return $r }
+
+    $raw = ''
+    try { $raw = [IO.File]::ReadAllText($Path, [Text.Encoding]::UTF8) }
+    catch { return $r }
+    $r.exists = $true
+
+    $full = [IO.Path]::GetFullPath($Path)
+    $rel = $full
+    if ($rel.StartsWith($repoDir, [StringComparison]::OrdinalIgnoreCase)) {
+        $rel = $rel.Substring($repoDir.Length)
+    }
+    $r.path_rel = $rel.TrimStart('\', '/').Replace('\', '/')
+
+    $idx = @{}
+    foreach ($ln in ($raw -split "`r?`n")) {
+        $s = $ln.Trim()
+        $mF = [regex]::Match($s, 'F-20\d{6}-\d{2}')
+        if (-not $mF.Success) { continue }
+        foreach ($mD in [regex]::Matches($s, 'D-20\d{6}-\d{2}')) {
+            if (-not $idx.ContainsKey($mD.Value)) { $idx[$mD.Value] = $mF.Value }
+        }
+    }
+    $r.index = $idx
+    $r.count = $idx.Count
+    return $r
+}
+
+function Resolve-Duty
+{
+    param([string]$Path, [string]$Feedback)
 
     $r = [ordered]@{
         exists = $false; path_rel = ''; url = ''; as_of_utc = ''
         scanned = 0; matched = 0; open = 0; late = 0; rows = @()
+        receipts_exists = $false; receipts_path_rel = ''; receipts_count = 0; receipted = 0
     }
     if ([string]::IsNullOrEmpty($Path)) { return $r }
     if (-not (Test-Path -LiteralPath $Path)) { return $r }
@@ -920,6 +974,12 @@ function Resolve-Duty
         foreach ($mm in [regex]::Matches($ps, 'D-20\d{6}-\d{2}')) { $suspended[$mm.Value] = $true }
     }
 
+    # Our receipts (see Resolve-DutyReceipts) are indexed once per build.
+    $rec = Resolve-DutyReceipts -Path $Feedback
+    $r.receipts_exists = $rec.exists
+    $r.receipts_path_rel = $rec.path_rel
+    $r.receipts_count = $rec.count
+
     $now = [DateTimeOffset]::Now
     $out = New-Object System.Collections.ArrayList
     $scanned = 0
@@ -954,6 +1014,11 @@ function Resolve-Duty
         $mId = [regex]::Match($s, 'D-20\d{6}-\d{2}')
         if ($mId.Success) { $id = $mId.Value }
         if ($id -ne '' -and $suspended.ContainsKey($id)) { continue }
+
+        # Did WE already reply to this order? Unknown (no receipt file) stays
+        # empty so the page can say "回执未知" instead of accusing us.
+        $receiptF = ''
+        if ($id -ne '' -and $rec.index.ContainsKey($id)) { $receiptF = [string]$rec.index[$id] }
 
         $subject = ([string]$cells[1]).Trim()
         if ($id -ne '') { $subject = $subject.Replace($id, '').Trim() }
@@ -1027,7 +1092,9 @@ function Resolve-Duty
         [void]$out.Add([ordered]@{
             id = $id; subject = $subject; status = $st
             due_txt = $dueTxt; due_utc = $dueUtc; action = $action
+            receipt_f = $receiptF
         })
+        if ($receiptF -ne '') { $r.receipted++ }
     }
 
     # Most urgent first; rows without a parsable deadline sink to the bottom
@@ -1176,6 +1243,10 @@ if ([string]::IsNullOrEmpty($DecisionsPath)) {
     $DecisionsPath = Join-Path $groupRoot 'docs\decisions.md'
 }
 
+if ([string]::IsNullOrEmpty($FeedbackPath)) {
+    $FeedbackPath = Join-Path $repoDir 'HQ-FEEDBACK.md'
+}
+
 if ([string]::IsNullOrEmpty($QaCiteAuditPath)) {
     $QaCiteAuditPath = Join-Path $repoDir 'logs\.qa-cite-audit.json'
 }
@@ -1191,7 +1262,7 @@ if (-not [string]::IsNullOrWhiteSpace($QaCiteNowUtc)) {
 $qacite = Resolve-QaCiteAudit -Path $QaCiteAuditPath -MaxAgeHours $QaCiteMaxAgeHours -Now $qaCiteNow
 $qaciteJs = To-JsLiteral -Obj $qacite -Label 'qacite'
 
-$duty = Resolve-Duty -Path $DecisionsPath
+$duty = Resolve-Duty -Path $DecisionsPath -Feedback $FeedbackPath
 $dutyJs = To-JsLiteral -Obj $duty -Label 'duty'
 
 if ([string]::IsNullOrEmpty($ArchiveStatePath)) {
@@ -1313,5 +1384,5 @@ try { $zonesN = @($snap.zones).Count } catch { $zonesN = 0 }
 $evsN = 0
 try { $evsN = @($snap.events_tail).Count } catch { $evsN = 0 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' art_bare=' + [int]$artBare.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' qacite=' + $(if ($qacite.exists) { 'ok' } elseif ($qacite.error) { $qacite.error } else { 'missing' }) + ' qacite_stale=' + $(if ($qacite.exists) { [string]$qacite.stale_cited } else { 'missing' }) + ' qacite_cited=' + $(if ($qacite.exists) { [string]$qacite.cited } else { 'missing' }) + ' qacite_age=' + $(if ($qacite.exists) { [string]$qacite.age_hours } else { 'missing' }) + ' qacite_overdue=' + $(if ($qacite.exists) { if ($qacite.overdue) { '1' } else { '0' } } else { 'missing' }) + ' qdue=' + $(if ($qdue.exists) { [string]$qdue.late } else { 'missing' }) + ' qdue_bad=' + $(if ($qdue.exists) { [string]$qdue.bad } else { 'missing' }) + ' qdue_code=' + $(if ($qdue.exists) { [string]$qdue.code } else { 'missing' }) + ' qdue_long=' + $(if ($qdue.exists) { [string]$qdue.long } else { 'missing' }) + ' qdue_longmax=' + $(if ($qdue.exists) { [string]$qdue.long_max } else { 'missing' }) + ' qdue_dupe=' + $(if ($qdue.exists) { [string]$qdue.dupe } else { 'missing' }) + ' qdue_dupe_rows=' + $(if ($qdue.exists) { [string]$qdue.dupe_rows } else { 'missing' }) + ' qdue_max=' + [int]$qdue.max_days + ' qdue_open=' + [int]$qdue.open + ' qdue_dated=' + [int]$qdue.dated + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' art_bare=' + [int]$artBare.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' duty_receipted=' + [int]$duty.receipted + ' duty_receipts=' + $(if ($duty.receipts_exists) { [string]$duty.receipts_count } else { 'missing' }) + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' qacite=' + $(if ($qacite.exists) { 'ok' } elseif ($qacite.error) { $qacite.error } else { 'missing' }) + ' qacite_stale=' + $(if ($qacite.exists) { [string]$qacite.stale_cited } else { 'missing' }) + ' qacite_cited=' + $(if ($qacite.exists) { [string]$qacite.cited } else { 'missing' }) + ' qacite_age=' + $(if ($qacite.exists) { [string]$qacite.age_hours } else { 'missing' }) + ' qacite_overdue=' + $(if ($qacite.exists) { if ($qacite.overdue) { '1' } else { '0' } } else { 'missing' }) + ' qdue=' + $(if ($qdue.exists) { [string]$qdue.late } else { 'missing' }) + ' qdue_bad=' + $(if ($qdue.exists) { [string]$qdue.bad } else { 'missing' }) + ' qdue_code=' + $(if ($qdue.exists) { [string]$qdue.code } else { 'missing' }) + ' qdue_long=' + $(if ($qdue.exists) { [string]$qdue.long } else { 'missing' }) + ' qdue_longmax=' + $(if ($qdue.exists) { [string]$qdue.long_max } else { 'missing' }) + ' qdue_dupe=' + $(if ($qdue.exists) { [string]$qdue.dupe } else { 'missing' }) + ' qdue_dupe_rows=' + $(if ($qdue.exists) { [string]$qdue.dupe_rows } else { 'missing' }) + ' qdue_max=' + [int]$qdue.max_days + ' qdue_open=' + [int]$qdue.open + ' qdue_dated=' + [int]$qdue.dated + ' built=' + $built + ' path=' + $OutPath)
 exit 0

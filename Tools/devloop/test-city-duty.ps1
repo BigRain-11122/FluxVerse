@@ -126,6 +126,42 @@ foreach ($k in @('E', 'F', 'G', 'H')) {
     $results[$k] = [pscustomobject]@{ log = $log; html = $html }
 }
 
+# --- I/J) duty receipts (an order the group ledger still calls "dispatched"
+#          although we already answered it in ./HQ-FEEDBACK.md) ----------------
+# The group ledger is the group's to flip (D-20260924-05): our only closure
+# channel is a receipt line citing the decision id. Without this the card reads
+# "N overdue" and cannot tell "we ignored it" from "we replied".
+$decI = Join-Path $sandbox 'decI.md'
+Write-TextFile $decI ($hdr + "`r`n" +
+"| 2026-10-28 | D-20261028-80 replied order | sandbox | basis | 1) owner=@FluxVerse | T2 | dispatched(12-31 00:00) |`r`n" +
+"| 2026-10-28 | D-20261028-81 unanswered order | sandbox | basis | 1) owner=@FluxVerse | T2 | dispatched(12-31 00:00) |`r`n")
+
+# Two rows name the same decision: the FIRST one is the reply that discharged it,
+# the later one is usually evidence and must not overwrite the citation.
+$fbI = Join-Path $sandbox 'feedback-I.md'
+Write-TextFile $fbI ("| F-20261029-01 | P1 | answered D-20261028-80 with evidence | x |`r`n" +
+"| F-20261029-02 | P2 | a later row quotes D-20261028-80 again | y |`r`n" +
+"| F-20261029-03 | P2 | a receipt that names no decision id at all | z |`r`n")
+
+$outI = Join-Path $sandbox 'panel-I.html'
+$histI = Join-Path $sandbox 'hist-I.jsonl'
+$logI = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
+        -ProofRoot $repoDir -DecisionsPath $decI -FeedbackPath $fbI `
+        -OutPath $outI -HistoryPath $histI) -join "`n"
+$htmlI = ''
+if (Test-Path -LiteralPath $outI) { $htmlI = [IO.File]::ReadAllText($outI) }
+$results['I'] = [pscustomobject]@{ log = $logI; html = $htmlI }
+
+# Missing receipt ledger: "unknown" must never be rendered as "unanswered".
+$outJ = Join-Path $sandbox 'panel-J.html'
+$histJ = Join-Path $sandbox 'hist-J.jsonl'
+$logJ = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
+        -ProofRoot $repoDir -DecisionsPath $decI -FeedbackPath (Join-Path $sandbox 'no-feedback.md') `
+        -OutPath $outJ -HistoryPath $histJ) -join "`n"
+$htmlJ = ''
+if (Test-Path -LiteralPath $outJ) { $htmlJ = [IO.File]::ReadAllText($outJ) }
+$results['J'] = [pscustomobject]@{ log = $logJ; html = $htmlJ }
+
 $pass = 0
 $fail = 0
 function Check([string]$name, [bool]$cond) {
@@ -135,6 +171,7 @@ function Check([string]$name, [bool]$cond) {
 
 $A = $results['A']; $B = $results['B']; $C = $results['C']; $D = $results['D']
 $E = $results['E']; $F = $results['F']; $G = $results['G']; $H = $results['H']
+$I = $results['I']; $J = $results['J']
 
 Check 'A: builder reported PANEL OK' ($A.log -match 'PANEL OK')
 Check 'A: exactly one open order' ($A.log -match 'duty=1(?!\d)')
@@ -175,7 +212,19 @@ Check 'G: stamp without remain= is not a fake zero' ($G.log -match 'arch=today(?
 Check 'H: missing stamp reads as missing, not as zero backlog' ($H.log -match 'arch=missing(?!\w)')
 Check 'H: missing stamp ships exists=false for that key' ($H.html.Contains('"stamp":""'))
 
-Check 'no fixture crashes a build' ((@($A.log, $B.log, $C.log, $D.log, $E.log, $F.log, $G.log, $H.log) | Where-Object { $_ -match 'FAIL:' }).Count -eq 0)
+Check 'I: replied order is counted as replied' ($I.log -match 'duty_receipted=1(?!\d)')
+Check 'I: receipt index counts distinct decision ids, not receipt lines' ($I.log -match 'duty_receipts=1(?!\d)')
+Check 'I: the replied row ships its F id' ($I.html.Contains('"receipt_f":"F-20261029-01"'))
+Check 'I: the unanswered row ships an empty receipt' ($I.html.Contains('"receipt_f":""'))
+Check 'I: first receipt wins, a later quote does not overwrite it' (-not $I.html.Contains('F-20261029-02"'))
+Check 'I: a receipt naming no decision id is not indexed' (-not $I.html.Contains('F-20261029-03'))
+Check 'I: still two open orders (receipts do not close ledger rows)' ($I.log -match 'duty=2(?!\d)')
+
+Check 'J: missing receipt ledger is named missing, not zero' ($J.log -match 'duty_receipts=missing')
+Check 'J: page carries receipts_exists=false' ($J.html.Contains('"receipts_exists":false'))
+Check 'J: a missing ledger still lists both orders' ($J.log -match 'duty=2(?!\d)')
+
+Check 'no fixture crashes a build' ((@($A.log, $B.log, $C.log, $D.log, $E.log, $F.log, $G.log, $H.log, $I.log, $J.log) | Where-Object { $_ -match 'FAIL:' }).Count -eq 0)
 
 try { Remove-Item -LiteralPath $sandbox -Recurse -Force } catch { }
 

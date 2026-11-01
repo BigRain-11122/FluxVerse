@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T18:09:16Z",
-    "current_activity":  "r790 收口：runner 自己的沙盒第一次有了每轮入口——`./Tools/devloop/test-run-ps-suites.ps1`（81 条断言）并入 verify 族，活跑 `suites=11 red=0 ran=95477ms`（180 s 帽的 53%）；并入前先修掉「经 runner 调用必红」的 n 组断言（改比「跑完还给你的值＝进来时的值」）。",
-    "artifact":  "`./Tools/devloop/test-run-ps-suites.ps1`（n 组嵌套安全，直跑 81/81、经 runner 全绿）, `./Tools/devloop/ps-suites-tick.ps1`（verify 族加该套＋注释）, `./Tools/devloop/test-verify-ps-suites.ps1`（z22 十→十一套并点名，203/203）, `./TECH.md`（§九 r790 段）",
-    "artifact_utc":  "2026-11-01T18:09:16Z",
-    "milestone":  "下一件＝`./state/queue/main.md` #23 司级基准面刷新（`./docs/global-benchmarks.md` 逾期 6 天，`./Tools/devloop/benchmark-duty.ps1` 每 tick 已点名）；48 小时内出刷新轮，否则转提案轨记判负。",
+    "updated_utc":  "2026-11-01T18:28:13Z",
+    "current_activity":  "r791 收口：面板「应办」卡不再把「本司已回执、集团台账还没翻」读成「本司没做」——三条逾期（D-20261028-04／-11／-13）各自挂上回执号（./HQ-FEEDBACK.md 的 F-20261028-01／-03），活跑 `PANEL OK … duty=5 duty_late=3 duty_receipted=3 duty_receipts=45`，页头印「5 项待办 · 3 项逾期 · 已回执 3」。",
+    "artifact":  "`./world-public/city-panel.html`（应办卡每行回执标＋摘要已回执数）, `./Tools/devloop/build-city-panel.ps1`（Resolve-DutyReceipts 与 duty_receipted 读数）, `./Tools/devloop/test-city-duty.ps1`（32→42/42）, `./logs/devloop-r709-panel-duty-test.js`（12→27/27）, `./TECH.md`（r791 行）",
+    "artifact_utc":  "2026-11-01T18:28:13Z",
+    "milestone":  "下一步：把面板上仍印「未回执」的两条应办令 D-20261101-05／D-20261102-05 逐条落实并回执，并刷新 `./docs/global-benchmarks.md`（已逾 6 天，`./Tools/devloop/benchmark-duty.ps1` 每 tick 点名）；48 小时内出结论。",
     "milestone_eta_utc":  "2026-11-03T12:00:00Z"
 }

@@ -133,9 +133,57 @@ chk('empty rows string renders the no-duty line', String(none.get('duty').innerH
 chk('empty rows: summary says none', String(none.get('duty-sum').textContent).indexOf('无待办') >= 0);
 chk('empty rows: self-check passes', (rowOf(none, '应办令') || {}).ok === true);
 
+// 7b. receipts: an order the group ledger still lists as dispatched, and that we
+// already answered with an F- line in ./HQ-FEEDBACK.md, must not read as an
+// ignored order. Three states, three different words - never two.
+const rc = runPanelHtml(withDuty(realHtml, {
+  exists: true, path_rel: 'x', url: '', as_of_utc: '2026-10-31T04:00:00Z',
+  scanned: 4, matched: 3, open: 3, late: 2, receipted: 2, receipts_exists: true, receipts_count: 45,
+  rows: [
+    { id: 'D-20261028-04', subject: 'replied and late', status: 'dispatched',
+      due_txt: '10-31 00:00', due_utc: '2026-10-30T16:00:00Z', action: '', receipt_f: 'F-20261028-01' },
+    { id: 'D-20261028-11', subject: 'replied and late two', status: 'dispatched',
+      due_txt: '10-31 00:00', due_utc: '2026-10-30T16:00:00Z', action: '', receipt_f: 'F-20261028-03' },
+    { id: 'D-20261101-05', subject: 'not replied yet', status: 'dispatched',
+      due_txt: '', due_utc: '', action: '', receipt_f: '' }
+  ]
+}), 'duty-receipts');
+{
+  const rendered = dutyRows(rc);
+  chk('receipts: one rendered row per data row', rendered.length === 3, 'rendered=' + rendered.length);
+  const repliedRows = rendered.filter(x => x.text.indexOf('已回执') >= 0);
+  chk('receipts: replied rows show the F id', repliedRows.length === 2 &&
+    repliedRows.some(x => x.text.indexOf('F-20261028-01') >= 0) &&
+    repliedRows.some(x => x.text.indexOf('F-20261028-03') >= 0),
+    'replied=' + repliedRows.length);
+  chk('receipts: the unanswered row says 未回执 exactly once',
+    rendered.filter(x => x.text.indexOf('未回执') >= 0).length === 1);
+  chk('receipts: a replied overdue row still reads as overdue',
+    rendered.find(x => x.text.indexOf('D-20261028-04') >= 0).warn === true);
+  chk('receipts: summary carries the replied count',
+    String(rc.get('duty-sum').textContent).indexOf('已回执 2') >= 0,
+    'sum=' + String(rc.get('duty-sum').textContent));
+}
+
+// 7c. missing receipt ledger: "unknown" must not be dressed up as "unanswered"
+const rcUnknown = runPanelHtml(withDuty(realHtml, {
+  exists: true, path_rel: 'x', url: '', as_of_utc: '', scanned: 2, matched: 1, open: 1, late: 0,
+  receipted: 0, receipts_exists: false, receipts_count: 0,
+  rows: [{ id: 'D-20261028-77', subject: 'receipts unreadable', status: 'dispatched',
+    due_txt: '', due_utc: '', action: '', receipt_f: '' }]
+}), 'duty-receipts-missing');
+{
+  const rendered = dutyRows(rcUnknown);
+  chk('unknown receipts: row says 回执未知', rendered.length === 1 && rendered[0].text.indexOf('回执未知') >= 0);
+  chk('unknown receipts: row never says 未回执', rendered[0].text.indexOf('未回执') < 0);
+  chk('unknown receipts: hint explains the unknown',
+    String(rcUnknown.get('duty-hint').textContent).indexOf('回执状态未知') >= 0);
+  chk('unknown receipts: summary never invents a replied count',
+    String(rcUnknown.get('duty-sum').textContent).indexOf('已回执') < 0);
+}
+
 // 8. no undefined/NaN leaks
-const allText = [real, miss, one, none].map(r =>
-  String(r.get('duty').innerHTML) + String(r.get('duty-sum').textContent) +
+const allText = [real, miss, one, none, rc, rcUnknown].map(r =>
   String(r.get('duty-hint').textContent)).join(' ');
 chk('no undefined/NaN in the duty card', allText.indexOf('undefined') < 0 && allText.indexOf('NaN') < 0);
 

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T03:14:14Z",
-    "current_activity":  "r772 收口：qa/ 图池真的瘦下来了——235 张 42.9MB 收到 24 张 3.4MB，211 件旧图搬进归档目录（移动非删除，逐件台账），一张都没删；取景卡 shots=3 照旧，census 复跑 moves=0（正身=`./Tools/devloop/qa-rotation.ps1`）",
-    "artifact":  "`./Tools/devloop/qa-rotation.ps1`, `./Tools/devloop/test-qa-rotation.ps1`, `./.gitignore`, `./TECH.md`, `./state/queue/main.md`",
-    "artifact_utc":  "2026-11-01T03:14:14Z",
-    "milestone":  "下一轮=main#23 司级基准刷新（10-27 逾期，指针=`./state/queue/main.md`）；其后=main#103 拆 explore#12 的 45KB 巨行（活队列 qdue_bad 一直挂着它）",
+    "updated_utc":  "2026-11-01T03:25:12Z",
+    "current_activity":  "r773 收口：面板队列行的那条红旗没了——`qdue_bad` 从 1 变 0。explore#12 那行 45,413 字符、66 个内嵌 `|` 的巨行被按「末笔=rNNN」段界拆成 65 段一行一件，全档落附录（原文一个字没丢，拼回去逐字节相同），原表 #12 换成 309 字符的索引行（正身=`./state/queue/_log/explore-12-log.md`）",
+    "artifact":  "`./state/queue/_log/explore-12-log.md`, `./state/queue/explore.md`, `./state/queue/main.md`, `./TECH.md`, `./world-public/city-panel.html`",
+    "artifact_utc":  "2026-11-01T03:25:12Z",
+    "milestone":  "下一轮=main#23 司级基准刷新（10-27 到期，已逾期 5 天；三向检索 WFC 前沿/城市孪生开源/引擎侧，判据=④表新增一行+③表源分级，指针=`./state/queue/main.md`）；另有 main#110 队列行宽守卫待领",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

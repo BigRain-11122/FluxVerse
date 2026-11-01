@@ -135,6 +135,8 @@ function Get-PsSuitesTickDefaults {
         'Tools\devloop\face-path-lint.ps1',
         'Tools\devloop\write-status-face.ps1',
         'Tools\devloop\write-fastpath-state.ps1',
+        'Tools\devloop\nolivecheck-census.ps1',
+        'Tools\devloop\test-nolivecheck-census.ps1',
         'Tools\devloop\fixtures\*\*'
     )
 }

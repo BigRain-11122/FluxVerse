@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T00:32:55Z",
-    "current_activity":  "r764 收口（main#76）：面板沙盒缺夹具时不再甩一串 ENOENT 栈。logs\\ 是 gitignored，panel-fixture-* 是构建产物，新克隆的树上历史套件一读就崩、exit 1，看着像面板坏了。本轮新增一只纯函数守卫 Tools/devloop/panel-fixture-guard.js：按组（history / selfcheck）报出缺哪几件、每件是什么，并给出唯一修法（重建夹具命令），套件改以 exit 3「无法判定」收场而不是崩栈；两组文件互不重叠，免得自检套件被要求重建它根本不读的历史对。r671 套件 20 → 30 项（含契约断言：套件读的每一件都必须在守卫清单里），r670 套件 8/8 不动。实证：临时移走一件夹具 → 打印 FIXTURES MISSING 1 of 5 + REBUILD 行 + 单行判决，exit 3；还原后 30/30。30 套面板沙盒 ALL PASS。",
-    "artifact":  "Tools/devloop/panel-fixture-guard.js, logs/devloop-r671-panel-history-test.js, logs/devloop-r670-panel-selfcheck-test.js, ./TECH.md",
-    "artifact_utc":  "2026-11-01T00:32:55Z",
-    "milestone":  "下一步：main#77（-NoLiveCheck 白名单静态普查，只在沙盒里用的缝不许漏到生产）→ main#100（runner 计数不认 PASS \u003c名字\u003e 方言，21 条判据长期账面不可见）→ main#23 司级基准刷新（10-27 逾期）。判据=沙盒全绿且 Tools/devloop/run-panel-suites.ps1 收 ALL PASS；指向 state/queue/main.md",
+    "updated_utc":  "2026-11-01T00:59:38Z",
+    "current_activity":  "r765 收口（main#77）：状态档写入器的「沙盒专用开关」第一次被机器盯着。write-fastpath-state 入盘前必须把每个显式 12-hex 与 live 文件实算值比一遍——比错的信号比不写更坏，下一轮要么每轮假 FULL-ROUND，要么凑巧对上把真变化静音；而唯一能跳过它的开关与生产收尾链之间此前只隔一行头注。本轮新增只读普查件 Tools/devloop/nolivecheck-census.ps1：扫全树 ps1/cmd/bat/vbs，逐行认令牌并分注释/代码，与白名单比对后按「文件:行」点名越界者，默认只报、加开关才 exit 2；白名单过期也看得见（stale=）。接线三处：verify 每 tick 多一行 nolivecheck-census、写侧沙盒族加第六套、tick 受保护源加两件。活树读数 files=231 hits=3 unexpected=0 stale=1。同轮修红：首版单跑 432ms 顶破 gate 自己的「缓存轮 \u003c3s」判据（3066ms），改读取路径并剪掉 Unity 资产树后 163ms，剪枝面每跑都印出来。",
+    "artifact":  "Tools/devloop/nolivecheck-census.ps1, Tools/devloop/test-nolivecheck-census.ps1, Tools/perceptor/verify.ps1, ./TECH.md",
+    "artifact_utc":  "2026-11-01T00:59:12Z",
+    "milestone":  "下一步：main#100（runner 断言计数方言）→ main#104（普查件 163ms 对缓存轮 \u003c3s 预算的余量）→ main#23 司级基准刷新（10-27 逾期）。判据=写侧族 Tools/devloop/run-ps-suites.ps1 得 failing=0 parity=ok counted=6，且 verify 活跑一行 nolivecheck-census 为 unexpected=0；指向 state/queue/main.md",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

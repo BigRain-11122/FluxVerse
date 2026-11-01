@@ -590,6 +590,40 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
   }
 }
 
+# ---------- 2k. no-live-check census (main#77, r765) ----------
+# write-fastpath-state.ps1 v1.2 refuses to write a 12-hex value it cannot verify
+# against the live file, because a wrong value there either fires a fake
+# FULL-ROUND forever or (worse) matches by accident and silences a real change.
+# The only thing that can skip that check is a drill switch the writer keeps for
+# its sandboxes. Until r765 the barrier between that switch and the production
+# wrap-up chain was a header comment; now the census scans every script in the
+# tree and names any file outside the whitelist that spells it.
+# WARN, not FAIL - same stance as 2b..2j: an observation, not a broken city.
+$nlcScript = Join-Path $repoRoot 'Tools\devloop\nolivecheck-census.ps1'
+if (Test-Path -LiteralPath $nlcScript) {
+  $nlcLines = @()
+  try { $nlcLines = @(& $nlcScript 2>&1 | ForEach-Object { [string]$_ }) } catch { $nlcLines = @() }
+  $nlcSum = @($nlcLines | Where-Object { $_ -like 'nolivecheck-census:*' }) | Select-Object -First 1
+  if ($nlcSum) {
+    $mNlcFiles = [regex]::Match($nlcSum, 'files=(\d+)')
+    $mNlcHits = [regex]::Match($nlcSum, 'hits=(\d+)')
+    $mNlcUnexp = [regex]::Match($nlcSum, 'unexpected=(\d+)')
+    $mNlcStale = [regex]::Match($nlcSum, 'stale=(\d+)')
+    $nlcLine = 'nolivecheck-census: files=' + $mNlcFiles.Groups[1].Value + ' hits=' + $mNlcHits.Groups[1].Value +
+               ' unexpected=' + $mNlcUnexp.Groups[1].Value + ' stale=' + $mNlcStale.Groups[1].Value
+    if ($mNlcUnexp.Success -and [int]$mNlcUnexp.Groups[1].Value -gt 0) {
+      Write-Output ('VERIFY WARN: ' + $nlcLine + ' - a script outside the whitelist names the state-writer drill switch; that switch skips the live-hash comparison, so keep it out of any production chain')
+      foreach ($u in @($nlcLines | Where-Object { $_ -match '^\s{2}\S+\.(ps1|cmd|bat|vbs):\d+\s' })) {
+        Write-Output ('VERIFY WARN: nlc ' + $u.Trim())
+      }
+    } else {
+      Write-Output ('VERIFY HEALTH: ' + $nlcLine)
+    }
+  } else {
+    Write-Output 'VERIFY WARN: nolivecheck-census produced no summary line'
+  }
+}
+
 # ---------- verdict ----------
 if ($fail.Count -gt 0) {
   $fail | ForEach-Object { Write-Output ('VERIFY FAIL: ' + $_) }

@@ -383,7 +383,7 @@ $script:voff = $false
 # ---------- case r: family defaults + CheckOnly never spawn ---------------
 $wDefs = @(Get-PsSuitesTickDefaults -Family write)
 $vDefs = @(Get-PsSuitesTickDefaults -Family verify)
-Check 'r1 write family guards eleven entries incl. the fixture tree' ($wDefs.Count -eq 11) ('count=' + $wDefs.Count)
+Check 'r1 write family guards thirteen entries incl. the fixture tree' ($wDefs.Count -eq 13) ('count=' + $wDefs.Count)
 Check 'r2 verify family guards the gate it proves' ($vDefs -contains 'Tools\perceptor\verify.ps1') (($vDefs -join ','))
 Check 'r3 verify family is wider than the write list' ($vDefs.Count -gt $wDefs.Count) ('verify=' + $vDefs.Count + ' write=' + $wDefs.Count)
 $overlap = @($wDefs | Where-Object { $vDefs -contains $_ })

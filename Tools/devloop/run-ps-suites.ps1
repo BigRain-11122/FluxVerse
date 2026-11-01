@@ -56,7 +56,8 @@ $defaultRel = @(
     'Tools\devloop\test-fastpath-state-live.ps1',
     'logs\devloop-r247-facewriter-test.ps1',
     'logs\devloop-r197-writer-test.ps1',
-    'logs\devloop-r271-keep-negcon.ps1'
+    'logs\devloop-r271-keep-negcon.ps1',
+    'Tools\devloop\test-nolivecheck-census.ps1'
 )
 
 # Verify-side family (main#89). Each of these proves a slice of Tools\perceptor\

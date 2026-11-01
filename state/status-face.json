@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T03:39:57Z",
-    "current_activity":  "r774 收口：队列行宽第一次有机器看着——面板「队列逾期」行多一枚红标并点了名（超长行 1 行 · #4 8062 字符 · 一行一件（上限 3000 字符）），verify 每 tick 也印 long=/longmax=；首跑就抓到 `./state/queue/main.md` #4 那条 8,062 字符的逐轮 PASS 长卷（立 main#111 待拆）。超长与「due 写法坏」分两本账，都不开红灯",
-    "artifact":  "`./Tools/devloop/queue-due.ps1`, `./Tools/devloop/city-panel-template.html`, `./Tools/perceptor/verify.ps1`, `./state/queue/main.md`, `./TECH.md`, `./world-public/city-panel.html`, `./qa/city-panel-narrow.png`",
-    "artifact_utc":  "2026-11-01T03:39:57Z",
-    "milestone":  "下一轮=main#111 拆 `./state/queue/main.md` #4 的 8,062 字符长卷（按 r773 同法每轮一笔落附录目录 `./state/queue/_log/`，拆后拼回逐字节等于原行，活队列 long=0）；其后 main#23 司级基准刷新（10-27 到期已逾期 6 天）",
+    "updated_utc":  "2026-11-01T03:50:54Z",
+    "current_activity":  "r775 收口：`./state/queue/main.md` #4 那条 8,062 字符（65 条逐轮 PASS 记录）的长卷按 `·rNNN=` 段界拆成一行一件，主表只留 214 字符索引行（末笔 r625），全档落 `./state/queue/_log/main-4-log.md`；无损证据=从 git HEAD 取原行、附录 65 段拼回逐字节相等（7,947 字符），其余 93 行零改动",
+    "artifact":  "`./state/queue/_log/main-4-log.md`, `./state/queue/main.md`, `./world-public/city-panel.html`, `./qa/city-panel-narrow.png`, `./TECH.md`, `./Tools/devloop/queue-due.ps1`",
+    "artifact_utc":  "2026-11-01T03:50:54Z",
+    "milestone":  "下一轮=main#112 队列 id 唯一性机检（落点 `./Tools/devloop/queue-due.ps1` 扫描面复用·r775 实测两条 #110 一开一关仍并存·判据三问已入队）；其后 main#23 司级 7 天基准刷新（`./docs/global-benchmarks.md`·due=2026-10-27 已逾期 5 天）",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

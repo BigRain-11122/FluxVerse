@@ -1,0 +1,76 @@
+# main#4 逐轮 PASS 记录全档（r775 拆行·main#111）
+
+- 来历：原 `state/queue/main.md` #4（P3-002 编年史悬置防御续行·持续执法项）的备注格里累积了 65 段「rNNN=第N回 PASS」记录，整行 **8062 字符**，违「一行一件」也超 r774 立的行宽上限 3000（r774 面板红标点名的就是它）。
+- 拆法：按 **`·rNNN=`** 段界切开；主表 #4 只留索引行（末笔指针 + 本附录取址）。
+- 无损口径：下面每个 `- ` 行去掉前缀、段间补回一个 `·`，按序拼接**逐字节等于**原备注正文（首段前缀原样照抄，含它的前导空格）。校验不靠本脚本自证：同轮从 `git show HEAD:state/queue/main.md` 取原行再拼回比对。
+- 本附录仍在队列扫描面（`Get-QueueDue` 只扫 `state/queue` 下 `*.md`），故每段一行、行长均 < 3000。
+
+## 附录
+
+-  持续执法项·每轮零额外 token
+
+- r348=第一百一十一回 PASS（零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收）
+- r349=第一百一十二回 PASS（零 staged world-events〔staged 面同上两件豁免〕+10-12 当日档未产=无件可收）
+- r351=第一百一十四回 PASS（01:2x 零 staged world-events〔同上两件豁免·r350 第一百一十三回见 §九 r350 行〕+10-12 当日档未产=无件可收）
+- r352=第一百一十五回 PASS（01:3x 零 staged world-events〔同上两件豁免〕+10-12 当日档未产=无件可收）·r353/r354=第一百一十六/一十七回 PASS（零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收·详 TECH §九 r353/r354 行）
+- r355=第一百一十八回 PASS（零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收·详 §九 r355 行）
+- r356=第一百一十九回 PASS（03:1x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收·详 §九 r356 行）
+- r357=第一百二十回 PASS（03:1x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收·详 §九 r357 行）
+- r358=第一百二十一回 PASS（03:4x 零 staged world-events〔staged 面同上两件豁免〕+10-12 当日档未产=无件可收）
+- r359=第一百二十二回 PASS（零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收）
+- r360=第一百二十三回 PASS（零 staged world-events〔staged 面同上两件豁免〕+10-12 当日档未产=无件可收）
+- r361=第一百二十四回 PASS（零 staged world-events〔staged 面同上两件豁免〕+10-12 当日档未产=无件可收）
+- r362=第一百二十五回 PASS（04:2x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收）
+- r369=第一百三十二回 PASS（06:0x 零 staged world-events〔同上两件豁免〕+10-11 档已入库净·10-12 当日档未产=无件可收）
+- r370=第一百三十三回 PASS（零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收）
+- r371=第一百三十四回 PASS（06:1x 零 staged world-events〔staged 面同上两件豁免〕+10-12 当日档未产=无件可收）
+- r372=第一百三十五回 PASS（零 staged world-events〔staged 面同上两件豁免〕+10-12 当日档未产=无件可收）
+- r373=第一百三十六回 PASS（06:4x 零 staged world-events〔同上两件豁免〕+10-12 当日档未产=无件可收）
+- r374=第一百三十七回 PASS（06:4x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收）
+- r375=第一百三十八回 PASS（07:0x 零 staged world-events〔staged 面同上两件豁免〕+10-12 当日档未产=无件可收〔Test-Path 实证〕）
+- r376=第一百三十九回 PASS（零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收）
+- r377=第一百四十回 PASS（07:1x 零 staged world-events〔staged 面同上两件豁免〕+10-12 当日档未产=无件可收〔ls 实证〕）
+- r378=第一百四十一回 PASS（07:2x 零 staged world-events〔staged 面同上两件豁免〕+10-12 当日档未产=无件可收）
+- r379=第一百四十二回 PASS（07:4x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收〔ls 实证〕）
+- r380=第一百四十三回 PASS（07:4x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收〔ls 实证〕）
+- r381=第一百四十四回 PASS（07:5x 零 staged world-events〔staged 面同上两件豁免〕+10-12 当日档未产=无件可收〔ls 实证·tick 23:56 产物〕）
+- r382=第一百四十五回 PASS（08:1x 零 staged world-events〔staged 面同上两件豁免〕+10-12 当日档未产=无件可收〔glob 实证·world/ 最新=20261011〕）
+- r383=第一百四十六回 PASS（08:1x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收〔Test-Path 实证·world/ 最新=20261011〕）
+- r384=第一百四十七回 PASS（08:2x 零 staged world-events〔同上两件豁免〕+10-12 当日档未产=无件可收〔Test-Path 实证〕）
+- r385=第一百四十八回 PASS（08:3x 零 staged world-events〔同上两件豁免〕+10-12 当日档未产=无件可收〔Test-Path 实证〕）
+- r386=第一百四十九回 PASS（08:4x 零 staged world-events〔同上两件豁免〕+10-12 当日档未产=无件可收〔Get-ChildItem 实证·world/ 最新=20261011〕）
+- r387=第一百五十回 PASS（09:0x 零 staged world-events〔同上两件豁免〕+10-12 当日档未产=无件可收〔Get-ChildItem 实证·world/ 最新=20261011〕）
+- r388=第一百五十一回 PASS（09:0x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收〔Get-ChildItem 实证·world/ 最新=20261011〕）
+- r389=第一百五十二回 PASS（09:2x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-12 当日档未产=无件可收〔Test-Path 实证〕）
+- r490=第二百五十三回 PASS（07:5x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-13 当日档 0 未产=日内正常态）〔r494 勘正：原误书「第三百五十三回」·TECH r490 正身 L925 实证=第二百五十三回·+100 手误漂移当轮修〕·r491~r493=第二百五十四~二百五十六回 PASS（注记跳位承 TECH §九 r491~r493 行）
+- r494=第二百五十七回 PASS（08:3x 零 staged world-events〔staged 面同上两件豁免〕+10-13 当日档未产=日内正常态〔world/ 最新入库=20261012 实扫〕）
+- r495=第二百五十八回 PASS（08:5x 零 staged world-events〔staged 面同上两件豁免〕+10-13 当日档在产〔c1 读=QUIET〕·*.log gitignore 豁免面=无件可收）
+- r496=第二百五十九回 PASS（09:2x 零 staged world-events〔staged 面同上两件豁免〕+10-13 当日档在产〔c1 读=QUIET〕·*.log gitignore 豁免面=无件可收）
+- r497=第二百六十回 PASS（09:4x 零 staged world-events〔staged 面同上两件豁免〕+10-13 当日档在产〔c1 读=QUIET〕·*.log gitignore 豁免面=无件可收）
+- r498=第二百六十一回 PASS（09:5x 零 staged world-events〔staged 面同上两件豁免〕+10-13 当日档在产〔c1 读=QUIET〕·*.log gitignore 豁免面=无件可收）
+- r499=第二百六十二回 PASS（09:5x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+world/ 树净〔status --porcelain 零行〕+10-13 当日档在产〔c1 读=QUIET〕·*.log gitignore 豁免面=无件可收）
+- r500=第二百六十三回 PASS（10:0x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-13 当日档未产=无件可收）
+- r501=第二百六十四回 PASS（10:1x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-13 当日档在产〔c1 读=QUIET〕）
+- r502=第二百六十五回 PASS（10:4x 零 staged world-events〔staged 面=同上两件豁免·非编年史〕+10-13 当日档在产〔c1 读=QUIET·*.log gitignore 豁免面=无件可收〕）
+- r503=第二百六十六回 PASS（11:1x 零 staged world-events〔staged 面=同上两件豁免·非编年史〕+10-13 当日档未产〔world/ 域 10-13 件零命中=无件可收〕）
+- r504=第二百六十七回 PASS（11:2x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-13 当日档未产〔world/ 域 10-13 件零命中=无件可收〕）
+- r505=第二百六十八回 PASS（11:4x 零 staged world-events〔staged 面=同上两件豁免·非编年史〕+10-13 当日档未产〔world/ 域 10-13 件零命中=无件可收〕）
+- r506=第二百六十九回 PASS（11:5x 零 staged world-events〔staged 面=同上两件豁免·非编年史〕+10-13 当日档未产〔world/ 域 10-13 件零命中=无件可收〕）
+- r507=第二百七十回 PASS（11:5x 零 staged world-events〔staged 面=同上两件豁免·非编年史〕+10-13 当日档未产〔world/ 域 10-13 件零命中=无件可收〕）
+- r508=第二百七十一回 PASS（12:0x 零 staged world-events〔staged 面=同上两件豁免·非编年史〕+10-13 当日档未产〔world/ 域 10-13 件零命中=无件可收〕）
+- r509=第二百七十二回 PASS（12:1x 零 staged world-events〔staged 面=同上两件豁免·非编年史〕+10-13 当日档未产〔world/ 域 10-13 件零命中=无件可收〕） |
+- r510=第二百七十三回 PASS（12:3x 零 staged world-events【staged 面=同上两件豁免·非编年史】+10-13 当日档未产=无件可收）
+- r511=第二百七十四回 PASS（12:5x 零 staged world-events〔staged 面=同上两件豁免·非编年史〕+10-13 当日档未产=无件可收）
+- r512=第二百七十五回 PASS（13:0x 零 staged world-events〔staged 面=同上两件豁免·非编年史〕+10-13 当日档未产=无件可收）
+- r513=第二百七十六回 PASS（13:1x 零 staged world-events〔staged 面=同上两件豁免·非编年史〕+10-13 当日档未产=无件可收）
+- r514=第二百七十七回 PASS（13:3x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-13 当日档未产=无件可收·活档 mtime 13:36 在写=<24h 非悬置面）
+- r516=第二百七十九回 PASS（14:3x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-13 活档 c1 读=QUIET·*.log gitignore 豁免面=无件可收）
+- r517=第二百八十回 PASS（14:2x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-13 活档 c1 读=QUIET·*.log gitignore 豁免面=无件可收）
+- r518=第二百八十一回 PASS（14:4x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-13 当日档 logs/ 面零待收〔status 净·无件可收〕）
+- r519=第二百八十二回 PASS（15:0x 零 staged world-events〔staged 面同上两件豁免〕+10-13 当日档未产=无件可收）
+- r520=第二百八十三回 PASS（15:2x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 轮换件·非编年史〕+10-13 当日档未产=无件可收
+- r592=PASS（15:5x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+world/ 当日档 world-events-20261014.jsonl 未产〔10-13/10-12 双档在库·日界归档制〕=无件可收）
+- r607=PASS（20:2x 零 staged world-events｛staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+world/ 当日档 world-events-20261014.jsonl 未产〔last=20261013·日界归档 23:5x 时点件〕=无件可收）
+- r616=PASS（01:0x 零 >24h staged 编年史〔10-14 档 staged 1.2h<24h·00:0x tick 收档动作〕+本窗 pathspec 顺带入库 10-14 档〔对齐 r551 收 10-13 档先例〕+10-15 当日档未产=无件可收）
+- r621=PASS（03:4x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-14 档已入库〔r616 commit 2dbea19c〕+10-15 当日档未产〔world-events-20261015.jsonl 无·23:5x 日界归档时点件〕=无件可收）
+- r625=PASS（05:1x 零 staged world-events〔staged 面=PulseBeacon.mat 交互窗件+city-snapshot.json tick 豁免件·非编年史〕+10-14 档已入库〔r616 commit 2dbea19c〕+10-15 当日档未产〔world-events-20261015.jsonl 无·Get-ChildItem 实证·23:5x 日界归档时点件〕=无件可收） 

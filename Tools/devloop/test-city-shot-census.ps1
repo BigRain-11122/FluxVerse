@@ -143,6 +143,67 @@ $liveUnreg = @($liveRows | Where-Object { $_.reason -eq 'unnamed' -and $_.shape_
 Write-Output ('  note live qa/: images=' + $liveRows.Count + ' inlinable=' + (@($liveRows | Where-Object { $_.keep }).Count) + ' unregistered_shape_ok=' + $liveUnreg.Count)
 foreach ($u in $liveUnreg) { Write-Output ('  note live unregistered: ' + $u.name + ' ' + $u.w + 'x' + $u.h) }
 
+# ---------- e) why the cache missed is now visible (queue main#108, r770) ----------
+# cached=0/1 alone cannot tell "the key never matches" from "the cache was never
+# written" - both looked the same on the tick line. The module always knew the
+# reason; r770 carries it as a head word on cached=0 only (key hit and first run
+# stay bare, so the signal is not repeated every tick as noise).
+function RowReasonOf($res, [string]$name) {
+    $r = @($res.rows | Where-Object { $_.name -eq $name }) | Select-Object -First 1
+    if ($null -eq $r) { return 'MISSING' }
+    return [string]$r.reason
+}
+$enc8 = New-Object System.Text.UTF8Encoding($false)
+
+# 1) corrupt cache: must recompute, say so, and still produce the same rows.
+$badCache = Join-Path $sandbox 'cache-e\shot-census.json'
+New-Item -ItemType Directory -Path (Split-Path -Parent $badCache) -Force | Out-Null
+[System.IO.File]::WriteAllText($badCache, '{ this is not json ', $enc8)
+$e1 = Get-CityShotAuditCached -Dir $shots -CachePath $badCache -ModulePath $module
+Check 'e1 corrupt cache is not served' (-not $e1.cached)
+Check 'e2 corrupt cache names unreadable' ([string]$e1.reason -eq 'unreadable')
+Check 'e3 corrupt cache still yields all rows' ($e1.rows.Count -eq 7)
+Check 'e4 corrupt cache is rewritten' ($e1.wrote -and (Test-Path -LiteralPath $badCache))
+$e1b = Get-CityShotAuditCached -Dir $shots -CachePath $badCache -ModulePath $module
+Check 'e5 repaired cache serves again' ($e1b.cached -and [string]::IsNullOrEmpty([string]$e1b.reason))
+
+# 2) stale: the directory moved on, the cache must not be trusted.
+$staleProbe = Join-Path $shots 'city-normal-a.png'
+$staleItem = Get-Item -LiteralPath $staleProbe
+$staleItem.LastWriteTimeUtc = $staleItem.LastWriteTimeUtc.AddMinutes(5)
+$e2 = Get-CityShotAuditCached -Dir $shots -CachePath $badCache -ModulePath $module
+Check 'e6 changed dir names stale' ((-not $e2.cached) -and ([string]$e2.reason -eq 'stale'))
+
+# 3) unwritable cache: parent path is a file, so the write cannot land. The
+#    census must still answer correctly - a lost cache is slower, never wrong.
+$blocker = Join-Path $sandbox 'blocker.txt'
+[System.IO.File]::WriteAllText($blocker, 'x', $enc8)
+$blockedCache = Join-Path $blocker 'shot-census.json'
+$e3 = Get-CityShotAuditCached -Dir $shots -CachePath $blockedCache -ModulePath $module
+Check 'e7 unwritable cache names unwritable' ([string]$e3.reason -eq 'unwritable')
+Check 'e8 unwritable cache reports no write' (-not $e3.wrote)
+Check 'e9 unwritable cache still yields all rows' ($e3.rows.Count -eq 7)
+Check 'e10 unwritable cache leaves no side file' (-not (Test-Path -LiteralPath ($blockedCache + '.new')))
+
+# 4) the tick line carries it. A corrupt cache in the live path must print the
+#    reason, the very next tick must be a bare key hit, and the word root that
+#    the red scan forbids must not appear on either line.
+$lineCache = Join-Path $sandbox 'cache-e\line.json'
+[System.IO.File]::WriteAllText($lineCache, 'nope', $enc8)
+$env:FLUXVERSE_SHOT_DIR = $shots
+$env:FLUXVERSE_SHOT_CACHE = $lineCache
+try {
+    $logE1 = (& powershell -NoProfile -ExecutionPolicy Bypass -File $verify) -join "`n"
+    $logE2 = (& powershell -NoProfile -ExecutionPolicy Bypass -File $verify) -join "`n"
+} finally {
+    Remove-Item Env:\FLUXVERSE_SHOT_DIR -ErrorAction SilentlyContinue
+    Remove-Item Env:\FLUXVERSE_SHOT_CACHE -ErrorAction SilentlyContinue
+}
+Check 'e11 tick names the corrupt cache' ($logE1 -match 'city-shot-census: .*cached=0\(unreadable\)')
+Check 'e12 tick still reports the census' ($logE1 -match 'city-shot-census: images=7 inlinable=2')
+Check 'e13 next tick is a bare key hit' (($logE2 -match 'cached=1') -and (-not ($logE2 -match 'cached=1\(')))
+Check 'e14 neither line carries the red word root' (-not ($logE1 -match 'city-shot.*FAIL') -and -not ($logE2 -match 'city-shot.*FAIL'))
+
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 Write-Output ('test-city-shot-census: ' + $pass + ' passed, ' + $fail + ' failed (of ' + ($pass + $fail) + ')')
 if ($fail -gt 0) { exit 1 }

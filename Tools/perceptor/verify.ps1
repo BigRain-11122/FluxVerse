@@ -256,10 +256,11 @@ if (Test-Path -LiteralPath $shotModule) {
     if ($env:FLUXVERSE_SHOT_CACHE) { $shotCachePath = $env:FLUXVERSE_SHOT_CACHE }
     $shotRows = @()
     $shotCached = $false
+    $shotReason = ''
     if (Get-Command Get-CityShotAuditCached -ErrorAction SilentlyContinue) {
       $shotRes = $null
       try { $shotRes = Get-CityShotAuditCached -Dir $shotDir -CachePath $shotCachePath -ModulePath $shotModule } catch { $shotRes = $null }
-      if ($shotRes) { $shotRows = @($shotRes.rows); $shotCached = [bool]$shotRes.cached }
+      if ($shotRes) { $shotRows = @($shotRes.rows); $shotCached = [bool]$shotRes.cached; $shotReason = [string]$shotRes.reason }
       else { $shotRows = @(Get-CityShotAudit -Dir $shotDir) }
     } else {
       $shotRows = @(Get-CityShotAudit -Dir $shotDir)
@@ -276,6 +277,12 @@ if (Test-Path -LiteralPath $shotModule) {
               ' panel=' + $panelRows.Count + ' shape_skipped=' + $shapeRows.Count +
               ' unreadable=' + $badRows.Count + ' unregistered=' + $unregRows.Count +
               ' cached=' + ([int]$shotCached)
+      # main#108 (r770): a miss says why. A key hit and a genuine first run stay
+      # bare - there is nothing to explain, and a head word on every tick would
+      # turn a real signal into noise.
+      if ((-not $shotCached) -and -not [string]::IsNullOrWhiteSpace($shotReason)) {
+        $line = $line + '(' + $shotReason + ')'
+      }
       if ($unregRows.Count -gt 0) {
         Write-Output ('VERIFY WARN: ' + $line + ' - an image passes the shape gate but belongs to no registered frame family, so the panel skips it; rename into a registered family or retire it')
         foreach ($u in $unregRows) { Write-Output ('VERIFY WARN: city-shot ' + $u.name + ' ' + $u.w + 'x' + $u.h) }

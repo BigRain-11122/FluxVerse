@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T02:17:04Z",
-    "current_activity":  "r769 收口：取景普查改内容寻址（键=`./Tools/devloop/city-shot-shape.ps1` 本体指纹＋qa/ 每图 name|length|mtime），缓存轮 shot-census 1510ms→64ms、整轮 2724→1286ms，六项读数逐项不变；沙盒 30/30（含「同长垃圾字节＋还原 mtime 缓存仍命中、新鲜读报 unreadable」的破坏性证明）",
-    "artifact":  "Tools/perceptor/verify.ps1, Tools/devloop/city-shot-shape.ps1, Tools/devloop/test-city-shot-census.ps1, ./TECH.md, ./state/queue/main.md, ./state/runbook.md",
-    "artifact_utc":  "2026-11-01T02:17:04Z",
-    "milestone":  "下一个=main#108 缓存失效理由上行（cached=0(stale|no-dir|unreadable|write-failed)）／main#109 qa/ 235 张图 45MB 的只读清点与滚动保留；研究位=main#23 司级基准刷新（10-27 逾期）；指针=`./state/queue/main.md`",
+    "updated_utc":  "2026-11-01T02:25:35Z",
+    "current_activity":  "r770 收口：取景普查缓存第一次说得清「为什么没命中」——`cached=0` 时行尾缀理由（stale／no-dir／unreadable／unwritable），键命中与首跑裸尾；活跑两趟 1488→65ms、整轮 1311ms，六项读数不变（正身=`./Tools/devloop/city-shot-shape.ps1` 与 `./Tools/perceptor/verify.ps1`）",
+    "artifact":  "`./Tools/devloop/city-shot-shape.ps1`, `./Tools/perceptor/verify.ps1`, `./Tools/devloop/test-city-shot-census.ps1`, `./TECH.md`, `./state/queue/main.md`, `./state/runbook.md`",
+    "artifact_utc":  "2026-11-01T02:25:35Z",
+    "milestone":  "下一个=main#109 `qa/` 235 张图 45MB 的只读清点与滚动保留（指针 `./state/queue/main.md`）；研究位=main#23 司级基准刷新（10-27 逾期）",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

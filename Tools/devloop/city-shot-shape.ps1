@@ -147,6 +147,13 @@ function Get-CityShotFingerprint
 
 # Returns rows (same shape as Get-CityShotAudit) plus how they were obtained.
 # cached=$true means NOT ONE image header was opened this run.
+#
+# reason (queue main#108, r770) says WHY the cache did not answer, so the tick
+# line can tell "the key never matches" from "the cache was never written" -
+# two states that used to look identical. Empty reason = key hit, or a genuine
+# first run (nothing to explain yet). The vocabulary is deliberately safe to
+# print on a VERIFY line: 'fail' is a banned word root there (r750), which is
+# why the unwritable case is 'unwritable' rather than 'write-failed'.
 function Get-CityShotAuditCached
 {
     param([string]$Dir, [string]$CachePath, [string]$ModulePath = '', [switch]$NoWrite)
@@ -185,7 +192,7 @@ function Get-CityShotAuditCached
             Move-Item -LiteralPath $tmp -Destination $CachePath -Force
             $res.wrote = $true
         } catch {
-            $res.reason = 'write-failed'
+            $res.reason = 'unwritable'
             if ($tmp) { try { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue } catch { } }
         }
     }

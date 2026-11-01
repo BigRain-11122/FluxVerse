@@ -22,22 +22,39 @@
 # The hit token is assembled from two pieces on purpose: this file must not trip
 # its own census, and neither may the sandbox that exercises it.
 #
+# COST BUDGET (main#104, r768): this census runs inside every tick, so its cost
+# is part of the gate's own cached-round budget (3 s, asserted by
+# test-verify-ps-suites case b3). r765's first version cost ~0.43 s and pushed
+# that round over its line before anybody could see why; the pruning and the
+# single-IndexOf pass brought it to ~0.16-0.17 s. The lesson is not "it is fast
+# now" but "nobody would notice it getting slow again": the tree grows, and the
+# first symptom would be the gate's own b3 going red with no attribution. So the
+# run reports its own elapsed milliseconds and judges them against a budget it
+# states out loud. Crossing the budget is INFORMATIONAL (exit stays 0) and names
+# the sanctioned remedy from main#104 - move the census out of the per-tick
+# section (ride check-fastpath.ps1) or shrink the scan. Raising the gate's 3 s
+# budget to absorb it is explicitly not the fix.
+#
 # HONEST BOUNDARY: a text scan cannot prove the switch is *reached* at runtime,
 # only that the token is or is not written down. A call assembled from pieces
 # would slip through (and the sandbox builds its fixtures that way, which is the
 # same hole seen from the other side). It also does not judge whether a hit is a
-# sane sandbox use - that stays a reviewer question.
+# sane sandbox use - that stays a reviewer question. The cost figure is this
+# process's wall clock for scanning only - it excludes fixing that number.
 #
-# Usage: powershell -ExecutionPolicy Bypass -File nolivecheck-census.ps1 [-ScanRoot <dir>] [-FailOnUnexpected]
+# Usage: powershell -ExecutionPolicy Bypass -File nolivecheck-census.ps1 [-ScanRoot <dir>] [-FailOnUnexpected] [-BudgetMs <int>]
 # Exit:  0 = census produced; 2 = unexpected hit(s) AND -FailOnUnexpected given.
 # ASCII-only law (PS5.1 GBK trap). No auto-variable locals (r164).
 
 param(
     [string]$ScanRoot = '',
-    [switch]$FailOnUnexpected
+    [switch]$FailOnUnexpected,
+    [int]$BudgetMs = 250
 )
 
 $ErrorActionPreference = 'Stop'
+$costSw = New-Object System.Diagnostics.Stopwatch
+$costSw.Start()
 
 $hitText = '-' + 'NoLiveCheck'
 
@@ -146,9 +163,17 @@ foreach ($a in $allowList) {
     if (-not $hitFiles.ContainsKey($a)) { [void]$staleRows.Add($a) }
 }
 
+$costSw.Stop()
+$costMs = [int]$costSw.ElapsedMilliseconds
+$overBudget = ($costMs -gt $BudgetMs)
+
 Write-Output ('nolivecheck-census: files=' + $allFiles.Count + ' hits=' + $hitCount +
     ' allowed=' + $allowedRows.Count + ' unexpected=' + $unexpectedRows.Count +
-    ' stale=' + $staleRows.Count)
+    ' stale=' + $staleRows.Count +
+    ' ms=' + $costMs + ' budget=' + $BudgetMs)
+if ($overBudget) {
+    Write-Output ('BUDGET OVER: ' + $costMs + 'ms > ' + $BudgetMs + 'ms - this census runs on every tick, so its cost is part of the gate''s cached-round budget (3 s). Move it out of the per-tick section (ride check-fastpath.ps1) or shrink the scan; do not raise that budget to absorb it.')
+}
 Write-Output ('scan root: ' + $rootNorm)
 Write-Output ('pruned: ' + ($pruneRel -join ', '))
 Write-Output ''

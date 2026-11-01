@@ -754,6 +754,31 @@ $zrAfter = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrBad
 Check 'z25 an unreadable run leaves suites=0 in the ticket' ($null -ne $zrZero -and [int]$zrZero.suites -eq 0) ("suites=" + [int]$zrZero.suites)
 Check 'z26 a real run after it restarts the baseline' (@(("$($zrAfter.runs)" -split ',')).Count -eq 1) ("runs=" + $zrAfter.runs)
 
+# ---------- za: the round can say where its time went (main#104, r768) ------
+# b3 above asserts the cached round stays under 3 s. Without a decomposition that
+# number is only actionable as "raise it" - and main#104 forbids raising it. The
+# ledger exists so the next budget decision is arithmetic instead of intuition;
+# measured r768 it already corrected the intuition hard (shot-census 1.41-1.45 s
+# of a 2.10 s round, while the newest per-tick item, the census, was 106 ms).
+# Two properties matter: the parts must reconcile with the total, or the numbers
+# are decoration, and the line must not look like a section verdict, or it would
+# be counted as one by every `^VERIFY (HEALTH|WARN): <section>:` filter above.
+$za = Run-Verify
+$zaCost = @($za.lines | Where-Object { $_ -like 'VERIFY COST:*' })
+Check 'za1 a round prints exactly one cost line' ($zaCost.Count -eq 1) ('count=' + $zaCost.Count)
+$zaText = [string]$zaCost[0]
+$zaTotalM = [regex]::Match($zaText, 'total=(\d+)ms')
+Check 'za2 the line states a total in ms' ($zaTotalM.Success) $zaText
+$zaSum = 0
+foreach ($m in [regex]::Matches($zaText, '(?:^|\s)([a-z][a-z0-9-]*)=(\d+)ms')) {
+    if ($m.Groups[1].Value -eq 'total') { continue }
+    $zaSum += [int]$m.Groups[2].Value
+}
+Check 'za3 the parts reconcile with the total' ($zaTotalM.Success -and $zaSum -eq [int]$zaTotalM.Groups[1].Value) ('sum=' + $zaSum + ' total=' + $zaTotalM.Groups[1].Value)
+Check 'za4 the cost line is not a section verdict' (-not ($zaText -like 'VERIFY HEALTH:*') -and -not ($zaText -like 'VERIFY WARN:*')) $zaText
+Check 'za5 the sections and their order are named' ($zaText -match 'state=\d+ms' -and $zaText -match 'shot-census=\d+ms' -and $zaText -match 'families=\d+ms' -and $zaText -match 'rest=\d+ms') $zaText
+Check 'za6 the cost line never leaks the red token' (-not ($zaText -match '(?i)fail')) $zaText
+
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Output ('RESULT pass=' + ($script:checks - $script:fails) + ' fail=' + $script:fails)

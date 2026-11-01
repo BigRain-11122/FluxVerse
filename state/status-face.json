@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T01:38:23Z",
-    "current_activity":  "r767 收口：main#105 销件——重沙盒族的上限从拍脑袋的 120 秒改成能从票据自己复算的规则（2× 最近一次实测向上取整到 5 秒 = 165 秒），并加两条不变式（任何族上限 ≤ tick 周期的 1/3；仍扛得住 2× 实测且不虚抬）。每 tick 那条没人能处置的 family baseline over 2/3 告警下线：活跑 ps-suites-verify2 一行从 WARN 变 HEALTH（base=77806ms，165 秒的 47%）。沙盒 160→163/163（z5/z5b/z5c/z5d）。同轮判例：./Tools/devloop/test-run-ps-suites.ps1 的环境断言在经 runner 调用时必红（runner 给子套件打嵌套标记），它不属于任何族清单、只能直跑。",
-    "artifact":  "Tools/devloop/ps-suites-tick.ps1, Tools/devloop/test-verify-ps-suites.ps1, ./TECH.md, ./state/runbook.md, ./state/queue/main.md",
-    "artifact_utc":  "2026-11-01T01:38:00Z",
-    "milestone":  "下一个：main#104（普查件 163 ms 对「缓存轮 \u003c3 秒」预算的余量）→ main#23 司级基准刷新（10-27 逾期）→ main#103（explore#12 的 45KB 巨行待拆，活队列 qdue_bad=1 一直挂着）。判据=写侧族 failing=0 parity=ok counted=6，-Verify 全族 counted=9 且 exit 0。指针=./state/queue/main.md",
+    "updated_utc":  "2026-11-01T02:05:48Z",
+    "current_activity":  "r768 收口：每个 tick 多一行 VERIFY COST，缓存轮的 2.1 秒第一次拆得开——total=2100ms 里 shot-census=1407ms 占 68%，而上一轮刚加的普查件只占 99-106ms（直觉差了 13 倍）；普查件总结行多了自定义 ms= 与 budget=250，越线打 BUDGET OVER 并写死法定出路（移出每 tick 段或缩扫描面，禁抬 gate 预算）。判据：test-nolivecheck-census 45/45、test-verify-ps-suites 169/169（分段合计=total）。",
+    "artifact":  "Tools/perceptor/verify.ps1, Tools/devloop/nolivecheck-census.ps1, Tools/devloop/test-nolivecheck-census.ps1, Tools/devloop/test-verify-ps-suites.ps1, ./TECH.md, ./state/queue/main.md, ./state/runbook.md",
+    "artifact_utc":  "2026-11-01T02:05:40Z",
+    "milestone":  "下一件=main#107（取景普查 1.4 秒是缓存轮真主因，判据=内容寻址缓存：qa/ 未变第二次不读图头、换图必失效、禁抬 b3），其后 main#23 司级基准刷新（10-27 逾期）与 main#103（explore#12 的 45KB 巨行待拆，活队列 qdue_bad=1 一直挂着它）；研究=写侧族 failing=0 parity=ok counted=6、-Verify 全族 counted=9 且 exit 0；指针=./state/queue/main.md",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

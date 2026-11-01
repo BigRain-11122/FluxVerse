@@ -34,6 +34,31 @@ $utf8 = New-Object System.Text.UTF8Encoding($false)
 $fail = @()
 $healed = 0
 
+# ---------- cost ledger (queue main#104, r768) ----------
+# This gate runs on every tick, and its cached round has a 3 s budget that
+# test-verify-ps-suites case b3 asserts. Measured r768 on an idle-ish machine:
+# 2205 / 2292 / 2371 / 2467 / 2746 / 2762 / 3119 ms - i.e. the budget is not
+# comfortable, it is a coin flip, and one sample already crossed the assertion
+# line. The reason that was alarming rather than actionable is that nobody could
+# say WHERE the time went: only the ps-suites families print their own cost
+# because they are expected to be expensive, and everything else (shot census
+# over 235 images, the r2-site python call, the queue scan) was a single opaque
+# residue. A budget you cannot decompose cannot be defended, only raised - and
+# main#104 forbids raising it. So each section marks the stopwatch when it hands
+# over, and the run prints one `VERIFY COST:` line with the whole decomposition.
+# Observation only: nothing is judged here, and the line deliberately does not
+# start with "VERIFY HEALTH:"/"VERIFY WARN:" so the per-section assertions stay
+# exactly as they were.
+$costSw = New-Object System.Diagnostics.Stopwatch
+$costSw.Start()
+$costLast = 0
+$costParts = New-Object System.Collections.ArrayList
+function Set-CostMark([string]$Name) {
+  $now = $costSw.ElapsedMilliseconds
+  [void]$costParts.Add([pscustomobject]@{ Name = $Name; Ms = [int]($now - $script:costLast) })
+  $script:costLast = $now
+}
+
 # Two-phase promotion lives in one module so a sandbox can drive every branch
 # (queue main#93). Missing module = the gate cannot keep its promise on FAIL.
 $statePromoteMod = Join-Path $repoRoot 'Tools\devloop\state-promote.ps1'
@@ -42,6 +67,8 @@ if (-not (Test-Path -LiteralPath $statePromoteMod)) {
   exit 1
 }
 . $statePromoteMod
+
+Set-CostMark 'boot'
 
 # ---------- 1. state (candidate = .new if present, else current) ----------
 $promote = (Test-Path $newStateFile)
@@ -108,6 +135,8 @@ if (-not $cand) {
   }
 }
 
+Set-CostMark 'state'
+
 # ---------- 2. registry + events self-heal (delta from cursor) ----------
 $reg = $null
 if (Test-Path $registryFile) {
@@ -157,6 +186,8 @@ if ((Test-Path $eventsFile) -and $known.Count -gt 0) {
   [System.IO.File]::WriteAllText($verifyState, ('events_verified=' + $clean.Count + "`n"), $utf8)
 }
 
+Set-CostMark 'registry'
+
 # ---------- 2b. probe path census (main#26, r688) ----------
 # Static and read-only: replays each probe's own path algebra, then Test-Path's
 # the result. No probe is executed, so this cannot perturb the read chain.
@@ -193,6 +224,8 @@ if (Test-Path -LiteralPath $censusScript) {
     Write-Output 'VERIFY WARN: probe-path-census produced no summary line'
   }
 }
+
+Set-CostMark 'probe-census'
 
 # ---------- 2c. city shot census (main#47, r707) ----------
 # The public panel inlines the newest qa/ images as its "city view" card. The
@@ -233,6 +266,8 @@ if (Test-Path -LiteralPath $shotModule) {
     Write-Output 'VERIFY WARN: city-shot-shape.ps1 did not provide Get-CityShotAudit'
   }
 }
+
+Set-CostMark 'shot-census'
 
 # ---------- 2d. R2 district site check (main#55, r716) ----------
 # r713/r714 found the R2 district standing 91.7% over the L_Water mesh, and the
@@ -290,6 +325,8 @@ if ((-not (Test-Path -LiteralPath $siteScript)) -or (-not (Test-Path -LiteralPat
   }
 }
 
+Set-CostMark 'r2-site'
+
 # ---------- 2e. daily log archive duty (main#56, r719) ----------
 # r715 archived 2,174 stale log files by hand and nothing ran it again, so the
 # backlog could only grow back. The archiver itself is unchanged and keeps its
@@ -346,6 +383,8 @@ if (-not (Test-Path -LiteralPath $archiveDuty)) {
   }
 }
 
+Set-CostMark 'archive'
+
 # ---------- 2f. R2 ambient baseline (main#63, r725) ----------
 # r722 fixed the street frame's black right wall by giving the scene a Trilight
 # ambient plus a probe refresh, but that only runs inside the three build entries
@@ -384,6 +423,8 @@ if (-not (Test-Path -LiteralPath $ambMod)) {
     Write-Output 'VERIFY WARN: ambient-verdict.ps1 did not provide Get-AmbientVerdict'
   }
 }
+
+Set-CostMark 'ambient'
 
 # ---------- 2g. queue due-marker census (main#87) ----------
 # r745 put the overdue count on the page and r747 made a badly written `due`
@@ -430,6 +471,8 @@ if (-not (Test-Path -LiteralPath $qdueMod)) {
     Write-Output 'VERIFY WARN: queue-due.ps1 did not provide Get-QueueDue'
   }
 }
+
+Set-CostMark 'qdue'
 
 # ---------- 2h/2i. sandbox families actually run (main#88 r750, main#94 r752) ----------
 # r748 built one entry for the PowerShell sandboxes (run-ps-suites.ps1), r750
@@ -590,6 +633,8 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
   }
 }
 
+Set-CostMark 'families'
+
 # ---------- 2k. no-live-check census (main#77, r765) ----------
 # write-fastpath-state.ps1 v1.2 refuses to write a 12-hex value it cannot verify
 # against the live file, because a wrong value there either fires a fake
@@ -609,13 +654,25 @@ if (Test-Path -LiteralPath $nlcScript) {
     $mNlcHits = [regex]::Match($nlcSum, 'hits=(\d+)')
     $mNlcUnexp = [regex]::Match($nlcSum, 'unexpected=(\d+)')
     $mNlcStale = [regex]::Match($nlcSum, 'stale=(\d+)')
+    $mNlcMs = [regex]::Match($nlcSum, 'ms=(\d+)')
+    $mNlcBudget = [regex]::Match($nlcSum, 'budget=(\d+)')
     $nlcLine = 'nolivecheck-census: files=' + $mNlcFiles.Groups[1].Value + ' hits=' + $mNlcHits.Groups[1].Value +
                ' unexpected=' + $mNlcUnexp.Groups[1].Value + ' stale=' + $mNlcStale.Groups[1].Value
+    if ($mNlcMs.Success) { $nlcLine = $nlcLine + ' ms=' + $mNlcMs.Groups[1].Value }
+    if ($mNlcBudget.Success) { $nlcLine = $nlcLine + ' budget=' + $mNlcBudget.Groups[1].Value }
+    $nlcOver = $false
+    if ($mNlcMs.Success -and $mNlcBudget.Success) {
+      $nlcOver = ([int]$mNlcMs.Groups[1].Value -gt [int]$mNlcBudget.Groups[1].Value)
+    }
     if ($mNlcUnexp.Success -and [int]$mNlcUnexp.Groups[1].Value -gt 0) {
       Write-Output ('VERIFY WARN: ' + $nlcLine + ' - a script outside the whitelist names the state-writer drill switch; that switch skips the live-hash comparison, so keep it out of any production chain')
       foreach ($u in @($nlcLines | Where-Object { $_ -match '^\s{2}\S+\.(ps1|cmd|bat|vbs):\d+\s' })) {
         Write-Output ('VERIFY WARN: nlc ' + $u.Trim())
       }
+    } elseif ($nlcOver) {
+      # main#104: the census cost is a slice of this tick's own budget, so it
+      # gets its own line before the gate as a whole goes red with no culprit.
+      Write-Output ('VERIFY WARN: ' + $nlcLine + ' - census cost is over its own budget; it runs every tick, so move it out of the per-tick section (ride check-fastpath.ps1) or shrink the scan rather than raising the gate budget')
     } else {
       Write-Output ('VERIFY HEALTH: ' + $nlcLine)
     }
@@ -623,6 +680,17 @@ if (Test-Path -LiteralPath $nlcScript) {
     Write-Output 'VERIFY WARN: nolivecheck-census produced no summary line'
   }
 }
+
+# The decomposition, printed once, right before the verdict (queue main#104).
+# Sum of the parts is the measured round; the tail between the last mark and
+# here is added as 'rest' so the numbers reconcile with wall clock instead of
+# quietly leaving a gap that nobody can explain later.
+$costTail = [int]($costSw.ElapsedMilliseconds - $costLast)
+[void]$costParts.Add([pscustomobject]@{ Name = 'rest'; Ms = $costTail })
+$costTotal = 0
+foreach ($cp in $costParts) { $costTotal += [int]$cp.Ms }
+$costText = (@($costParts | ForEach-Object { $_.Name + '=' + $_.Ms + 'ms' }) -join ' ')
+Write-Output ('VERIFY COST: total=' + $costTotal + 'ms ' + $costText)
 
 # ---------- verdict ----------
 if ($fail.Count -gt 0) {

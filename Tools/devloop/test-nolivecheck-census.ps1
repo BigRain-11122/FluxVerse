@@ -59,9 +59,10 @@ function New-CleanTree {
     Write-Text 'Tools\devloop\test-fastpath-state-live.ps1' ("# this drill checks the live-hash path itself`r`n`$x = 1`r`n")
 }
 
-function Invoke-Census([string]$ScanRoot, [switch]$Fail) {
+function Invoke-Census([string]$ScanRoot, [switch]$Fail, [string[]]$Extra) {
     $argv = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $census, '-ScanRoot', $ScanRoot)
     if ($Fail) { $argv += '-FailOnUnexpected' }
+    if ($Extra) { $argv += $Extra }
     $out = @()
     $out = @(& powershell.exe @argv 2>&1 | ForEach-Object { [string]$_ })
     $script:lastCode = $LASTEXITCODE
@@ -148,6 +149,26 @@ $selfText = [System.IO.File]::ReadAllText($PSCommandPath, [System.Text.Encoding]
 if ($selfText.IndexOf($flag, [System.StringComparison]::Ordinal) -lt 0) { Ok 'j4 this sandbox does not name the token either' }
 else { No 'j4 this sandbox does not name the token either' 'sandbox source contains the literal token' }
 Has 'j5 live tree still names the owner' $body 'write-fastpath-state.ps1'
+
+# ---------------- m. cost budget (main#104): the per-tick slice is spoken for
+# The census runs inside every tick, so its cost is part of the gate's own 3 s
+# cached-round budget. What main#104 asked for was not a one-off measurement but
+# an early signal: the tree grows, and the first symptom would otherwise be the
+# gate's b3 going red with nobody able to say which section ate the time. So the
+# run states its own elapsed milliseconds against a budget, and crossing that
+# budget is INFORMATIONAL - the danger is the silent slice, not the number.
+$body = Invoke-Census $RepoDir -Fail
+if ($body -match 'nolivecheck-census:.*\sms=\d+\sbudget=250') { Ok 'm1 summary carries its own cost and the default budget' }
+else { No 'm1 summary carries its own cost and the default budget' ($body -split "`n")[0] }
+$censusText = [System.IO.File]::ReadAllText($census, [System.Text.Encoding]::UTF8)
+Has 'm2 the remedy is written down next to the tool' $censusText 'move the census out of the per-tick'
+Has 'm2b crossing the budget is stated as informational' $censusText 'Crossing the budget is INFORMATIONAL'
+$body = Invoke-Census $RepoDir -Fail -Extra @('-BudgetMs', '0')
+Has 'm3 an over-budget run says BUDGET OVER with both numbers' $body 'BUDGET OVER: '
+if ($body -match 'BUDGET OVER: (\d+)ms > 0ms') { Ok 'm4 the overstated cost is a real elapsed figure' }
+else { No 'm4 the overstated cost is a real elapsed figure' ($body -split "`n")[1] }
+Has 'm5 the over-budget line names the sanctioned remedy' $body 'ride check-fastpath.ps1'
+Eq 'm6 over budget is informational, not a failure' ([string]$script:lastCode) '0'
 
 # ---------------- k. ASCII-only audit for both new files
 foreach ($pair in @(@{ N = 'census'; P = $census }, @{ N = 'sandbox'; P = $PSCommandPath })) {

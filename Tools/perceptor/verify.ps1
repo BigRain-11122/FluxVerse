@@ -243,7 +243,27 @@ if (Test-Path -LiteralPath $shotModule) {
   $loaded = $true
   try { . $shotModule } catch { $loaded = $false }
   if ($loaded -and (Get-Command Get-CityShotAudit -ErrorAction SilentlyContinue)) {
-    $shotRows = @(Get-CityShotAudit -Dir $shotDir)
+    # main#107 (r769): the census is content-addressed, not re-read. On a cached
+    # tick nothing changes in qa/, so opening 235 image headers to learn the same
+    # numbers cost 68% of the whole round (r768 cost ledger) - and main#104
+    # forbids paying for that by raising the 3 s gate budget. The cache key is
+    # the verdict's own input (name/length/mtime of every image + this module's
+    # identity), so any added/changed/removed frame, or any threshold edit,
+    # invalidates it and the next tick recomputes with byte-identical readings.
+    # Cache file is gitignored (logs/) and unwritable-tree safe: a failed write
+    # only means the next tick pays full price again, never a wrong verdict.
+    $shotCachePath = Join-Path $repoRoot 'logs\.city-shot-census-cache.json'
+    if ($env:FLUXVERSE_SHOT_CACHE) { $shotCachePath = $env:FLUXVERSE_SHOT_CACHE }
+    $shotRows = @()
+    $shotCached = $false
+    if (Get-Command Get-CityShotAuditCached -ErrorAction SilentlyContinue) {
+      $shotRes = $null
+      try { $shotRes = Get-CityShotAuditCached -Dir $shotDir -CachePath $shotCachePath -ModulePath $shotModule } catch { $shotRes = $null }
+      if ($shotRes) { $shotRows = @($shotRes.rows); $shotCached = [bool]$shotRes.cached }
+      else { $shotRows = @(Get-CityShotAudit -Dir $shotDir) }
+    } else {
+      $shotRows = @(Get-CityShotAudit -Dir $shotDir)
+    }
     if ($shotRows.Count -eq 0 -and -not (Test-Path -LiteralPath $shotDir)) {
       Write-Output ('VERIFY WARN: city-shot-census: shot dir missing: ' + $shotDir)
     } else {
@@ -254,7 +274,8 @@ if (Test-Path -LiteralPath $shotModule) {
       $keepRows  = @($shotRows | Where-Object { $_.keep })
       $line = 'city-shot-census: images=' + $shotRows.Count + ' inlinable=' + $keepRows.Count +
               ' panel=' + $panelRows.Count + ' shape_skipped=' + $shapeRows.Count +
-              ' unreadable=' + $badRows.Count + ' unregistered=' + $unregRows.Count
+              ' unreadable=' + $badRows.Count + ' unregistered=' + $unregRows.Count +
+              ' cached=' + ([int]$shotCached)
       if ($unregRows.Count -gt 0) {
         Write-Output ('VERIFY WARN: ' + $line + ' - an image passes the shape gate but belongs to no registered frame family, so the panel skips it; rename into a registered family or retire it')
         foreach ($u in $unregRows) { Write-Output ('VERIFY WARN: city-shot ' + $u.name + ' ' + $u.w + 'x' + $u.h) }

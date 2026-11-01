@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T02:05:48Z",
-    "current_activity":  "r768 收口：每个 tick 多一行 VERIFY COST，缓存轮的 2.1 秒第一次拆得开——total=2100ms 里 shot-census=1407ms 占 68%，而上一轮刚加的普查件只占 99-106ms（直觉差了 13 倍）；普查件总结行多了自定义 ms= 与 budget=250，越线打 BUDGET OVER 并写死法定出路（移出每 tick 段或缩扫描面，禁抬 gate 预算）。判据：test-nolivecheck-census 45/45、test-verify-ps-suites 169/169（分段合计=total）。",
-    "artifact":  "Tools/perceptor/verify.ps1, Tools/devloop/nolivecheck-census.ps1, Tools/devloop/test-nolivecheck-census.ps1, Tools/devloop/test-verify-ps-suites.ps1, ./TECH.md, ./state/queue/main.md, ./state/runbook.md",
-    "artifact_utc":  "2026-11-01T02:05:40Z",
-    "milestone":  "下一件=main#107（取景普查 1.4 秒是缓存轮真主因，判据=内容寻址缓存：qa/ 未变第二次不读图头、换图必失效、禁抬 b3），其后 main#23 司级基准刷新（10-27 逾期）与 main#103（explore#12 的 45KB 巨行待拆，活队列 qdue_bad=1 一直挂着它）；研究=写侧族 failing=0 parity=ok counted=6、-Verify 全族 counted=9 且 exit 0；指针=./state/queue/main.md",
+    "updated_utc":  "2026-11-01T02:17:04Z",
+    "current_activity":  "r769 收口：取景普查改内容寻址（键=`./Tools/devloop/city-shot-shape.ps1` 本体指纹＋qa/ 每图 name|length|mtime），缓存轮 shot-census 1510ms→64ms、整轮 2724→1286ms，六项读数逐项不变；沙盒 30/30（含「同长垃圾字节＋还原 mtime 缓存仍命中、新鲜读报 unreadable」的破坏性证明）",
+    "artifact":  "Tools/perceptor/verify.ps1, Tools/devloop/city-shot-shape.ps1, Tools/devloop/test-city-shot-census.ps1, ./TECH.md, ./state/queue/main.md, ./state/runbook.md",
+    "artifact_utc":  "2026-11-01T02:17:04Z",
+    "milestone":  "下一个=main#108 缓存失效理由上行（cached=0(stale|no-dir|unreadable|write-failed)）／main#109 qa/ 235 张图 45MB 的只读清点与滚动保留；研究位=main#23 司级基准刷新（10-27 逾期）；指针=`./state/queue/main.md`",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

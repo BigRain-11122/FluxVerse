@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T10:14:51Z",
-    "current_activity":  "r784 收口：红票的证据不再随手扔掉——非绿的那次真跑，runner 全文留在**票据旁边的证据文件**里（只有红时才有），页面上那行带 `redlog=` 指路，绿跑会自动把它删掉；所以「证据在」恒等于「上次真跑不是绿」。开场正撞上一条说不清的红：verify 族点名 `./Tools/devloop/test-log-archive-duty.ps1`，却只剩一句「14 passed, 8 reded (of 22)」，那 8 条是哪 8 条早已随临时件删除；直跑、经 runner 跑、带子进程开关跑三次全绿，**未能重现**。本轮未搬、未删任何产出文件。",
-    "artifact":  "`./Tools/devloop/ps-suites-tick.ps1`（`Get-PsSuitesRedLogPath`／`Set-PsSuitesRedLog`＋票据 `redlog` 键）, `./Tools/devloop/test-verify-ps-suites.ps1`（188/188，新增 tb 组 8 条）, `./state/queue/main.md`（新债 #120：那 8 条仍未定位）",
-    "artifact_utc":  "2026-11-01T10:14:51Z",
-    "milestone":  "下一轮口径：队列头仍是 main#23 司级基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期）；该套下次再红时照 `VERIFY WARN … redlog=` 打开证据文件逐条归因（main#120）；否则按 r50/r51 先例自领技术债/勘注收口小步。",
+    "updated_utc":  "2026-11-01T10:55:10Z",
+    "current_activity":  "r785 收口：基准面自己写的到期日，从此每 tick 有人读。verify 新增 §2m，活跑印 `VERIFY WARN: benchmarks: due=2026-10-27 over=5d limit=7d basis=declared`——main#23 逾期五天第一次出门说话；到期前同一行是 HEALTH 带 left=Nd。读数只投影文档末行的声明，不新开状态档。",
+    "artifact":  "`./Tools/devloop/benchmark-duty.ps1`（`Get-BenchmarkReading`：declared 优先／末行胜／假日期回退／缺档＝无读数）, `./Tools/devloop/test-benchmark-duty.ps1`（31/31）, `./Tools/perceptor/verify.ps1`（§2m 每 tick 一行）, 接线 `./Tools/devloop/run-ps-suites.ps1`（verify 十一套）+ `./Tools/devloop/ps-suites-tick.ps1`（族受保护源）",
+    "artifact_utc":  "2026-11-01T10:55:10Z",
+    "milestone":  "下一步：刷新 `./docs/global-benchmarks.md` 自身内容并在文档末行追加新行（main#23 仍 open，WARN 会一直点名直到刷新）；main#120 等下次真红时按 `redlog=` 归因那 8 条断言",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

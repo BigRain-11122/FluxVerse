@@ -842,6 +842,52 @@ if (-not (Test-Path -LiteralPath $qaCiteDuty)) {
 
 Set-CostMark 'qa-cite'
 
+# ---------- 2m benchmark face: print the due date it declares for itself -----
+# docs/global-benchmarks.md already carries its own next-refresh date, and until
+# now the only reader of that date was a person who remembered to look. Queue
+# main#23 was five days past it with nothing on any surface saying so - the same
+# shape as the qa-cite record before r783. The module turns the declared date
+# into a per-tick reading; the date itself stays owned by the document.
+# WARN names the queue row and the action; no red-scan token in these lines.
+$bmDuty = Join-Path $repoRoot 'Tools\devloop\benchmark-duty.ps1'
+$bmFace = Join-Path $repoRoot 'docs\global-benchmarks.md'
+if ($env:FLUXVERSE_BENCHMARKS) { $bmFace = $env:FLUXVERSE_BENCHMARKS }
+if (-not (Test-Path -LiteralPath $bmDuty)) {
+  Write-Output 'VERIFY WARN: benchmarks: benchmark-duty.ps1 missing - due-date reading skipped'
+} else {
+  $bmLoaded = $true
+  try { . $bmDuty } catch { $bmLoaded = $false }
+  if ($bmLoaded -and (Get-Command Get-BenchmarkReading -ErrorAction SilentlyContinue)) {
+    $bm = $null
+    try { $bm = Get-BenchmarkReading -Path $bmFace } catch { $bm = $null }
+    if (-not $bm) {
+      Write-Output 'VERIFY WARN: benchmarks: reading module threw - due-date reading skipped this tick'
+    } elseif (-not $bm.exists) {
+      Write-Output 'VERIFY WARN: benchmarks: the benchmark face file is missing - there is no face to date'
+    } elseif (-not $bm.ok) {
+      Write-Output 'VERIFY WARN: benchmarks: no due date could be read - the face declares none and has no mtime'
+    } else {
+      $bmParts = @('benchmarks:')
+      $bmParts += ('due=' + $bm.due)
+      if ($bm.days_left -lt 0) {
+        $bmParts += ('over=' + ([Math]::Abs($bm.days_left)) + 'd')
+      } else {
+        $bmParts += ('left=' + $bm.days_left + 'd')
+      }
+      $bmParts += ('limit=' + $bm.limit_days + 'd')
+      $bmParts += ('basis=' + $bm.basis)
+      $bmLine = ($bmParts -join ' ')
+      if ($bm.days_left -lt 0) {
+        Write-Output ('VERIFY WARN: ' + $bmLine + ' - the benchmark face is past the due date it declares for itself; refresh it and append a row (queue main#23)')
+      } else {
+        Write-Output ('VERIFY HEALTH: ' + $bmLine)
+      }
+    }
+  } else {
+    Write-Output 'VERIFY WARN: benchmark-duty.ps1 did not provide Get-BenchmarkReading'
+  }
+}
+
 # The decomposition, printed once, right before the verdict (queue main#104).
 # Sum of the parts is the measured round; the tail between the last mark and
 # here is added as 'rest' so the numbers reconcile with wall clock instead of

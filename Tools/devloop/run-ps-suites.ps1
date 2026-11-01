@@ -74,6 +74,7 @@ $verifyRel = @(
     'Tools\devloop\test-queue-due.ps1',
     'Tools\devloop\test-log-archive-duty.ps1',
     'Tools\devloop\test-qa-cite-duty.ps1',
+    'Tools\devloop\test-benchmark-duty.ps1',
     'Tools\devloop\test-verify-ps-suites.ps1',
     'Tools\devloop\test-probe-path-census.ps1',
     'Tools\devloop\test-state-promote.ps1'

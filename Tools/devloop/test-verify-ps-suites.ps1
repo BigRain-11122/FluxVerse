@@ -39,6 +39,9 @@ $utf8 = New-Object System.Text.UTF8Encoding($false)
 $ticket = Join-Path $sandbox 'ticket.json'
 $vticket = Join-Path $sandbox 'ticket-verify.json'
 $v2ticket = Join-Path $sandbox 'ticket-verify2.json'
+# main#117: the write side is two families. The sandbox seeds the face half so
+# its cases never reach the real 17.8 s suite half.
+$w2ticket = Join-Path $sandbox 'ticket-write2.json'
 
 function New-Runner([string]$name, [string]$body) {
     $p = Join-Path $sandbox $name
@@ -85,6 +88,13 @@ $script:v2force = $false
 $script:v2timeout = $null
 $script:v2off = $false
 $script:v2ticketpath = $v2ticket
+# Face + census half of the write side (main#117). Same rules: fixture runner,
+# own temp ticket, never the real suites.
+$script:w2runner = $runnerGreen
+$script:w2force = $false
+$script:w2timeout = $null
+$script:w2off = $false
+$script:w2ticketpath = $w2ticket
 
 # Seed the verify-family ticket before the write-side cases: those assert that
 # a cached tick stays under 3 s, and a due verify run would spend that budget
@@ -92,6 +102,7 @@ $script:v2ticketpath = $v2ticket
 . $module
 $null = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $vticket -RunnerPath $runnerGreen -TimeoutSec 8
 $null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $v2ticket -RunnerPath $runnerGreen -TimeoutSec 8
+$null = Invoke-PsSuitesTick -RepoDir $root -Family write2 -TicketPath $w2ticket -RunnerPath $runnerGreen -TimeoutSec 8
 
 function Clear-PsEnv {
     foreach ($k in @('FLUXVERSE_PS_SUITES', 'FLUXVERSE_PS_SUITES_RUNNER', 'FLUXVERSE_PS_SUITES_TICKET',
@@ -101,7 +112,10 @@ function Clear-PsEnv {
                      'FLUXVERSE_PS_SUITES_VERIFY_FORCE',
                      'FLUXVERSE_PS_SUITES_VERIFY2', 'FLUXVERSE_PS_SUITES_VERIFY2_RUNNER',
                      'FLUXVERSE_PS_SUITES_VERIFY2_TICKET', 'FLUXVERSE_PS_SUITES_VERIFY2_TIMEOUT',
-                     'FLUXVERSE_PS_SUITES_VERIFY2_FORCE', 'FLUXVERSE_PS_SUITES_CHILD')) {
+                     'FLUXVERSE_PS_SUITES_VERIFY2_FORCE', 'FLUXVERSE_PS_SUITES_CHILD',
+                     'FLUXVERSE_PS_SUITES_WRITE2', 'FLUXVERSE_PS_SUITES_WRITE2_RUNNER',
+                     'FLUXVERSE_PS_SUITES_WRITE2_TICKET', 'FLUXVERSE_PS_SUITES_WRITE2_TIMEOUT',
+                     'FLUXVERSE_PS_SUITES_WRITE2_FORCE')) {
         Remove-Item ('Env:\' + $k) -ErrorAction SilentlyContinue
     }
 }
@@ -129,6 +143,13 @@ function Run-Verify {
     if ($script:v2timeout) { $env:FLUXVERSE_PS_SUITES_VERIFY2_TIMEOUT = [string]$script:v2timeout }
     if ($script:v2off) { $env:FLUXVERSE_PS_SUITES_VERIFY2 = 'off' }
     if ($script:v2force) { $env:FLUXVERSE_PS_SUITES_VERIFY2_FORCE = '1' }
+    # Face + census half of the write side (main#117): cached ticket + fixture
+    # runner, so a sandbox round never pays the real 17.8 s half.
+    $env:FLUXVERSE_PS_SUITES_WRITE2_TICKET = $script:w2ticketpath
+    $env:FLUXVERSE_PS_SUITES_WRITE2_RUNNER = $script:w2runner
+    if ($script:w2timeout) { $env:FLUXVERSE_PS_SUITES_WRITE2_TIMEOUT = [string]$script:w2timeout }
+    if ($script:w2off) { $env:FLUXVERSE_PS_SUITES_WRITE2 = 'off' }
+    if ($script:w2force) { $env:FLUXVERSE_PS_SUITES_WRITE2_FORCE = '1' }
     if ($script:child) { $env:FLUXVERSE_PS_SUITES_CHILD = '1' }
     $sw = New-Object System.Diagnostics.Stopwatch
     $sw.Start()
@@ -143,6 +164,12 @@ function Run-Verify {
 # $x[0] would hand back a single character (r749 lesson, re-hit here).
 function Get-PsLine($out) {
     return @($out.lines | Where-Object { $_ -match '^VERIFY (HEALTH|WARN): ps-suites:' })
+}
+
+# The face + census half of the write side (main#117) prints its own label, so
+# `ps-suites:` must not pick it up and vice versa.
+function Get-Write2Line($out) {
+    return @($out.lines | Where-Object { $_ -match '^VERIFY (HEALTH|WARN): ps-suites-write2:' })
 }
 
 # The verify family prints its own label, so it can never be mistaken for the
@@ -382,12 +409,38 @@ $script:voff = $false
 
 # ---------- case r: family defaults + CheckOnly never spawn ---------------
 $wDefs = @(Get-PsSuitesTickDefaults -Family write)
+$w2Defs = @(Get-PsSuitesTickDefaults -Family write2)
 $vDefs = @(Get-PsSuitesTickDefaults -Family verify)
-Check 'r1 write family guards fifteen entries incl. the fixture tree' ($wDefs.Count -eq 15) ('count=' + $wDefs.Count)
+Check 'r1 the state-writer half guards six entries incl. the fixture tree' ($wDefs.Count -eq 6) ('count=' + $wDefs.Count)
 Check 'r2 verify family guards the gate it proves' ($vDefs -contains 'Tools\perceptor\verify.ps1') (($vDefs -join ','))
 Check 'r3 verify family is wider than the write list' ($vDefs.Count -gt $wDefs.Count) ('verify=' + $vDefs.Count + ' write=' + $wDefs.Count)
 $overlap = @($wDefs | Where-Object { $vDefs -contains $_ })
 Check 'r4 the two source sets overlap only on the runner and the fixture tree' ($overlap.Count -eq 2 -and ($overlap -contains 'Tools\devloop\run-ps-suites.ps1') -and ($overlap -contains 'Tools\devloop\fixtures\*\*')) (($overlap -join ','))
+# main#117: the seven-suite write family (32.0 s = 71% of its 45 s cap, a
+# budget WARN every tick) is split by what each suite guards. The two halves
+# must not share a single suite, or the split buys nothing.
+$wSuites = @(
+    'Tools\devloop\test-fastpath-state-live.ps1',
+    'logs\devloop-r197-writer-test.ps1',
+    'logs\devloop-r271-keep-negcon.ps1'
+)
+$w2Suites = @(
+    'Tools\devloop\test-write-status-face-bare.ps1',
+    'logs\devloop-r247-facewriter-test.ps1',
+    'Tools\devloop\test-nolivecheck-census.ps1',
+    'Tools\devloop\test-qa-rotation.ps1'
+)
+$leak1 = @($wDefs | Where-Object { $w2Suites -contains $_ })
+Check 'r4b the state half carries none of the face suites' ($leak1.Count -eq 0) ($leak1 -join ',')
+$leak2 = @($w2Defs | Where-Object { $wSuites -contains $_ })
+Check 'r4c the face half carries none of the state suites' ($leak2.Count -eq 0) ($leak2 -join ',')
+$missing1 = @($wSuites | Where-Object { -not ($wDefs -contains $_) })
+$missing2 = @($w2Suites | Where-Object { -not ($w2Defs -contains $_) })
+Check 'r4d every write suite is guarded by exactly one half' ($missing1.Count -eq 0 -and $missing2.Count -eq 0) (($missing1 -join ',') + ' | ' + ($missing2 -join ','))
+Check 'r4e the face half keeps its own ticket file' ((Get-PsSuitesFamilyTicketName -Family write2) -eq 'logs\.ps-suites-write2-last.json') (Get-PsSuitesFamilyTicketName -Family write2)
+Check 'r4f the face cap stays at the same 45 s as the state half' ((Get-PsSuitesFamilyTimeout -Family write2) -eq 45) ([string](Get-PsSuitesFamilyTimeout -Family write2))
+$overlap2 = @($w2Defs | Where-Object { $vDefs -contains $_ })
+Check 'r4g the face half overlaps verify only on the runner and the fixture tree' ($overlap2.Count -eq 2 -and ($overlap2 -contains 'Tools\devloop\run-ps-suites.ps1') -and ($overlap2 -contains 'Tools\devloop\fixtures\*\*')) (($overlap2 -join ','))
 $chkTicket = Join-Path $sandbox 'chk.json'
 $chk1 = Invoke-PsSuitesTick -RepoDir $root -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen -CheckOnly
 Check 'r5 CheckOnly reports a due run without spawning' ($chk1.needs_run -eq $true -and $chk1.status -eq 'stale' -and -not (Test-Path -LiteralPath $chkTicket)) ([string]$chk1.status)
@@ -509,7 +562,7 @@ $w3 = Get-PsSuitesFingerprint -RepoDir $fxDir -Paths @('fxsub\**')
 Check 'w3 editing a fixture moves the fingerprint' ($w2 -ne $w3) ($w2 + ' vs ' + $w3)
 $w4 = Get-PsSuitesFingerprint -RepoDir $fxDir -Paths @('fxsub\**')
 Check 'w4 the fixture fingerprint is stable across reads' ($w3 -eq $w4) ($w3 + ' vs ' + $w4)
-Check 'w5 both families guard the fixture tree' ($wDefs -contains 'Tools\devloop\fixtures\*\*' -and $vDefs -contains 'Tools\devloop\fixtures\*\*') (($wDefs -join ',') + ' | ' + ($vDefs -join ','))
+Check 'w5 every family guards the fixture tree' ($wDefs -contains 'Tools\devloop\fixtures\*\*' -and $w2Defs -contains 'Tools\devloop\fixtures\*\*' -and $vDefs -contains 'Tools\devloop\fixtures\*\*') (($wDefs -join ',') + ' | ' + ($w2Defs -join ',') + ' | ' + ($vDefs -join ','))
 # NOTE: $root is the Tools dir in this sandbox, so RepoDir must be its parent -
 # the first draft of w6 pointed at Tools and expanded to NOFILES (r754).
 $repo = Split-Path $root -Parent
@@ -519,7 +572,10 @@ $wAll = Get-PsSuitesFingerprint -RepoDir $repo -Paths @('Tools\devloop\fixtures\
 Check 'w7 the live fixture fingerprint is a real hash' ($wAll -match '^[0-9a-f]{12}$') $wAll
 $wReal = @(Expand-PsSuitesSourceList -RepoDir $repo -Paths $wDefs)
 $wMissing = @($wReal | Where-Object { -not (Test-Path -LiteralPath (Join-Path $repo $_)) })
-Check 'w8 every guarded write-side source exists in the real tree' ($wMissing.Count -eq 0 -and $wReal.Count -ge 15) (($wMissing -join ',') + ' of ' + $wReal.Count)
+Check 'w8 every guarded write-side source exists in the real tree' ($wMissing.Count -eq 0 -and $wReal.Count -ge 6) (($wMissing -join ',') + ' of ' + $wReal.Count)
+$w2Real = @(Expand-PsSuitesSourceList -RepoDir $repo -Paths $w2Defs)
+$w2Missing = @($w2Real | Where-Object { -not (Test-Path -LiteralPath (Join-Path $repo $_)) })
+Check 'w8b every guarded face-side source exists in the real tree' ($w2Missing.Count -eq 0 -and $w2Real.Count -ge 11) (($w2Missing -join ',') + ' of ' + $w2Real.Count)
 
 # ---------- case x: the ticket's `exit` is the runner's REAL code (main#97) --
 # r754 caught a live ticket reading `failing=1 exit=0` while the runner must have
@@ -724,7 +780,27 @@ $null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath (Join-Pat
 $zSec2 = ''
 try { $zSec2 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zSec2 = '' }
 Check 'z23 the heavy family asks for exactly its one sandbox' ($zSec2 -match '-Suites' -and @(($zSec2 -split '[,;\s]+') | Where-Object { $_ -match 'test-.*\.ps1$' }).Count -eq 1 -and $zSec2 -match 'test-verify-ps-suites\.ps1') $zSec2
+$env:FV_ARGS_OUT = $zArgFile
+$null = Invoke-PsSuitesTick -RepoDir $root -Family write -TicketPath (Join-Path $sandbox 'z-w.json') -RunnerPath $runnerArgs -Force
+$zW = ''
+try { $zW = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW = '' }
+Check 'z30 the state half asks for exactly its three suites' ($zW -match '-Suites' -and @(($zW -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 3 -and $zW -match 'test-fastpath-state-live\.ps1') $zW
+$null = Invoke-PsSuitesTick -RepoDir $root -Family write2 -TicketPath (Join-Path $sandbox 'z-w2.json') -RunnerPath $runnerArgs -Force
+$zW2 = ''
+try { $zW2 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW2 = '' }
+Check 'z31 the face half asks for its four suites only' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 4 -and $zW2 -match 'test-qa-rotation\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
 Remove-Item 'Env:\FV_ARGS_OUT' -ErrorAction SilentlyContinue
+
+# main#117 turn rule: when both write halves are due, the state half runs and
+# the face half defers - one round never pays both.
+Remove-Item -LiteralPath $ticket -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $w2ticket -Force -ErrorAction SilentlyContinue
+$zw1 = Run-Verify
+$zw1w = @(Get-PsLine $zw1); $zw1f = @(Get-Write2Line $zw1)
+Check 'z32 a write-side run defers the face half' ("$($zw1w[0])" -match 'ran=\d+ms' -and "$($zw1f[0])" -match 'deferred \(write-side ran \d+ms this tick\)') "$($zw1w[0]) | $($zw1f[0])"
+$zw2 = Run-Verify
+$zw2w = @(Get-PsLine $zw2); $zw2f = @(Get-Write2Line $zw2)
+Check 'z33 the face half then takes its own turn' ("$($zw2w[0])" -match 'cached=' -and "$($zw2f[0])" -match 'ran=\d+ms') "$($zw2w[0]) | $($zw2f[0])"
 
 # A family whose suite count changed (main#99: 9 -> 8) must not average the old
 # durations into the new baseline, or the budget WARN keeps ringing for three

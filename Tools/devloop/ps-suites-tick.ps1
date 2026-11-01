@@ -87,7 +87,29 @@ function Get-PsSuitesTickDefaults {
     # site-verdict.ps1 must not buy a write-side run, and the ~51 s
     # gate-of-the-gate sandbox must not ride along with the eight light verify
     # suites (main#99: together they measured 121.6 s = 68% of the 180 s cap).
-    param([ValidateSet('write','verify','verify2')][string]$Family = 'write')
+    param([ValidateSet('write','write2','verify','verify2')][string]$Family = 'write')
+    if ($Family -eq 'write2') {
+        # main#117: the seven-suite write family measured 32.0 s against a 45 s
+        # cap - past the 2/3 budget line, so every tick printed a WARN. Timed
+        # one suite at a time it was 3.4 / 3.6 / 4.0 / 4.3 / 3.7 / 3.2 / 7.2 s:
+        # no single suite eats the bulk, ~2.5-3 s per suite is PowerShell
+        # process start. So the honest fix is to split by what each suite
+        # guards and let one tick pay one half. This half is the face writer
+        # plus the two census/QA tools whose sandboxes live beside it.
+        return @(
+            'Tools\devloop\test-write-status-face-bare.ps1',
+            'logs\devloop-r247-facewriter-test.ps1',
+            'Tools\devloop\test-nolivecheck-census.ps1',
+            'Tools\devloop\test-qa-rotation.ps1',
+            'Tools\devloop\run-ps-suites.ps1',
+            'Tools\devloop\build-city-panel.ps1',
+            'Tools\devloop\face-path-lint.ps1',
+            'Tools\devloop\write-status-face.ps1',
+            'Tools\devloop\nolivecheck-census.ps1',
+            'Tools\devloop\qa-rotation.ps1',
+            'Tools\devloop\fixtures\*\*'
+        )
+    }
     if ($Family -eq 'verify2') {
         # Only what can flip test-verify-ps-suites.ps1's verdict: the sandbox
         # itself, the tick module it dot-sources, the runner it drives, the
@@ -123,24 +145,15 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\fixtures\*\*'
         )
     }
-    # Guarded sources: the five write-side suites plus everything whose change
-    # can flip their verdict (runner, builder regex, lint constant, the two
-    # writers under test).
+    # The other half of main#117: the state-file writer and the three suites
+    # that prove it. Editing write-fastpath-state.ps1 must not buy the face
+    # suites anymore (and vice versa).
     return @(
-        'Tools\devloop\test-write-status-face-bare.ps1',
         'Tools\devloop\test-fastpath-state-live.ps1',
-        'logs\devloop-r247-facewriter-test.ps1',
         'logs\devloop-r197-writer-test.ps1',
         'logs\devloop-r271-keep-negcon.ps1',
         'Tools\devloop\run-ps-suites.ps1',
-        'Tools\devloop\build-city-panel.ps1',
-        'Tools\devloop\face-path-lint.ps1',
-        'Tools\devloop\write-status-face.ps1',
         'Tools\devloop\write-fastpath-state.ps1',
-        'Tools\devloop\nolivecheck-census.ps1',
-        'Tools\devloop\test-nolivecheck-census.ps1',
-        'Tools\devloop\qa-rotation.ps1',
-        'Tools\devloop\test-qa-rotation.ps1',
         'Tools\devloop\fixtures\*\*'
     )
 }
@@ -268,9 +281,10 @@ function Write-PsSuitesTicket {
 }
 
 function Get-PsSuitesFamilyTicketName {
-    param([ValidateSet('write','verify','verify2')][string]$Family = 'write')
+    param([ValidateSet('write','write2','verify','verify2')][string]$Family = 'write')
     if ($Family -eq 'verify2') { return 'logs\.ps-suites-verify2-last.json' }
     if ($Family -eq 'verify') { return 'logs\.ps-suites-verify-last.json' }
+    if ($Family -eq 'write2') { return 'logs\.ps-suites-write2-last.json' }
     return 'logs\.ps-suites-last.json'
 }
 
@@ -287,9 +301,12 @@ function Get-PsSuitesFamilyTimeout {
     # (80.5 s -> 161 -> 165 s, headroom 84.5 s). It stays under the light
     # family's 180 s (one sandbox must not get more rope than eight) and inside
     # the rule that no family cap may exceed 1/3 of the 600 s tick.
-    param([ValidateSet('write','verify','verify2')][string]$Family = 'write')
+    param([ValidateSet('write','write2','verify','verify2')][string]$Family = 'write')
     if ($Family -eq 'verify') { return 180 }
     if ($Family -eq 'verify2') { return 165 }
+    # main#117: both write-side halves keep the 45 s cap. Measured 11.6 s
+    # (state writer) and 17.8 s (face + census) - the 2/3 line is 30 s, so
+    # both fit with room and neither needs a bigger guess.
     return 45
 }
 
@@ -451,7 +468,7 @@ function Get-PsSuitesRedTail {
 function Invoke-PsSuitesTick {
     param(
         [Parameter(Mandatory=$true)][string]$RepoDir,
-        [ValidateSet('write','verify','verify2')][string]$Family = 'write',
+        [ValidateSet('write','write2','verify','verify2')][string]$Family = 'write',
         [string]$TicketPath = '',
         [string[]]$Paths = @(),
         [string]$RunnerPath = '',
@@ -479,6 +496,14 @@ function Invoke-PsSuitesTick {
     # Each family names its own suites. `-Verify` would run all nine (including
     # the ~51 s heavy sandbox), which is exactly the coupling main#99 removed:
     # the light family runs the eight test-*.ps1 entries of its guarded set.
+    # main#117: the write side is split the same way, so the runner's default
+    # list (all seven) can never make one family pay for both halves.
+    if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write') {
+        $ExtraArgs = @('-Suites', 'Tools\devloop\test-fastpath-state-live.ps1,logs\devloop-r197-writer-test.ps1,logs\devloop-r271-keep-negcon.ps1')
+    }
+    if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write2') {
+        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-nolivecheck-census.ps1,Tools\devloop\test-qa-rotation.ps1')
+    }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify') {
         $lightSuites = @(Get-PsSuitesTickDefaults -Family 'verify' | Where-Object { $_ -match 'test-[^\\]+\.ps1$' })
         $ExtraArgs = @('-Suites', ($lightSuites -join ','))

@@ -33,6 +33,11 @@
 #      forgot its trailing `|` keeps its marker in the final split element, so
 #      the deadline is still counted - and the malformed row is reported as bad
 #      with reason `row` instead of being read one cell off in silence.
+#   N) duplicate ids (main#112): the same id twice in one queue file is counted
+#      and named with its 1-based line, in a third account that never joins
+#      `bad` or `long`. The same number in two files is not a collision (the
+#      queues number independently), and a row whose first cell is not a plain
+#      integer is not a data row at all.
 # ASCII-only law: fixtures are ASCII; the live CJK rows are only counted.
 
 $ErrorActionPreference = 'Stop'
@@ -200,6 +205,37 @@ $lenL = $rowL1.Length
 $rowL = "# fixture queue: width boundary`r`n`r`n| # | task | ptr | note |`r`n|---|---|---|---|`r`n" + $rowL1 + "`r`n"
 Write-TextFile (Join-Path $qdirL 'queue-l.md') $rowL
 
+# --- N) duplicate ids (main#112) --------------------------------------------
+# Ids are numbered by hand, so a collision leaves no trace: r774 saw two `#110`
+# rows and "the #110 row already shipped" then vouched for the open one. Two
+# files here prove the grouping rule: a number repeated in the SAME file is a
+# collision, the same number in ANOTHER file is not (the queues number
+# independently). A row whose first cell is not a plain integer is not a data
+# row and must not enter the count at all.
+$qdirN = Join-Path $sandbox 'queueN'
+New-Item -ItemType Directory -Path $qdirN -Force | Out-Null
+$rowN1 = @"
+# fixture queue: duplicate ids
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | unique row | p | nothing here |
+| 4 | duplicate, still open | p | nothing here |
+| 4 | ~~duplicate, already shipped~~ | p | nothing here |
+| x | not a data row (non-integer id) | p | nothing here |
+"@
+Write-TextFile (Join-Path $qdirN 'queue-n1.md') $rowN1
+$rowN2 = @"
+# fixture queue: second file numbers independently
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 4 | same number, other file | p | nothing here |
+| 5 | duplicate in file two | p | nothing here |
+| 5 | duplicate in file two again | p | nothing here |
+"@
+Write-TextFile (Join-Path $qdirN 'queue-n2.md') $rowN2
+
 # --- results ---------------------------------------------------------------
 $A = Get-QueueDue -Dir $qdirA -Today $today
 $B = Get-QueueDue -Dir $qdirB -Today $today
@@ -209,6 +245,7 @@ $QH = Get-QueueDue -Dir $qdirH -Today $today
 $QI = Get-QueueDue -Dir $qdirI -Today $today
 $QJ = Get-QueueDue -Dir $qdirJ -Today $today
 $QK = Get-QueueDue -Dir $qdirK -Today $today
+$QN = Get-QueueDue -Dir $qdirN -Today $today
 $QLat = Get-QueueDue -Dir $qdirL -Today $today -MaxRowChars $lenL
 $QLover = Get-QueueDue -Dir $qdirL -Today $today -MaxRowChars ($lenL - 1)
 
@@ -240,8 +277,12 @@ $liveLate = 0
 $liveLong = 0
 $liveLongMax = 0
 $liveLateIds = @()
+$liveDupeGroups = 0
+$liveDupeRows = 0
+$liveIdsByFile = @{}
 foreach ($f in @(Get-ChildItem -LiteralPath $qdirLive -Filter '*.md' -File | Sort-Object Name)) {
     $txt = [IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8)
+    $liveIdsByFile[$f.Name] = @{}
     foreach ($line in ($txt -split "`r?`n")) {
         $t = $line.Trim()
         if (-not $t.StartsWith('|')) { continue }
@@ -249,6 +290,8 @@ foreach ($f in @(Get-ChildItem -LiteralPath $qdirLive -Filter '*.md' -File | Sor
         if ($cells.Count -lt 5) { continue }
         $id = $cells[1].Trim()
         if ($id -notmatch '^\d+$') { continue }
+        if ($liveIdsByFile[$f.Name].ContainsKey($id)) { $liveIdsByFile[$f.Name][$id]++ }
+        else { $liveIdsByFile[$f.Name][$id] = 1 }
         if ($t.Length -gt $liveLongMax) { $liveLongMax = $t.Length }
         if ($t.Length -gt 3000) { $liveLong++ }
         if ($t.Contains('~~')) { continue }
@@ -262,6 +305,13 @@ foreach ($f in @(Get-ChildItem -LiteralPath $qdirLive -Filter '*.md' -File | Sor
         } catch { continue }
         $liveDated++
         if ($due.Date -lt $today.Date) { $liveLate++; $liveLateIds += $id }
+    }
+}
+foreach ($fn in @($liveIdsByFile.Keys | Sort-Object)) {
+    foreach ($cid in @($liveIdsByFile[$fn].Keys)) {
+        if ($liveIdsByFile[$fn][$cid] -lt 2) { continue }
+        $liveDupeGroups++
+        $liveDupeRows += $liveIdsByFile[$fn][$cid]
     }
 }
 
@@ -300,6 +350,13 @@ $logK = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
 $htmlK = ''
 if (Test-Path -LiteralPath $outK) { $htmlK = [IO.File]::ReadAllText($outK) }
 
+$outN = Join-Path $sandbox 'panel-n.html'
+$logN = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
+        -ProofRoot $repoDir -QueueDir $qdirN `
+        -OutPath $outN -HistoryPath (Join-Path $sandbox 'hist-n.jsonl')) -join "`n"
+$htmlN = ''
+if (Test-Path -LiteralPath $outN) { $htmlN = [IO.File]::ReadAllText($outN) }
+
 $pass = 0
 $fail = 0
 function Check([string]$name, [bool]$cond) {
@@ -333,6 +390,9 @@ Check 'C: long count matches recount' ($C.long -eq $liveLong)
 Check 'C: long items agree with the long count' (@($C.long_items).Count -eq $C.long)
 Check 'C: long_max matches the longest live row' ($C.long_max -eq $liveLongMax)
 Check 'C: the long cap is shipped with the census' ($C.long_limit -eq 3000)
+Check 'C: live duplicate groups match recount' ($C.dupe -eq $liveDupeGroups)
+Check 'C: live duplicate rows agree with the recount' ($C.dupe_rows -eq $liveDupeRows)
+Check 'C: live duplicate items agree with dupe_rows' (@($C.dupe_items).Count -eq $C.dupe_rows)
 
 Check 'F: eight rows scanned' ($QF.scanned -eq 8)
 Check 'F: five bad markers' ($QF.bad -eq 5)
@@ -407,6 +467,24 @@ Check 'K: one character over the cap is long' ($QLover.long -eq 1)
 Check 'K: the boundary row reports its own length' ((@($QLover.long_items)[0].chars) -eq $lenL)
 Check 'K: an injected cap is echoed back' ($QLat.long_limit -eq $lenL)
 
+# N) duplicate ids (main#112): grouped per file, named with 1-based line, and
+# kept in their own account. A shared number across two files is NOT a
+# collision; a row whose first cell is not an integer is not a data row.
+Check 'N: fixture queue read' ($QN.exists -eq $true)
+Check 'N: six data rows scanned (the non-integer id is not one)' ($QN.scanned -eq 6)
+Check 'N: two duplicate groups (one per file, not merged)' ($QN.dupe -eq 2)
+Check 'N: four rows share an id' ($QN.dupe_rows -eq 4)
+Check 'N: dupe items agree with dupe_rows' (@($QN.dupe_items).Count -eq $QN.dupe_rows)
+Check 'N: a unique id is not named' (@($QN.dupe_items | Where-Object { $_.id -eq '1' }).Count -eq 0)
+Check 'N: the same number in another file is not a collision' ((((@($QN.dupe_items | Where-Object { $_.id -eq '4' } | ForEach-Object { $_.file }) | Sort-Object) -join ',')) -eq 'queue-n1.md,queue-n1.md')
+Check 'N: a number unique in its own file is never named' (@($QN.dupe_items | Where-Object { $_.id -eq '4' -and $_.file -eq 'queue-n2.md' }).Count -eq 0)
+Check 'N: line numbers point at the real rows (1-based)' (((@($QN.dupe_items | Where-Object { $_.id -eq '4' -and $_.file -eq 'queue-n1.md' } | ForEach-Object { $_.line }) | Sort-Object) -join ',') -eq '6,7')
+Check 'N: closed flag is per row, not per id' ((@($QN.dupe_items | Where-Object { $_.id -eq '4' -and $_.file -eq 'queue-n1.md' -and $_.closed }).Count -eq 1) -and (@($QN.dupe_items | Where-Object { $_.id -eq '4' -and $_.file -eq 'queue-n1.md' -and -not $_.closed }).Count -eq 1))
+Check 'N: duplicate ids never join the bad account' ($QN.bad -eq 0)
+Check 'N: duplicate ids never join the long account' ($QN.long -eq 0)
+Check 'N: a queue with unique ids reports dupe=0' ($A.dupe -eq 0 -and $A.dupe_rows -eq 0)
+Check 'N: dupe items ship in file order, not reversed' (((@($QN.dupe_items | Where-Object { $_.id -eq '4' -and $_.file -eq 'queue-n1.md' } | ForEach-Object { $_.line })) -join ',') -eq '6,7')
+
 Check 'D: builder reported PANEL OK' ($logD -match 'PANEL OK')
 Check 'D: fixture queue reports one late' ($logD -match 'qdue=1(?!\d)')
 Check 'D: fixture queue reports 12 days' ($logD -match 'qdue_max=12(?!\d)')
@@ -416,6 +494,7 @@ Check 'D: an unreadable date is reported as bad, not dropped' ($logD -match 'qdu
 Check 'D: a queue with no quoted deadline reports code=0' ($logD -match 'qdue_code=0(?!\d)')
 Check 'D: a queue with no over-cap row reports long=0' ($logD -match 'qdue_long=0(?!\d)')
 Check 'D: the longest row is reported even when nothing is over the cap' ($logD -match 'qdue_longmax=[1-9]\d*(?!\d)')
+Check 'D: a queue with no duplicate id reports dupe=0' ($logD -match 'qdue_dupe=0(?!\d)')
 
 Check 'E: missing queue dir still builds' ($logE -match 'PANEL OK')
 Check 'E: missing queue dir says missing, not zero' ($logE -match 'qdue=missing')
@@ -423,6 +502,7 @@ Check 'E: missing queue dir says bad=missing too' ($logE -match 'qdue_bad=missin
 Check 'E: missing queue dir says code=missing too' ($logE -match 'qdue_code=missing')
 Check 'E: missing queue dir says long=missing too' ($logE -match 'qdue_long=missing')
 Check 'E: missing queue dir says longmax=missing too' ($logE -match 'qdue_longmax=missing')
+Check 'E: missing queue dir says dupe=missing too' ($logE -match 'qdue_dupe=missing')
 Check 'E: page still carries the row element' ($htmlE.Contains('id="f-queue"'))
 
 Check 'I: builder reports the quoted count' ($logI -match 'PANEL OK' -and $logI -match 'qdue_code=1(?!\d)')
@@ -432,6 +512,11 @@ Check 'K: builder reports the over-cap row count' ($logK -match 'PANEL OK' -and 
 Check 'K: builder reports the longest row' ($logK -match ('qdue_longmax=' + $kMaxChars + '(?!\d)'))
 Check 'K: the over-cap rows reach the page data' ($htmlK.Contains('long_items'))
 Check 'K: the page carries the shipped cap' ($htmlK.Contains('"long_limit":3000'))
+
+Check 'N: builder reports the duplicate group count' ($logN -match 'PANEL OK' -and $logN -match 'qdue_dupe=2(?!\d)')
+Check 'N: builder reports how many rows share an id' ($logN -match 'qdue_dupe_rows=4(?!\d)')
+Check 'N: the duplicate rows reach the page data' ($htmlN.Contains('dupe_items'))
+Check 'N: the page ships the line numbers for the fix' ($htmlN.Contains('"line":6'))
 
 if (Test-Path -LiteralPath $sandbox) { Remove-Item -LiteralPath $sandbox -Recurse -Force }
 

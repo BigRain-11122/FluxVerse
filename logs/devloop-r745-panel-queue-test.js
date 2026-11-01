@@ -232,5 +232,45 @@ chk('long.not-hidden-by-late', e14.innerHTML.indexOf('超长行 1 行') >= 0 &&
 const e15 = runPanel(withQueue(calm), 'calm3')('f-queue');
 chk('long.absent-when-zero', e15.innerHTML.indexOf('超长行') < 0, e15.innerHTML);
 
+// --- 12) duplicate ids (queue main#112) -----------------------------------
+// Ids are numbered by hand, so a collision leaves no trace until both rows are
+// read - and "the #N row already shipped" then vouches for the open row that
+// shares the number. The page names how many ids collide, which ones, how many
+// rows they span, and keeps this third account apart from `bad` and `long`.
+const dupeOnly = {
+  exists: true, dir_rel: 'state/queue', files: 1, scanned: 3, open: 3, dated: 0, late: 0,
+  max_days: 0, max_id: '', bad: 0, code: 0, long: 0, long_max: 0, long_max_id: '',
+  long_limit: 3000, dupe: 1, dupe_rows: 2, as_of: '2026-11-01', items: [],
+  dupe_items: [
+    { id: '110', file: 'main.md', line: 91, closed: false },
+    { id: '110', file: 'main.md', line: 92, closed: true }
+  ]
+};
+const e16 = runPanel(withQueue(dupeOnly), 'dupeonly')('f-queue');
+chk('dupe.chip', e16.innerHTML.indexOf('重复 id 1 组') >= 0, e16.innerHTML);
+chk('dupe.names-id', e16.innerHTML.indexOf('#110') >= 0, e16.innerHTML);
+chk('dupe.row-count', e16.innerHTML.indexOf('2 行同号') >= 0, e16.innerHTML);
+chk('dupe.says-why', e16.innerHTML.indexOf('「#N 已销」不替另一行作保') >= 0, e16.innerHTML);
+chk('dupe.keeps-ok-chip', e16.innerHTML.indexOf('在队 3 件') >= 0, e16.innerHTML);
+chk('dupe.not-called-long', e16.innerHTML.indexOf('超长行') < 0, e16.innerHTML);
+chk('dupe.not-called-bad', e16.innerHTML.indexOf('标记坏') < 0, e16.innerHTML);
+
+const dupeLate = {
+  exists: true, dir_rel: 'state/queue', files: 1, scanned: 3, open: 3, dated: 1, late: 1,
+  max_days: 5, max_id: '23', bad: 0, code: 0, long: 0, long_max: 0, long_max_id: '',
+  long_limit: 3000, dupe: 1, dupe_rows: 2, as_of: '2026-11-01',
+  items: [{ id: '23', file: 'main.md', due: '2026-10-27', days: 5 }],
+  dupe_items: [
+    { id: '110', file: 'main.md', line: 91, closed: false },
+    { id: '110', file: 'main.md', line: 92, closed: true }
+  ]
+};
+const e17 = runPanel(withQueue(dupeLate), 'dupellate')('f-queue');
+chk('dupe.not-hidden-by-late', e17.innerHTML.indexOf('重复 id 1 组') >= 0 &&
+  e17.innerHTML.indexOf('逾期 1 件') >= 0, e17.innerHTML);
+
+const e18 = runPanel(withQueue(calm), 'calm4')('f-queue');
+chk('dupe.absent-when-zero', e18.innerHTML.indexOf('重复 id') < 0, e18.innerHTML);
+
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 if (fail > 0) process.exit(1);

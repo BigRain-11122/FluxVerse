@@ -66,6 +66,19 @@
 #    structural debt (one row is supposed to be one item), not a mis-written
 #    marker, so the two accounts stay separate. Closed (struck) rows are counted
 #    too and carry `closed=true` - a struck 45 KB row still breaks the table.
+#  - DUPLICATE IDS (main#112). Ids are numbered by hand, and a collision leaves
+#    no trace: r774 saw two `#110` rows, and the closed one's "already shipped"
+#    reading silently vouched for the open one. This module now counts, PER FILE
+#    (the three queues number independently, so main#112 and tech#16 are not a
+#    collision), every id that appears more than once: `dupe` = number of such
+#    ids, `dupe_rows` = how many rows they span, `dupe_items` = one entry per row
+#    of every duplicated group ({id,file,line,closed}, `line` is 1-based within
+#    the file, so a reader can jump straight to it). Only DATA rows count (the
+#    same shape test as every other account: a `|`-led row whose first cell is a
+#    plain integer) - an example table pasted into prose is not the queue.
+#    `dupe` is NOT `bad` and NOT `long`: a duplicate id is a numbering debt, not a
+#    mis-written marker and not an overlong row, so it keeps its own account and
+#    never turns the gate red.
 #  - WHICH CELL IS LAST (main#102). "The remark cell is the last cell" assumed a
 #    trailing `|`, so a row that forgot it had its marker judged against the
 #    POINTER cell and the remark cell was never scanned - silently (main#100
@@ -180,11 +193,14 @@ function Get-QueueDue
         long_max = 0
         long_max_id = ''
         long_limit = $MaxRowChars
+        dupe     = 0
+        dupe_rows = 0
         as_of    = $Today.Date.ToString('yyyy-MM-dd')
         items    = @()
         bad_items = @()
         code_items = @()
         long_items = @()
+        dupe_items = @()
     }
     if ([string]::IsNullOrEmpty($Dir)) { return $r }
     if (-not (Test-Path -LiteralPath $Dir)) { return $r }
@@ -206,6 +222,7 @@ function Get-QueueDue
     $badItems = New-Object System.Collections.ArrayList
     $codeItems = New-Object System.Collections.ArrayList
     $longItems = New-Object System.Collections.ArrayList
+    $rowRecs = New-Object System.Collections.ArrayList
     $files = 0
     $rows = 0
     $opens = 0
@@ -222,7 +239,9 @@ function Get-QueueDue
         $files++
         $txt = ''
         try { $txt = [IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8) } catch { continue }
+        $lineNo = 0
         foreach ($line in ($txt -split "`r?`n")) {
+            $lineNo++
             $t = $line.Trim()
             if (-not $t.StartsWith('|')) { continue }
             $cells = $t.Split('|')
@@ -230,6 +249,14 @@ function Get-QueueDue
             $idTxt = $cells[1].Trim()
             if ($idTxt -notmatch '^\d+$') { continue }
             $rows++
+            # Every data row is recorded for the duplicate-id account (main#112):
+            # the row's own file, its 1-based line, and whether it is closed.
+            $null = $rowRecs.Add([ordered]@{
+                id     = $idTxt
+                file   = $f.Name
+                line   = $lineNo
+                closed = [bool]$t.Contains('~~')
+            })
             # Row width (main#110): measured on EVERY data row, closed ones
             # included - a struck 45 KB row still wrecks the table - and before
             # the closed-row skip so a finished monster cannot hide.
@@ -343,6 +370,38 @@ function Get-QueueDue
             if ($days -gt [int]$r.max_days) { $r.max_days = $days; $r.max_id = $idTxt }
         }
     }
+
+    # Duplicate ids, per file (main#112). Ids are numbered by hand and a
+    # collision is invisible until someone reads both rows: `#N already
+    # shipped` then vouches for an open row that shares the number. Group by
+    # (file,id), keep every group with more than one row, and name each row
+    # with its 1-based line so the fix is a jump, not a hunt.
+    $dupeItems = New-Object System.Collections.ArrayList
+    $byFileId = @{}
+    foreach ($rec in $rowRecs) {
+        $key = [string]$rec.file + '|' + [string]$rec.id
+        if (-not $byFileId.ContainsKey($key)) {
+            $byFileId[$key] = New-Object System.Collections.ArrayList
+        }
+        $null = $byFileId[$key].Add($rec)
+    }
+    $dupeGroups = 0
+    foreach ($key in @($byFileId.Keys | Sort-Object)) {
+        $grp = $byFileId[$key]
+        if ($grp.Count -lt 2) { continue }
+        $dupeGroups++
+        foreach ($rec in @($grp | Sort-Object -Property @{ Expression = { [int]$_.line } })) {
+            $null = $dupeItems.Add([ordered]@{
+                id     = $rec.id
+                file   = $rec.file
+                line   = $rec.line
+                closed = $rec.closed
+            })
+        }
+    }
+    $r.dupe = $dupeGroups
+    $r.dupe_rows = $dupeItems.Count
+    if ($dupeItems.Count -gt 0) { $r.dupe_items = @($dupeItems) }
 
     $r.files = $files
     $r.scanned = $rows

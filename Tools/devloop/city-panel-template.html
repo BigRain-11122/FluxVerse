@@ -269,6 +269,11 @@ const ARCH = __ARCH_JSON__;
 // `long` counts DATA rows longer than `long_limit` characters (long_items:
 // {id,file,chars,closed}); it is a separate account from `bad` - an overlong row
 // is one-item-per-row debt, not a mis-written marker.
+// `dupe` counts ids that appear more than once in the SAME queue file
+// (dupe_rows = how many rows they span; dupe_items: {id,file,line,closed}).
+// Ids are numbered by hand, so a collision leaves no trace until someone reads
+// both rows - "the #N row already shipped" then vouches for the open one that
+// shares the number. Third separate account: numbering debt, never a red light.
 // The page never recounts: builder is the single number source (queue main#83).
 const QUEUE = __QUEUE_JSON__;
 // SHOTS = builder-resolved City3D evidence frames from qa/ ({items:[{name,rel,
@@ -642,6 +647,25 @@ function artTitle(it){
         (long > longIds.length ? ' …' : '') +
         ' · 一行一件（上限 ' + longLimit + ' 字符）</span>')
       : '';
+    // 重复 id（queue main#112）：id 是手工取的号，撞号此前没有任何信号——r774 就
+    // 见过两条 `#110`，而「#110 已销」的读法会连带替同号那行开着的活作保。这里
+    // 按文件分组点名（同号不同事），**与 bad／long 分三本账**：编号债不是标记写错、
+    // 也不是行太长；只给读数与点名，不凭它开红灯。
+    const dupe = (typeof Q.dupe === 'number') ? Q.dupe : 0;
+    const dupeRows = (typeof Q.dupe_rows === 'number') ? Q.dupe_rows : 0;
+    const dupeAll = (Array.isArray(Q.dupe_items) ? Q.dupe_items : [])
+      .map(function (it) { return (it && it.id) ? ('#' + it.id) : ''; })
+      .filter(function (s) { return s !== ''; });
+    const dupeIds = dupeAll
+      .filter(function (v, i) { return dupeAll.indexOf(v) === i; })
+      .slice(0, 3)
+      .map(function (v) { return v; });
+    const dupeTxt = dupe > 0
+      ? ('<span class="tag warn">重复 id ' + dupe + ' 组</span>' +
+        '<span class="muted"> ' + esc(dupeIds.join(' · ')) +
+        (dupe > dupeIds.length ? ' …' : '') +
+        ' · ' + dupeRows + ' 行同号（同号不同事，「#N 已销」不替另一行作保）</span>')
+      : '';
     if (late > 0) {
       // r749（main#87）：点名「哪几行」逾期，而不只是「几件」。此前只有最久
       // 一行的 id，读者还得自己翻文件去数；标记面本就带每一行，直接印前五条。
@@ -657,13 +681,13 @@ function artTitle(it){
         (lateIds.length
           ? ('<span class="muted"> · 逾期行 ' + esc(lateIds.join(' · ')) +
             (late > lateIds.length ? ' …' : '') + '</span>')
-          : '') + rowTxt + badTxt + codeTxt + longTxt;
+          : '') + rowTxt + badTxt + codeTxt + longTxt + dupeTxt;
     } else if (dueBad > 0 || rowTxt !== '') {
-      el.innerHTML = rowTxt + badTxt + codeTxt + longTxt;
+      el.innerHTML = rowTxt + badTxt + codeTxt + longTxt + dupeTxt;
     } else {
       el.innerHTML = '<span class="tag ok">无逾期</span>' +
         '<span class="muted"> 在队 ' + open + ' 件（带期限 ' + dated + '）</span>' +
-        codeTxt + longTxt;
+        codeTxt + longTxt + dupeTxt;
     }
   })();
 

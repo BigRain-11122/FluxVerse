@@ -480,7 +480,17 @@ if (-not (Test-Path -LiteralPath $qdueMod)) {
     } elseif (-not $qd.exists) {
       Write-Output ('VERIFY WARN: qdue: queue dir not readable (' + $qdir + ') - open/late/bad unknown, not zero')
     } else {
-      $qLine = 'qdue: open=' + $qd.open + ' dated=' + $qd.dated + ' late=' + $qd.late + ' max=' + $qd.max_days + 'd bad=' + $qd.bad + ' code=' + $qd.code + ' long=' + $qd.long + ' longmax=' + $qd.long_max
+      $qLine = 'qdue: open=' + $qd.open + ' dated=' + $qd.dated + ' late=' + $qd.late + ' max=' + $qd.max_days + 'd bad=' + $qd.bad + ' code=' + $qd.code + ' long=' + $qd.long + ' longmax=' + $qd.long_max + ' dupe=' + $qd.dupe + ' duperows=' + $qd.dupe_rows
+      # Duplicate ids (main#112): ids are numbered by hand, so a collision is
+      # invisible until both rows are read - and "the #N row already shipped"
+      # then vouches for the open row that shares the number. This is a third
+      # account (not bad, not long) and it stays a READOUT: a queue whose only
+      # defect is a duplicate id keeps its HEALTH line, the hint just says where.
+      $qDupeHint = ''
+      if ($qd.dupe -gt 0) {
+        $qDupeIds = @($qd.dupe_items | ForEach-Object { '#' + $_.id + '@' + $_.file + ':' + $_.line })
+        $qDupeHint = '; duplicate queue ids in the same file (numbering debt, "shipped" does not vouch for the other row): ' + ($qDupeIds -join ', ')
+      }
       # Row width (main#110): a row longer than the module's cap is structural
       # debt ("one row is one item"), NOT a mis-written marker - it never joins
       # the bad account. The suffix is printed whenever it exists, so an overdue
@@ -496,14 +506,14 @@ if (-not (Test-Path -LiteralPath $qdueMod)) {
         if (@($qd.bad_items | Where-Object { $_.reason -eq 'row' }).Count -gt 0) {
           $qHint = $qHint + '; a row missing its trailing | mis-shifts which cell is last'
         }
-        Write-Output ('VERIFY WARN: ' + $qLine + ' - badly written due markers: ' + ($qBad -join ', ') + $qHint + $qLongHint)
+        Write-Output ('VERIFY WARN: ' + $qLine + ' - badly written due markers: ' + ($qBad -join ', ') + $qHint + $qLongHint + $qDupeHint)
       } elseif ($qd.late -gt 0) {
         $qLate = @($qd.items | ForEach-Object { '#' + $_.id + ' ' + $_.days + 'd' })
-        Write-Output ('VERIFY WARN: ' + $qLine + ' - overdue queue rows: ' + ($qLate -join ', ') + $qLongHint)
+        Write-Output ('VERIFY WARN: ' + $qLine + ' - overdue queue rows: ' + ($qLate -join ', ') + $qLongHint + $qDupeHint)
       } elseif ($qd.long -gt 0) {
-        Write-Output ('VERIFY WARN: ' + $qLine + $qLongHint)
+        Write-Output ('VERIFY WARN: ' + $qLine + $qLongHint + $qDupeHint)
       } else {
-        Write-Output ('VERIFY HEALTH: ' + $qLine)
+        Write-Output ('VERIFY HEALTH: ' + $qLine + $qDupeHint)
       }
     }
   } else {

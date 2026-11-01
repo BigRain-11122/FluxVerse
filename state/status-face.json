@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T03:50:54Z",
-    "current_activity":  "r775 收口：`./state/queue/main.md` #4 那条 8,062 字符（65 条逐轮 PASS 记录）的长卷按 `·rNNN=` 段界拆成一行一件，主表只留 214 字符索引行（末笔 r625），全档落 `./state/queue/_log/main-4-log.md`；无损证据=从 git HEAD 取原行、附录 65 段拼回逐字节相等（7,947 字符），其余 93 行零改动",
-    "artifact":  "`./state/queue/_log/main-4-log.md`, `./state/queue/main.md`, `./world-public/city-panel.html`, `./qa/city-panel-narrow.png`, `./TECH.md`, `./Tools/devloop/queue-due.ps1`",
-    "artifact_utc":  "2026-11-01T03:50:54Z",
-    "milestone":  "下一轮=main#112 队列 id 唯一性机检（落点 `./Tools/devloop/queue-due.ps1` 扫描面复用·r775 实测两条 #110 一开一关仍并存·判据三问已入队）；其后 main#23 司级 7 天基准刷新（`./docs/global-benchmarks.md`·due=2026-10-27 已逾期 5 天）",
+    "updated_utc":  "2026-11-01T04:04:30Z",
+    "current_activity":  "r776 收口：队列撞号第一次被机器点名——`./Tools/devloop/queue-due.ps1` 新增第三本账（`dupe`／`dupe_rows`／`dupe_items`，按文件分组、逐条给 1 基行号），面板「队列逾期」行印「重复 id N 组 · M 行同号」，verify §2g 印 `dupe=`／`duperows=`；活队列首跑点出那对 `#110`（`./state/queue/main.md` 91／92 行），活跃那条当场改号 #113，改后 `qdue_dupe=0`、逾期／坏标记／超长三账一字未动",
+    "artifact":  "`./world-public/city-panel.html`, `./Tools/devloop/queue-due.ps1`, `./Tools/devloop/test-queue-due.ps1`, `./state/queue/main.md`, `./TECH.md`",
+    "artifact_utc":  "2026-11-01T04:04:30Z",
+    "milestone":  "下一步=main#23 司级 7 天基准刷新（`./docs/global-benchmarks.md`，due=2026-10-27 已逾期 5 天）→ main#20 浸泡 ABORT 观察位；维护面=main#113 qa 保留窗口判据（`./Tools/devloop/qa-rotation.ps1`）",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

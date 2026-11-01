@@ -114,6 +114,19 @@ $dirLong = New-Queue 'long' @"
 | 2 | long row | p | $padLong |
 "@
 
+# duplicate (main#112): the same id twice in one file. Ids are numbered by hand
+# and "the #N row already shipped" then vouches for the open row that shares the
+# number. Own account (not bad, not long) and a READOUT: this queue's only
+# defect is the collision, so the line stays HEALTH - the hint just says where.
+$dirDupe = New-Queue 'dupe' @"
+# fixture queue: duplicate ids
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | first holder of the number | p | nothing here |
+| 1 | second holder, same number | p | nothing here |
+"@
+
 # ---------- 1. live machine --------------------------------------------------
 $out = Run-Verify ''
 $text = $out -join "`n"
@@ -128,6 +141,8 @@ if ($live.Count -eq 1) {
   Check 'live line carries code=' ($live[0] -match 'code=\d+') $live[0]
   Check 'live line carries long=' ($live[0] -match 'long=\d+') $live[0]
   Check 'live line carries longmax=' ($live[0] -match 'longmax=\d+') $live[0]
+  Check 'live line carries dupe=' ($live[0] -match 'dupe=\d+') $live[0]
+  Check 'live line carries duperows=' ($live[0] -match 'duperows=\d+') $live[0]
 }
 Check 'live gate still passes with the census wired' ($text -match 'VERIFY PASS') $text
 Check 'live census text contains no FAIL token' (-not ($text -match 'FAIL')) $text
@@ -204,6 +219,22 @@ if ($w5c.Count -eq 1) {
 }
 Check 'over-cap fixture does not fail the gate' ($text5c -match 'VERIFY PASS') $text5c
 Check 'over-cap fixture text contains no FAIL token' (-not ($text5c -match 'FAIL')) $text5c
+
+# ---------- 5d. duplicate id -> readout, HEALTH kept, no FAIL (main#112) -----
+$out5d = Run-Verify $dirDupe
+$text5d = $out5d -join "`n"
+$h5d = @(Get-QdueLine $out5d)
+Check 'duplicate fixture prints one qdue line' ($h5d.Count -eq 1) $text5d
+if ($h5d.Count -eq 1) {
+  Check 'duplicate fixture reports dupe=1' ($h5d[0] -match 'dupe=1(?!\d)') $h5d[0]
+  Check 'duplicate fixture reports how many rows share it' ($h5d[0] -match 'duperows=2(?!\d)') $h5d[0]
+  Check 'duplicate fixture stays HEALTH (a readout is not a verdict)' ($h5d[0] -match '^VERIFY HEALTH: qdue:') $h5d[0]
+  Check 'duplicate fixture keeps bad=0 (separate accounts)' ($h5d[0] -match 'bad=0(?!\d)') $h5d[0]
+  Check 'duplicate fixture keeps long=0 (separate accounts)' ($h5d[0] -match 'long=0(?!\d)') $h5d[0]
+  Check 'the hint names every row with file and line' (($h5d[0] -match '#1@q\.md:5') -and ($h5d[0] -match '#1@q\.md:6')) $h5d[0]
+}
+Check 'duplicate fixture does not fail the gate' ($text5d -match 'VERIFY PASS') $text5d
+Check 'duplicate fixture text contains no FAIL token' (-not ($text5d -match 'FAIL')) $text5d
 
 # ---------- 6. missing directory -> WARN "unknown", never zero --------------
 $missing = Join-Path $sandbox 'no-such-queue'

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T10:55:10Z",
-    "current_activity":  "r785 收口：基准面自己写的到期日，从此每 tick 有人读。verify 新增 §2m，活跑印 `VERIFY WARN: benchmarks: due=2026-10-27 over=5d limit=7d basis=declared`——main#23 逾期五天第一次出门说话；到期前同一行是 HEALTH 带 left=Nd。读数只投影文档末行的声明，不新开状态档。",
-    "artifact":  "`./Tools/devloop/benchmark-duty.ps1`（`Get-BenchmarkReading`：declared 优先／末行胜／假日期回退／缺档＝无读数）, `./Tools/devloop/test-benchmark-duty.ps1`（31/31）, `./Tools/perceptor/verify.ps1`（§2m 每 tick 一行）, 接线 `./Tools/devloop/run-ps-suites.ps1`（verify 十一套）+ `./Tools/devloop/ps-suites-tick.ps1`（族受保护源）",
-    "artifact_utc":  "2026-11-01T10:55:10Z",
-    "milestone":  "下一步：刷新 `./docs/global-benchmarks.md` 自身内容并在文档末行追加新行（main#23 仍 open，WARN 会一直点名直到刷新）；main#120 等下次真红时按 `redlog=` 归因那 8 条断言",
+    "updated_utc":  "2026-11-01T11:38:03Z",
+    "current_activity":  "r786 收口：tick 里那条「归档职责天天报错、没人能处置」的 WARN 停下来了——病根=`./Tools/devloop/archive-logs.ps1` 的 `Get-RepoRoot` 用裸 `git rev-parse` 问的是调用方 cwd，计划任务起的 tick 在仓库外，PS5.1 又把原生 stderr 变成终止错误，于是归档器每次真跑都抛、日戳永不写、保留策略整天没跑（今日 tick 前 10 轮全 ERROR）；修法=cwd 无关的 `git -C \u003cPath\u003e` + try/catch 兜底，实锚=异 cwd 与仓根 dry-run 读数逐项相同 116 件 2130640 字节，活跑 `VERIFY PASS` 且 `ps-suites-verify suites=10 red=0 assertions=448`。",
+    "artifact":  "`./Tools/devloop/archive-logs.ps1`（仓根解析改 `git -C`＋保护集同改＋try/catch 兜底）, `./Tools/devloop/test-log-archive-duty.ps1`（新增 f 组·异 cwd 真跑·22→25/25·失败自带实况证据）",
+    "artifact_utc":  "2026-11-01T11:38:03Z",
+    "milestone":  "下一件=`./docs/global-benchmarks.md` 司级 7 天刷新（main#23 已逾期 5 天，§2m 每 tick 点名；刷新需实质研究不是改日期），随后 `./state/queue/main.md` 头部不再有逾期行。",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

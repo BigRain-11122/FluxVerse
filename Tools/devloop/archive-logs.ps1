@@ -1,4 +1,4 @@
-﻿# archive-logs.ps1 - zip old log files into <logs>/_archive, never lose bytes.
+# archive-logs.ps1 - zip old log files into <logs>/_archive, never lose bytes.
 # Contract: a source file is deleted only after its zip entry is re-opened and
 # its uncompressed length matches the original file length exactly.
 # Protected from archiving: git-tracked files, code extensions, *.lock, _archive itself.
@@ -17,10 +17,33 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression | Out-Null
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
+# Resolve the repo that owns a directory without depending on the caller's cwd.
+# Two traps this guards against (both were live until r786):
+#   * cwd: the scheduler starts the tick outside the repo, so a plain
+#     'git rev-parse' asked about C:\Windows\System32 instead of our own tree
+#     and the archiver threw on every tick-time run (the sandbox was green
+#     only when a human ran it from the repo root).
+#   * native stderr: under $ErrorActionPreference='Stop', PS 5.1 turns a
+#     native command's stderr into a terminating RemoteException, so
+#     'git rev-parse' in a non-repo directory killed the whole archiver
+#     instead of returning "not a repo". Redirection does not save it.
 function Get-RepoRoot {
-  $out = & git rev-parse --show-toplevel 2>$null
-  if ($LASTEXITCODE -ne 0 -or -not $out) { return $null }
-  return (($out | Select-Object -First 1).Trim() -replace '/', '\')
+  param([string]$Path = '')
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try {
+    $gitArgs = @()
+    if ($Path) { $gitArgs += @('-C', $Path) }
+    $gitArgs += @('rev-parse', '--show-toplevel')
+    $out = & git @gitArgs 2>$null
+    $code = $LASTEXITCODE
+  } catch {
+    return $null
+  } finally {
+    $ErrorActionPreference = $prev
+  }
+  if ($code -ne 0 -or -not $out) { return $null }
+  return ((@($out)[0]).Trim() -replace '/', '\')
 }
 
 function Remove-EmptyDirs {
@@ -37,7 +60,7 @@ function Remove-EmptyDirs {
 }
 
 if (-not $LogsDir) {
-  $repoRoot = Get-RepoRoot
+  $repoRoot = Get-RepoRoot -Path $PSScriptRoot
   if (-not $repoRoot) { Write-Host 'ARCHIVE FAIL: repo root not found'; exit 2 }
   $LogsDir = Join-Path $repoRoot 'logs'
 }
@@ -45,12 +68,13 @@ if (-not (Test-Path -LiteralPath $LogsDir)) { Write-Host "ARCHIVE FAIL: logs dir
 $LogsDir = (Resolve-Path -LiteralPath $LogsDir).Path
 $archDir = Join-Path $LogsDir '_archive'
 
-# protected set: git-tracked paths under logs (repo root required)
-$repo = Get-RepoRoot
+# protected set: git-tracked paths under logs (repo resolved from LogsDir, not cwd)
+$repo = Get-RepoRoot -Path $LogsDir
 $protected = @{}
 if ($repo) {
-  Push-Location -LiteralPath $repo
-  try { $tracked = & git ls-files -z -- logs 2>$null } finally { Pop-Location }
+  $prevEap = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try { $tracked = & git -C $repo ls-files -z -- logs 2>$null } catch { $tracked = $null } finally { $ErrorActionPreference = $prevEap }
   if ($tracked) {
     foreach ($t in ($tracked -split "`0")) {
       if ($t) { $protected[($t -replace '/', '\').ToLower()] = 1 }

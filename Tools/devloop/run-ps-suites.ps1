@@ -137,6 +137,49 @@ if ($missing.Count -gt 0) {
     exit 3
 }
 
+# ---------- guarded-source preflight (queue main#3 / P3-003, r788) ----------
+# The suite FILES existing is not the same as the registry being sane: the tick
+# fingerprints a per-family list of guarded sources, and a source path that does
+# not resolve hashes as the literal token `=MISSING` - as stable as a real hash,
+# so the whole family silently guards nothing (measured r754: a sandbox passed
+# RepoDir=Tools\, every path became Tools\Tools\... and stayed green forever).
+# Checking it here, before any suite is spawned, turns a renamed source into a
+# loud exit 3 instead of a quiet stable fingerprint.
+# Skipped when no family is named (-Suites / -All): those lists are chosen by
+# the caller and carry no registry to check.
+# FLUXVERSE_PS_SUITES_SOURCES is a test seam only (the sandbox points the
+# registry at a fixture file so the preflight is provable without renaming real
+# sources); production never sets it.
+$familyForSources = @()
+if ($Suites.Count -gt 0) { $familyForSources = @() }
+elseif ($Verify) { $familyForSources = @('verify', 'verify2') }
+elseif ($All) { $familyForSources = @() }
+else { $familyForSources = @('write', 'write2') }
+
+if ($familyForSources.Count -gt 0) {
+    $tickModule = Join-Path $RepoDir 'Tools\devloop\ps-suites-tick.ps1'
+    if (Test-Path -LiteralPath $tickModule) {
+        . $tickModule
+        $sourceRel = @()
+        foreach ($fam in $familyForSources) { $sourceRel += @(Get-PsSuitesTickDefaults -Family $fam) }
+        $override = $env:FLUXVERSE_PS_SUITES_SOURCES
+        if (-not [string]::IsNullOrEmpty($override)) {
+            $sourceRel = @($override -split '[,;]' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
+        }
+        $probe = Test-PsSuitesSourceList -RepoDir $RepoDir -Paths $sourceRel
+        if ($probe.Gaps.Count -gt 0) {
+            foreach ($g in $probe.Gaps) { Write-Output ('PS SUITES SOURCE MISSING ' + $g) }
+            Write-Output ('PS SUITES ERROR: ' + $probe.Gaps.Count + ' guarded source(s) missing - fingerprinting those would cache a stable empty entry')
+            exit 3
+        }
+        $srcLine = 'PS SUITES SOURCES guarded=' + $probe.Checked
+        if ($probe.NoFiles.Count -gt 0) { $srcLine = $srcLine + ' nofiles=' + $probe.NoFiles.Count }
+        Write-Output $srcLine
+    } else {
+        Write-Output ('PS SUITES WARN: source preflight skipped (module missing: ' + $tickModule + ')')
+    }
+}
+
 # ---------- art-pattern parity (single source, two sides) ----------
 # Write-side only: the verify family does not guard build-city-panel.ps1's
 # artifact regex, so asking it for that parity would report a drift nobody in

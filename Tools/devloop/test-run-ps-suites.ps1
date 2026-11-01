@@ -128,6 +128,15 @@ Write-Output '--- h) default list ---'
 $repo2 = Join-Path $sbDir 'repo2'
 Write-Fixture (Join-Path $repo2 'Tools\devloop\build-city-panel.ps1') $builderBody
 Write-Fixture (Join-Path $repo2 'Tools\devloop\face-path-lint.ps1') $lintBody
+# r788: the guarded-source preflight reads the family registry through this
+# module, so the fixture repo must carry a real copy of it (a stub would prove
+# nothing about the registry it is asked for).
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'ps-suites-tick.ps1') -Destination (Join-Path $repo2 'Tools\devloop\ps-suites-tick.ps1') -Force
+# r788: the default list is now nine suites (r787 added the public-face screen
+# sandbox). The fixture used to write eight and asserted `suites=8`, so HEAD was
+# red here for a whole round - a fixture list that drifts from the runner's own
+# default list is the same "guessed registry" problem the source preflight below
+# exists to stop, so keep this list in literal step with $defaultRel.
 $defRel = @(
     'Tools\devloop\test-write-status-face-bare.ps1',
     'Tools\devloop\test-fastpath-state-live.ps1',
@@ -136,15 +145,22 @@ $defRel = @(
     'logs\devloop-r271-keep-negcon.ps1',
     'Tools\devloop\test-nolivecheck-census.ps1',
     'Tools\devloop\test-qa-rotation.ps1',
-    'Tools\devloop\test-runbook-sync.ps1'
+    'Tools\devloop\test-runbook-sync.ps1',
+    'Tools\devloop\test-status-face-screen.ps1'
 )
 foreach ($rel in $defRel) { Write-Fixture (Join-Path $repo2 $rel) $green }
+# Test seam for the guarded-source preflight (r788): the real registry names
+# sources this fixture repo does not have, so point it at one file that does
+# exist. Cases x/y/z below drive the seam on purpose.
+$env:FLUXVERSE_PS_SUITES_SOURCES = 'Tools\devloop\build-city-panel.ps1'
 $rh = Invoke-Runner @('-RepoDir', $repo2)
 Check 'h: exit 0'                ($rh.code -eq 0)
-Check 'h: eight default suites'  ($rh.out -match 'PS SUITES suites=8 ')
+Check 'h: nine default suites'   ($rh.out -match 'PS SUITES suites=9 ')
 Check 'h: r247 in default set'   ($rh.out -match 'devloop-r247-facewriter-test\.ps1')
 Check 'h: r271 in default set'   ($rh.out -match 'devloop-r271-keep-negcon\.ps1')
 Check 'h: nlc census in default set' ($rh.out -match 'test-nolivecheck-census\.ps1')
+Check 'h: face screen in default set' ($rh.out -match 'test-status-face-screen\.ps1')
+Check 'h: preflight line printed' ($rh.out -match 'PS SUITES SOURCES guarded=1')
 
 # ---------- j..m) verify-side family (-Verify, main#89) ----------
 # The verify family is a different list with different rules: no parity (that
@@ -166,6 +182,12 @@ $verifyRel = @(
 )
 $counted = "Write-Output 'RESULT: 30 passed, 0 failed (of 30)'`r`nexit 0`r`n"
 foreach ($rel in $verifyRel) { Write-Fixture (Join-Path $repo3 $rel) $counted }
+# r788: the -Verify run now also checks the guarded-source registry of the two
+# verify halves before spawning anything. This fixture repo has none of those
+# sources, so the seam points at a file it does have (a different one from the
+# default-list section on purpose: each section proves its own resolution).
+$env:FLUXVERSE_PS_SUITES_SOURCES = 'Tools\devloop\test-verify-r2-site.ps1'
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'ps-suites-tick.ps1') -Destination (Join-Path $repo3 'Tools\devloop\ps-suites-tick.ps1') -Force
 
 Write-Output '--- j) -Verify list ---'
 $rj = Invoke-Runner @('-RepoDir', $repo3, '-Verify')
@@ -177,6 +199,7 @@ Check 'j: no PARITY line'          (-not ($rj.out -cmatch 'PARITY'))
 Check 'j: verify verdict'          ($rj.out -match 'PS SUITES VERIFY VERDICT: ALL PASS')
 Check 'j: "N passed" dialect counted' ($rj.out -match 'assertions=330 counted=11')
 Check 'j: names a verify suite'    ($rj.out -match 'PASS  test-verify-r2-site\.ps1')
+Check 'j: verify preflight ran'    ($rj.out -match 'PS SUITES SOURCES guarded=1')
 
 Write-Output '--- k) -Verify missing file ---'
 $rjMissing = Join-Path $repo3 'Tools\devloop\test-verify-ambient.ps1'
@@ -273,6 +296,44 @@ Check 'w1: exit 0 from foreign cwd' ($rw.code -eq 0)
 Check 'w1: counted, not missing'    ($rw.out -match 'PS SUITES suites=1 assertions=3 counted=1')
 Check 'w1: no missing error'        (-not ($rw.out -match 'suite file\(s\) missing'))
 
+# ---------- x) guarded-source preflight (r788, queue main#3 / P3-003) ----------
+# The suite files can all be present while the family's guarded-source registry
+# is broken: the tick hashes each source path, and a path that does not resolve
+# hashes as a literal token - stable forever, so the family guards nothing and
+# nothing says so. The runner therefore checks the registry of the family it is
+# about to run, before spawning anything.
+Write-Output '--- x) guarded-source preflight ---'
+$env:FLUXVERSE_PS_SUITES_SOURCES = 'Tools\devloop\nope-a.ps1,Tools\devloop\nope-b.ps1'
+$rx = Invoke-Runner @('-RepoDir', $repo2)
+Check 'x1: exit 3'                 ($rx.code -eq 3)
+Check 'x1: names first gap'        ($rx.out -match 'PS SUITES SOURCE MISSING Tools\\devloop\\nope-a\.ps1')
+Check 'x1: names second gap'       ($rx.out -match 'PS SUITES SOURCE MISSING Tools\\devloop\\nope-b\.ps1')
+Check 'x1: counts the gaps'        ($rx.out -match 'PS SUITES ERROR: 2 guarded source\(s\) missing')
+Check 'x1: no suite was spawned'   (-not ($rx.out -match 'PASS  test-write-status-face-bare\.ps1'))
+Check 'x1: no verdict printed'     (-not ($rx.out -match 'PS SUITES VERDICT'))
+
+# y) an empty glob is a legal state, not a broken registry: Expand-PsSuitesSourceList
+# records it as `=NOFILES` on purpose ("the first fixture has not been added
+# yet"), so the preflight must not refuse the run over it. repo2 has no
+# fixtures tree at all, which is exactly that state.
+Write-Output '--- y) empty glob allowed ---'
+$env:FLUXVERSE_PS_SUITES_SOURCES = 'Tools\devloop\fixtures\**'
+$ry = Invoke-Runner @('-RepoDir', $repo2)
+Check 'y1: exit 0'                 ($ry.code -eq 0)
+Check 'y1: nofiles reported'       ($ry.out -match 'PS SUITES SOURCES guarded=0 nofiles=1')
+Check 'y1: suites still ran'       ($ry.out -match 'PS SUITES suites=9 ')
+
+# z) an explicit -Suites list names no family, so there is no registry to check
+# - the preflight must stay out of the way (this is the shape every fixture case
+# in this sandbox uses).
+Write-Output '--- z) explicit list skips the registry ---'
+$env:FLUXVERSE_PS_SUITES_SOURCES = 'Tools\devloop\nope-a.ps1'
+$rz = Invoke-Runner @('-RepoDir', $repo1, '-Suites', $green)
+Check 'z1: exit 0'                 ($rz.code -eq 0)
+Check 'z1: no source line'         (-not ($rz.out -match 'PS SUITES SOURCES'))
+Check 'z1: no gap named'           (-not ($rz.out -match 'SOURCE MISSING'))
+$env:FLUXVERSE_PS_SUITES_SOURCES = 'Tools\devloop\build-city-panel.ps1'
+
 # ---------- i) ASCII-only body ----------
 Write-Output '--- i) ASCII-only body ---'
 $bad = 0
@@ -280,6 +341,7 @@ foreach ($b in [System.IO.File]::ReadAllBytes($runner)) { if ($b -gt 127) { $bad
 Check 'i: runner ascii=0'        ($bad -eq 0)
 
 # ---------- cleanup ----------
+Remove-Item Env:\FLUXVERSE_PS_SUITES_SOURCES -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath $sbDir -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Output ('SUITES total=' + ($pass + $fail) + ' pass=' + $pass + ' fail=' + $fail)

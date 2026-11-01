@@ -220,6 +220,42 @@ function Expand-PsSuitesSourceList {
     return [string[]]$list
 }
 
+function Test-PsSuitesSourceList {
+    # Are the guarded sources this family fingerprints actually on disk?
+    # (queue main#3 / P3-003, landed r788.)
+    # The fingerprint lists every source path and hashes it; an absent path
+    # hashes as the literal string `=MISSING`, which is as stable as a real
+    # hash - so a renamed or mis-resolved source is invisible. The measured
+    # case (r754): a sandbox passed RepoDir=Tools\, every path became
+    # Tools\Tools\... and the fingerprint stayed perfectly stable while
+    # guarding nothing. The guard had silently stopped guarding.
+    # Judgement is kept deliberately narrow so it cannot cry wolf:
+    #   * a literal entry that is absent -> gap (we know what it should be)
+    #   * a glob that matches nothing    -> allowed, reported as nofiles
+    #     (Expand-PsSuitesSourceList records `=NOFILES` on purpose: "the first
+    #      fixture has not been added yet" is a legal state, a broken registry
+    #      is not)
+    param(
+        [Parameter(Mandatory=$true)][string]$RepoDir,
+        [string[]]$Paths = @()
+    )
+    $expanded = @(Expand-PsSuitesSourceList -RepoDir $RepoDir -Paths $Paths)
+    $gaps = @()
+    $nofiles = @()
+    $checked = 0
+    foreach ($rel in $expanded) {
+        if ($rel -like '*=NOFILES') { $nofiles += $rel; continue }
+        $checked++
+        $full = Join-Path $RepoDir $rel
+        if (-not (Test-Path -LiteralPath $full)) { $gaps += $rel }
+    }
+    return [pscustomobject]@{
+        Gaps    = [string[]]$gaps
+        NoFiles = [string[]]$nofiles
+        Checked = $checked
+    }
+}
+
 function Get-PsSuitesFingerprint {
     param(
         [Parameter(Mandatory=$true)][string]$RepoDir,

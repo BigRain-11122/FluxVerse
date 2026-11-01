@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T03:06:35Z",
-    "current_activity":  "r771 收口：qa/ 图池第一次有数——新工具印 images=235／42.9MB／oldest=21d，面板自拍 82 件占 33.2MB（77%），拟移出 211 件 39.4MB；保留窗口按捕捉会话计（city3d- 25 组留 3 组），全程只读（正身=`./Tools/devloop/qa-rotation.ps1`）",
-    "artifact":  "`./Tools/devloop/qa-rotation.ps1`, `./Tools/devloop/test-qa-rotation.ps1`, `./Tools/devloop/run-ps-suites.ps1`, `./TECH.md`, `./state/queue/main.md`",
-    "artifact_utc":  "2026-11-01T03:06:35Z",
-    "milestone":  "下一轮=main#109 执行移出并证明移出后 `city-shot-census` 读数自洽（指针=`./state/queue/main.md`）；研究线=main#23 司级基准刷新（10-27 逾期）",
+    "updated_utc":  "2026-11-01T03:14:14Z",
+    "current_activity":  "r772 收口：qa/ 图池真的瘦下来了——235 张 42.9MB 收到 24 张 3.4MB，211 件旧图搬进归档目录（移动非删除，逐件台账），一张都没删；取景卡 shots=3 照旧，census 复跑 moves=0（正身=`./Tools/devloop/qa-rotation.ps1`）",
+    "artifact":  "`./Tools/devloop/qa-rotation.ps1`, `./Tools/devloop/test-qa-rotation.ps1`, `./.gitignore`, `./TECH.md`, `./state/queue/main.md`",
+    "artifact_utc":  "2026-11-01T03:14:14Z",
+    "milestone":  "下一轮=main#23 司级基准刷新（10-27 逾期，指针=`./state/queue/main.md`）；其后=main#103 拆 explore#12 的 45KB 巨行（活队列 qdue_bad 一直挂着它）",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

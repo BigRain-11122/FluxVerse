@@ -8,8 +8,16 @@
 # the order is (1) count what is there, (2) state a threshold, (3) move - never
 # delete, (4) prove the census is still self-consistent afterwards.
 #
-# This round ships steps 1-2 only: the census and the dry-run plan. Nothing is
-# moved or deleted by this script, and -Plan never touches the file system.
+# Steps 1-2 (census + dry-run plan) shipped in r771. Step 3 (-Apply, r772) moves
+# the planned files into <pool>\_archive - never deletes. The archive is a
+# sub-directory, so the census (top level only) stops counting what moved and
+# the shot card's window is what still lives in the pool. Step 4 (proof the
+# census is still self-consistent) is the round's job: run this tool twice.
+#
+# -Apply is fail-closed in two ways: (a) if ANY planned name already exists in
+# the archive, nothing at all is moved (a half-applied plan is the state this
+# order forbids); (b) every move is logged to _archive\MOVED.tsv so a manual
+# reversal is a copy, not a guess. A no-op apply (plan empty) is success.
 #
 # Classification reuses the same family registry as city-shot-shape.ps1 so the
 # pool and the card cannot disagree about what a "city frame" is. The panel
@@ -27,7 +35,9 @@ param(
     # Print one MOVE line per file the plan would move.
     [switch]$List,
     # Machine-readable one-json-line output (used by the sandbox).
-    [switch]$Json
+    [switch]$Json,
+    # Actually move the planned files into <pool>\_archive (never deletes).
+    [switch]$Apply
 )
 
 $ErrorActionPreference = 'Stop'
@@ -176,6 +186,81 @@ function Format-QaBytes
     return ([string]$Bytes + 'B')
 }
 
+# ---------------------------------------------------------------------------
+# Step 3: apply. Move, never delete. Two-phase on purpose - the pre-flight runs
+# over the whole plan before a single file moves, so a conflict cannot leave the
+# pool half-rotated (the plan itself is one object, so pre-flight and the move
+# phase cannot disagree about what is planned).
+# ---------------------------------------------------------------------------
+function Invoke-QaApply
+{
+    param([string]$Pool, [object]$Census)
+
+    $res = New-Object PSObject -Property ([ordered]@{
+        archive = (Join-Path $Pool '_archive')
+        moved = 0
+        bytes = [int64]0
+        conflicts = @()
+        failed = @()
+        ledger_error = ''
+        ok = $false
+    })
+
+    $plan = @()
+    foreach ($g in @($Census.groups)) {
+        foreach ($n in @($g.move_names)) {
+            $plan += (New-Object PSObject -Property ([ordered]@{ name = [string]$n; group = [string]$g.name }))
+        }
+    }
+    if ($plan.Count -eq 0) { $res.ok = $true; return $res }
+
+    foreach ($p in $plan) {
+        if (Test-Path -LiteralPath (Join-Path $res.archive $p.name)) { $res.conflicts += $p.name }
+    }
+    if ($res.conflicts.Count -gt 0) { return $res }
+
+    if (-not (Test-Path -LiteralPath $res.archive)) {
+        New-Item -ItemType Directory -Path $res.archive -Force | Out-Null
+    }
+    $ledger = Join-Path $res.archive 'MOVED.tsv'
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    if (-not (Test-Path -LiteralPath $ledger)) {
+        [System.IO.File]::WriteAllText($ledger, "# utc`tname`tbytes`tmtime_utc`tgroup`r`n", $utf8)
+    }
+
+    $now = [DateTime]::UtcNow
+    $bytesMoved = [int64]0
+    $lines = New-Object System.Collections.ArrayList
+    foreach ($p in $plan) {
+        $src = Join-Path $Pool $p.name
+        $dest = Join-Path $res.archive $p.name
+        try {
+            $fi = Get-Item -LiteralPath $src -ErrorAction Stop
+            $len = [int64]$fi.Length
+            $mtime = $fi.LastWriteTimeUtc
+            Move-Item -LiteralPath $src -Destination $dest -ErrorAction Stop
+            $res.moved++
+            $bytesMoved = $bytesMoved + $len
+            [void]$lines.Add($now.ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" + $p.name + "`t" +
+                $len + "`t" + $mtime.ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" + $p.group)
+        } catch {
+            $res.failed += ($p.name + ' :: ' + $_.Exception.Message)
+        }
+    }
+    $res.bytes = $bytesMoved
+    if ($lines.Count -gt 0) {
+        try {
+            [System.IO.File]::AppendAllText($ledger, (($lines -join "`r`n") + "`r`n"), $utf8)
+        } catch {
+            # The move already happened; a missing ledger line must not pretend
+            # the move failed, but it does mean the run is not clean.
+            $res.ledger_error = $_.Exception.Message
+        }
+    }
+    $res.ok = (($res.failed.Count -eq 0) -and ($res.ledger_error -eq ''))
+    return $res
+}
+
 if (-not $Dir) {
     $Dir = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'qa'
 }
@@ -227,6 +312,29 @@ foreach ($g in $census.groups) {
         foreach ($n in $g.move_names) { Write-Host ('    MOVE ' + $n) }
     }
 }
+$planTail = $(if ($Apply) { ' (apply follows)' } else { ' (dry-run, nothing touched)' })
 Write-Host ('QA PLAN: moves=' + $moves + ' reclaim=' + (Format-QaBytes -Bytes $reclaim) +
-    ' keep_sessions=' + $KeepFamily + ' keep_panel=' + $KeepPanel + ' (dry-run, nothing touched)')
+    ' keep_sessions=' + $KeepFamily + ' keep_panel=' + $KeepPanel + $planTail)
+
+if ($Apply) {
+    $ap = Invoke-QaApply -Pool $Dir -Census $census
+    if ($ap.conflicts.Count -gt 0) {
+        Write-Host ('QA APPLY FAIL: ' + $ap.conflicts.Count + ' planned name(s) already in ' +
+            $ap.archive + ' - nothing moved (pool and archive disagree)')
+        foreach ($n in $ap.conflicts) { Write-Host ('    CONFLICT ' + $n) }
+        exit 2
+    }
+    if ($ap.failed.Count -gt 0) {
+        Write-Host ('QA APPLY FAIL: moved=' + $ap.moved + ' bytes=' + (Format-QaBytes -Bytes $ap.bytes) +
+            ' failed=' + $ap.failed.Count)
+        foreach ($f in $ap.failed) { Write-Host ('    FAILED ' + $f) }
+        exit 2
+    }
+    if ($ap.ledger_error) {
+        Write-Host ('QA APPLY FAIL: moved=' + $ap.moved + ' but the archive ledger could not be written: ' + $ap.ledger_error)
+        exit 2
+    }
+    Write-Host ('QA APPLY: moved=' + $ap.moved + ' bytes=' + (Format-QaBytes -Bytes $ap.bytes) +
+        ' archive=' + $ap.archive + ' (moved, not deleted; ledger=MOVED.tsv)')
+}
 exit 0

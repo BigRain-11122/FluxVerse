@@ -34,6 +34,15 @@ function New-Fix([string]$name, [int]$len, [datetime]$mtime) {
     [System.IO.File]::SetLastWriteTimeUtc($path, $mtime)
 }
 
+# Absolute-path variant for the second pool (apply-mode fixtures). No mtime is
+# set on purpose: every session then ties on time and the name token alone
+# decides the window, which is the tie-break the tool documents.
+function New-Fix2([string]$path, [int]$len) {
+    $bytes = New-Object byte[] $len
+    for ($i = 0; $i -lt $len; $i++) { $bytes[$i] = [byte](65 + ($i % 26)) }
+    [System.IO.File]::WriteAllBytes($path, $bytes)
+}
+
 # Four capture sessions, oldest first. Each session is six views.
 $sessions = @('20261001-1000', '20261002-1000', '20261003-1000', '20261004-1000')
 $views = @('overview', 'street', 'gamedistrict', 'housefront', 'showcase', 'cutaway')
@@ -115,6 +124,81 @@ Check 'the non-image fixture was never touched' ($stillMd)
 $nonAscii = 0
 foreach ($b in [System.IO.File]::ReadAllBytes($tool)) { if ($b -gt 127) { $nonAscii++ } }
 Check 'tool is ASCII-only' ($nonAscii -eq 0)
+
+# ---------------------------------------------------------------------------
+# Apply mode (r772): the plan is executed as a MOVE, whole sessions only, and
+# the pool that remains is the plan's complement. Everything below re-reads the
+# file system - it must not trust the tool's own report.
+# ---------------------------------------------------------------------------
+$archive = Join-Path $pool '_archive'
+$applyLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool -Apply) -join "`n"
+$applyRc = $LASTEXITCODE
+Check 'apply exits 0' ($applyRc -eq 0)
+Check 'apply reports the 8 planned moves and their bytes' ($applyLog -match 'QA APPLY: moved=8 bytes=1000B')
+Check 'apply names its archive' ($applyLog -match ('archive=' + [regex]::Escape($archive)))
+
+$poolLeft = @(Get-ChildItem -LiteralPath $pool -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' })
+$archived = @(Get-ChildItem -LiteralPath $archive -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' })
+Check 'nothing was deleted: 32 images still exist across pool+archive' (($poolLeft.Count + $archived.Count) -eq 32)
+Check 'exactly the 8 planned files left the pool' ($poolLeft.Count -eq 24)
+Check 'the archive holds exactly those 8' ($archived.Count -eq 8)
+$wholeSession = $true
+foreach ($v in $views) {
+    $inPool = Test-Path -LiteralPath (Join-Path $pool ('city3d-shots-20261001-1000-bm-a-' + $v + '.jpg'))
+    $inArch = Test-Path -LiteralPath (Join-Path $archive ('city3d-shots-20261001-1000-bm-a-' + $v + '.jpg'))
+    if ($inPool -or -not $inArch) { $wholeSession = $false }
+}
+Check 'the moved session arrived whole (all six views in the archive)' $wholeSession
+$keepIntact = $true
+foreach ($s in @('20261002-1000', '20261003-1000', '20261004-1000')) {
+    foreach ($v in $views) {
+        if (-not (Test-Path -LiteralPath (Join-Path $pool ('city3d-shots-' + $s + '-bm-a-' + $v + '.jpg')))) { $keepIntact = $false }
+    }
+}
+Check 'every view of the three surviving sessions is still in the pool' $keepIntact
+Check 'panel keeps its newest 3 in the pool' (
+    (Test-Path -LiteralPath (Join-Path $pool 'city-panel-r704-bm-a.png')) -and
+    (Test-Path -LiteralPath (Join-Path $archive 'city-panel-r700-bm-a.png')) -and
+    (Test-Path -LiteralPath (Join-Path $archive 'city-panel-r701-bm-a.png')))
+Check 'the non-family image never moved' (Test-Path -LiteralPath (Join-Path $pool 'notes.png'))
+Check 'the non-image file never moved' (Test-Path -LiteralPath (Join-Path $pool 'readme.md'))
+
+$ledger = Join-Path $archive 'MOVED.tsv'
+$ledgerRows = @()
+if (Test-Path -LiteralPath $ledger) {
+    $ledgerRows = @(Get-Content -LiteralPath $ledger -Encoding UTF8 | Where-Object { $_ -and -not $_.StartsWith('#') })
+}
+Check 'the archive ledger has one row per moved file' ($ledgerRows.Count -eq 8)
+Check 'the ledger records name and size (reversal needs no guessing)' (
+    [bool](@($ledgerRows) -match 'city3d-shots-20261001-1000-bm-a-street\.jpg\t100\t'))
+
+# Second apply is a no-op, not a second wave: the surviving pool is inside the
+# window, so the plan is empty and the archive must not grow.
+$againLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool -Apply) -join "`n"
+$againRc = $LASTEXITCODE
+$archived2 = @(Get-ChildItem -LiteralPath $archive -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' })
+Check 're-apply exits 0' ($againRc -eq 0)
+Check 're-apply plans zero moves' ($againLog -match 'QA PLAN: moves=0\b')
+Check 're-apply moves nothing (archive still 8)' ($archived2.Count -eq 8)
+
+# Fail-closed: a planned name that already sits in the archive means pool and
+# archive disagree, so the tool must move NOTHING and say so.
+$pool2 = Join-Path $sandbox 'qa2'
+New-Item -ItemType Directory -Path $pool2 -Force | Out-Null
+foreach ($s in $sessions) {
+    foreach ($v in $views) {
+        New-Fix2 (Join-Path $pool2 ('city3d-shots-' + $s + '-bm-a-' + $v + '.jpg')) 100
+    }
+}
+$arch2 = Join-Path $pool2 '_archive'
+New-Item -ItemType Directory -Path $arch2 -Force | Out-Null
+[System.IO.File]::WriteAllBytes((Join-Path $arch2 'city3d-shots-20261001-1000-bm-a-street.jpg'), (New-Object byte[] 7))
+$conflLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool2 -Apply) -join "`n"
+$conflRc = $LASTEXITCODE
+$pool2Left = @(Get-ChildItem -LiteralPath $pool2 -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' })
+Check 'a conflict exits 2' ($conflRc -eq 2)
+Check 'a conflict is named, not silently skipped' ($conflLog -match 'QA APPLY FAIL: 1 planned name\(s\) already in')
+Check 'a conflict moves nothing at all (all 24 still in the pool)' ($pool2Left.Count -eq 24)
 
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 Write-Output ('test-qa-rotation: ' + $pass + ' passed, ' + $fail + ' failed (of ' + ($pass + $fail) + ')')

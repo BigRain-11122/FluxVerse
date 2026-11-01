@@ -46,3 +46,8 @@ City3D/Assets/ithappy/
 # FULL-ROUND on every fastpath check)
 __pycache__/
 *.pyc
+
+# qa/ retention archive (queue main#109, r772): Tools/devloop/qa-rotation.ps1
+# moves screenshots past the rolling window here - moved, never deleted. What
+# the shot card can still inline stays tracked in qa/; archived bytes do not.
+qa/_archive/

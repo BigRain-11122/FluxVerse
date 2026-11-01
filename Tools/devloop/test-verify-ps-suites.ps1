@@ -725,6 +725,21 @@ $null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrTicket
 $zrThird = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrTicket -RunnerPath $runnerGreen -Force
 Check 'z24 a changed suite count restarts the baseline' (@(("$($zrThird.runs)" -split ',')).Count -eq 1) ("runs=" + $zrThird.runs)
 
+# r766: a ticket whose last run never produced a summary records suites=0, and
+# its duration (330 ms of "1 suite file(s) missing") is not a sample of the
+# family. Measured live: the heavy family's baseline read 26.7 s against a real
+# 79.5 s run - the exact silence the baseline column exists to break.
+$zrBad = New-Runner 'runner-nosummary.ps1' @'
+Write-Output 'boom: no summary line'
+exit 3
+'@
+$zrBadTicket = Join-Path $sandbox 'z-reset0.json'
+$null = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrBadTicket -RunnerPath $zrBad -Force
+$zrZero = Get-PsSuitesTicket -Path $zrBadTicket
+$zrAfter = Invoke-PsSuitesTick -RepoDir $root -Family verify2 -TicketPath $zrBadTicket -RunnerPath $runnerGreen -Force
+Check 'z25 an unreadable run leaves suites=0 in the ticket' ($null -ne $zrZero -and [int]$zrZero.suites -eq 0) ("suites=" + [int]$zrZero.suites)
+Check 'z26 a real run after it restarts the baseline' (@(("$($zrAfter.runs)" -split ',')).Count -eq 1) ("runs=" + $zrAfter.runs)
+
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Output ('RESULT pass=' + ($script:checks - $script:fails) + ' fail=' + $script:fails)

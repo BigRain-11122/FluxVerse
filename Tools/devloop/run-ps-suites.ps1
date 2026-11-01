@@ -85,7 +85,16 @@ if ($Suites.Count -gt 0) {
     foreach ($s in $Suites) {
         foreach ($one in ($s -split '[,;]')) {
             $t = $one.Trim().Trim('"').Trim("'")
-            if ($t -ne '') { $list += $t }
+            if ($t -eq '') { continue }
+            # A relative entry is relative to the REPO, never to the caller's
+            # working directory: the tick passes `-Suites Tools\devloop\x.ps1`
+            # and is launched by a scheduler whose cwd is whatever it was when
+            # the task fired. Measured r766: with cwd=C:\Windows\System32 the
+            # verify2 family died in 330 ms with `1 suite file(s) missing`
+            # (runner exit 3 -> ticket `unreadable`) while the same command
+            # passed from the repo root - a green suite that never ran.
+            if (-not [System.IO.Path]::IsPathRooted($t)) { $t = Join-Path $RepoDir $t }
+            $list += $t
         }
     }
 } elseif ($Verify) {
@@ -257,7 +266,7 @@ foreach ($f in $list) {
 
     $passCount = -1
     $failCount = -1
-    # Two count dialects in this repo: `pass=3 fail=0` (writer sandboxes) and
+    # Two summary dialects in this repo: `pass=3 fail=0` (writer sandboxes) and
     # `30 passed, 0 failed` (verify sandboxes). Accept both, last match wins.
     $mp = [regex]::Matches($out, '(?i)\bpass(?:ed)?\s*[=:]\s*(\d+)')
     if ($mp.Count -gt 0) { $passCount = [int]$mp[$mp.Count - 1].Groups[1].Value }
@@ -267,6 +276,22 @@ foreach ($f in $list) {
     if ($mf.Count -gt 0) { $failCount = [int]$mf[$mf.Count - 1].Groups[1].Value }
     $mf2 = [regex]::Matches($out, '(?i)\b(\d+)\s+failed\b')
     if ($mf2.Count -gt 0) { $failCount = [int]$mf2[$mf2.Count - 1].Groups[1].Value }
+
+    # Third dialect (queue main#100): suites that print one line per check
+    # (`PASS <name>` / `FAIL <name>`) and never summarise in either form above.
+    # Without this, r759's 15 -> 36 assertions still read as counted=0.
+    # Guard rails: only when BOTH summary sides are absent (never mix sources -
+    # a half-summarised suite stays uncounted rather than getting an invented
+    # number), and only when at least two marker lines are present (a lone
+    # `PASS` in an unrelated log line is not a check list).
+    if ($passCount -lt 0 -and $failCount -lt 0) {
+        $mpass = [regex]::Matches($out, '(?im)^\s*PASS\s+\S')
+        $mfail = [regex]::Matches($out, '(?im)^\s*FAIL\s+\S')
+        if (($mpass.Count + $mfail.Count) -ge 2) {
+            $passCount = $mpass.Count
+            $failCount = $mfail.Count
+        }
+    }
 
     if ($passCount -ge 0 -and $failCount -ge 0) {
         $assertTotal += ($passCount + $failCount)

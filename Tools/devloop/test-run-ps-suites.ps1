@@ -13,6 +13,10 @@
 #   g) missing suite file         -> exit 3 (setup error, not a red suite)
 #   h) default list wiring        -> the five write-side suites by name
 #   i) runner body is ASCII-only
+#   v) per-line `PASS <name>` / `FAIL <name>` suites are counted (main#100):
+#      lines only -> counted, summary+lines -> summary wins (no double),
+#      lone marker -> not a list, FAIL line under exit 0 -> red
+#   w) a relative -Suites entry resolves against -RepoDir, not the caller's cwd
 # ASCII-only law: no CJK in this file.
 # ---------------------------------------------------------------------------
 
@@ -217,6 +221,53 @@ $env:FLUXVERSE_PS_SUITES_CHILD = 'keep'
 $null = Invoke-Runner @('-RepoDir', $repo1, '-Suites', $markerSuite)
 Check 'n: pre-set marker restored' ($env:FLUXVERSE_PS_SUITES_CHILD -eq 'keep')
 Remove-Item ('Env:\FLUXVERSE_PS_SUITES_CHILD') -ErrorAction SilentlyContinue
+
+# ---------- v) third count dialect (queue main#100) ----------
+# Suites that print one line per check and never summarise in `pass=N` or
+# `N passed` form used to land as counted=0 assertions=0 - honest arithmetic
+# silently lost. The runner now counts those lines, with two guard rails:
+# never mix with a summary dialect, and never treat a lone marker as a list.
+Write-Output '--- v) per-line dialect ---'
+$linesOnly = Join-Path $repo1 'Tools\devloop\test-lines-only.ps1'
+Write-Fixture $linesOnly ("Write-Output '  PASS alpha'`r`nWrite-Output '  PASS beta'`r`nWrite-Output '  PASS gamma'`r`nWrite-Output '  PASS delta'`r`nexit 0`r`n")
+$rv1 = Invoke-Runner @('-RepoDir', $repo1, '-Suites', $linesOnly)
+Check 'v1: exit 0'                 ($rv1.code -eq 0)
+Check 'v1: four lines counted'     ($rv1.out -match 'assertions=4 counted=1 failing=0')
+Check 'v1: suite still named PASS' ($rv1.out -match 'PASS  test-lines-only\.ps1  exit=0')
+
+$both = Join-Path $repo1 'Tools\devloop\test-lines-and-summary.ps1'
+Write-Fixture $both ("Write-Output '  PASS alpha'`r`nWrite-Output '  PASS beta'`r`nWrite-Output 'RESULT pass=2 fail=0'`r`nexit 0`r`n")
+$rv2 = Invoke-Runner @('-RepoDir', $repo1, '-Suites', $both)
+Check 'v2: summary wins, no double' ($rv2.out -match 'assertions=2 counted=1 failing=0')
+
+$lone = Join-Path $repo1 'Tools\devloop\test-lone-marker.ps1'
+Write-Fixture $lone ("Write-Output 'PASS looks like a log line'`r`nexit 0`r`n")
+$rv3 = Invoke-Runner @('-RepoDir', $repo1, '-Suites', $lone)
+Check 'v3: lone marker not a list'  ($rv3.out -match 'assertions=0 counted=0 failing=0')
+
+$lineRed = Join-Path $repo1 'Tools\devloop\test-lines-red.ps1'
+Write-Fixture $lineRed ("Write-Output '  PASS alpha'`r`nWrite-Output '  FAIL beta named-check'`r`nexit 0`r`n")
+$rv4 = Invoke-Runner @('-RepoDir', $repo1, '-Suites', $lineRed)
+Check 'v4: FAIL line beats exit 0'  ($rv4.code -eq 2)
+Check 'v4: failing=1'               ($rv4.out -match 'failing=1')
+Check 'v4: both lines counted'      ($rv4.out -match 'assertions=2 counted=1')
+Check 'v4: red check echoed'        ($rv4.out -match 'FAIL beta named-check')
+
+# ---------- w) relative -Suites entries resolve against -RepoDir (r766) ----------
+# The tick spawns the runner with `-Suites Tools\devloop\test-verify-ps-suites.ps1`
+# from a scheduler-chosen working directory. Measured live: with cwd
+# C:\Windows\System32 that suite list arrived as "1 suite file(s) missing",
+# exit 3, 330 ms - the ticket said `unreadable` and the heavy sandbox had not
+# run at all, while the same command from the repo root passed. A relative
+# entry now means "relative to the repo", never to the caller.
+Write-Output '--- w) relative suite path ---'
+Push-Location ([System.IO.Path]::GetTempPath())
+try {
+    $rw = Invoke-Runner @('-RepoDir', $repo1, '-Suites', 'Tools\devloop\test-green.ps1')
+} finally { Pop-Location }
+Check 'w1: exit 0 from foreign cwd' ($rw.code -eq 0)
+Check 'w1: counted, not missing'    ($rw.out -match 'PS SUITES suites=1 assertions=3 counted=1')
+Check 'w1: no missing error'        (-not ($rw.out -match 'suite file\(s\) missing'))
 
 # ---------- i) ASCII-only body ----------
 Write-Output '--- i) ASCII-only body ---'

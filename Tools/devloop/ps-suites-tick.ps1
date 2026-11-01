@@ -678,7 +678,15 @@ function Invoke-PsSuitesTick {
     # durations measured a different family, so averaging across the change
     # would keep the budget WARN ringing for three runs after the fix. Restart
     # the history with this run instead.
-    if ($null -ne $ticket -and [int]$ticket.suites -gt 0 -and [int]$ticket.suites -ne [int]$res.suites -and $res.status -ne 'timeout') {
+    # r766: a ticket whose last run was `unreadable` records `suites=0` (the
+    # runner died before its summary), and the old `-gt 0` guard let those
+    # duration samples into the average - measured live, the heavy family's
+    # baseline read 26.7 s against a real 79.5 s run, i.e. exactly the silence
+    # the baseline exists to break. A run whose length we never measured is
+    # not a sample.
+    $oldSuites = -1
+    if ($null -ne $ticket) { $oldSuites = [int]$ticket.suites }
+    if ($oldSuites -ne [int]$res.suites -and $res.status -ne 'timeout' -and [int]$res.suites -gt 0) {
         $res.runs = [string][int]$res.ms
         $res.base_ms = [int]$res.ms
         $res.budget_over = Test-PsSuitesBudgetOver -BaseMs ([int]$res.base_ms) -TimeoutSec $TimeoutSec

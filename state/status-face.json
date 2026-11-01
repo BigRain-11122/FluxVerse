@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T00:59:38Z",
-    "current_activity":  "r765 收口（main#77）：状态档写入器的「沙盒专用开关」第一次被机器盯着。write-fastpath-state 入盘前必须把每个显式 12-hex 与 live 文件实算值比一遍——比错的信号比不写更坏，下一轮要么每轮假 FULL-ROUND，要么凑巧对上把真变化静音；而唯一能跳过它的开关与生产收尾链之间此前只隔一行头注。本轮新增只读普查件 Tools/devloop/nolivecheck-census.ps1：扫全树 ps1/cmd/bat/vbs，逐行认令牌并分注释/代码，与白名单比对后按「文件:行」点名越界者，默认只报、加开关才 exit 2；白名单过期也看得见（stale=）。接线三处：verify 每 tick 多一行 nolivecheck-census、写侧沙盒族加第六套、tick 受保护源加两件。活树读数 files=231 hits=3 unexpected=0 stale=1。同轮修红：首版单跑 432ms 顶破 gate 自己的「缓存轮 \u003c3s」判据（3066ms），改读取路径并剪掉 Unity 资产树后 163ms，剪枝面每跑都印出来。",
-    "artifact":  "Tools/devloop/nolivecheck-census.ps1, Tools/devloop/test-nolivecheck-census.ps1, Tools/perceptor/verify.ps1, ./TECH.md",
-    "artifact_utc":  "2026-11-01T00:59:12Z",
-    "milestone":  "下一步：main#100（runner 断言计数方言）→ main#104（普查件 163ms 对缓存轮 \u003c3s 预算的余量）→ main#23 司级基准刷新（10-27 逾期）。判据=写侧族 Tools/devloop/run-ps-suites.ps1 得 failing=0 parity=ok counted=6，且 verify 活跑一行 nolivecheck-census 为 unexpected=0；指向 state/queue/main.md",
+    "updated_utc":  "2026-11-01T01:22:26Z",
+    "current_activity":  "r766 收口（main#100＋main#106）：verify 家族的断言账第一次说真话——同一条命令的族行从 assertions=176 变成 281，-Verify 全族 439（counted=9）。根因两条：①Tools/devloop/run-ps-suites.ps1 只认两种摘要方言，逐行印 PASS 名字的套件长期 counted=0（某套 15 项升到 36 项而族行一个字没动）；②tick 传的是相对套件清单，而 -Suites 的相对路径按调用者 cwd 解析、与 -RepoDir 无关，调度器起 tick 时 cwd 不是仓库根，重沙盒那族 330 毫秒就以「1 suite file(s) missing」收场、票据记 unreadable——套件根本没跑而所有行看上去都正常。修法：runner 认第三种方言（两边摘要都没有时才数逐行、至少两行才算清单、摘要胜绝不混算）+ 相对条目按 -RepoDir 归一化。第三枚真发现：基线复位守卫写成 ticket.suites 大于 0，于是 unreadable 票里的 330 毫秒假样本混进均值，重沙盒基线被读成 26.7 秒而真实一次 80.5 秒。",
+    "artifact":  "Tools/devloop/run-ps-suites.ps1, Tools/devloop/ps-suites-tick.ps1, Tools/devloop/test-run-ps-suites.ps1, Tools/devloop/test-verify-ps-suites.ps1, ./TECH.md, ./state/runbook.md, ./state/queue/main.md",
+    "artifact_utc":  "2026-11-01T01:22:26Z",
+    "milestone":  "下一步：main#105（重沙盒真实基线 80.5 秒＝120 秒上限的 67%，越过 2/3 线，三选一：瘦身／隔轮跑／有痕调上限；该告警是预期读数不是抖动）→ main#104（普查件 163 毫秒对缓存轮 3 秒预算的余量）→ main#23 司级基准刷新（10-27 逾期）。判据=写侧族 Tools/devloop/run-ps-suites.ps1 须 failing=0 parity=ok counted=6，-Verify 全族 counted=9 且 exit 0；指针=./state/queue/main.md",
     "milestone_eta_utc":  "2026-11-02T12:00:00Z"
 }

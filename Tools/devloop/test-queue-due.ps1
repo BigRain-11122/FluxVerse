@@ -59,6 +59,12 @@ function Write-TextFile([string]$path, [string]$body) {
     [IO.File]::WriteAllText($path, $body, $utf8)
 }
 
+# Pure-function cases pin a frozen clock so their day counts are exact forever.
+# Case D cannot: it drives the REAL builder, which reads the real clock and has
+# no clock hook. So the builder case gets its own fixture with dates derived
+# from the real clock (r787: the frozen fixture made the suite report "12 days"
+# against a builder saying 13, and it went red on 2026-11-02 with no code
+# change - a test may not be a calendar bomb).
 $today = [datetime]::new(2026, 11, 1)
 
 # --- A) fixture queue -------------------------------------------------------
@@ -316,6 +322,28 @@ foreach ($fn in @($liveIdsByFile.Keys | Sort-Object)) {
 }
 
 # --- D) builder integration ------------------------------------------------
+# r787: the builder reads the real clock, so this case's fixture is the only one
+# whose dates are relative. Same shape as case A: one late by 12, one due today,
+# one undated, one closed, one unparseable.
+$qdirD = Join-Path $sandbox 'queueD'
+New-Item -ItemType Directory -Path $qdirD -Force | Out-Null
+$realToday  = (Get-Date).Date
+$dLateReal  = $realToday.AddDays(-12).ToString('yyyy-MM-dd')
+$dTodayReal = $realToday.ToString('yyyy-MM-dd')
+$dClosedReal = $realToday.AddDays(-31).ToString('yyyy-MM-dd')
+$rowD = @"
+# fixture queue
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | open and late | p | due=$dLateReal |
+| 2 | open and due today | p | due=$dTodayReal |
+| 3 | open, no deadline | p | nothing here |
+| 4 | ~~closed work~~ **done** | p | due=$dClosedReal |
+| 5 | open, unparseable date | p | due=2026-13-45 |
+"@
+Write-TextFile (Join-Path $qdirD 'queue-d.md') $rowD
+
 $snap = Join-Path $repoDir 'world-public\city-snapshot.json'
 $face = Join-Path $repoDir 'state\status-face.json'
 foreach ($p in @($snap, $face)) {
@@ -324,7 +352,7 @@ foreach ($p in @($snap, $face)) {
 
 $outD = Join-Path $sandbox 'panel-d.html'
 $logD = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
-        -ProofRoot $repoDir -QueueDir $qdirA `
+        -ProofRoot $repoDir -QueueDir $qdirD `
         -OutPath $outD -HistoryPath (Join-Path $sandbox 'hist-d.jsonl')) -join "`n"
 $htmlD = ''
 if (Test-Path -LiteralPath $outD) { $htmlD = [IO.File]::ReadAllText($outD) }

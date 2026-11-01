@@ -23,6 +23,15 @@
 # pool and the card cannot disagree about what a "city frame" is. The panel
 # token is checked first, exactly like city-shot-shape.ps1: a panel self-shot
 # also starts with city-, but it is evidence of the page, not of the city.
+# Step 5 (r777, queue main#113): the window numbers were a guess, so the pool
+# needed a criterion that is not a guess. The one this repo actually has is
+# "a committed document names it": a runbook line or a TECH section that says
+# qa/<name> is evidence somebody will try to open later. So a file cited by any
+# tracked *.md / *.txt is never planned for a move (class 'cited'), and names
+# that are cited but already sit in _archive are reported as dangling - r772
+# moved 69 such files and nothing said so. If the citation index cannot be
+# built the tool refuses to plan or apply (fail-closed): archiving cited
+# evidence is exactly the damage this step exists to stop.
 # Read-only, no network, ASCII-only (PS5.1 GBK law).
 [CmdletBinding()]
 param(
@@ -32,6 +41,13 @@ param(
     [int]$KeepFamily = 3,
     # Rolling window for panel self-shots (never inlined), counted in FILES.
     [int]$KeepPanel = 3,
+    # Repo root used to build the citation index (tracked *.md / *.txt).
+    # Empty = two levels above this script (the repo root).
+    [string]$CiteRoot = '',
+    # Explicit citation file list for the sandbox. Passing -CiteFiles with an
+    # empty array means "no citations anywhere" (deterministic fixtures); the
+    # switch being absent means "ask git for the tracked md/txt files".
+    [string[]]$CiteFiles = @(),
     # Print one MOVE line per file the plan would move.
     [switch]$List,
     # Machine-readable one-json-line output (used by the sandbox).
@@ -79,31 +95,134 @@ function Get-QaSessionKey
     return 'name:' + $Name
 }
 
-function Get-QaPoolCensus
+function Get-QaPoolFiles
 {
     param([string]$Pool)
+    # A hashtable, not a PSObject: property assignment on a PSObject inside a
+    # function is easy to get subtly wrong (r777 first cut returned an empty
+    # file list and the census printed a calm images=0).
+    $out = @{ exists = $false; files = @(); error = '' }
+    if ([string]::IsNullOrWhiteSpace($Pool)) { return $out }
+    if (-not (Test-Path -LiteralPath $Pool)) { return $out }
+    try {
+        $list = Get-ChildItem -LiteralPath $Pool -File -ErrorAction Stop |
+            Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' }
+        $out.files = @($list)
+        $out.exists = $true
+    } catch {
+        $out.error = $_.Exception.Message
+        $out.files = @()
+        $out.exists = $false
+    }
+    return $out
+}
+
+# Citation index: which of the given image names appear in a tracked text file.
+# A committed document that names qa/<file> is the only retention criterion this
+# repo can prove; a guess at "which sessions matter" is what main#113 objected
+# to. Matching is substring on the full file name (Ordinal, ASCII names only),
+# so "documented" means "somebody can find the exact string in the repo text".
+function Get-QaCitationIndex
+{
+    param(
+        [string]$Root,
+        [string[]]$Files,
+        [bool]$Explicit,
+        [string[]]$Names
+    )
+    $res = New-Object PSObject -Property ([ordered]@{
+        ok = $false; error = ''; mode = 'git'; scanned = 0; skipped = 0
+        names = @{}; sources = @{}
+    })
+    if ($null -eq $Names -or @($Names).Count -eq 0) { $res.ok = $true; return $res }
+    $needles = @($Names | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+    if ($needles.Count -eq 0) { $res.ok = $true; return $res }
+
+    $list = @()
+    if ($Explicit) {
+        $res.mode = 'explicit'
+        $list = @($Files)
+    } else {
+        if ([string]::IsNullOrWhiteSpace($Root) -or -not (Test-Path -LiteralPath $Root)) {
+            $res.error = 'cite root missing: ' + $Root
+            return $res
+        }
+        try {
+            $tracked = @(& git -C $Root ls-files 2>$null)
+            if ($LASTEXITCODE -ne 0) {
+                $res.error = 'git ls-files exit ' + $LASTEXITCODE
+                return $res
+            }
+        } catch {
+            $res.error = 'git unavailable: ' + $_.Exception.Message
+            return $res
+        }
+        $list = @($tracked | Where-Object { $_ -match '\.(md|txt)$' })
+    }
+
+    foreach ($rel in $list) {
+        if ([string]::IsNullOrWhiteSpace($rel)) { continue }
+        $p = [string]$rel
+        if (-not [System.IO.Path]::IsPathRooted($p)) { $p = Join-Path $Root $p }
+        if (-not (Test-Path -LiteralPath $p)) { $res.skipped++; continue }
+        try {
+            $len = (Get-Item -LiteralPath $p).Length
+            # A single document above 8 MB is not a citation face this tool can
+            # afford to scan per run; it is skipped and counted, never assumed.
+            if ($len -gt 8388608) { $res.skipped++; continue }
+            $text = [System.IO.File]::ReadAllText($p)
+        } catch {
+            $res.skipped++
+            continue
+        }
+        $res.scanned++
+        foreach ($n in $needles) {
+            if ($text.IndexOf($n, [StringComparison]::Ordinal) -ge 0) {
+                if (-not $res.names.ContainsKey($n)) { $res.names[$n] = 0 }
+                $res.names[$n] = [int]$res.names[$n] + 1
+                if (-not $res.sources.ContainsKey($n)) {
+                    $res.sources[$n] = New-Object System.Collections.ArrayList
+                }
+                [void]$res.sources[$n].Add([string]$rel)
+            }
+        }
+    }
+    $res.ok = $true
+    return $res
+}
+
+function Get-QaPoolCensus
+{
+    param([string]$Pool, [object[]]$Files = $null, [hashtable]$Cited = @{})
     $res = New-Object PSObject -Property ([ordered]@{
         dir = $Pool; exists = $false; images = 0; bytes = 0; oldest_days = -1
-        groups = @()
+        groups = @(); cited = 0; cited_kept = 0
     })
     if ([string]::IsNullOrWhiteSpace($Pool)) { return $res }
     if (-not (Test-Path -LiteralPath $Pool)) { return $res }
     $res.exists = $true
-    $files = @()
-    try {
-        $files = @(Get-ChildItem -LiteralPath $Pool -File -ErrorAction Stop |
-            Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' })
-    } catch {
-        $res.exists = $false
-        return $res
+    # NOT $files: PowerShell variable names are case-insensitive, so a local
+    # $files and the $Files parameter are the same slot - the first cut reset
+    # the caller's list to empty and the census printed a calm images=0.
+    $fileList = @()
+    if ($null -ne $Files) {
+        $fileList = @($Files)
+    } else {
+        try {
+            $fileList = @(Get-ChildItem -LiteralPath $Pool -File -ErrorAction Stop |
+                Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' })
+        } catch {
+            $res.exists = $false
+            return $res
+        }
     }
-    $res.images = $files.Count
-    if ($files.Count -eq 0) { return $res }
+    $res.images = $fileList.Count
+    if ($fileList.Count -eq 0) { return $res }
 
     $now = (Get-Date).ToUniversalTime()
     $sum = 0
     $oldest = $null
-    foreach ($f in $files) {
+    foreach ($f in $fileList) {
         $sum += [int64]$f.Length
         if ($null -eq $oldest -or $f.LastWriteTimeUtc -lt $oldest) { $oldest = $f.LastWriteTimeUtc }
     }
@@ -112,7 +231,7 @@ function Get-QaPoolCensus
 
     $groups = @()
     $byGroup = @{}
-    foreach ($f in $files) {
+    foreach ($f in $fileList) {
         $g = Get-QaGroupName -Name $f.Name
         if (-not $byGroup.ContainsKey($g)) { $byGroup[$g] = New-Object System.Collections.ArrayList }
         [void]$byGroup[$g].Add($f)
@@ -149,9 +268,20 @@ function Get-QaPoolCensus
         }
 
         $moveList = @()
+        $citedNames = @()
+        $citedKept = @()
+        foreach ($f in $sorted) {
+            if ($Cited.ContainsKey([string]$f.Name)) { $citedNames += [string]$f.Name }
+        }
         if ($keep -ge 0 -and $sessions.Count -gt $keep) {
             foreach ($s in @($sessions[$keep..($sessions.Count - 1)])) {
-                foreach ($n in @($s.names | Sort-Object)) { $moveList += $n }
+                foreach ($n in @($s.names | Sort-Object)) {
+                    # Cited evidence is outside the retention window's jurisdiction:
+                    # a committed document points at this name, so moving it would
+                    # leave the document pointing at nothing.
+                    if ($Cited.ContainsKey([string]$n)) { $citedKept += [string]$n; continue }
+                    $moveList += $n
+                }
             }
         }
         $reclaim = [int64]0
@@ -171,8 +301,13 @@ function Get-QaPoolCensus
             move = [int]$moveList.Count
             reclaim = [int64]$reclaim
             oldest_days = $(if ($oldestG) { [int][Math]::Floor(($now - $oldestG).TotalDays) } else { -1 })
+            cited = [int]$citedNames.Count
+            cited_kept = [int]$citedKept.Count
+            cited_names = @($citedNames)
             move_names = @($moveList)
         }))
+        $res.cited = [int]$res.cited + $citedNames.Count
+        $res.cited_kept = [int]$res.cited_kept + $citedKept.Count
     }
     $res.groups = @($groups)
     return $res
@@ -264,8 +399,52 @@ function Invoke-QaApply
 if (-not $Dir) {
     $Dir = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'qa'
 }
+if (-not $CiteRoot) {
+    $CiteRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+}
 
-$census = Get-QaPoolCensus -Pool $Dir
+$poolFiles = Get-QaPoolFiles -Pool $Dir
+if (-not $poolFiles.exists -and -not [string]::IsNullOrWhiteSpace($poolFiles.error)) {
+    Write-Host ('QA POOL FAIL: cannot enumerate ' + $Dir + ' :: ' + $poolFiles.error)
+    exit 2
+}
+$poolNames = @()
+foreach ($f in @($poolFiles.files)) { $poolNames += [string]$f.Name }
+
+# Archived names are part of the index too: that is how a citation that no
+# longer resolves becomes visible instead of silent.
+$archiveDir = Join-Path $Dir '_archive'
+$archNames = @()
+if (Test-Path -LiteralPath $archiveDir) {
+    try {
+        $archNames = @(Get-ChildItem -LiteralPath $archiveDir -File -ErrorAction Stop |
+            Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' } |
+            ForEach-Object { [string]$_.Name })
+    } catch {
+        $archNames = @()
+    }
+}
+
+$citeExplicit = $PSBoundParameters.ContainsKey('CiteFiles')
+$cite = Get-QaCitationIndex -Root $CiteRoot -Files $CiteFiles -Explicit $citeExplicit `
+    -Names (@($poolNames) + @($archNames))
+
+# Fail-closed: if we cannot tell what the repo cites, we cannot tell what is safe
+# to move. The 69 dangling names r772 left behind are the reason this is not a
+# warning.
+if ($poolFiles.exists -and -not $cite.ok) {
+    Write-Host ('QA CITE FAIL: cannot build the citation index (' + $cite.error +
+        ') - refusing to plan a move over evidence a document may name')
+    exit 2
+}
+
+$citedSet = @{}
+foreach ($k in @($cite.names.Keys)) { $citedSet[[string]$k] = $true }
+
+$census = Get-QaPoolCensus -Pool $Dir -Files $poolFiles.files -Cited $citedSet
+
+$dangling = @()
+foreach ($n in $archNames) { if ($citedSet.ContainsKey([string]$n)) { $dangling += [string]$n } }
 
 if ($Json) {
     $payload = [ordered]@{
@@ -275,11 +454,17 @@ if ($Json) {
         oldest_days = $census.oldest_days
         keep_family = $KeepFamily
         keep_panel = $KeepPanel
+        cited = $census.cited
+        cited_kept = $census.cited_kept
+        cite_scanned = $cite.scanned
+        cite_mode = $cite.mode
+        archive_cited = @($dangling).Count
         groups = @($census.groups | ForEach-Object {
             [ordered]@{
                 name = $_.name; count = $_.count; bytes = $_.bytes; keep = $_.keep
                 sessions = $_.sessions; move = $_.move; reclaim = $_.reclaim
                 oldest_days = $_.oldest_days; move_names = @($_.move_names)
+                cited = $_.cited; cited_kept = $_.cited_kept; cited_names = @($_.cited_names)
             }
         })
     }
@@ -295,6 +480,8 @@ if (-not $census.exists) {
 $head = 'QA POOL: images=' + $census.images + ' bytes=' + (Format-QaBytes -Bytes $census.bytes) +
     ' oldest=' + $census.oldest_days + 'd'
 Write-Host ($head + ' dir=' + $Dir)
+Write-Host ('QA CITE: cited=' + $census.cited + '/' + $census.images + ' in pool, archive_cited=' +
+    @($dangling).Count + ' (index=' + $cite.mode + ' scanned=' + $cite.scanned + ' md/txt)')
 
 $moves = 0
 $reclaim = [int64]0
@@ -304,17 +491,32 @@ foreach ($g in $census.groups) {
     $line = '  ' + $g.name.PadRight(7) + ' n=' + $g.count + ' sessions=' + $sessTxt +
         ' bytes=' + (Format-QaBytes -Bytes $g.bytes) +
         ' keep=' + $keepTxt + ' move=' + $g.move + ' reclaim=' + (Format-QaBytes -Bytes $g.reclaim) +
-        ' oldest=' + $g.oldest_days + 'd'
+        ' oldest=' + $g.oldest_days + 'd' + ' cited=' + $g.cited
     Write-Host $line
     $moves += $g.move
     $reclaim += $g.reclaim
     if ($List) {
         foreach ($n in $g.move_names) { Write-Host ('    MOVE ' + $n) }
+        foreach ($n in $g.cited_names) {
+            $src = ''
+            if ($cite.sources.ContainsKey([string]$n)) { $src = (@($cite.sources[[string]$n]) | Select-Object -First 1) }
+            Write-Host ('    KEEP ' + $n + ' (cited: ' + $src + ')')
+        }
     }
 }
 $planTail = $(if ($Apply) { ' (apply follows)' } else { ' (dry-run, nothing touched)' })
 Write-Host ('QA PLAN: moves=' + $moves + ' reclaim=' + (Format-QaBytes -Bytes $reclaim) +
-    ' keep_sessions=' + $KeepFamily + ' keep_panel=' + $KeepPanel + $planTail)
+    ' keep_sessions=' + $KeepFamily + ' keep_panel=' + $KeepPanel +
+    ' cited_kept=' + $census.cited_kept + $planTail)
+if (@($dangling).Count -gt 0) {
+    Write-Host ('QA DANGLING: ' + @($dangling).Count + ' cited name(s) sit in _archive - ' +
+        'a tracked document names a path that is no longer in the pool')
+    if ($List) {
+        foreach ($n in @($dangling | Sort-Object | Select-Object -First 20)) {
+            Write-Host ('    DANGLING ' + $n)
+        }
+    }
+}
 
 if ($Apply) {
     $ap = Invoke-QaApply -Pool $Dir -Census $census

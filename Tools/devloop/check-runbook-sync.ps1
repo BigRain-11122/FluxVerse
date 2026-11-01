@@ -29,12 +29,20 @@ if (-not (Test-Path -LiteralPath $TechPath)) { Fail 'tech-missing' }
 $runbookText = [System.IO.File]::ReadAllText($RunbookPath)
 $techText = [System.IO.File]::ReadAllText($TechPath)
 
-# Runbook current-round marker: 'r<N> <bi>' (U+6BD5), last match wins.
+# Runbook current-round marker: 'r<N> <bi>' (U+6BD5). The runbook keeps its
+# history newest-first, one block per round, so the LAST match is the OLDEST
+# block - r777 measured exactly that: a correct file (current block r777, then
+# history r776/r775) came out as 'runbook=r775' DRIFT against tech_tail=r777.
+# Take the maximum round number instead: independent of block order, and a
+# stale current block still drifts because TECH's tail keeps moving.
 $bi = [char]0x6BD5
 $rbMatches = [regex]::Matches($runbookText, ('r(\d+)\s*' + $bi))
 if ($rbMatches.Count -eq 0) { Fail 'runbook-no-current-round-marker' }
 # keep the captured digits as strings for display (leading zeros preserved); compare numerically
-$runbookR = $rbMatches[$rbMatches.Count - 1].Groups[1].Value
+$runbookR = '0'
+foreach ($m in $rbMatches) {
+    if ([int]$m.Groups[1].Value -gt [int]$runbookR) { $runbookR = $m.Groups[1].Value }
+}
 
 # TECH section-9 span: heading '## <jiu><dun>' (U+4E5D U+3001) up to next '## ' heading or EOF.
 $jiu = [char]0x4E5D

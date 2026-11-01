@@ -18,6 +18,12 @@ $sandbox = Join-Path ([System.IO.Path]::GetTempPath()) ('fv-qarot-' + $PID)
 $pool = Join-Path $sandbox 'qa'
 New-Item -ItemType Directory -Path $pool -Force | Out-Null
 
+# Citation fixtures (r777, main#113): the tool will not move a file that a
+# tracked document names. The empty one keeps every number in this sandbox
+# stable; the cited ones are used by the dedicated groups at the end.
+$citeEmpty = Join-Path $sandbox 'cite-empty.md'
+[System.IO.File]::WriteAllText($citeEmpty, "# nothing cited here`r`n")
+
 $pass = 0
 $fail = 0
 function Check([string]$name, [bool]$cond) {
@@ -65,7 +71,7 @@ New-Fix 'notes.png' 30 ($base)
 # Non-image: never counted at all.
 [System.IO.File]::WriteAllText((Join-Path $pool 'readme.md'), 'not an image')
 
-$log = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool) -join "`n"
+$log = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool -CiteFiles $citeEmpty) -join "`n"
 $rc = $LASTEXITCODE
 
 Check 'tool exits 0 on a readable pool' ($rc -eq 0)
@@ -80,7 +86,7 @@ Check 'plan says it is a dry run' ($log -match 'dry-run, nothing touched')
 
 # Per-file listing proves session atomicity: the oldest session is named in
 # full, the newest one is not named at all.
-$listLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool -List) -join "`n"
+$listLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool -List -CiteFiles $citeEmpty) -join "`n"
 $movedOld = 0
 foreach ($v in $views) {
     if ($listLog -match ('MOVE city3d-shots-20261001-1000-bm-a-' + $v + '\.jpg')) { $movedOld++ }
@@ -94,7 +100,7 @@ Check 'no view of the newest session is listed' ($movedNew -eq 0)
 Check 'it lists no md file' (-not ($listLog -match 'MOVE readme\.md'))
 
 # Json mode: totals must agree with the text mode.
-$jsonLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool -Json) -join "`n"
+$jsonLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool -Json -CiteFiles $citeEmpty) -join "`n"
 $j = $null
 try { $j = $jsonLog | ConvertFrom-Json } catch { $j = $null }
 Check 'json parses' ($null -ne $j)
@@ -109,7 +115,7 @@ if ($j) {
 
 # Missing directory is a stated failure, not a silent zero.
 $missing = Join-Path $sandbox 'nope'
-$badLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $missing) -join "`n"
+$badLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $missing -CiteFiles $citeEmpty) -join "`n"
 $badRc = $LASTEXITCODE
 Check 'missing dir exits 2' ($badRc -eq 2)
 Check 'missing dir is named, not printed as zero images' ($badLog -match 'QA POOL FAIL')
@@ -131,7 +137,7 @@ Check 'tool is ASCII-only' ($nonAscii -eq 0)
 # file system - it must not trust the tool's own report.
 # ---------------------------------------------------------------------------
 $archive = Join-Path $pool '_archive'
-$applyLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool -Apply) -join "`n"
+$applyLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool -Apply -CiteFiles $citeEmpty) -join "`n"
 $applyRc = $LASTEXITCODE
 Check 'apply exits 0' ($applyRc -eq 0)
 Check 'apply reports the 8 planned moves and their bytes' ($applyLog -match 'QA APPLY: moved=8 bytes=1000B')
@@ -174,7 +180,7 @@ Check 'the ledger records name and size (reversal needs no guessing)' (
 
 # Second apply is a no-op, not a second wave: the surviving pool is inside the
 # window, so the plan is empty and the archive must not grow.
-$againLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool -Apply) -join "`n"
+$againLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool -Apply -CiteFiles $citeEmpty) -join "`n"
 $againRc = $LASTEXITCODE
 $archived2 = @(Get-ChildItem -LiteralPath $archive -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' })
 Check 're-apply exits 0' ($againRc -eq 0)
@@ -193,12 +199,74 @@ foreach ($s in $sessions) {
 $arch2 = Join-Path $pool2 '_archive'
 New-Item -ItemType Directory -Path $arch2 -Force | Out-Null
 [System.IO.File]::WriteAllBytes((Join-Path $arch2 'city3d-shots-20261001-1000-bm-a-street.jpg'), (New-Object byte[] 7))
-$conflLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool2 -Apply) -join "`n"
+$conflLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool2 -Apply -CiteFiles $citeEmpty) -join "`n"
 $conflRc = $LASTEXITCODE
 $pool2Left = @(Get-ChildItem -LiteralPath $pool2 -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' })
 Check 'a conflict exits 2' ($conflRc -eq 2)
 Check 'a conflict is named, not silently skipped' ($conflLog -match 'QA APPLY FAIL: 1 planned name\(s\) already in')
 Check 'a conflict moves nothing at all (all 24 still in the pool)' ($pool2Left.Count -eq 24)
+
+# ---------------------------------------------------------------------------
+# Citation group (r777, main#113): the window numbers were a guess, so the rule
+# became "a tracked document names it" - such a file is never planned for a
+# move, and a cited name that already sits in _archive is reported as dangling
+# instead of vanishing. Everything here re-reads the file system.
+# ---------------------------------------------------------------------------
+$pool3 = Join-Path $sandbox 'qa3'
+New-Item -ItemType Directory -Path $pool3 -Force | Out-Null
+foreach ($s in $sessions) {
+    foreach ($v in $views) {
+        New-Fix2 (Join-Path $pool3 ('city3d-shots-' + $s + '-bm-a-' + $v + '.jpg')) 100
+    }
+}
+# One citation, on ONE view of the oldest session: that file must stay while the
+# other five views of the same session still move (a citation is per file, not a
+# blanket pardon for the session).
+$citeOne = Join-Path $sandbox 'cite-one.md'
+[System.IO.File]::WriteAllText($citeOne, "Evidence: qa/city3d-shots-20261001-1000-bm-a-street.jpg`r`n")
+
+$citeLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool3 -List -CiteFiles $citeOne) -join "`n"
+$citeRc = $LASTEXITCODE
+Check 'cited run exits 0' ($citeRc -eq 0)
+Check 'citation line prints the index readout' ($citeLog -match 'QA CITE: cited=1/24 in pool, archive_cited=0')
+Check 'the cited file is reported as kept' ($citeLog -match 'KEEP city3d-shots-20261001-1000-bm-a-street\.jpg \(cited: ')
+Check 'the cited file is not planned for a move' (-not ($citeLog -match 'MOVE city3d-shots-20261001-1000-bm-a-street\.jpg'))
+Check 'the other five views of that session still move' ($citeLog -match 'QA PLAN: moves=5\b')
+Check 'plan counts the move the citation avoided' ($citeLog -match 'cited_kept=1\b')
+Check 'no dangling line when pool and archive agree' (-not ($citeLog -match 'QA DANGLING'))
+
+# Apply honours it: the cited file is still in the pool afterwards.
+$citeApply = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool3 -Apply -CiteFiles $citeOne) -join "`n"
+$citeApplyRc = $LASTEXITCODE
+Check 'cited apply exits 0' ($citeApplyRc -eq 0)
+Check 'cited apply moved exactly five' ($citeApply -match 'QA APPLY: moved=5\b')
+Check 'the cited file survived apply in the pool' (
+    Test-Path -LiteralPath (Join-Path $pool3 'city3d-shots-20261001-1000-bm-a-street.jpg'))
+Check 'the uncited view of the same session is in the archive' (
+    Test-Path -LiteralPath (Join-Path $pool3 ('_archive' + [System.IO.Path]::DirectorySeparatorChar +
+        'city3d-shots-20261001-1000-bm-a-overview.jpg')))
+
+# Dangling: a cited name that is already archived must be named, not silent.
+$citeDang = Join-Path $sandbox 'cite-dangling.md'
+[System.IO.File]::WriteAllText($citeDang, "Old receipt: qa/city3d-shots-20261001-1000-bm-a-overview.jpg`r`n")
+$dangLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool3 -List -CiteFiles $citeDang) -join "`n"
+Check 'dangling line appears when a cited name lives in the archive' ($dangLog -match 'QA DANGLING: 1 cited name')
+Check 'the dangling name is named' ($dangLog -match 'DANGLING city3d-shots-20261001-1000-bm-a-overview\.jpg')
+
+# Fail-closed: no citation index means no plan at all.
+$noCiteLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool3 -CiteRoot (Join-Path $sandbox 'no-such-root')) -join "`n"
+$noCiteRc = $LASTEXITCODE
+Check 'an unbuildable citation index exits 2' ($noCiteRc -eq 2)
+Check 'the refusal names the reason' ($noCiteLog -match 'QA CITE FAIL')
+Check 'the refusal moved nothing (19 still in the pool)' (
+    @(Get-ChildItem -LiteralPath $pool3 -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' }).Count -eq 19)
+
+# Json mirrors the citation fields.
+$json3 = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool3 -Json -CiteFiles $citeOne) -join "`n"
+$j3 = $null
+try { $j3 = $json3 | ConvertFrom-Json } catch { $j3 = $null }
+Check 'json carries cited and cited_kept' ($null -ne $j3 -and [int]$j3.cited -eq 1 -and [int]$j3.cited_kept -eq 1)
+Check 'json carries the archive citation readout' ($null -ne $j3 -and [int]$j3.archive_cited -ge 0)
 
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 Write-Output ('test-qa-rotation: ' + $pass + ' passed, ' + $fail + ' failed (of ' + ($pass + $fail) + ')')

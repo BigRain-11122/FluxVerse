@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-01T18:28:13Z",
-    "current_activity":  "r791 收口：面板「应办」卡不再把「本司已回执、集团台账还没翻」读成「本司没做」——三条逾期（D-20261028-04／-11／-13）各自挂上回执号（./HQ-FEEDBACK.md 的 F-20261028-01／-03），活跑 `PANEL OK … duty=5 duty_late=3 duty_receipted=3 duty_receipts=45`，页头印「5 项待办 · 3 项逾期 · 已回执 3」。",
-    "artifact":  "`./world-public/city-panel.html`（应办卡每行回执标＋摘要已回执数）, `./Tools/devloop/build-city-panel.ps1`（Resolve-DutyReceipts 与 duty_receipted 读数）, `./Tools/devloop/test-city-duty.ps1`（32→42/42）, `./logs/devloop-r709-panel-duty-test.js`（12→27/27）, `./TECH.md`（r791 行）",
-    "artifact_utc":  "2026-11-01T18:28:13Z",
-    "milestone":  "下一步：把面板上仍印「未回执」的两条应办令 D-20261101-05／D-20261102-05 逐条落实并回执，并刷新 `./docs/global-benchmarks.md`（已逾 6 天，`./Tools/devloop/benchmark-duty.ps1` 每 tick 点名）；48 小时内出结论。",
-    "milestone_eta_utc":  "2026-11-03T12:00:00Z"
+    "updated_utc":  "2026-11-01T19:03:42Z",
+    "current_activity":  "r792 收口：基准面 v1.4 刷新（司级 7 天，逾期 6 天清账）——两项「C·待证」源核销：CoG 2026《Evolutionary Wave Function Collapse》按 arXiv:2607.02082 直址取件升「确认」（官方 4-page short paper + 结论原文复证「全局约束是 WFC 硬弱点」），城市数字孪生开源阵营按组织页/官网/会议日程三面升「确认」（DTCC Platform＝Chalmers·MIT·2022 起）。活跑 `Get-BenchmarkReading` → `ok=true due=2026-11-09 left=8d basis=declared`，每 tick 那行由 `VERIFY WARN … over=6d` 转 `VERIFY HEALTH: benchmarks: due=2026-11-09 left=8d`；队列逾期件 2→0。",
+    "artifact":  "`./docs/global-benchmarks.md`（v1.4：①视野面两行升 B·确认、③源表两行升确认、④更新记录新增 2026-11-02 行）、`./state/queue/main.md`（#23 销行＋新立 #125 参数名陷阱债）、`./state/queue/tech.md`（#16 采用面回访销行＋#17 陈旧行销行＋新立 #18 待证核销位）、`./logs/tick-20261102.log`（每 tick benchmark 行转 HEALTH 的实锚）",
+    "artifact_utc":  "2026-11-01T19:03:42Z",
+    "milestone":  "下一步：tech#18 深潜窗（2026-11-19）核销 ICCS 2025 混合式与 arXiv:2308.07307 两件待证源；main#121（状态面词表过宽，due=2026-11-16）交委员会；main#125 参数名静默零债待领；48 小时内不动基准面。",
+    "milestone_eta_utc":  "2026-11-19T00:00:00Z"
 }

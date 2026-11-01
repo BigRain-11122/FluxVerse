@@ -141,6 +141,12 @@ const GREEN = {
     error: '', utc: nowIso(2), images: 20, cited: 8, stale_days: 90,
     stale_cited: 0, stale_cited_bytes: 0, superseded_cited: 0, newer_sibling_cited: 0
   },
+  // r797 added the bare-parameter census row (queue main#128): a healthy page
+  // carries a cached reading with zero risky functions.
+  SPARAM: {
+    root: 'Tools\\devloop', files: 66, functions: 242, simple: 123, risky: 0,
+    items: [], cached: true, reason: '', fp: 'deadbeef0001'
+  },
   // r745 added the queue-overdue row (queue main#83). A calm fixture = readable
   // queues with deadlines declared but none of them late, so an "all green" page
   // stays green for the right reason.
@@ -294,6 +300,41 @@ function maintText(html, label) {
   const t = maintText(injectAll(fresh), 'qacite-fresh');
   chk('qacite.fresh-no-stale-note', t.indexOf('未刷新') < 0 && t.indexOf('均未超 90 天') >= 0,
     'text=' + JSON.stringify(t));
+}
+
+// r797 (queue main#128): the bare-parameter census is a reading, so the honest
+// shapes are: zero offenders (green), a named offender count (warn + names in
+// the title), and "not measured" when the tool directory is not on disk - that
+// last one must never read as zero.
+{
+  const t = maintText(injectAll(GREEN), 'sparam-ok');
+  chk('sparam.healthy-row', t.indexOf('裸参数风险 0 处') >= 0, 'text=' + JSON.stringify(t));
+  chk('sparam.healthy-anchor', t.indexOf('66 文件') >= 0 && t.indexOf('242 函数') >= 0,
+    'text=' + JSON.stringify(t));
+}
+{
+  const bad = Object.assign({}, GREEN);
+  bad.SPARAM = Object.assign({}, GREEN.SPARAM, {
+    risky: 2, items: [
+      { rel: 'Tools/devloop/a.ps1', line: 7, name: 'Get-Bare', why: 'path-param-unvalidated(Path)' },
+      { rel: 'Tools/devloop/b.ps1', line: 9, name: 'Get-Bare2', why: 'path-param-unvalidated(Path)' }
+    ]
+  });
+  const run = runPanel(injectAll(bad), 'sparam-risk');
+  const spans = (run.get('f-maint').children || []).map(c => String(c.textContent || ''));
+  const t = spans.join(' | ');
+  chk('sparam.risk-row', t.indexOf('裸参数风险 2 处') >= 0, 'text=' + JSON.stringify(t));
+  const warnSpan = (run.get('f-maint').children || []).filter(c => /(^|\s)warn(\s|$)/.test(c.className || ''));
+  chk('sparam.risk-warn-class', warnSpan.length >= 1, 'classes=' + JSON.stringify(warnSpan.map(c => c.className)));
+  chk('sparam.risk-names', warnSpan.some(c => (c.title || '').indexOf('Get-Bare') >= 0),
+    'titles=' + JSON.stringify(warnSpan.map(c => c.title)));
+}
+{
+  const gone = Object.assign({}, GREEN);
+  gone.SPARAM = { root: '<missing>', files: 0, functions: 0, simple: 0, risky: 0, items: [], cached: false, reason: 'no-dir', fp: '' };
+  const t = maintText(injectAll(gone), 'sparam-missing');
+  chk('sparam.missing-row', t.indexOf('未测量') >= 0, 'text=' + JSON.stringify(t));
+  chk('sparam.missing-never-zero', t.indexOf('裸参数风险 0 处') < 0, 'text=' + JSON.stringify(t));
 }
 
 console.log('RESULT pass=' + pass + ' fail=' + fail);

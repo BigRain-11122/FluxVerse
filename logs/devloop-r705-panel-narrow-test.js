@@ -114,6 +114,11 @@ const FIXTURE = {
     error: '', utc: nowIso(2), images: 20, cited: 8, stale_days: 90,
     stale_cited: 0, stale_cited_bytes: 0, superseded_cited: 0, newer_sibling_cited: 0
   },
+  // r797: bare-parameter census reading (queue main#128), calm = zero risky.
+  SPARAM: {
+    root: 'Tools\\devloop', files: 66, functions: 242, simple: 123, risky: 0,
+    items: [], cached: true, reason: '', fp: 'deadbeef0001'
+  },
   QUEUE: {
     exists: true, dir_rel: 'state/queue', files: 3, scanned: 12, open: 12,
     dated: 3, late: 0, max_days: 0, max_id: '', as_of: YMD(), items: []

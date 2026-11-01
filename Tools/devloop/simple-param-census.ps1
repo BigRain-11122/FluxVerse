@@ -218,7 +218,151 @@ function Get-SimpleParamCensus {
     return $res
 }
 
-function Format-SimpleParamCensus {
+function Get-SimpleParamSha12
+{
+    param([string]$Text)
+    try {
+        $sha = [System.Security.Cryptography.SHA256]::Create()
+        try { $bytes = $sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes([string]$Text)) }
+        finally { $sha.Dispose() }
+        $sb = New-Object System.Text.StringBuilder
+        for ($i = 0; $i -lt 6; $i++) { [void]$sb.Append($bytes[$i].ToString('x2')) }
+        return $sb.ToString()
+    } catch { return '' }
+}
+
+function Get-SimpleParamFingerprint
+{
+    # What has to be identical for a cached answer to still be true: the file
+    # list (name|length|mtime), the root itself, AND this module - the parse
+    # rules live here, so editing a rule must invalidate every cached count
+    # (same law as the city-shot census, r769).
+    param([string]$Root, [string]$ModulePath = '')
+    if ([string]::IsNullOrWhiteSpace($Root)) { return '' }
+    if (-not (Test-Path -LiteralPath $Root)) { return '' }
+    $fileList = @()
+    try {
+        $fileList = @(Get-ChildItem -LiteralPath $Root -File -Filter '*.ps1' -ErrorAction Stop | Sort-Object -Property Name)
+    } catch { return '' }
+    $parts = New-Object System.Collections.ArrayList
+    [void]$parts.Add($Root)
+    foreach ($f in $fileList) {
+        [void]$parts.Add($f.Name + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
+    }
+    if (-not [string]::IsNullOrWhiteSpace($ModulePath)) {
+        try {
+            $mb = [System.IO.File]::ReadAllBytes($ModulePath)
+            [void]$parts.Add('module|' + $mb.Length + '|' + (Get-SimpleParamSha12 -Text ([System.Text.Encoding]::UTF8.GetString($mb))))
+        } catch { [void]$parts.Add('module|?') }
+    }
+    return (Get-SimpleParamSha12 -Text ($parts -join "`n"))
+}
+
+function Get-SimpleParamCensusCached
+{
+    # A fresh census parses 66 files and costs ~560 ms - too much to pay every
+    # ten minutes for an answer that only changes when a *.ps1 changes. So the
+    # caller may hand in a cache path; the fingerprint above decides whether the
+    # recorded answer still answers. Fail-open: a stale/corrupt/missing cache is
+    # never an error, it just means recompute (a read-only tree only gets slower).
+    #
+    # `reason` says WHY the cache did not answer, so the page can tell "the key
+    # never matches" from "the cache was never written" - the same vocabulary as
+    # the city-shot census (r770): '' (hit or genuine first run) / stale /
+    # unreadable / unwritable / no-cache-path / no-dir. Never a zero standing in
+    # for "not measured": a missing root reports `<missing>` plus no-dir.
+    param(
+        [string]$Root,
+        [string]$RepoDir = '',
+        [string]$CachePath = '',
+        [string]$ModulePath = '',
+        [switch]$NoWrite
+    )
+
+    $res = [ordered]@{
+        root      = $Root
+        files     = 0
+        functions = 0
+        simple    = 0
+        risky     = 0
+        items     = @()
+        cached    = $false
+        reason    = ''
+        fp        = ''
+        wrote     = $false
+    }
+
+    if ([string]::IsNullOrWhiteSpace($Root) -or -not (Test-Path -LiteralPath $Root)) {
+        $res.root = '<missing>'
+        $res.reason = 'no-dir'
+        return $res
+    }
+
+    $census = $null
+    $fp = Get-SimpleParamFingerprint -Root $Root -ModulePath $ModulePath
+    $res.fp = $fp
+
+    if ([string]::IsNullOrWhiteSpace($CachePath)) {
+        $census = Get-SimpleParamCensus -Root $Root -RepoDir $RepoDir
+        $res.reason = 'no-cache-path'
+    } elseif ($fp -and (Test-Path -LiteralPath $CachePath)) {
+        try {
+            $cache = Get-Content -LiteralPath $CachePath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($cache -and $cache.PSObject.Properties['fingerprint'] -and ([string]$cache.fingerprint -eq $fp)) {
+                $res.files = [int]$cache.files
+                $res.functions = [int]$cache.functions
+                $res.simple = [int]$cache.simple
+                $res.risky = [int]$cache.risky
+                $res.items = @($cache.items)
+                $res.cached = $true
+                return $res
+            }
+            $res.reason = 'stale'
+        } catch { $res.reason = 'unreadable' }
+    }
+
+    if ($null -eq $census) { $census = Get-SimpleParamCensus -Root $Root -RepoDir $RepoDir }
+    $res.files = [int]$census.files
+    $res.functions = [int]$census.functions
+    $res.simple = [int]$census.simple_count
+    $res.risky = [int]$census.risky_count
+    $riskyItems = @()
+    foreach ($it in @($census.simple)) {
+        if ($it.why -eq '') { continue }
+        $riskyItems += [ordered]@{ rel = $it.rel; line = [int]$it.line; name = $it.name; why = $it.why }
+    }
+    $res.items = $riskyItems
+
+    if ((-not $NoWrite) -and $fp -and -not [string]::IsNullOrWhiteSpace($CachePath)) {
+        $tmp = ''
+        try {
+            $parent = Split-Path -Parent $CachePath
+            if ($parent -and -not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
+            $payload = [ordered]@{
+                fingerprint = $fp
+                written_utc = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
+                root        = $res.root
+                files       = $res.files
+                functions   = $res.functions
+                simple      = $res.simple
+                risky       = $res.risky
+                items       = @($riskyItems)
+            }
+            $json = ConvertTo-Json -InputObject $payload -Depth 5 -Compress
+            $tmp = $CachePath + '.new'
+            [System.IO.File]::WriteAllText($tmp, $json, (New-Object System.Text.UTF8Encoding($false)))
+            Move-Item -LiteralPath $tmp -Destination $CachePath -Force
+            $res.wrote = $true
+        } catch {
+            $res.reason = 'unwritable'
+            if ($tmp) { try { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue } catch { } }
+        }
+    }
+    return $res
+}
+
+function Format-SimpleParamCensus
+{
     # Human/line-oriented form: one summary line, then every risky item, then
     # (with -List) every simple item. ASCII only, stable order (input order).
     param($Census, [switch]$List)

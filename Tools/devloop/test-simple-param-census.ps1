@@ -23,6 +23,10 @@
 #   l) wiring: the write2 family guards the tool and runs its sandbox
 #   m) both new files stay ASCII (PS5.1 encoding law)
 #   n) live tree: the two shapes r792/r793 fixed are NOT in the risk list
+#   o) cache (r797): a first run writes, the second answers from disk, a changed
+#      source invalidates, a corrupt cache reads 'unreadable', a missing root
+#      reads 'no-dir', an unwritable cache keeps the answer - and no miss ever
+#      hands back a zero that looks measured
 #
 # ASCII-only (no CJK typed here).
 
@@ -225,6 +229,53 @@ Check 'n3 Get-BenchmarkReading is not a risk any more (r793 note)' ($bench.Count
 # The census must not pass by listing nothing at all: the family itself has to
 # be populated, otherwise a broken parser would read as "all clean".
 Check 'n4 the live family still lists simple functions' ($live.simple_count -ge 50) ([string]$live.simple_count)
+
+Write-Output '--- o) cache: the fingerprint decides, the reason has a name ---'
+# r797: a fresh census parses 66 files (~560 ms) and the panel wants the number
+# every tick. The cache is only honest if (a) the key really covers what the
+# answer depends on, and (b) a miss says WHY it missed instead of handing back
+# a zero. Both are proved here on fixtures, not on the live tree.
+$cDir = Join-Path $sandbox 'cache'
+New-Item -ItemType Directory -Force -Path $cDir | Out-Null
+$null = New-Fixture 'cache\c1.ps1' @(
+    'function Get-Bare2 {',
+    '    param([string]$FilePath)',
+    '    return [ordered]@{ ok = 0 }',
+    '}'
+)
+$cachePath = Join-Path $sandbox 'spc-cache.json'
+$c1 = Get-SimpleParamCensusCached -Root $cDir -RepoDir $sandbox -CachePath $cachePath -ModulePath $module
+Check 'o1 first run recomputes and writes the cache' ($c1.cached -eq $false -and $c1.wrote -eq $true) ('cached=' + [string]$c1.cached + ' wrote=' + [string]$c1.wrote)
+Check 'o2 first run still reports the risk' ($c1.risky -eq 1) ([string]$c1.risky)
+Check 'o3 cache file is on disk afterwards' (Test-Path -LiteralPath $cachePath)
+$c2 = Get-SimpleParamCensusCached -Root $cDir -RepoDir $sandbox -CachePath $cachePath -ModulePath $module
+Check 'o4 second run answers from the cache' ($c2.cached -eq $true -and $c2.reason -eq '') ('cached=' + [string]$c2.cached + ' reason=' + [string]$c2.reason)
+Check 'o5 cached answer carries the same counts' ($c2.risky -eq $c1.risky -and $c2.files -eq $c1.files -and $c2.functions -eq $c1.functions)
+Check 'o6 cached answer still names the offending function' (@($c2.items).Count -eq 1 -and (@($c2.items)[0].name -eq 'Get-Bare2')) ([string](@($c2.items)[0].name))
+$null = New-Fixture 'cache\c1.ps1' @(
+    'function Get-Bare2 {',
+    '    param([string]$FilePath)',
+    '    return [ordered]@{ ok = 0 }',
+    '}',
+    'function Get-Clean2 {',
+    '    param([Parameter(Mandatory=$true)][string]$Path)',
+    '    return 2',
+    '}'
+)
+$c3 = Get-SimpleParamCensusCached -Root $cDir -RepoDir $sandbox -CachePath $cachePath -ModulePath $module
+Check 'o7 a changed source invalidates the cache' ($c3.cached -eq $false -and $c3.reason -eq 'stale') ('cached=' + [string]$c3.cached + ' reason=' + [string]$c3.reason)
+Check 'o8 the recomputed answer sees the new function' ($c3.simple -eq 2 -and $c3.risky -eq 1) ('simple=' + [string]$c3.simple + ' risky=' + [string]$c3.risky)
+[System.IO.File]::WriteAllText($cachePath, '{not json', (New-Object System.Text.ASCIIEncoding))
+$c4 = Get-SimpleParamCensusCached -Root $cDir -RepoDir $sandbox -CachePath $cachePath -ModulePath $module
+Check 'o9 a corrupt cache reads as unreadable, not as zero' ($c4.cached -eq $false -and $c4.reason -eq 'unreadable' -and $c4.files -gt 0) ('reason=' + [string]$c4.reason + ' files=' + [string]$c4.files)
+$c5 = Get-SimpleParamCensusCached -Root $cDir -RepoDir $sandbox
+Check 'o10 no cache path says so and still answers' ($c5.cached -eq $false -and $c5.reason -eq 'no-cache-path' -and $c5.files -gt 0) ('reason=' + [string]$c5.reason)
+$c6 = Get-SimpleParamCensusCached -Root (Join-Path $sandbox 'nope') -CachePath $cachePath
+Check 'o11 a missing root is no-dir and names <missing>' ($c6.reason -eq 'no-dir' -and $c6.root -eq '<missing>') ('reason=' + [string]$c6.reason + ' root=' + [string]$c6.root)
+$blocker = New-Fixture 'blocker.bin' @('x')
+$badCache = Join-Path $blocker 'cache.json'
+$c7 = Get-SimpleParamCensusCached -Root $cDir -RepoDir $sandbox -CachePath $badCache -ModulePath $module
+Check 'o12 an unwritable cache keeps the answer and says so' ($c7.reason -eq 'unwritable' -and $c7.risky -eq $c3.risky) ('reason=' + [string]$c7.reason + ' risky=' + [string]$c7.risky)
 
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 

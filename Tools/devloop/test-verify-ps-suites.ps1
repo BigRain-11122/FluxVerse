@@ -416,7 +416,7 @@ $script:voff = $false
 $wDefs = @(Get-PsSuitesTickDefaults -Family write)
 $w2Defs = @(Get-PsSuitesTickDefaults -Family write2)
 $vDefs = @(Get-PsSuitesTickDefaults -Family verify)
-Check 'r1 the state-writer half guards nine entries incl. the fixture tree' ($wDefs.Count -eq 9) ('count=' + $wDefs.Count)
+Check 'r1 the state-writer half guards eleven entries incl. the fixture tree' ($wDefs.Count -eq 11) ('count=' + $wDefs.Count)
 Check 'r2 verify family guards the gate it proves' ($vDefs -contains 'Tools\perceptor\verify.ps1') (($vDefs -join ','))
 Check 'r3 verify family is wider than the write list' ($vDefs.Count -gt $wDefs.Count) ('verify=' + $vDefs.Count + ' write=' + $wDefs.Count)
 $overlap = @($wDefs | Where-Object { $vDefs -contains $_ })
@@ -428,13 +428,15 @@ $wSuites = @(
     'Tools\devloop\test-fastpath-state-live.ps1',
     'logs\devloop-r197-writer-test.ps1',
     'logs\devloop-r271-keep-negcon.ps1',
-    'Tools\devloop\test-nolivecheck-census.ps1'
+    'Tools\devloop\test-nolivecheck-census.ps1',
+    # r797 rebalance: runbook/TECH round-number sync is bookkeeping of the
+    # state docs, not the panel, and the face half was past its 2/3 line.
+    'Tools\devloop\test-runbook-sync.ps1'
 )
 $w2Suites = @(
     'Tools\devloop\test-write-status-face-bare.ps1',
     'logs\devloop-r247-facewriter-test.ps1',
     'Tools\devloop\test-qa-rotation.ps1',
-    'Tools\devloop\test-runbook-sync.ps1',
     'Tools\devloop\test-status-face-screen.ps1',
     'Tools\devloop\test-simple-param-census.ps1'
 )
@@ -826,11 +828,11 @@ $env:FV_ARGS_OUT = $zArgFile
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write -TicketPath (Join-Path $sandbox 'z-w.json') -RunnerPath $runnerArgs -Force
 $zW = ''
 try { $zW = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW = '' }
-Check 'z30 the state half asks for exactly its four suites' ($zW -match '-Suites' -and @(($zW -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 4 -and $zW -match 'test-fastpath-state-live\.ps1') $zW
+Check 'z30 the state half asks for exactly its five suites' ($zW -match '-Suites' -and @(($zW -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 5 -and $zW -match 'test-fastpath-state-live\.ps1' -and $zW -match 'test-runbook-sync\.ps1') $zW
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write2 -TicketPath (Join-Path $sandbox 'z-w2.json') -RunnerPath $runnerArgs -Force
 $zW2 = ''
 try { $zW2 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW2 = '' }
-Check 'z31 the face half asks for its six suites only, census included' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 6 -and $zW2 -match 'test-qa-rotation\.ps1' -and $zW2 -match 'test-runbook-sync\.ps1' -and $zW2 -match 'test-simple-param-census\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
+Check 'z31 the face half asks for its five suites only, census included' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 5 -and $zW2 -match 'test-qa-rotation\.ps1' -and $zW2 -match 'test-simple-param-census\.ps1' -and $zW2 -notmatch 'test-runbook-sync\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
 Remove-Item 'Env:\FV_ARGS_OUT' -ErrorAction SilentlyContinue
 
 # main#117 turn rule: when both write halves are due, the state half runs and

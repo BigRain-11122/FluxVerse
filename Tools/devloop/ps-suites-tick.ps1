@@ -102,7 +102,6 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\test-write-status-face-bare.ps1',
             'logs\devloop-r247-facewriter-test.ps1',
             'Tools\devloop\test-qa-rotation.ps1',
-            'Tools\devloop\test-runbook-sync.ps1',
             'Tools\devloop\test-status-face-screen.ps1',
             # main#127: the bare-parameter census and its sandbox. It reads the
             # devloop tree (the same files this half guards), so it belongs to
@@ -116,7 +115,6 @@ function Get-PsSuitesTickDefaults {
             'Tools\tick\export-public-snapshot.ps1',
             'Tools\devloop\write-status-face.ps1',
             'Tools\devloop\qa-rotation.ps1',
-            'Tools\devloop\check-runbook-sync.ps1',
             'Tools\devloop\fixtures\*\*'
         )
     }
@@ -174,15 +172,23 @@ function Get-PsSuitesTickDefaults {
     # crossed its own 2/3 line (30.2 s of a 45 s cap) when the public-screen
     # suite joined it. Rebalancing halves is the same discipline as splitting
     # one: no budget was raised.
+    # r797: the runbook/TECH round-number sync moved here. The face half had
+    # grown to six suites and measured 30.7 s of its 45 s cap - past the 2/3
+    # line again, so every tick printed a budget WARN nobody could act on. That
+    # suite guards two BOOKKEEPING docs (state/runbook.md and TECH.md), not the
+    # rendered panel, so it belongs with the state-file half. Same discipline as
+    # r787: rebalance the halves, never raise the cap.
     return @(
         'Tools\devloop\test-fastpath-state-live.ps1',
         'logs\devloop-r197-writer-test.ps1',
         'logs\devloop-r271-keep-negcon.ps1',
         'Tools\devloop\test-nolivecheck-census.ps1',
+        'Tools\devloop\test-runbook-sync.ps1',
         'Tools\devloop\run-ps-suites.ps1',
         'Tools\devloop\write-fastpath-state.ps1',
         'Tools\devloop\nolivecheck-census.ps1',
         'Tools\devloop\census-cost.ps1',
+        'Tools\devloop\check-runbook-sync.ps1',
         'Tools\devloop\fixtures\*\*'
     )
 }
@@ -632,10 +638,10 @@ function Invoke-PsSuitesTick {
     # main#117: the write side is split the same way, so the runner's default
     # list (all seven) can never make one family pay for both halves.
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write') {
-        $ExtraArgs = @('-Suites', 'Tools\devloop\test-fastpath-state-live.ps1,logs\devloop-r197-writer-test.ps1,logs\devloop-r271-keep-negcon.ps1,Tools\devloop\test-nolivecheck-census.ps1')
+        $ExtraArgs = @('-Suites', 'Tools\devloop\test-fastpath-state-live.ps1,logs\devloop-r197-writer-test.ps1,logs\devloop-r271-keep-negcon.ps1,Tools\devloop\test-nolivecheck-census.ps1,Tools\devloop\test-runbook-sync.ps1')
     }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write2') {
-        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-runbook-sync.ps1,Tools\devloop\test-status-face-screen.ps1,Tools\devloop\test-simple-param-census.ps1')
+        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-status-face-screen.ps1,Tools\devloop\test-simple-param-census.ps1')
     }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify') {
         $lightSuites = @(Get-PsSuitesTickDefaults -Family 'verify' | Where-Object { $_ -match 'test-[^\\]+\.ps1$' })

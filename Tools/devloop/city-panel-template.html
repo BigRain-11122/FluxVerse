@@ -269,6 +269,16 @@ const ARCH = __ARCH_JSON__;
 // with its own age, never a decision, and it costs ~2.4s to take - so it is
 // recorded once and shown here with its age, not recomputed every tick.
 const QACITE = __QACITE_JSON__;
+// SPARAM = the bare-parameter census ({root,files,functions,simple,risky,
+// items:[{rel,line,name,why}],cached,reason}). It counts plain (non-advanced)
+// functions that take a REQUIRED, path-ish parameter nothing validates - the
+// shape that made `-QueueDir` hand back "open=0" instead of complaining (r792,
+// fixed r793, list driven to zero r796). A reading, not a gate: `risky` > 0
+// names the offenders so a regression shows up on this page instead of only
+// inside a tool somebody has to remember to run. `reason` is the cache verdict
+// ('' hit or first run, stale, unreadable, unwritable, no-cache-path, no-dir) -
+// a missing tool dir must read as "not measured", never as "zero risky".
+const SPARAM = __SPARAM_JSON__;
 // QUEUE = the self-drive queues' overdue counter ({exists,files,scanned,open,
 // dated,late,max_days,max_id,as_of,bad,code,long,long_max,long_max_id,long_limit,
 // items:[{id,file,due,days}]}), computed
@@ -632,6 +642,43 @@ function artTitle(it){
       ? ('引用复核 ' + Q.stale_cited + '/' + Q.cited + ' 件超 ' + Q.stale_days + ' 天')
       : ('引用复核 ' + Q.cited + ' 件均未超 ' + Q.stale_days + ' 天');
     sp.textContent = head + ' · 同族已有更新帧 ' + Q.superseded_cited + ' 件' + (age ? ' · ' + age : '');
+    el.appendChild(sp);
+  })();
+
+  // 裸参数风险（queue main#128）：r792 那轮 `-QueueDir` 不报错、直接读成「队列没活」
+  // 的坑，源头是一族「普通函数 + 必填路径参数 + 无人校验」——PowerShell 只对
+  // advanced 函数拒绝未知具名参数。r795 立了普查件、r796 把活树清到 0。这里把那
+  // 个数字搬上页面：回归一眼可见，不必有人记得去跑工具。口径三条：①risk 是读数
+  // 不是闸门，>0 时点名前两处（title 里给出全部）；②工具目录不在盘时写「未测量」，
+  // 绝不印 0；③缓存命中不影响准确度——指纹覆盖了文件清单与本模块自身，任一变化
+  // 都会重算，所以这行没有「读数多老」的问题。
+  (function () {
+    const el = $('f-maint');
+    if (!el) return;
+    const S = SPARAM || {};
+    const sp = document.createElement('span');
+    if (S.reason === 'no-dir' || typeof S.files !== 'number' || S.files <= 0) {
+      sp.className = 'muted';
+      sp.textContent = '裸参数风险 未测量（普查目录不在盘）';
+      el.appendChild(sp);
+      return;
+    }
+    const n = (typeof S.risky === 'number') ? S.risky : -1;
+    if (n < 0) {
+      sp.className = 'muted';
+      sp.textContent = '裸参数风险 未记录';
+      el.appendChild(sp);
+      return;
+    }
+    const items = Array.isArray(S.items) ? S.items : [];
+    const names = items.map(it => it && it.name ? String(it.name) : '').filter(x => x !== '');
+    sp.className = n > 0 ? 'tag warn' : 'ok';
+    sp.textContent = '裸参数风险 ' + n + ' 处（' + S.files + ' 文件 · ' + S.functions + ' 函数）';
+    if (n > 0) {
+      sp.title = names.length
+        ? ('未校验路径参数：' + names.join(' · '))
+        : '未校验路径参数（逐条见 logs 里普查件输出）';
+    }
     el.appendChild(sp);
   })();
 

@@ -172,5 +172,33 @@ chk('code.keeps-ok-chip', e9.innerHTML.indexOf('tag ok') >= 0, e9.innerHTML);
 const e10 = runPanel(withQueue(calm), 'calm2')('f-queue');
 chk('code.absent-when-zero', e10.innerHTML.indexOf('引号内期限') < 0, e10.innerHTML);
 
+// --- 10) a row missing its trailing pipe (queue main#102) ------------------
+// A missing `|` used to shift which cell is "the remark", so a marker was judged
+// against the pointer cell - silently. The parser now reads the last cell by the
+// row's own shape and reports the shape itself; the page must keep the two
+// illnesses apart (a wrongly written `due` is not the same as a broken row).
+const rowOnly = {
+  exists: true, dir_rel: 'state/queue', files: 1, scanned: 1, open: 1, dated: 0, late: 0,
+  max_days: 0, max_id: '', bad: 1, code: 0, as_of: '2026-11-01', items: [],
+  bad_items: [{ id: '12', file: 'explore.md', token: 'missing-trailing-pipe', reason: 'row' }]
+};
+const e11 = runPanel(withQueue(rowOnly), 'rowbad')('f-queue');
+chk('row.chip', e11.innerHTML.indexOf('行尾缺 | 1 行') >= 0, e11.innerHTML);
+chk('row.ids', e11.innerHTML.indexOf('（#12）') >= 0, e11.innerHTML);
+chk('row.explains', e11.innerHTML.indexOf('备注格按行自身形状判定') >= 0, e11.innerHTML);
+chk('row.not-called-due-shape', e11.innerHTML.indexOf('标记坏') < 0, e11.innerHTML);
+
+const mixed = {
+  exists: true, dir_rel: 'state/queue', files: 2, scanned: 2, open: 2, dated: 0, late: 0,
+  max_days: 0, max_id: '', bad: 2, code: 0, as_of: '2026-11-01', items: [],
+  bad_items: [{ id: '12', file: 'explore.md', token: 'missing-trailing-pipe', reason: 'row' },
+    { id: '4', file: 'main.md', token: 'due=2026-1-5', reason: 'shape' }]
+};
+const e12 = runPanel(withQueue(mixed), 'rowmixed')('f-queue');
+chk('row.mixed-splits-counts', e12.innerHTML.indexOf('标记坏 1 处') >= 0 &&
+  e12.innerHTML.indexOf('行尾缺 | 1 行') >= 0, e12.innerHTML);
+chk('row.mixed-names-both', e12.innerHTML.indexOf('（#4）') >= 0 &&
+  e12.innerHTML.indexOf('（#12）') >= 0, e12.innerHTML);
+
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 if (fail > 0) process.exit(1);

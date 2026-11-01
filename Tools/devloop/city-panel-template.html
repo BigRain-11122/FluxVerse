@@ -581,12 +581,27 @@ function artTitle(it){
     // `Due=…` 这类行此前静默变成「无期限」，谁也不会发现截止日根本没被读到。
     // 有坏标记时不再亮绿灯「无逾期」——那是拿读数替写法作保。
     const bad = (typeof Q.bad === 'number') ? Q.bad : 0;
-    const badIds = (Array.isArray(Q.bad_items) ? Q.bad_items : [])
+    const badItems = (Array.isArray(Q.bad_items) ? Q.bad_items : []);
+    // 行尾缺竖线（queue main#102）不是「due 写法不对」，是表格形状坏了：此前
+    // 备注格靠「倒数第二个元素」取，缺尾 `|` 的行会把标记判到指针格上，整行
+    // 静默看错一格。这类条目从 due 写法的账里分出来单独印，别把两种病混成一个数。
+    const rowBadIds = badItems
+      .filter(function (it) { return it && it.reason === 'row'; })
       .map(function (it) { return (it && it.id) ? ('#' + it.id) : ''; })
       .filter(function (s) { return s !== ''; })
       .slice(0, 3);
-    const badTxt = bad > 0
-      ? ('<span class="tag warn">标记坏 ' + bad + ' 处</span>' +
+    const dueBad = (bad > rowBadIds.length) ? (bad - rowBadIds.length) : 0;
+    const badIds = badItems
+      .filter(function (it) { return !it || it.reason !== 'row'; })
+      .map(function (it) { return (it && it.id) ? ('#' + it.id) : ''; })
+      .filter(function (s) { return s !== ''; })
+      .slice(0, 3);
+    const rowTxt = rowBadIds.length
+      ? ('<span class="tag warn">行尾缺 | ' + badItems.filter(function (it) { return it && it.reason === 'row'; }).length + ' 行</span>' +
+        '<span class="muted"> （' + rowBadIds.join(' · ') + '）· 备注格按行自身形状判定</span>')
+      : '';
+    const badTxt = dueBad > 0
+      ? ('<span class="tag warn">标记坏 ' + dueBad + ' 处</span>' +
         '<span class="muted"> due 写法不对' +
         (badIds.length ? ('（' + badIds.join(' · ') + '）') : '') +
         ' · 未计入期限' + (late > 0 ? '' : (' · 在队 ' + open + ' 件（带期限 ' + dated + '）')) +
@@ -620,9 +635,9 @@ function artTitle(it){
         (lateIds.length
           ? ('<span class="muted"> · 逾期行 ' + esc(lateIds.join(' · ')) +
             (late > lateIds.length ? ' …' : '') + '</span>')
-          : '') + badTxt + codeTxt;
-    } else if (bad > 0) {
-      el.innerHTML = badTxt + codeTxt;
+          : '') + rowTxt + badTxt + codeTxt;
+    } else if (dueBad > 0 || rowTxt !== '') {
+      el.innerHTML = rowTxt + badTxt + codeTxt;
     } else {
       el.innerHTML = '<span class="tag ok">无逾期</span>' +
         '<span class="muted"> 在队 ' + open + ' 件（带期限 ' + dated + '）</span>' +

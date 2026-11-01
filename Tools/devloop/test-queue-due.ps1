@@ -29,6 +29,10 @@
 #      visible without accusing every row that shows the format template; only
 #      strict, calendar-valid markers inside paired backticks in the REMARK cell
 #      are counted.
+#   J) the last cell is chosen by the row's own shape (main#102): a row that
+#      forgot its trailing `|` keeps its marker in the final split element, so
+#      the deadline is still counted - and the malformed row is reported as bad
+#      with reason `row` instead of being read one cell off in silence.
 # ASCII-only law: fixtures are ASCII; the live CJK rows are only counted.
 
 $ErrorActionPreference = 'Stop'
@@ -144,6 +148,24 @@ $rowI = @'
 '@
 Write-TextFile (Join-Path $qdirI 'queue-i.md') $rowI
 
+# --- J) a row without a trailing pipe (main#102) ----------------------------
+# Rows 1 and 2 have no closing `|`: their remark cell is the LAST split element,
+# not the second-to-last. Before the fix, their markers were judged against the
+# pointer cell and the remark was never scanned - the deadline vanished in
+# silence. Row 3 is well-formed and must not change.
+$qdirJ = Join-Path $sandbox 'queueJ'
+New-Item -ItemType Directory -Path $qdirJ -Force | Out-Null
+$rowJ = @"
+# fixture queue: rows missing the trailing pipe
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | late, no trailing pipe | p | due=2026-10-20
+| 2 | due today, no trailing pipe | p | due=2026-11-01
+| 3 | well formed | p | due=2026-10-25 |
+"@
+Write-TextFile (Join-Path $qdirJ 'queue-j.md') $rowJ
+
 # --- results ---------------------------------------------------------------
 $A = Get-QueueDue -Dir $qdirA -Today $today
 $B = Get-QueueDue -Dir $qdirB -Today $today
@@ -151,6 +173,7 @@ $QF = Get-QueueDue -Dir $qdirF -Today $today
 $QG = Get-QueueDue -Dir $qdirG -Today $today
 $QH = Get-QueueDue -Dir $qdirH -Today $today
 $QI = Get-QueueDue -Dir $qdirI -Today $today
+$QJ = Get-QueueDue -Dir $qdirJ -Today $today
 
 # --- C) live queue, independent recount ------------------------------------
 $qdirLive = Join-Path $repoDir 'state\queue'
@@ -285,6 +308,14 @@ Check 'I: a quoted marker is never late' ($QI.late -eq 0)
 Check 'I: a quoted broken form is not counted (not strict)' (@($QI.code_items | Where-Object { $_.id -eq '3' }).Count -eq 0)
 Check 'I: a quoted date in a prose cell is not counted' (@($QI.code_items | Where-Object { $_.id -eq '4' }).Count -eq 0)
 Check 'I: code census never makes a marker bad' ($QI.bad -eq 0)
+
+Check 'J: three rows scanned' ($QJ.scanned -eq 3)
+Check 'J: a marker in a tail-less row is still read as its deadline' ($QJ.dated -eq 3)
+Check 'J: the tail-less late row is late' ($QJ.late -eq 2 -and $QJ.max_id -eq '1')
+Check 'J: the tail-less due-today row is not late' (@($QJ.items | Where-Object { $_.id -eq '2' }).Count -eq 0)
+Check 'J: a malformed row is reported, not silent' ($QJ.bad -eq 2)
+Check 'J: the malformed rows are named with reason row' (((@($QJ.bad_items | Where-Object { $_.reason -eq 'row' } | ForEach-Object { $_.id }) | Sort-Object) -join ',') -eq '1,2')
+Check 'J: the well-formed row is not accused' (@($QJ.bad_items | Where-Object { $_.id -eq '3' }).Count -eq 0)
 
 Check 'D: builder reported PANEL OK' ($logD -match 'PANEL OK')
 Check 'D: fixture queue reports one late' ($logD -match 'qdue=1(?!\d)')

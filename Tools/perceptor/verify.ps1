@@ -414,7 +414,11 @@ if (-not (Test-Path -LiteralPath $qdueMod)) {
       $qLine = 'qdue: open=' + $qd.open + ' dated=' + $qd.dated + ' late=' + $qd.late + ' max=' + $qd.max_days + 'd bad=' + $qd.bad + ' code=' + $qd.code
       if ($qd.bad -gt 0) {
         $qBad = @($qd.bad_items | ForEach-Object { '#' + $_.id + '(' + $_.token + ' ' + $_.reason + ')' })
-        Write-Output ('VERIFY WARN: ' + $qLine + ' - badly written due markers: ' + ($qBad -join ', ') + '; the remark cell wants due=YYYY-MM-DD')
+        $qHint = '; the remark cell wants due=YYYY-MM-DD'
+        if (@($qd.bad_items | Where-Object { $_.reason -eq 'row' }).Count -gt 0) {
+          $qHint = $qHint + '; a row missing its trailing | mis-shifts which cell is last'
+        }
+        Write-Output ('VERIFY WARN: ' + $qLine + ' - badly written due markers: ' + ($qBad -join ', ') + $qHint)
       } elseif ($qd.late -gt 0) {
         $qLate = @($qd.items | ForEach-Object { '#' + $_.id + ' ' + $_.days + 'd' })
         Write-Output ('VERIFY WARN: ' + $qLine + ' - overdue queue rows: ' + ($qLate -join ', '))

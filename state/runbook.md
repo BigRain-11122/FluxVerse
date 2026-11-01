@@ -3,6 +3,9 @@
 ## 我是谁
 超体宇宙城底座 DevLoop（Biggame 承建·bm-a 无人值守轮）；主线=City3D R2 模块壳（交互窗承建）＋CEO 唯一产品面 `world-public/city-panel.html`。
 ## 我现在在干什么
+r763 毕（FULL-ROUND·triggers=1 c4-tech 传棒续领·产品面=**面板第一次把「行坏了」和「写法坏了」分开印**）：main#102 收口。病根＝`Tools/devloop/queue-due.ps1` 用 `$cells.Count - 2` 取备注格，只在「行尾有 `|`」时成立；缺收尾竖线的行会把标记判到指针格上，备注格根本没被扫，而且一声不响（main#100 就是活实例）。修法三处：①备注格由**行自身形状**决定（`EndsWith('|')` 为真取倒数第二个，为假取最后一个）；②缺尾竖线的行计入 `bad` 新 reason `row`（token `missing-trailing-pipe`），面板／`PANEL OK qdue_bad=`／verify §2g 自然可见；③面板两账分开——`行尾缺 | N 行（#id…）· 备注格按行自身形状判定` 与 `标记坏 N 处` 各印各的，verify 在只有 `row` 时追加一句「a row missing its trailing | mis-shifts which cell is last」。同轮清活形状债三条（`state/queue/explore.md` #146／#245、`state/queue/main.md` #77 补尾 `|`），活队列 `bad` 4→**1**：剩下的是 `state/queue/explore.md` #12——一行 45,413 字符、66 个内嵌 `|` 的巨行，立 main#103 待拆成一行一件（诚实边界：不为让数字变绿而转义 `\|`）。验证＝`Tools/devloop/test-queue-due.ps1` **83/83**（新 J 组七条）、`Tools/devloop/test-verify-queue-due.ps1` `RESULT: PASS`、渲染套 `logs/devloop-r745-panel-queue-test.js` **45/45**、面板 **30 套 failing=0**、写族 `suites=5 assertions=193 parity=ok`、`BOARD-CHECK PASS`、活面板 `PANEL OK bytes=197797 … qdue=1 qdue_bad=1 qdue_open=207 qdue_dated=3`。
+
+## 我现在在干什么（历史 r762）
 r762 毕（FULL-ROUND·triggers=1 c4-tech 传棒续领·产品面=**反引号里的真期限不再静默消失**）：main#101 收口。病根＝r760 把成对反引号定为「引用不是声明」，这一端是对的，但那意味着写在反引号里的**真期限**既不报 bad 也不算期限——静默蒸发，方向与 r749「不静默丢期限」正好相反。开红灯也不行：每一行举格式模板的示例都会被点名。所以这一轮只加**读数**，不加判决：`Tools/devloop/queue-due.ps1` 新增 `code`／`code_items`，判定手法是拿掩后文本的**同一 span** 比对原行（`Hide-InlineCode` 掩成等长空格，下标一一对齐），空即被引；只数备注格内、严格且真实日历日的标记（引号里的坏写法另有人管）。三处接线＝面板队列行在三态分支末尾都拼一段 `.muted`「引号内期限 N 处（#id…）不计期限」，**永不带 warn**；builder `PANEL OK` 增 `qdue_code=`；`verify.ps1` §2g 每 tick 行尾增 `code=`。验证＝`test-queue-due.ps1` 62→**76/76**（H 组补两条＋I 组十一条）、`test-verify-queue-due.ps1` 33→**37**、渲染套 33→**39**、面板 30 套 `failing=0`、写族 `suites=5 assertions=193 parity=ok`、`COMPILE OK`、390 窄屏 `pnghead=390x6787 offenders=0`、活面板 `qdue_bad=0 qdue_code=0`。诚实边界＝只保证看得见，不替读的人判断那个引号是示例还是真期限。
 
 ## 我现在在干什么（历史 r761）

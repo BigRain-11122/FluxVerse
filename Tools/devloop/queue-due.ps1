@@ -56,6 +56,14 @@
 #    a non-zero number is not a verdict, it is the queue saying "these dates are
 #    quoted, look at them yourself". Quoted markers in other cells stay silent -
 #    they are citations by construction, and every doc row would be a hit.
+#  - WHICH CELL IS LAST (main#102). "The remark cell is the last cell" assumed a
+#    trailing `|`, so a row that forgot it had its marker judged against the
+#    POINTER cell and the remark cell was never scanned - silently (main#100
+#    carried a deadline for days under that bug). The last cell is now chosen by
+#    the row's own shape: with a trailing `|` it is the second-to-last split
+#    element, without one it is the last. A missing trailing `|` is still a
+#    malformed row, so it is reported as bad with reason `row` (token
+#    `missing-trailing-pipe`) - visible on the panel, never a silent read.
 # Read-only, fail-soft: a missing/empty directory ships exists=false and the
 # page says so instead of printing a comfortable zero.
 # ASCII-only (PS 5.1 GBK law): the CJK rows live in the UTF-8 queue files.
@@ -208,12 +216,24 @@ function Get-QueueDue
             $opens++
 
             # Only the remark cell (last cell) declares a marker; every other
-            # cell is prose about markers (main#87). $cells has a trailing
-            # empty element because the row text ends with '|'. Inline code is
-            # masked first so quoted examples are never markers (main#90).
+            # cell is prose about markers (main#87). Inline code is masked
+            # first so quoted examples are never markers (main#90). Which
+            # element is last depends on the row's own shape (main#102): a
+            # row that ends with '|' has a trailing empty element, one that
+            # does not keeps its remark in the final element.
             $masked = Hide-InlineCode $t
             $cellsMasked = $masked.Split('|')
-            $remarkIndex = $cells.Count - 2
+            $hasTail = $t.EndsWith('|')
+            $remarkIndex = $cellsMasked.Count - 1
+            if ($hasTail) { $remarkIndex = $cellsMasked.Count - 2 }
+            if (-not $hasTail) {
+                $null = $badItems.Add([ordered]@{
+                    id     = $idTxt
+                    file   = $f.Name
+                    token  = 'missing-trailing-pipe'
+                    reason = 'row'
+                })
+            }
             $remark = ''
             if ($remarkIndex -ge 0 -and $remarkIndex -lt $cellsMasked.Count) {
                 $remark = $cellsMasked[$remarkIndex]

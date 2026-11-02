@@ -24,6 +24,9 @@ function Invoke-LogArchiveDuty {
     [string]$LogsDir = '',
     [string]$StatePath = '',
     [int]$Days = 14,
+    # Directory size cap handed straight to the archiver (D-20261101-05 item 3).
+    # 0 = age-only rotation.
+    [int]$MaxFiles = 400,
     [int]$MaxRemainArchivable = 200,
     [datetime]$Now = (Get-Date),
     [switch]$Force,
@@ -37,6 +40,8 @@ function Invoke-LogArchiveDuty {
     candidates = 0
     archived = 0
     remain_archivable = 0
+    live = 0
+    max_files = $MaxFiles
     remain_stale = $false
     verdict = 'SKIP'
     max_remain = $MaxRemainArchivable
@@ -78,7 +83,7 @@ function Invoke-LogArchiveDuty {
     }
   }
 
-  $splat = @{ Days = $Days; LogsDir = $LogsDir }
+  $splat = @{ Days = $Days; LogsDir = $LogsDir; MaxFiles = $MaxFiles }
   if ($DryRun) { $splat['DryRun'] = $true }
   if ($SimulateVerifyMismatch) { $splat['SimulateVerifyMismatch'] = $true }
 
@@ -105,10 +110,17 @@ function Invoke-LogArchiveDuty {
   $mCand = [regex]::Match($summary, 'candidates=(\d+)')
   $mArch = [regex]::Match($summary, 'archived=(\d+)')
   $mRemain = [regex]::Match($summary, 'remain_archivable=(\d+)')
+  # The "nothing to do" early exit prints no LIVE_AFTER line at all, so the
+  # match input can be empty -- never let that be an exception (r798 判例:
+  # [regex]::Match($null, ...) throws and the whole duty reads as "threw").
+  $liveLine = @($lines | Where-Object { $_ -like 'ARCHIVE LIVE_AFTER:*' } | Select-Object -First 1)
+  $mLive = $null
+  if ($liveLine.Count -gt 0) { $mLive = [regex]::Match([string]$liveLine[0], 'LIVE_AFTER:\s*(\d+)') }
   $mVerdict = [regex]::Match($summary, 'verdict=(\S+)')
   if ($mCand.Success) { $result.candidates = [int]$mCand.Groups[1].Value }
   if ($mArch.Success) { $result.archived = [int]$mArch.Groups[1].Value }
   if ($mRemain.Success) { $result.remain_archivable = [int]$mRemain.Groups[1].Value }
+  if ($mLive -and $mLive.Success) { $result.live = [int]$mLive.Groups[1].Value }
 
   $verdict = 'NOVERDICT'
   if ($mVerdict.Success) { $verdict = $mVerdict.Groups[1].Value }

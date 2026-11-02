@@ -173,9 +173,43 @@ Check 'f: health line emitted'       ($f.log -match 'VERIFY HEALTH: log-archive:
 Check 'f: source archived'           (-not (Test-Path -LiteralPath (Join-Path $fDir 'old9.log')))
 if ($fail -gt $failF) { Show-ArchiveEvidence 'f' $f.log }
 
+# ---------- g) directory size cap (D-20261101-05 item 3) ----------
+# Age alone can never bound the directory: 14 days of ten-minute tick logs is
+# ~2,000 files. The cap must archive the oldest eligible files even when they
+# are inside the retention window, and it must never touch today's files or
+# protected extensions.
+$gDir = New-Case 'g'
+for ($i = 1; $i -le 5; $i++) { $null = Add-LogFile $gDir ('queue' + $i + '.log') $i ('payload-' + $i) }
+$null = Add-LogFile $gDir 'today.log' 0 'today-payload'
+$gProt = Join-Path $gDir 'keeper.ps1'
+Set-Content -LiteralPath $gProt -Value '# keep me' -Encoding ASCII
+$gArchiver = Join-Path (Split-Path -Parent $PSScriptRoot) 'devloop\archive-logs.ps1'
+$gLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $gArchiver -LogsDir $gDir -MaxFiles 2) -join "`n"
+$gCode = $LASTEXITCODE
+Write-Output '--- g) file-count cap ---'
+$failG = $fail
+Check 'g: archiver exits 0'          ($gCode -eq 0)
+Check 'g: cap line names the overflow' ($gLog -match 'ARCHIVE CAP: live=7 max=2 over=5 age=0 cap_extra=5')
+Check 'g: live lands under the cap'  ($gLog -match 'ARCHIVE LIVE_AFTER: 2')
+Check 'g: oversize files archived'   (@(Get-ChildItem -LiteralPath $gDir -Filter 'queue*.log' -ErrorAction SilentlyContinue).Count -eq 0)
+Check 'g: today file untouched'      (Test-Path -LiteralPath (Join-Path $gDir 'today.log'))
+Check 'g: protected ext untouched'   (Test-Path -LiteralPath $gProt)
+$gZips = @(Get-ChildItem -LiteralPath (Join-Path $gDir '_archive') -Filter '*.zip' -ErrorAction SilentlyContinue)
+Check 'g: weekly zip names'          ($gZips.Count -ge 1 -and @($gZips | Where-Object { $_.Name -match 'logs-\d{4}-W\d{2}-part\d{2}-' }).Count -eq $gZips.Count)
+$gEntryCount = 0
+if ($gZips.Count -gt 0) {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
+    foreach ($gz in $gZips) {
+        $gZip = [System.IO.Compression.ZipFile]::OpenRead($gz.FullName)
+        try { $gEntryCount += @($gZip.Entries).Count } finally { $gZip.Dispose() }
+    }
+}
+Check 'g: all five bytes kept'       ($gEntryCount -eq 5)
+if ($fail -gt $failG) { Write-Output ('  -- evidence g: ' + ($gLog -replace "`n", ' | ')) }
+
 # ---------- e) token hygiene ----------
 Write-Output '--- e) red-scan hygiene ---'
-$all = ($a.log + "`n" + $b.log + "`n" + $c.log + "`n" + $d.log + "`n" + $f.log) -split "`n"
+$all = ($a.log + "`n" + $b.log + "`n" + $c.log + "`n" + $d.log + "`n" + $f.log + "`n" + $gLog) -split "`n"
 $archiveLines = @($all | Where-Object { $_ -match 'log-archive' })
 Check 'e: archive lines present'     ($archiveLines.Count -ge 4)
 Check 'e: archive lines never FAIL'  (@($archiveLines | Where-Object { $_ -match 'FAIL' }).Count -eq 0)

@@ -5,6 +5,11 @@
 [CmdletBinding()]
 param(
   [int]$Days = 14,
+  # Directory size cap (decision D-20261101-05 item 3: keep 14 days, rotate
+  # weekly, cap the live file count at 400). Age alone is not a bound: 14 days
+  # of ten-minute tick logs is ~2,000 files, so the older-than-N-days rule can
+  # never hold the directory down. 0 disables the cap.
+  [int]$MaxFiles = 400,
   [switch]$DryRun,
   [string]$LogsDir = '',
   [int]$ChunkMb = 150,
@@ -84,6 +89,7 @@ if ($repo) {
 
 $keepExt = @('.ps1', '.psm1', '.js', '.py', '.cs', '.sh', '.cmd', '.bat')
 $cut = (Get-Date).AddDays(-$Days)
+if ($env:FLUXVERSE_ARCHIVE_MAX_FILES) { $MaxFiles = [int]$env:FLUXVERSE_ARCHIVE_MAX_FILES }
 
 # One machine-readable line so callers (verify 2e / log-archive-duty.ps1) never
 # have to re-derive the selection rules to report a number.
@@ -92,15 +98,19 @@ function Write-ArchiveSummary {
   Write-Output ("ARCHIVE SUMMARY: candidates={0} archived={1} remain_archivable={2} verdict={3}" -f $Candidates, $Archived, $RemainArchivable, $Verdict)
 }
 
-# single source of truth for the selection rules (candidates and the post-run
-# "what is left" count must never drift apart)
+# single source of truth for the selection rules (age candidates, the cap
+# overflow candidates and the post-run "what is left" count must never drift
+# apart). -OlderThan is the only knob: the age rule passes the 14-day cutoff,
+# the cap rule passes today's midnight so nothing from today can be archived.
 function Get-ArchivableFiles {
+  param([datetime]$OlderThan = [datetime]::MinValue)
+  if ($OlderThan -eq [datetime]::MinValue) { $OlderThan = $cut }
   $found = New-Object System.Collections.ArrayList
   foreach ($f in (Get-ChildItem -LiteralPath $LogsDir -File -Recurse -Force)) {
     if ($f.DirectoryName.ToLower().StartsWith($archDir.ToLower())) { continue }
     if ($f.Name -like '*.lock') { continue }
     if ($keepExt -contains $f.Extension.ToLower()) { continue }
-    if ($f.LastWriteTime -ge $cut) { continue }
+    if ($f.LastWriteTime -ge $OlderThan) { continue }
     if ($repo -and $protected.Count -gt 0) {
       $rel = (($f.FullName.Substring($repo.Length + 1)) -replace '/', '\').ToLower()
       if ($protected.ContainsKey($rel)) { continue }
@@ -111,23 +121,53 @@ function Get-ArchivableFiles {
 }
 
 $all = @(Get-ChildItem -LiteralPath $LogsDir -File -Recurse -Force)
-$cands = Get-ArchivableFiles
+$liveNow = @($all | Where-Object { -not $_.DirectoryName.ToLower().StartsWith($archDir.ToLower()) })
+$cands = @(Get-ArchivableFiles)
+$ageCandCount = $cands.Count
 $oldRemaining = @($all | Where-Object { $_.LastWriteTime -lt $cut -and -not $_.DirectoryName.ToLower().StartsWith($archDir.ToLower()) })
+
+$capNeed = 0
+$capExtra = 0
+if ($MaxFiles -gt 0 -and ($liveNow.Count -gt $MaxFiles)) {
+  $capNeed = $liveNow.Count - $MaxFiles
+  $have = @{}
+  foreach ($c in $cands) { $have[$c.FullName.ToLower()] = 1 }
+  $stillNeed = $capNeed - $cands.Count
+  if ($stillNeed -gt 0) {
+    # today's files are never cap fodder: the running tick log and everything
+    # the day is still writing stay put until tomorrow.
+    $capFloor = (Get-Date).Date
+    $pool = @(Get-ArchivableFiles -OlderThan $capFloor | Where-Object { -not $have.ContainsKey($_.FullName.ToLower()) })
+    $extra = @($pool | Sort-Object LastWriteTime, FullName | Select-Object -First $stillNeed)
+    if ($extra.Count -gt 0) { $cands = @($cands) + $extra; $capExtra = $extra.Count }
+  }
+}
 
 $totalBytes = 0
 if ($cands.Count -gt 0) { $totalBytes = ($cands | Measure-Object Length -Sum).Sum }
 
 Write-Host ("ARCHIVE ROOT: {0}" -f $LogsDir)
 Write-Host ("ARCHIVE CUTOFF: {0} (days={1})" -f $cut.ToString('yyyy-MM-dd HH:mm'), $Days)
+if ($MaxFiles -gt 0) {
+  Write-Host ("ARCHIVE CAP: live={0} max={1} over={2} age={3} cap_extra={4}" -f $liveNow.Count, $MaxFiles, [Math]::Max(0, ($liveNow.Count - $MaxFiles)), $ageCandCount, $capExtra)
+} else {
+  Write-Host ("ARCHIVE CAP: live={0} max=off over=0 age={1} cap_extra=0" -f $liveNow.Count, $ageCandCount)
+}
 Write-Host ("ARCHIVE CANDIDATES: {0} files, {1} bytes" -f $cands.Count, $totalBytes)
-$monthGroups = @($cands | Group-Object { $_.LastWriteTime.ToString('yyyyMM') } | Sort-Object Name)
-foreach ($g in $monthGroups) {
-  Write-Host ("ARCHIVE MONTH: {0} files={1} bytes={2}" -f $g.Name, $g.Count, (($g.Group | Measure-Object Length -Sum).Sum))
+# Weekly buckets (decision D-20261101-05: rotate weekly). Deliberately plain
+# day-of-year weeks, not ISO 8601: the only job of this label is a stable,
+# ordered, human-readable zip name.
+$weekOf = { param($d) '{0}-W{1:D2}' -f $d.Year, ([int]([math]::Floor(($d.DayOfYear - 1) / 7)) + 1) }
+$weekGroups = @($cands | Group-Object { & $weekOf $_.LastWriteTime } | Sort-Object Name)
+foreach ($g in $weekGroups) {
+  Write-Host ("ARCHIVE WEEK: {0} files={1} bytes={2}" -f $g.Name, $g.Count, (($g.Group | Measure-Object Length -Sum).Sum))
 }
 
 if ($cands.Count -eq 0) {
   Write-Host ("ARCHIVE REMAIN_OLD: {0}" -f $oldRemaining.Count)
   Write-Host 'ARCHIVE REMAIN_ARCHIVABLE: 0'
+  # Nothing is moving, so the live count is simply the count we just measured.
+  Write-Host ("ARCHIVE LIVE_AFTER: {0}" -f $liveNow.Count)
   Write-Host 'ARCHIVE VERDICT: OK (nothing to do)'
   Write-ArchiveSummary -Candidates 0 -Archived 0 -RemainArchivable 0 -Verdict 'OK'
   exit 0
@@ -136,6 +176,7 @@ if ($cands.Count -eq 0) {
 if ($DryRun) {
   Write-Host ("ARCHIVE REMAIN_OLD: {0}" -f $oldRemaining.Count)
   Write-Host ("ARCHIVE REMAIN_ARCHIVABLE: {0}" -f $cands.Count)
+  Write-Host ("ARCHIVE LIVE_AFTER: {0}" -f $liveNow.Count)
   Write-Host 'ARCHIVE VERDICT: DRYRUN'
   Write-ArchiveSummary -Candidates $cands.Count -Archived 0 -RemainArchivable $cands.Count -Verdict 'DRYRUN'
   exit 0
@@ -149,19 +190,19 @@ $madeZips = New-Object System.Collections.ArrayList
 $archived = New-Object System.Collections.ArrayList
 $failures = New-Object System.Collections.ArrayList
 
-foreach ($g in $monthGroups) {
+foreach ($g in $weekGroups) {
   $chunk = New-Object System.Collections.ArrayList
   $chunkBytes = 0
   $chunkNo = 0
   $limit = [int64]$ChunkMb * 1MB
 
   $flush = {
-    param($chunk, $month, $chunkNo)
+    param($chunk, $bucket, $chunkNo)
     if ($chunk.Count -eq 0) { return }
-    $zipPath = Join-Path $archDir ("logs-{0}-part{1:D2}-{2}.zip" -f $month, $chunkNo, $stampShort)
+    $zipPath = Join-Path $archDir ("logs-{0}-part{1:D2}-{2}.zip" -f $bucket, $chunkNo, $stampShort)
     $n = 2
     while (Test-Path -LiteralPath $zipPath) {
-      $zipPath = Join-Path $archDir ("logs-{0}-part{1:D2}-{2}-{3}.zip" -f $month, $chunkNo, $stampShort, $n)
+      $zipPath = Join-Path $archDir ("logs-{0}-part{1:D2}-{2}-{3}.zip" -f $bucket, $chunkNo, $stampShort, $n)
       $n++
     }
     $archive = [System.IO.Compression.ZipFile]::Open($zipPath, [System.IO.Compression.ZipArchiveMode]::Create)
@@ -219,11 +260,16 @@ foreach ($g in $monthGroups) {
   }
 }
 
+$liveAfter = @(Get-ChildItem -LiteralPath $LogsDir -File -Recurse -Force | Where-Object { -not $_.DirectoryName.ToLower().StartsWith($archDir.ToLower()) })
+
 $manifestPath = Join-Path $archDir ("manifest-{0}.json" -f $stamp)
 $manifest = [pscustomobject]@{
   stamp = $stamp
   cutoff = $cut.ToString('o')
   days = $Days
+  max_files = $MaxFiles
+  live_before = $liveNow.Count
+  live_after = $liveAfter.Count
   logs_dir = $LogsDir
   zips = $madeZips
   files = $archived
@@ -245,6 +291,12 @@ Write-Host ("ARCHIVE EMPTY_DIRS_REMOVED: {0}" -f $removedDirs)
 Write-Host ("ARCHIVE MANIFEST: {0}" -f (Split-Path -Leaf $manifestPath))
 Write-Host ("ARCHIVE REMAIN_OLD: {0}" -f $remainOld.Count)
 Write-Host ("ARCHIVE REMAIN_ARCHIVABLE: {0}" -f $remainArchivable.Count)
+Write-Host ("ARCHIVE LIVE_AFTER: {0}" -f $liveAfter.Count)
+if ($MaxFiles -gt 0 -and $liveAfter.Count -gt $MaxFiles) {
+  # Honest reading, not a verdict: protected (git-tracked / code / today's)
+  # files can keep the directory above the cap and saying so beats pretending.
+  Write-Host ("ARCHIVE CAP UNREACHED: live={0} max={1} - protected or same-day files hold the rest" -f $liveAfter.Count, $MaxFiles)
+}
 
 if ($failures.Count -gt 0) {
   Write-Host 'ARCHIVE VERDICT: FAIL'

@@ -114,6 +114,7 @@ $shellAllow = @(
 $shellDynamic = @{
   'state-promote.ps1:$MoveFile' = 'scriptblock test seam (r753), never a file'
   'archive-logs.ps1:$flush' = 'scriptblock chunk writer, never a file'
+  'archive-logs.ps1:$weekOf' = 'scriptblock week-label formatter (D-20261101-05 item 3), never a file'
 }
 $repoRootForChain = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 

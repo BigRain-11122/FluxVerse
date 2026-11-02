@@ -40,7 +40,9 @@ function Invoke-LogArchiveDuty {
     candidates = 0
     archived = 0
     remain_archivable = 0
-    live = 0
+    # -1 = not measured. The SKIP path never scans the directory, so a 0 here
+    # would be presented as "zero files" when the count was simply never taken.
+    live = -1
     max_files = $MaxFiles
     remain_stale = $false
     verdict = 'SKIP'

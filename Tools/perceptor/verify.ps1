@@ -395,7 +395,9 @@ if (-not (Test-Path -LiteralPath $archiveDuty)) {
       }
       # Directory size cap (D-20261101-05 item 3): a reading, not a verdict --
       # protected files can legitimately hold the live count above the cap.
-      if ($ad.max_files -gt 0) { $adParts += ('live=' + $ad.live + '/cap=' + $ad.max_files) }
+      # -1 means the duty never scanned (skip day); printing that as 0 would be
+      # a reading that no one took, so it is omitted instead.
+      if ($ad.max_files -gt 0 -and $ad.live -ge 0) { $adParts += ('live=' + $ad.live + '/cap=' + $ad.max_files) }
       $adLine = ($adParts -join ' ')
       if ($ad.verdict -ne 'OK' -and $ad.verdict -ne 'SKIP' -and $ad.verdict -ne 'DRYRUN') {
         Write-Output ('VERIFY WARN: ' + $adLine + ' - the log archiver did not finish (' + $ad.verdict + '); originals are kept and the next tick retries')

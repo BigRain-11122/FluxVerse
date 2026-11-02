@@ -139,6 +139,9 @@ Check 'c: skip is reported'          ($c.log -match 'log-archive: skipped\(alrea
 Check 'c: backlog carried over'      ($c.log -match 'remain_archivable=2\(last\)')
 Check 'c: warn about keeping up'     ($c.log -match 'VERIFY WARN: log-archive: .* not keeping up')
 Check 'c: nothing archived'          (-not (Test-Path -LiteralPath (Join-Path $cDir '_archive')))
+# A skip day never scans, so it must not publish a live count at all: "live=0"
+# would read as "the directory is empty" when nobody counted (r799 judgement).
+Check 'c: skip day states no live count' ($c.log -notmatch 'live=\d+/cap=')
 if ($fail -gt $failC) { Show-ArchiveEvidence 'c' $c.log }
 
 # ---------- d) zip verify mismatch -> originals kept ----------

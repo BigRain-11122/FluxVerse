@@ -1415,6 +1415,19 @@ function artTitle(it){
     : (prev ? [prev, { ts: snap.ts_utc, c: city.commits_total, r: city.renders_total }] : null);
   if (monoSrc) {
     const nmOf = { c: '提交', r: '渲染' };
+    // 归因（r804·queue main#131）：commits_total 是多仓求和，回落本身说不出是
+    // 哪个仓。记录里带 cr（逐仓计数）时才点名；任一侧没有 cr 就一个字也不猜，
+    // 只保留原来的求和读数（没量到的东西不写好话）。
+    const crOf = (a, b) => {
+      const ca = a && a.cr, cb = b && b.cr;
+      if (!ca || !cb) return '';
+      const out = [];
+      Object.keys(cb).forEach(n => {
+        const x2 = Number(ca[n]), y2 = Number(cb[n]);
+        if (!isNaN(x2) && !isNaN(y2) && y2 < x2) out.push(n + ' ' + x2 + '→' + y2);
+      });
+      return out.length ? '（' + out.join('、') + '）' : '';
+    };
     const endTs = Date.parse(monoSrc[monoSrc.length - 1].ts);
     const hist = [], live = [];
     for (let i = 1; i < monoSrc.length; i++) {
@@ -1427,7 +1440,8 @@ function artTitle(it){
             if (Number(monoSrc[j][k]) >= x) { recovered = true; break; }
           }
           const ageH = (!isNaN(endTs) && !isNaN(t)) ? (endTs - t) / 3600000 : 0;
-          const txt = nmOf[k] + ' ' + x + '→' + y + ' @' + String(monoSrc[i].ts).slice(11, 16) + 'Z';
+          const txt = nmOf[k] + ' ' + x + '→' + y + ' @' + String(monoSrc[i].ts).slice(11, 16) + 'Z' +
+            (k === 'c' ? crOf(monoSrc[i - 1], monoSrc[i]) : '');
           if (recovered && ageH > 2) hist.push(txt); else live.push(txt);
         }
       });

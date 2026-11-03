@@ -75,8 +75,11 @@ function Probe-git {
     $lastAny = ''
     foreach ($v in $lastCommits.Values) { if ($v -gt $lastAny) { $lastAny = $v } }
 
+    # r804 (queue main#131): keep the PER-REPO counts as well. commits_total is a
+    # sum, so a cross-round drop says "something went back" without saying what;
+    # with the map, the panel's monotonic card can name the repo that fell.
     return @{
-      state = @{ zones_activity = $zoneActivity; commits_total = $total; last_commit_ts = $lastAny }
+      state = @{ zones_activity = $zoneActivity; commits_total = $total; last_commit_ts = $lastAny; commits_by_repo = $commitStats }
       newcur = $newCur
     }
   } catch { return $null }

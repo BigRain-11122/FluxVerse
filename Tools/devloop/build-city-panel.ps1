@@ -27,6 +27,11 @@
 
 param(
     [string]$SnapPath = '',
+    # Internal engine state (world\world-state.json). Read-only, and ONLY for the
+    # per-repo commit counts that the public snapshot does not expose (queue
+    # main#131): the monotonic card can then say WHICH repo fell, not just that
+    # the sum did. Absent/unreadable = the card keeps its old wording.
+    [string]$StatePath = '',
     [string]$FacePath = '',
     [string]$TemplatePath = '',
     [string]$OutPath = '',
@@ -115,6 +120,7 @@ function Fail
 # --- self-locate: this script sits at <repo>\Tools\devloop\ ---
 $repoDir = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 if ([string]::IsNullOrEmpty($SnapPath))     { $SnapPath     = Join-Path $repoDir 'world-public\city-snapshot.json' }
+if ([string]::IsNullOrEmpty($StatePath))    { $StatePath    = Join-Path $repoDir 'world\world-state.json' }
 if ([string]::IsNullOrEmpty($FacePath))     { $FacePath     = Join-Path $repoDir 'state\status-face.json' }
 if ([string]::IsNullOrEmpty($TemplatePath)) { $TemplatePath = Join-Path $PSScriptRoot 'city-panel-template.html' }
 if ([string]::IsNullOrEmpty($OutPath))      { $OutPath      = Join-Path $repoDir 'world-public\city-panel.html' }
@@ -404,6 +410,24 @@ $histOk = $true
 # (validated below); tolerance fix = drop already-written ones at read time and
 # COUNT them, so the page can say so instead of hiding the loss.
 $histDropped = 0
+# Per-repo commit counts (queue main#131): commits_total is a SUM, so a drop
+# tells "something went back" and nothing else. Read the internal state's
+# history section and stamp it onto this round's record; a drop between two
+# stamped records can then be attributed to a repo instead of guessed at.
+# Missing/unparseable state = empty map = records keep the old shape (the card
+# must never invent an attribution it did not measure).
+$repoCommits = @{}
+try {
+    if (Test-Path -LiteralPath $StatePath) {
+        $ws = ConvertFrom-Json ([IO.File]::ReadAllText($StatePath, [Text.Encoding]::UTF8))
+        if ($null -ne $ws.history -and $null -ne $ws.history.commits_by_repo) {
+            foreach ($p in $ws.history.commits_by_repo.PSObject.Properties) {
+                $n = 0
+                if ([int]::TryParse([string]$p.Value, [ref]$n)) { $repoCommits[[string]$p.Name] = $n }
+            }
+        }
+    }
+} catch { $repoCommits = @{} }
 try {
     $rec = New-Object PSObject -Property ([ordered]@{
         ts = [string]$snap.ts_utc
@@ -414,6 +438,11 @@ try {
     try { $rec.g = [int]$snap.city.games_active } catch { $rec.g = 0 }
     try { $rec.f = [int]$snap.city.fleet_online } catch { $rec.f = 0 }
     try { $rec.e = [int](@($snap.events_tail).Count) } catch { $rec.e = 0 }
+    if ($repoCommits.Count -gt 0) {
+        $cr = [ordered]@{}
+        foreach ($k in @($repoCommits.Keys | Sort-Object)) { $cr[[string]$k] = [int]$repoCommits[$k] }
+        $rec | Add-Member -NotePropertyName cr -NotePropertyValue ([PSCustomObject]$cr)
+    }
 
     if (Test-Path -LiteralPath $HistoryPath) {
         foreach ($line in [IO.File]::ReadAllLines($HistoryPath, [Text.Encoding]::UTF8)) {

@@ -265,6 +265,12 @@ if ($stateParts.ContainsKey('fleet_biggame')) { $fleet += $stateParts.fleet_bigg
 $tasks = @(); if ($stateParts.ContainsKey('tasks')) { $tasks = $stateParts.tasks }
 $total = 0; if ($stateParts.ContainsKey('commits_total')) { $total = [int]$stateParts.commits_total }
 $lastC = ''; if ($stateParts.ContainsKey('last_commit_ts')) { $lastC = [string]$stateParts.last_commit_ts }
+# r804 (queue main#131): per-repo commit counts, forwarded so the panel can
+# attribute a cross-round drop to a repo instead of only reporting the sum.
+# Additive internal field (world-state); the public snapshot whitelist is
+# unchanged, so the release gate's key set does not move.
+$byRepo = @{}
+if ($stateParts.ContainsKey('commits_by_repo')) { $byRepo = $stateParts.commits_by_repo }
 # gaming pulse: any biggame machine online = city awake
 if ($stateParts.ContainsKey('fleet_biggame')) {
   $anyOn = $false
@@ -393,7 +399,7 @@ $state = [ordered]@{
     probe_quiet_count = $probeQuiets
     evolution = @{ next_tick = 'SUN 09:17'; open_proposals = $evOpen; total = $evTotal; applied = $evApplied }
   }
-  history = @{ commits_total = $total; last_commit_ts = $lastC }
+  history = @{ commits_total = $total; last_commit_ts = $lastC; commits_by_repo = $byRepo }
   reality = $reality
   city_phase = $cityPhase
   season = $citySeason

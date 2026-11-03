@@ -496,6 +496,15 @@ if (-not (Test-Path -LiteralPath $qdueMod)) {
       }
     } else {
       $qLine = 'qdue: open=' + $qd.open + ' dated=' + $qd.dated + ' late=' + $qd.late + ' max=' + $qd.max_days + 'd bad=' + $qd.bad + ' code=' + $qd.code + ' long=' + $qd.long + ' longmax=' + $qd.long_max + ' dupe=' + $qd.dupe + ' duperows=' + $qd.dupe_rows
+      # main#132: the page already answers "when is the next deadline", the tick
+      # only answered "is anything late yet" - so a quiet day read as "nothing
+      # ahead". Same shape as the builder's `qdue_next=` (due/days/#id) so the
+      # page and the tick cannot drift. No upcoming deadline prints NOTHING:
+      # an absent deadline is not "0 days left".
+      $qNext = @($qd.next_items)
+      if ($qNext.Count -gt 0) {
+        $qLine = $qLine + ' next=' + $qNext[0].due + '/' + $qNext[0].days_left + 'd/#' + $qNext[0].id
+      }
       # Duplicate ids (main#112): ids are numbered by hand, so a collision is
       # invisible until both rows are read - and "the #N row already shipped"
       # then vouches for the open row that shares the number. This is a third

@@ -14,6 +14,8 @@
 #      (the r747 false-hit class: 5 hits on the author's own row)
 #   4. a strict deadline quoted in backticks (invisible by rule) is reported as
 #      a read-only `code=` count - it never turns the line red (main#101)
+#   5. the nearest UPCOMING deadline is a readout on the tick line (`next=`),
+#      and a queue with nothing upcoming prints no `next=` at all (main#132)
 #
 # Boundary: verify.ps1 is executed for real (read-only against world state; it
 # only rewrites the event cursor with the same count). The live queue is read
@@ -235,6 +237,66 @@ if ($h5d.Count -eq 1) {
 }
 Check 'duplicate fixture does not fail the gate' ($text5d -match 'VERIFY PASS') $text5d
 Check 'duplicate fixture text contains no FAIL token' (-not ($text5d -match 'FAIL')) $text5d
+
+# ---------- 5e. nearest upcoming deadline -> next= readout (main#132) --------
+# The page already names the nearest deadline; the tick only said "nothing is
+# late yet", so a quiet queue read as "nothing ahead". Dates are derived from
+# today (never hard-coded) so this group cannot turn into a calendar bomb.
+$today = (Get-Date).Date
+$soonStr = $today.AddDays(9).ToString('yyyy-MM-dd')
+$laterStr = $today.AddDays(30).ToString('yyyy-MM-dd')
+$dueTodayStr = $today.ToString('yyyy-MM-dd')
+$dirNext = New-Queue 'next' @"
+# fixture queue: upcoming deadlines
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | later deadline | p | due=$laterStr |
+| 2 | nearest deadline | p | due=$soonStr |
+| 3 | undated | p | nothing here |
+"@
+$dirDueToday = New-Queue 'next-today' @"
+# fixture queue: deadline today
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | due today | p | due=$dueTodayStr |
+"@
+$dirNoNext = New-Queue 'next-none' @"
+# fixture queue: nothing upcoming
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | undated | p | nothing here |
+| 2 | overdue, not upcoming | p | due=2026-01-05 |
+"@
+
+$out5e = Run-Verify $dirNext
+$text5e = $out5e -join "`n"
+$h5e = @(Get-QdueLine $out5e)
+Check 'next fixture prints one qdue line' ($h5e.Count -eq 1) $text5e
+if ($h5e.Count -eq 1) {
+  Check 'next fixture names the nearest deadline' ($h5e[0] -match [regex]::Escape('next=' + $soonStr + '/9d/#2')) $h5e[0]
+  Check 'next fixture does not name the later one' (-not ($h5e[0] -match [regex]::Escape($laterStr))) $h5e[0]
+  Check 'next fixture stays a HEALTH line (a readout is not a verdict)' ($h5e[0] -match '^VERIFY HEALTH: qdue:') $h5e[0]
+}
+Check 'next fixture text contains no FAIL token' (-not ($text5e -match 'FAIL')) $text5e
+
+$out5f = Run-Verify $dirDueToday
+$h5f = @(Get-QdueLine $out5f)
+Check 'deadline-today fixture prints one qdue line' ($h5f.Count -eq 1) ($out5f -join "`n")
+if ($h5f.Count -eq 1) {
+  Check 'deadline today reads as 0 days left (today counts as upcoming)' ($h5f[0] -match [regex]::Escape('next=' + $dueTodayStr + '/0d/#1')) $h5f[0]
+}
+
+$out5g = Run-Verify $dirNoNext
+$h5g = @(Get-QdueLine $out5g)
+Check 'no-upcoming fixture prints one qdue line' ($h5g.Count -eq 1) ($out5g -join "`n")
+if ($h5g.Count -eq 1) {
+  Check 'no upcoming deadline prints no next= token at all' (-not ($h5g[0] -match 'next=')) $h5g[0]
+  Check 'an overdue row is not reported as the next deadline' (-not ($h5g[0] -match 'next=0')) $h5g[0]
+  Check 'no-upcoming fixture is still WARN for the overdue row' ($h5g[0] -match '^VERIFY WARN: qdue:') $h5g[0]
+}
 
 # ---------- 6. missing directory -> WARN "unknown", never zero --------------
 $missing = Join-Path $sandbox 'no-such-queue'

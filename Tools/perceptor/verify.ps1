@@ -581,6 +581,10 @@ $psWriteMs = 0
 # so the deferral ladder needs to know about the second one too.
 $psWrite2Ran = $false
 $psWrite2Ms = 0
+# main#133: the face half was split again - the three tooling suites (qa pool
+# rotation, bare-parameter census, panel fixture generator) now ride write3.
+$psWrite3Ran = $false
+$psWrite3Ms = 0
 $psVerifyRan = $false
 $psVerifyMs = 0
 
@@ -613,6 +617,7 @@ function Write-PsSuitesVerdict {
 if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
   Write-Output 'VERIFY HEALTH: ps-suites: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-write2: skipped (nested sandbox run)'
+  Write-Output 'VERIFY HEALTH: ps-suites-write3: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-verify: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-verify2: skipped (nested sandbox run)'
 } else {
@@ -620,6 +625,7 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
   if (-not (Test-Path -LiteralPath $psMod)) {
     Write-Output 'VERIFY WARN: ps-suites: ps-suites-tick.ps1 missing - write-side sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-write2: ps-suites-tick.ps1 missing - face-side sandboxes not run this tick'
+    Write-Output 'VERIFY WARN: ps-suites-write3: ps-suites-tick.ps1 missing - tooling-side sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-verify: ps-suites-tick.ps1 missing - verify-side sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-verify2: ps-suites-tick.ps1 missing - heavy verify sandbox not run this tick'
   } else {
@@ -670,7 +676,7 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
         } elseif (-not $w2Chk.needs_run) {
           $w2Res = $null
           try { $w2Res = Invoke-PsSuitesTick @w2Args } catch { $w2Res = $null }
-          Write-PsSuitesVerdict -Label 'ps-suites-write2' -Res $w2Res -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-nolivecheck-census.ps1,Tools\devloop\test-qa-rotation.ps1'
+          Write-PsSuitesVerdict -Label 'ps-suites-write2' -Res $w2Res -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-status-face-screen.ps1'
         } elseif ($psWriteRan) {
           $deferW2 = 'VERIFY HEALTH: ps-suites-write2: deferred (write-side ran ' + $psWriteMs + 'ms this tick) sha=' + $w2Chk.sha + ' req=' + [int]$w2Chk.req_suites
           if ([int]$w2Chk.base_ms -gt 0) { $deferW2 = $deferW2 + ' base=' + [int]$w2Chk.base_ms + 'ms' }
@@ -679,7 +685,48 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
           $w2Res = $null
           try { $w2Res = Invoke-PsSuitesTick @w2Args } catch { $w2Res = $null }
           if ($null -ne $w2Res -and $w2Res.ran) { $psWrite2Ran = $true; $psWrite2Ms = [int]$w2Res.ms }
-          Write-PsSuitesVerdict -Label 'ps-suites-write2' -Res $w2Res -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-nolivecheck-census.ps1,Tools\devloop\test-qa-rotation.ps1'
+          Write-PsSuitesVerdict -Label 'ps-suites-write2' -Res $w2Res -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-status-face-screen.ps1'
+        }
+      }
+
+      # ---- 2h3. tooling half of the write side (main#133) ----
+      # The face half measured 27.7 / 28.1 s with a 36.5 s spike - on the 2/3
+      # line of the 45 s cap every tick. Timing the six suites alone showed
+      # 4.3 / 4.7 / 10.2 / 3.5 / 3.5 / 3.6 s: the three that produce evidence
+      # (qa pool rotation, bare-parameter census, panel fixtures) moved here,
+      # leaving 12.5 s and 17.3 s. Same turn rule as write2: ask -CheckOnly,
+      # defer when something already really ran this round.
+      if ($env:FLUXVERSE_PS_SUITES_WRITE3 -eq 'off') {
+        Write-Output 'VERIFY HEALTH: ps-suites-write3: disabled by FLUXVERSE_PS_SUITES_WRITE3=off'
+      } else {
+        $w3Args = @{ RepoDir = $repoRoot; Family = 'write3' }
+        if ($env:FLUXVERSE_PS_SUITES_WRITE3_RUNNER) { $w3Args['RunnerPath'] = $env:FLUXVERSE_PS_SUITES_WRITE3_RUNNER }
+        if ($env:FLUXVERSE_PS_SUITES_WRITE3_TICKET) { $w3Args['TicketPath'] = $env:FLUXVERSE_PS_SUITES_WRITE3_TICKET }
+        if ($env:FLUXVERSE_PS_SUITES_WRITE3_TIMEOUT) {
+          $w3To = 0
+          if ([int]::TryParse($env:FLUXVERSE_PS_SUITES_WRITE3_TIMEOUT, [ref]$w3To) -and $w3To -gt 0) { $w3Args['TimeoutSec'] = $w3To }
+        }
+        if ($env:FLUXVERSE_PS_SUITES_WRITE3_FORCE -eq '1') { $w3Args['Force'] = $true }
+        $w3Rerun = 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-simple-param-census.ps1,Tools\devloop\test-rebuild-panel-fixtures-bad.ps1'
+        $w3Chk = $null
+        try { $w3Chk = Invoke-PsSuitesTick @w3Args -CheckOnly } catch { $w3Chk = $null }
+        if ($null -eq $w3Chk) {
+          Write-Output 'VERIFY WARN: ps-suites-write3: ps-suites-tick.ps1 threw - tooling-side sandboxes not measured this tick'
+        } elseif (-not $w3Chk.needs_run) {
+          $w3Res = $null
+          try { $w3Res = Invoke-PsSuitesTick @w3Args } catch { $w3Res = $null }
+          Write-PsSuitesVerdict -Label 'ps-suites-write3' -Res $w3Res -Rerun $w3Rerun
+        } elseif ($psWriteRan -or $psWrite2Ran) {
+          $why3 = 'write-side ran ' + $psWriteMs + 'ms'
+          if (-not $psWriteRan) { $why3 = 'face-side ran ' + $psWrite2Ms + 'ms' }
+          $deferW3 = 'VERIFY HEALTH: ps-suites-write3: deferred (' + $why3 + ' this tick) sha=' + $w3Chk.sha + ' req=' + [int]$w3Chk.req_suites
+          if ([int]$w3Chk.base_ms -gt 0) { $deferW3 = $deferW3 + ' base=' + [int]$w3Chk.base_ms + 'ms' }
+          Write-Output $deferW3
+        } else {
+          $w3Res = $null
+          try { $w3Res = Invoke-PsSuitesTick @w3Args } catch { $w3Res = $null }
+          if ($null -ne $w3Res -and $w3Res.ran) { $psWrite3Ran = $true; $psWrite3Ms = [int]$w3Res.ms }
+          Write-PsSuitesVerdict -Label 'ps-suites-write3' -Res $w3Res -Rerun $w3Rerun
         }
       }
 
@@ -704,9 +751,12 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
           try { $vRes = Invoke-PsSuitesTick @vArgs } catch { $vRes = $null }
           if ($null -ne $vRes -and $vRes.ran) { $psVerifyRan = $true; $psVerifyMs = [int]$vRes.ms }
           Write-PsSuitesVerdict -Label 'ps-suites-verify' -Res $vRes -Rerun 'Tools\devloop\run-ps-suites.ps1 -Verify'
-        } elseif ($psWriteRan -or $psWrite2Ran) {
+        } elseif ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran) {
           $why = 'write-side ran ' + $psWriteMs + 'ms'
-          if (-not $psWriteRan) { $why = 'face-side ran ' + $psWrite2Ms + 'ms' }
+          if (-not $psWriteRan) {
+            if ($psWrite2Ran) { $why = 'face-side ran ' + $psWrite2Ms + 'ms' }
+            else { $why = 'tooling-side ran ' + $psWrite3Ms + 'ms' }
+          }
           $deferLine = 'VERIFY HEALTH: ps-suites-verify: deferred (' + $why + ' this tick) sha=' + $vChk.sha + ' req=' + [int]$vChk.req_suites
           if ([int]$vChk.base_ms -gt 0) { $deferLine = $deferLine + ' base=' + [int]$vChk.base_ms + 'ms' }
           Write-Output $deferLine
@@ -741,10 +791,11 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
           $v2Res = $null
           try { $v2Res = Invoke-PsSuitesTick @v2Args } catch { $v2Res = $null }
           Write-PsSuitesVerdict -Label 'ps-suites-verify2' -Res $v2Res -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-verify-ps-suites.ps1'
-        } elseif ($psWriteRan -or $psWrite2Ran -or $psVerifyRan) {
+        } elseif ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran -or $psVerifyRan) {
           $why = 'write-side ran ' + $psWriteMs + 'ms'
           if (-not $psWriteRan) {
             if ($psWrite2Ran) { $why = 'face-side ran ' + $psWrite2Ms + 'ms' }
+            elseif ($psWrite3Ran) { $why = 'tooling-side ran ' + $psWrite3Ms + 'ms' }
             else { $why = 'verify-side ran ' + $psVerifyMs + 'ms' }
           }
           $deferLine2 = 'VERIFY HEALTH: ps-suites-verify2: deferred (' + $why + ' this tick) sha=' + $v2Chk.sha + ' req=' + [int]$v2Chk.req_suites

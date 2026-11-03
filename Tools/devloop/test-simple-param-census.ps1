@@ -201,14 +201,19 @@ Check 'k8 -FailOnRisk exits 2 when risks exist' ($codeRisk -eq 2) ([string]$code
 $codeClean = $LASTEXITCODE
 Check 'k9 -FailOnRisk exits 0 on a clean tree' ($codeClean -eq 0) ([string]$codeClean)
 
-Write-Output '--- l) wiring: the face half guards it and runs it ---'
+Write-Output '--- l) wiring: the tooling half guards it and runs it ---'
 if (-not (Test-Path -LiteralPath $tick)) { Write-Output ('setup FAIL: missing ' + $tick); exit 1 }
 . $tick
 $tickText = [System.IO.File]::ReadAllText($tick, [Text.Encoding]::UTF8)
-$w2 = @(Get-PsSuitesTickDefaults -Family write2)
-Check 'l1 the face half guards the tool' (@($w2 | Where-Object { $_ -eq 'Tools\devloop\simple-param-census.ps1' }).Count -eq 1)
-Check 'l2 the face half guards the sandbox' (@($w2 | Where-Object { $_ -eq 'Tools\devloop\test-simple-param-census.ps1' }).Count -eq 1)
-Check 'l3 the face half runs the sandbox by name' ($tickText -match 'test-simple-param-census\.ps1')
+# main#133: the census moved out of the face half into write3 (its sandbox was
+# one of the three that pushed the face half onto the 2/3 line). The judgment
+# is unchanged - a family that guards a tool must also run that tool's suite.
+$w3 = @(Get-PsSuitesTickDefaults -Family write3)
+$w2now = @(Get-PsSuitesTickDefaults -Family write2)
+Check 'l1 the tooling half guards the tool' (@($w3 | Where-Object { $_ -eq 'Tools\devloop\simple-param-census.ps1' }).Count -eq 1)
+Check 'l2 the tooling half guards the sandbox' (@($w3 | Where-Object { $_ -eq 'Tools\devloop\test-simple-param-census.ps1' }).Count -eq 1)
+Check 'l3 the tooling half runs the sandbox by name' ($tickText -match 'test-simple-param-census\.ps1')
+Check 'l4 the face half no longer carries it' (@($w2now | Where-Object { $_ -match 'simple-param-census' }).Count -eq 0) ($w2now -join ',')
 
 Write-Output '--- m) both new files stay ASCII ---'
 $toolBytes = [System.IO.File]::ReadAllBytes($module)

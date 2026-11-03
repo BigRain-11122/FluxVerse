@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-03T22:30:08Z",
-    "current_activity":  "r811 收口（改件 ./Tools/devloop/qa-rotation.ps1、./Tools/devloop/build-city-panel.ps1、./Tools/devloop/city-panel-template.html）：面板上「同族已有更新帧 72 件」原先只是一个总数，读起来像 72 份证据已经过期，而活数据是 superseded_by=city3d:10,panel:60,smoke:2——60 件落在自拍一族，而每张自拍的名字自带那一轮的时戳、本身就是自己的捕捉会话，「同会话里已有更新帧」对它结构性恒真。改法＝工具按组记这一本账、QA STALE 行与 -Record 都带构成、页面把 panel:60 渲染成「自拍 60」。验证：qa 轮转沙盒 101→104 断言全绿、面板 31 套 failing=0、390 窄屏 offenders=0、活门 VERIFY PASS。",
-    "artifact":  "改件 `./Tools/devloop/qa-rotation.ps1`（superseded 按组拆账）、`./Tools/devloop/build-city-panel.ps1`（读构成串）、`./Tools/devloop/city-panel-template.html`（渲染「自拍 60」）、判据 `./Tools/devloop/test-qa-rotation.ps1`（101→104）；记账 `./TECH.md` r811 行、`./state/runbook.md` r811 段、新债 `./state/queue/main.md` #133；产品面＝每 tick 重建的 `./world-public/city-panel.html`（本页「运行维护」行已带构成）。",
-    "artifact_utc":  "2026-11-03T22:30:08Z",
-    "milestone":  "48 小时内＝先拆 `ps-suites-write2` 族（`./state/queue/main.md` #133：六套 27.7–28.9 秒已贴 45 秒帽的 2/3 线，禁抬帽，按拆第五族或移出一套处置）；其后 `main#121`（发布闸词表过宽，到期 11-16，需委员会口径）与 `./state/queue/tech.md` 的 tech#18（基准面两件 C·待证取全文核销，due=2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）。`main#52` 仍等 Tuanjie 零进程窗口复测（fps_avg\u003e=486.8 且 p95\u003c=2.58ms）；队列 open 203，无活即转提案轨。",
+    "updated_utc":  "2026-11-03T22:53:08Z",
+    "current_activity":  "r812 收口（改件 ./Tools/devloop/ps-suites-tick.ps1、./Tools/perceptor/verify.ps1 与两份沙盒）：写侧沙盒族原先两半，面部半六套已量到 27.7 与 28.9 秒，贴着 45 秒帽的 2/3 线，于是每 tick 都印一条要人做决定的预算告警。逐套计时后确认没有单一大头（4.3、4.7、10.2、3.5、3.5、3.6 秒，成本主要是进程启动），按队列行的首选办法拆出第三族 write3，只收生产证据的三套工具沙盒；45 秒帽一字未抬。活跑面部半 12.1 秒、工具半 17.8 秒，五条族行全 HEALTH 且告警字样零出现。验证：门中门沙盒 218 增至 224 条断言全绿、普查沙盒 50 条、写侧九套 447 条、verify 侧十一套 734 条。",
+    "artifact":  "改件 `./Tools/devloop/ps-suites-tick.ps1`（第三族 defaults、受保护源、票据名、显式套件清单）、`./Tools/perceptor/verify.ps1`（新增第三族行与延后链）、`./Tools/devloop/test-verify-ps-suites.ps1`（族集合与请求套件断言 224 条）、`./Tools/devloop/test-simple-param-census.ps1`（改判到新族并加一条反向断言 50 条）；记账 `./TECH.md` r812 行、`./state/runbook.md` r812 段、`./state/queue/main.md` #133 销行；产品面＝每 tick 重建的 `./world-public/city-panel.html`。",
+    "artifact_utc":  "2026-11-03T22:53:08Z",
+    "milestone":  "48 小时内＝观察五条族行的真实成本（新族首次生产跑 17.8 秒），任一族再逼近 2/3 线则继续拆族或缩面、禁抬帽；候 `./state/queue/main.md` #121（发布闸词表口径，到期 2026-11-16）与 `./state/queue/tech.md` #18（基准面两件待证取全文核销，2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）；`./state/queue/main.md` #52 仍等 Tuanjie 零进程窗口复测（fps_avg\u003e=486.8 且 p95\u003c=2.58ms）。队列 open 202，无活即转提案轨。",
     "milestone_eta_utc":  "2026-11-06T02:00:00Z"
 }

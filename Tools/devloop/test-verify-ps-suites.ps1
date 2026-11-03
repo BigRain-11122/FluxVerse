@@ -832,7 +832,7 @@ Check 'z30 the state half asks for exactly its five suites' ($zW -match '-Suites
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write2 -TicketPath (Join-Path $sandbox 'z-w2.json') -RunnerPath $runnerArgs -Force
 $zW2 = ''
 try { $zW2 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW2 = '' }
-Check 'z31 the face half asks for its five suites only, census included' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 5 -and $zW2 -match 'test-qa-rotation\.ps1' -and $zW2 -match 'test-simple-param-census\.ps1' -and $zW2 -notmatch 'test-runbook-sync\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
+Check 'z31 the face half asks for its six suites only, census included' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 6 -and $zW2 -match 'test-qa-rotation\.ps1' -and $zW2 -match 'test-simple-param-census\.ps1' -and $zW2 -match 'test-rebuild-panel-fixtures-bad\.ps1' -and $zW2 -notmatch 'test-runbook-sync\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
 Remove-Item 'Env:\FV_ARGS_OUT' -ErrorAction SilentlyContinue
 
 # main#117 turn rule: when both write halves are due, the state half runs and

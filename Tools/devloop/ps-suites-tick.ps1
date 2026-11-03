@@ -107,6 +107,11 @@ function Get-PsSuitesTickDefaults {
             # devloop tree (the same files this half guards), so it belongs to
             # the face half rather than to the state writer's half.
             'Tools\devloop\test-simple-param-census.ps1',
+            # main#130: the panel fixture generator and its sandbox. The fixtures
+            # are what the render suites read, so they belong to the face half
+            # (2.7 s measured; this half was 23.2 s of the 45 s cap).
+            'Tools\devloop\test-rebuild-panel-fixtures-bad.ps1',
+            'Tools\devloop\rebuild-panel-fixtures.ps1',
             'Tools\devloop\simple-param-census.ps1',
             'Tools\devloop\run-ps-suites.ps1',
             'Tools\devloop\build-city-panel.ps1',
@@ -682,7 +687,7 @@ function Invoke-PsSuitesTick {
         $ExtraArgs = @('-Suites', 'Tools\devloop\test-fastpath-state-live.ps1,logs\devloop-r197-writer-test.ps1,logs\devloop-r271-keep-negcon.ps1,Tools\devloop\test-nolivecheck-census.ps1,Tools\devloop\test-runbook-sync.ps1')
     }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write2') {
-        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-status-face-screen.ps1,Tools\devloop\test-simple-param-census.ps1')
+        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-status-face-screen.ps1,Tools\devloop\test-simple-param-census.ps1,Tools\devloop\test-rebuild-panel-fixtures-bad.ps1')
     }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify') {
         $lightSuites = @(Get-PsSuitesTickDefaults -Family 'verify' | Where-Object { $_ -match 'test-[^\\]+\.ps1$' })

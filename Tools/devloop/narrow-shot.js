@@ -146,10 +146,16 @@ async function main() {
     });
     // Re-run the layout at the phone width (media queries key off the viewport).
     await send('Page.navigate', { url: URL_ARG });
-    await sleep(1200);
-
-    const measured = await send('Runtime.evaluate', { expression: MEASURE, returnByValue: true });
-    payload = JSON.parse(measured.result.value);
+    // r807: 1200ms is a habit, not a promise. A freshly rebuilt 220KB page can
+    // still be parsing when we measure, and an unrendered frame (rows=0) used to
+    // slide past the 800px floor and get an OK badge. Poll until the body has
+    // rows, then measure once; `rows-zero` in the judge is the backstop.
+    for (let wait = 0; wait < 10; wait++) {
+      await sleep(wait === 0 ? 1200 : 250);
+      const probe = await send('Runtime.evaluate', { expression: MEASURE, returnByValue: true });
+      payload = JSON.parse(probe.result.value);
+      if (payload.rowCount > 0) break;
+    }
 
     const metrics = await send('Page.getLayoutMetrics');
     contentH = Math.ceil((metrics.cssContentSize || metrics.contentSize).height);

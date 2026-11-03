@@ -107,6 +107,21 @@ chk('real build: duty self-check warns iff something is late',
   !!scDuty && (lateN > 0 ? (scDuty.warn && scDuty.vd.indexOf(String(lateN)) >= 0) : scDuty.ok),
   'late=' + lateN + ' vd=' + (scDuty && scDuty.vd));
 
+// 4b. r807: the summary line itself must not read the same whether we still owe
+// work or already answered and are waiting on the group ledger. Data-driven so
+// the assertion survives a new unanswered order arriving.
+{
+  const lateRowsReal = rows.filter(r => Date.parse(r.due_utc) < Date.now());
+  const allAnswered = lateRowsReal.length > 0 && lateRowsReal.every(r => !!r.receipt_f);
+  const anyAnswered = lateRowsReal.some(r => !!r.receipt_f);
+  const rsum = String(real.get('duty-sum').textContent);
+  chk('real build: summary matches the real receipt state',
+    allAnswered ? rsum.indexOf('逾期项均已回执') >= 0
+      : (anyAnswered ? (rsum.indexOf('其中') >= 0 && rsum.indexOf('均已回执') < 0)
+        : rsum.indexOf('均已回执') < 0),
+    'late=' + lateRowsReal.length + ' answered=' + lateRowsReal.filter(r => !!r.receipt_f).length + ' sum=' + rsum);
+}
+
 // 5. missing decision file must not masquerade as "nothing to do"
 const miss = runPanelHtml(withDuty(realHtml, {
   exists: false, path_rel: '', url: '', as_of_utc: '', scanned: 0, matched: 0, open: 0, late: 0, rows: []
@@ -163,6 +178,44 @@ const rc = runPanelHtml(withDuty(realHtml, {
   chk('receipts: summary carries the replied count',
     String(rc.get('duty-sum').textContent).indexOf('已回执 2') >= 0,
     'sum=' + String(rc.get('duty-sum').textContent));
+}
+
+// 7b2. r807: the summary must tell "we still owe work" from "we answered, the
+// group ledger has not flipped it". Both late rows answered => say so; only
+// some answered => say how many; receipts unknown => claim nothing.
+{
+  const rcAll = String(rc.get('duty-sum').textContent);
+  chk('r807 summary: all late rows answered => says so',
+    rcAll.indexOf('逾期项均已回执') >= 0 && rcAll.indexOf('等集团台账翻面') >= 0, 'sum=' + rcAll);
+  chk('r807 summary: still warns (late is still true)',
+    String(rc.get('duty-sum').className).indexOf('warn') >= 0,
+    'cls=' + String(rc.get('duty-sum').className));
+
+  const partial = runPanelHtml(withDuty(realHtml, {
+    exists: true, path_rel: 'x', url: '', as_of_utc: '', scanned: 5, matched: 3, open: 3, late: 2,
+    receipted: 1, receipts_exists: true, receipts_count: 45,
+    rows: [
+      { id: 'D-20261028-04', subject: 'replied late', status: 'dispatched',
+        due_txt: '10-31 00:00', due_utc: '2026-10-30T16:00:00Z', action: '', receipt_f: 'F-20261028-01' },
+      { id: 'D-20261028-11', subject: 'silent late', status: 'dispatched',
+        due_txt: '10-31 00:00', due_utc: '2026-10-30T16:00:00Z', action: '', receipt_f: '' },
+      { id: 'D-20261101-05', subject: 'not due yet', status: 'dispatched',
+        due_txt: '', due_utc: '', action: '', receipt_f: '' }
+    ]
+  }), 'duty-receipts-partial');
+  const pSum = String(partial.get('duty-sum').textContent);
+  chk('r807 summary: partial answers are named as a count', pSum.indexOf('其中 1 已回执') >= 0, 'sum=' + pSum);
+  chk('r807 summary: partial never claims all answered', pSum.indexOf('均已回执') < 0, 'sum=' + pSum);
+
+  const noneLate = runPanelHtml(withDuty(realHtml, {
+    exists: true, path_rel: 'x', url: '', as_of_utc: '', scanned: 2, matched: 1, open: 1, late: 0,
+    receipted: 1, receipts_exists: true, receipts_count: 45,
+    rows: [{ id: 'D-20261102-09', subject: 'answered, not due', status: 'dispatched',
+      due_txt: '', due_utc: '', action: '', receipt_f: 'F-20261102-01' }]
+  }), 'duty-receipts-nolate');
+  const nSum = String(noneLate.get('duty-sum').textContent);
+  chk('r807 summary: no late rows => no overdue sentence',
+    nSum.indexOf('逾期项均已回执') < 0 && nSum.indexOf('其中') < 0, 'sum=' + nSum);
 }
 
 // 7c. missing receipt ledger: "unknown" must not be dressed up as "unanswered"

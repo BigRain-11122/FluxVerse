@@ -1025,17 +1025,24 @@ function artTitle(it){
         '<span class="pv">集团决策面无点名本司的待办令（扫描 ' + (D.scanned || 0) + ' 行）</span></div>';
       return;
     }
-    const lateN = rows.filter(r => {
+    const lateRows = rows.filter(r => {
       const a = ago(r.due_utc);
       return a != null && a > 0;
-    }).length;
+    });
+    const lateN = lateRows.length;
     // 回执：集团台账要等集团收取面翻状态（本司禁写集团台账），所以我们唯一
     // 的结办通道是在 ./HQ-FEEDBACK.md 写一行引用决策号的回执。没有这一列，
     // 「逾期 3 件」就分不清「本司没做」和「本司已回执、台账还没翻」。
     const repliedN = rows.filter(r => r.receipt_f).length;
+    // r807：摘要原先只印「N 项逾期」，「本司还欠着活」与「本司已答、等集团台账翻面」
+    // 在这一行上逐字同形——逐行回执标在 390 窄屏会被滚出视野，摘要才是先看到的那句。
+    // 红色不撤（逾期仍是真的：集团台账没翻），改由措辞说清是谁那一步没走完。
+    const lateRepliedN = lateRows.filter(r => r.receipt_f).length;
     if (sum) {
       let txt = rows.length + ' 项待办' + (lateN ? ' · ' + lateN + ' 项逾期' : '');
       if (repliedN) txt += ' · 已回执 ' + repliedN;
+      if (lateN && lateRepliedN === lateN) txt += '（逾期项均已回执 · 等集团台账翻面）';
+      else if (lateRepliedN > 0) txt += '（其中 ' + lateRepliedN + ' 已回执）';
       sum.textContent = txt;
       if (lateN) sum.className = 'tag warn';
     }

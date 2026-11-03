@@ -63,6 +63,39 @@ chk('judge.rowcount-null-tolerated', j({ contentH: 700, domH: 700, rowCount: und
 chk('judge.rowcount-null-fine-when-tall', j({ rowCount: undefined }).ok === true,
   'row count is irrelevant once the page is clearly long');
 
+// --- 2b) r807: rows and height must agree with each other, not just with 800 ---
+// Live evidence 2026-11-04: right after a rebuild, narrow-shot read
+// `domH=844 contentH=844 rows=89` and printed VERDICT: OK (the next run read
+// 7064px). 844 clears the absolute 800 floor, so the old rule had nothing to say.
+{
+  const r = j({ domH: 844, contentH: 844, rowCount: 89 });
+  chk('judge.rows-implied-short', r.ok === false && r.reason === 'rows-implied-short', JSON.stringify(r));
+}
+chk('judge.rows-implied-real-page-ok', j({ domH: 7064, contentH: 7064, rowCount: 89 }).ok === true,
+  'the real full page must keep passing');
+chk('judge.rows-implied-exact-floor-ok', j({ domH: 240, contentH: 240, rowCount: 20 }).ok === true,
+  'rowCount == minRows is not "many rows" and must not be failed by the implied floor');
+chk('judge.rows-implied-boundary', j({ domH: 1080, contentH: 1080, rowCount: 90 }).ok === true &&
+  j({ domH: 1079, contentH: 1079, rowCount: 90 }).ok === false,
+  '90 rows at 12px/row: 1080 passes, 1079 does not');
+chk('judge.rows-implied-ignores-null-rows', j({ domH: 900, contentH: 900, rowCount: undefined }).ok === true,
+  'an uncountable row count must not invent a floor (that is rows-missing territory)');
+
+// --- 2c) r807: an unrendered frame must not earn the badge ---
+// Second live observation the same round: right after a rebuild the frame read
+// `domH=844 contentH=844 rows=0` (the next run read 7064px / 89 rows). Zero rows
+// is a slow start, not a short page, and 844 cleared the 800 floor.
+{
+  const r = j({ domH: 844, contentH: 844, rowCount: 0 });
+  chk('judge.rows-zero', r.ok === false && r.reason === 'rows-zero', JSON.stringify(r));
+}
+chk('judge.rows-zero-even-when-tall', j({ domH: 7064, contentH: 7064, rowCount: 0 }).reason === 'rows-zero',
+  'a tall frame with zero body rows is still unrendered');
+
+// --- 2d) wiring: wait for the body to have rows before measuring (r807) ---
+chk('wiring.settle-poll', /payload\.rowCount > 0\) break/.test(src),
+  'narrow-shot must poll until the body has rows before measuring');
+
 // --- 3) wiring in narrow-shot.js ---
 chk('wiring.require-judge', /require\('\.\/narrow-shot-verify'\)/.test(src), 'judge not imported');
 chk('wiring.retries-capped', /MAX_ATTEMPTS\s*=\s*3/.test(src), 'retry count is not pinned at 3');

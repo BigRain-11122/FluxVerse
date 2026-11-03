@@ -142,6 +142,23 @@ Check 'c: nothing archived'          (-not (Test-Path -LiteralPath (Join-Path $c
 # A skip day never scans, so it must not publish a live count at all: "live=0"
 # would read as "the directory is empty" when nobody counted (r799 judgement).
 Check 'c: skip day states no live count' ($c.log -notmatch 'live=\d+/cap=')
+# r810: the same judgement had only been applied to live=. candidates=0 and
+# archived=0 were printed on every skip day, i.e. two readings nobody took,
+# and they read exactly like "there was nothing to archive, nothing was
+# ...judged on the archive line itself: other sections legitimately print
+# similar tokens (r2-site prints dry_candidates=), so the check is scoped to
+# the log-archive lines rather than the whole verify output.
+$cArchiveLines = @(($c.log -split "`n") | Where-Object { $_ -match 'log-archive:' })
+Check 'c: skip day states no candidate count' (@($cArchiveLines | Where-Object { $_ -match ' candidates=\d' }).Count -eq 0)
+Check 'c: skip day states no archived count'  (@($cArchiveLines | Where-Object { $_ -match ' archived=\d' }).Count -eq 0)
+# ...and the duty itself must hand -1 to any other reader, not 0 (the panel and
+# future callers see the module, not the line).
+. (Join-Path (Split-Path -Parent $PSScriptRoot) 'devloop\log-archive-duty.ps1')
+$cMod = Invoke-LogArchiveDuty -Root (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) -LogsDir $cDir -StatePath $cStamp -MaxRemain 1
+Check 'c: module reports skip'        ([string]$cMod.reason -eq 'already-ran-today')
+Check 'c: module candidates unmeasured' ($cMod.candidates -eq -1)
+Check 'c: module archived unmeasured'   ($cMod.archived -eq -1)
+Check 'c: module live unmeasured'       ($cMod.live -eq -1)
 if ($fail -gt $failC) { Show-ArchiveEvidence 'c' $c.log }
 
 # ---------- d) zip verify mismatch -> originals kept ----------

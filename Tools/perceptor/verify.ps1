@@ -386,8 +386,14 @@ if (-not (Test-Path -LiteralPath $archiveDuty)) {
     } else {
       $adParts = @('log-archive:')
       if ($ad.ran) { $adParts += 'ran' } else { $adParts += ('skipped(' + $ad.reason + ')') }
-      $adParts += ('candidates=' + $ad.candidates)
-      $adParts += ('archived=' + $ad.archived)
+      # candidates/archived follow the same rule as live= below: -1 means the
+      # duty never scanned (skip day, or an archiver run with no ARCHIVE
+      # SUMMARY), so nothing is printed for it. A 0 in that spot read as
+      # "nothing to archive / nothing archived" when nobody had counted
+      # (r810; r799 fixed the same class for live=, and it applied to only one
+      # of the three numbers).
+      if ($ad.candidates -ge 0) { $adParts += ('candidates=' + $ad.candidates) }
+      if ($ad.archived -ge 0) { $adParts += ('archived=' + $ad.archived) }
       if ($ad.remain_stale) {
         $adParts += ('remain_archivable=' + $ad.remain_archivable + '(last)')
       } else {

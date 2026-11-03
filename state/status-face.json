@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-03T21:24:19Z",
-    "current_activity":  "r809 收口（改件 ./Tools/perceptor/verify.ps1 与沙盒 ./Tools/devloop/test-verify-queue-due.ps1）：每 tick 那行队列读数原先只答「有没有逾期」，不答「最近一个期限是哪天」——一个什么都没欠的日子与「明天就到」在日志里逐字相同，只有打开页面的人才看得见日期。改法＝同一行在 `next_items` 非空时追加 ` next=\u003cdue\u003e/\u003cNd\u003e/#\u003cid\u003e`，与页面上的 `qdue_next=` 同一形状（两面不可能各说各的）；没有未到期期限时一个令牌都不印（缺省不等于「0 天后」），逾期件不被当成「下一个期限」。只印最近一条、不参与红绿。验证：队列沙盒 37→48 断言 RESULT: PASS（新 5e 组 11 条，日期按真实当日推算）、verify 族 11 套 722 断言 failing=0、写侧族 9 套 444 断言 parity=ok、活跑见 `next=2026-11-16/12d/#121` 且 VERIFY PASS。",
-    "artifact":  "改件 `./Tools/perceptor/verify.ps1`（§2g 的 `qdue:` 行尾透传 `next=`）、判据 `./Tools/devloop/test-verify-queue-due.ps1`（37→48 断言，新 5e 组 11 条：最近那条点名、更晚的不点名、到期当天 0d、无未到期件时整段不出现且无 `next=0`、逾期行不冒充、仍 HEALTH）；记账 `./TECH.md` r809 行、`./state/runbook.md` r809 段、`./state/queue/main.md` #132 销行；产品面仍为每 tick 重建的 `./world-public/city-panel.html`。",
-    "artifact_utc":  "2026-11-03T21:24:00Z",
+    "updated_utc":  "2026-11-03T21:54:23Z",
+    "current_activity":  "r810 收口（改件 ./Tools/devloop/log-archive-duty.ps1 与 ./Tools/perceptor/verify.ps1）：跳过日的归档行原先印 candidates=0 archived=0，与「扫了、一件都不用归档」逐字相同——r799 已为同一行里的 live= 立过「跳过日不扫描就不许印 0」的判例，可那条判据只套在三个数里的一个上。改法＝本模块把这两个初值改成 -1（未测量，与 live 同一约定），门只在值 \u003e=0 时拼键。活跑现读 skipped(already-ran-today) remain_archivable=0(last)，真跑日照旧报 candidates/archived 实数。验证：归档职责沙盒 35→40 断言全绿（新 6 条判跳过行不出现这两个键、模块直读三键恒 -1）、verify 族 11 套 728 断言 failing=0、活门 VERIFY PASS。",
+    "artifact":  "改件 `./Tools/devloop/log-archive-duty.ps1`（candidates/archived 初值改 -1 并写明未测量约定）、`./Tools/perceptor/verify.ps1`（§2e 只在实测时拼键）、判据 `./Tools/devloop/test-log-archive-duty.ps1`（35→40 断言，c 组 6 条新判据；首版按整份 verify 输出判被 r2-site 的 dry_candidates= 假命中，改按 log-archive 行判）；记账 `./TECH.md` r810 行、`./state/runbook.md` r810 段；产品面仍为每 tick 重建的 `./world-public/city-panel.html`（本轮未改页面，零变化）。",
+    "artifact_utc":  "2026-11-03T21:54:23Z",
     "milestone":  "48 小时内＝把 `./state/queue/main.md` 里剩下的可推进件收口：`main#121`（发布闸词表过宽，到期 11-16，需委员会口径）与 `main#129` 部分余面（到期 11-17）；其后候 `./state/queue/tech.md` 的 tech#18（基准面两件 C·待证取全文核销，due=2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）。`main#52` 仍等 Tuanjie 零进程窗口复测（判据 fps_avg\u003e=486.8 且 p95\u003c=2.58ms，禁带载凑数）；队列 open 202，无活即转提案轨（提案落 `./TECH.md` 自驱提案行）。",
-    "milestone_eta_utc":  "2026-11-05T21:00:00Z"
+    "milestone_eta_utc":  "2026-11-06T02:00:00Z"
 }

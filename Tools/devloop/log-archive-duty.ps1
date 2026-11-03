@@ -1,4 +1,4 @@
-﻿# log-archive-duty.ps1 - daily gate in front of archive-logs.ps1 (queue main#56)
+# log-archive-duty.ps1 - daily gate in front of archive-logs.ps1 (queue main#56)
 # ---------------------------------------------------------------------------
 # r715 cleared 2,174 stale log files once, by hand. Nothing ran it again, so the
 # backlog was guaranteed to grow back: a one-off sweep is not a retention policy.
@@ -37,8 +37,14 @@ function Invoke-LogArchiveDuty {
   $result = [pscustomobject]@{
     ran = $false
     reason = ''
-    candidates = 0
-    archived = 0
+    # -1 = not measured (same convention as live= below). The SKIP path never
+    # scans the directory, so a 0 here would be presented as "nothing to
+    # archive" / "nothing archived" when neither count was ever taken (r810:
+    # the skip line used to print candidates=0 archived=0 next to a correctly
+    # omitted live=, i.e. the same r799 judgement applied to only one of three
+    # numbers).
+    candidates = -1
+    archived = -1
     remain_archivable = 0
     # -1 = not measured. The SKIP path never scans the directory, so a 0 here
     # would be presented as "zero files" when the count was simply never taken.
@@ -113,7 +119,7 @@ function Invoke-LogArchiveDuty {
   $mArch = [regex]::Match($summary, 'archived=(\d+)')
   $mRemain = [regex]::Match($summary, 'remain_archivable=(\d+)')
   # The "nothing to do" early exit prints no LIVE_AFTER line at all, so the
-  # match input can be empty -- never let that be an exception (r798 判例:
+  # match input can be empty -- never let that be an exception (r798 precedent:
   # [regex]::Match($null, ...) throws and the whole duty reads as "threw").
   $liveLine = @($lines | Where-Object { $_ -like 'ARCHIVE LIVE_AFTER:*' } | Select-Object -First 1)
   $mLive = $null

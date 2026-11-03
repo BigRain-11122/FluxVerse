@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-03T22:53:08Z",
-    "current_activity":  "r812 收口（改件 ./Tools/devloop/ps-suites-tick.ps1、./Tools/perceptor/verify.ps1 与两份沙盒）：写侧沙盒族原先两半，面部半六套已量到 27.7 与 28.9 秒，贴着 45 秒帽的 2/3 线，于是每 tick 都印一条要人做决定的预算告警。逐套计时后确认没有单一大头（4.3、4.7、10.2、3.5、3.5、3.6 秒，成本主要是进程启动），按队列行的首选办法拆出第三族 write3，只收生产证据的三套工具沙盒；45 秒帽一字未抬。活跑面部半 12.1 秒、工具半 17.8 秒，五条族行全 HEALTH 且告警字样零出现。验证：门中门沙盒 218 增至 224 条断言全绿、普查沙盒 50 条、写侧九套 447 条、verify 侧十一套 734 条。",
-    "artifact":  "改件 `./Tools/devloop/ps-suites-tick.ps1`（第三族 defaults、受保护源、票据名、显式套件清单）、`./Tools/perceptor/verify.ps1`（新增第三族行与延后链）、`./Tools/devloop/test-verify-ps-suites.ps1`（族集合与请求套件断言 224 条）、`./Tools/devloop/test-simple-param-census.ps1`（改判到新族并加一条反向断言 50 条）；记账 `./TECH.md` r812 行、`./state/runbook.md` r812 段、`./state/queue/main.md` #133 销行；产品面＝每 tick 重建的 `./world-public/city-panel.html`。",
-    "artifact_utc":  "2026-11-03T22:53:08Z",
-    "milestone":  "48 小时内＝观察五条族行的真实成本（新族首次生产跑 17.8 秒），任一族再逼近 2/3 线则继续拆族或缩面、禁抬帽；候 `./state/queue/main.md` #121（发布闸词表口径，到期 2026-11-16）与 `./state/queue/tech.md` #18（基准面两件待证取全文核销，2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）；`./state/queue/main.md` #52 仍等 Tuanjie 零进程窗口复测（fps_avg\u003e=486.8 且 p95\u003c=2.58ms）。队列 open 202，无活即转提案轨。",
+    "updated_utc":  "2026-11-03T23:17:21Z",
+    "current_activity":  "r813 收口（改 `./Tools/devloop/city-panel-template.html` 与 `./Tools/devloop/build-city-panel.ps1`）：每 tick 那条「N 分钟前 · scan X 行 · 轮数」第一次说得清上一轮到底跑没跑门。两次连着的轮首退避（perceptor/schema 有在飞改动）与一次全绿轮，在这行上原本逐字相同——年龄只说明日志还在写，而退避轮同样会起轮、导快照、重建本页。builder 现在从最后一轮自己的行里读 last_kind（gate / backoff / running / none），页面在年龄旁挂「上轮跳过 scan/gate」warn 标，自检「tick 覆盖」同步同一判词；健康的轮不额外说一个字，没有标记的轮说「上轮尚无门结论」而不是猜。同轮修红：r691 的 links=paths 在上一轮脸面落盘后的第一次重建变红——里程碑里同一个路径出现两次，builder 按去重名计 3、页面按出现渲染 4 个链接，改为按出现计数（miss_names 仍去重），r691 24/24 复绿。验证：新套件 17/17、面板 32 套 failing=0、写侧九套 447 断言 parity=ok、verify 十一套 734 断言 timeouts=0、390 窄屏 7106px offenders=0。",
+    "artifact":  "文件 `./Tools/devloop/build-city-panel.ps1`（tick 段新增 last_kind 解析＋art 路径按出现计数）、`./Tools/devloop/city-panel-template.html`（年龄旁警告标与自检判词）、`./logs/devloop-r813-panel-ticklast-test.js`（17 断言，含旧形态兼容与 anti-drift 两例）、产品面 `./world-public/city-panel.html`（每 5 分钟由 tick 重建）。",
+    "artifact_utc":  "2026-11-03T23:17:21Z",
+    "milestone":  "48 小时内：把「退避轮总量」也搬上可见面（现在只说最后一轮，答不了「今天有多少轮没跑门」），落 `./Tools/devloop/build-city-panel.ps1` 与 `./world-public/city-panel.html`；候 `./state/queue/main.md` #121（G3 内容网口径，委员会到期 2026-11-16）、`./state/queue/tech.md` #18（基准面两件取全文，2026-11-19 深潜窗）、`./state/queue/main.md` #52（Tuanjie 空载复测窗，fps_avg\u003e=486.8 且 p95\u003c=2.58ms）。",
     "milestone_eta_utc":  "2026-11-06T02:00:00Z"
 }

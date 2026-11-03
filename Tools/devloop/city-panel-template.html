@@ -554,6 +554,25 @@ function artTitle(it){
       if (parts.length) s.title = parts.join(' · ');
     })();
     $('f-tick').appendChild(s);
+    // 上一轮到底跑没跑门（r813）：年龄只说明日志还在写——一次退避轮同样会
+    // 起轮、导快照、重建本页，于是「门被跳过」与「门全绿」在这行上逐字相同。
+    // last_kind 由 builder 从最后一轮自己的行里读出来：backoff=轮首退避
+    // （scan/verify 未跑）、running=该轮尚无结论、gate=已出结论、none=日志里
+    // 没有轮次。只给后两种说一句额外的话，其余不喧哗。
+    if (tk.last_kind === 'backoff') {
+      const b = document.createElement('span');
+      b.className = 'tag warn';
+      b.style.marginLeft = '6px';
+      b.textContent = '上轮跳过 scan/gate';
+      b.title = '上一轮 tick 轮首退避（perceptor/schema 有在飞改动）：scan 与 verify 未跑，本行年龄只说明日志仍在写';
+      $('f-tick').appendChild(b);
+    } else if (tk.last_kind === 'running') {
+      const r2 = document.createElement('span');
+      r2.className = 'tag';
+      r2.style.marginLeft = '6px';
+      r2.textContent = '上轮尚无门结论';
+      $('f-tick').appendChild(r2);
+    }
   })();
 
   // 运行维护（queue main#59）：r719 起日志归档自己每天跑一次，但结果原先只躺在
@@ -1448,6 +1467,12 @@ function artTitle(it){
     tOk = true;
     tVd = '今日日志 · ' + tk.age_min + ' 分钟前 · scan ' + (tk.scan_lines || 0) + ' 行 · ' +
       (tk.rounds || 0) + ' 轮';
+  }
+  // 覆盖龄答不了「门跑没跑」：退避轮同样新鲜（r813）。把最后一轮的处置写进
+  // 判词，但不改 ok 判据——日志仍在写是真的，门没跑也是真的，两件事分开说。
+  if (tk.exists && tk.read_ok) {
+    if (tk.last_kind === 'backoff') tVd = tVd + ' · 上轮跳过 scan/gate（轮首退避）';
+    else if (tk.last_kind === 'running') tVd = tVd + ' · 上轮尚无门结论';
   }
   selfcheck.push({ ok: tOk, nm: 'tick 覆盖', vd: tVd });
 

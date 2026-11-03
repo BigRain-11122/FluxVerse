@@ -390,6 +390,11 @@ Check 'the stale file in the newest session is not named' (
     -not ($auditLog -match ('STALE city3d-shots-' + $newStamp + '-bm-a-overview\.jpg')))
 Check 'the audit still moves nothing cited' (
     -not ($auditLog -match ('MOVE city3d-shots-' + $oldStamp + '-bm-a-overview\.jpg')))
+# The superseded count must say which group it came from (r811): without the
+# breakdown a reader cannot tell "72 pieces of evidence went stale" from "60 of
+# them are self-shots that are each their own capture session".
+Check 'the superseded count names its group' ($auditLog -match 'superseded_by=city3d:2\b')
+Check 'no superseded count means no breakdown token' (-not ($log -match 'superseded_by='))
 
 # The margin is a real boundary, not decoration: 10 minutes makes the same pair
 # a re-shoot.
@@ -420,6 +425,7 @@ if ($rec) {
         [int]$rec.stale_cited -eq 2 -and [int]$rec.superseded_cited -eq 2 -and [int]$rec.cited -eq 3)
     Check 'the record carries a UTC stamp' ([string]$rec.utc -match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$')
     Check 'the record carries the margin it judged with' ([int]$rec.sibling_margin_min -eq 60)
+    Check 'the record carries the group breakdown' ([string]$rec.superseded_by_group -eq 'city3d:2')
 }
 Check 'the record run left every fixture in place' (
     @(Get-ChildItem -LiteralPath $pool5 -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' }).Count -eq 14)

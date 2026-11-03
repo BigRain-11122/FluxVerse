@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-03T21:54:23Z",
-    "current_activity":  "r810 收口（改件 ./Tools/devloop/log-archive-duty.ps1 与 ./Tools/perceptor/verify.ps1）：跳过日的归档行原先印 candidates=0 archived=0，与「扫了、一件都不用归档」逐字相同——r799 已为同一行里的 live= 立过「跳过日不扫描就不许印 0」的判例，可那条判据只套在三个数里的一个上。改法＝本模块把这两个初值改成 -1（未测量，与 live 同一约定），门只在值 \u003e=0 时拼键。活跑现读 skipped(already-ran-today) remain_archivable=0(last)，真跑日照旧报 candidates/archived 实数。验证：归档职责沙盒 35→40 断言全绿（新 6 条判跳过行不出现这两个键、模块直读三键恒 -1）、verify 族 11 套 728 断言 failing=0、活门 VERIFY PASS。",
-    "artifact":  "改件 `./Tools/devloop/log-archive-duty.ps1`（candidates/archived 初值改 -1 并写明未测量约定）、`./Tools/perceptor/verify.ps1`（§2e 只在实测时拼键）、判据 `./Tools/devloop/test-log-archive-duty.ps1`（35→40 断言，c 组 6 条新判据；首版按整份 verify 输出判被 r2-site 的 dry_candidates= 假命中，改按 log-archive 行判）；记账 `./TECH.md` r810 行、`./state/runbook.md` r810 段；产品面仍为每 tick 重建的 `./world-public/city-panel.html`（本轮未改页面，零变化）。",
-    "artifact_utc":  "2026-11-03T21:54:23Z",
-    "milestone":  "48 小时内＝把 `./state/queue/main.md` 里剩下的可推进件收口：`main#121`（发布闸词表过宽，到期 11-16，需委员会口径）与 `main#129` 部分余面（到期 11-17）；其后候 `./state/queue/tech.md` 的 tech#18（基准面两件 C·待证取全文核销，due=2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）。`main#52` 仍等 Tuanjie 零进程窗口复测（判据 fps_avg\u003e=486.8 且 p95\u003c=2.58ms，禁带载凑数）；队列 open 202，无活即转提案轨（提案落 `./TECH.md` 自驱提案行）。",
+    "updated_utc":  "2026-11-03T22:30:08Z",
+    "current_activity":  "r811 收口（改件 ./Tools/devloop/qa-rotation.ps1、./Tools/devloop/build-city-panel.ps1、./Tools/devloop/city-panel-template.html）：面板上「同族已有更新帧 72 件」原先只是一个总数，读起来像 72 份证据已经过期，而活数据是 superseded_by=city3d:10,panel:60,smoke:2——60 件落在自拍一族，而每张自拍的名字自带那一轮的时戳、本身就是自己的捕捉会话，「同会话里已有更新帧」对它结构性恒真。改法＝工具按组记这一本账、QA STALE 行与 -Record 都带构成、页面把 panel:60 渲染成「自拍 60」。验证：qa 轮转沙盒 101→104 断言全绿、面板 31 套 failing=0、390 窄屏 offenders=0、活门 VERIFY PASS。",
+    "artifact":  "改件 `./Tools/devloop/qa-rotation.ps1`（superseded 按组拆账）、`./Tools/devloop/build-city-panel.ps1`（读构成串）、`./Tools/devloop/city-panel-template.html`（渲染「自拍 60」）、判据 `./Tools/devloop/test-qa-rotation.ps1`（101→104）；记账 `./TECH.md` r811 行、`./state/runbook.md` r811 段、新债 `./state/queue/main.md` #133；产品面＝每 tick 重建的 `./world-public/city-panel.html`（本页「运行维护」行已带构成）。",
+    "artifact_utc":  "2026-11-03T22:30:08Z",
+    "milestone":  "48 小时内＝先拆 `ps-suites-write2` 族（`./state/queue/main.md` #133：六套 27.7–28.9 秒已贴 45 秒帽的 2/3 线，禁抬帽，按拆第五族或移出一套处置）；其后 `main#121`（发布闸词表过宽，到期 11-16，需委员会口径）与 `./state/queue/tech.md` 的 tech#18（基准面两件 C·待证取全文核销，due=2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）。`main#52` 仍等 Tuanjie 零进程窗口复测（fps_avg\u003e=486.8 且 p95\u003c=2.58ms）；队列 open 203，无活即转提案轨。",
     "milestone_eta_utc":  "2026-11-06T02:00:00Z"
 }

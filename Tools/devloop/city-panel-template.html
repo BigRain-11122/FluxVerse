@@ -641,7 +641,19 @@ function artTitle(it){
     const head = (typeof Q.stale_cited === 'number' && Q.stale_cited > 0)
       ? ('引用复核 ' + Q.stale_cited + '/' + Q.cited + ' 件超 ' + Q.stale_days + ' 天')
       : ('引用复核 ' + Q.cited + ' 件均未超 ' + Q.stale_days + ' 天');
-    sp.textContent = head + ' · 同族已有更新帧 ' + Q.superseded_cited + ' 件' + (age ? ' · ' + age : '');
+    // 「同族已有更新帧」这个数必须说得出构成（r811）：自拍件的名字自带那一轮的时间
+    // 戳，于是每一张自拍**本身就是自己的捕捉会话**，「同会话里已有更新的帧」对它
+    // 结构性恒真——72 件里有 61 件就是这一桶，不是 72 份证据过期。只印总数会让
+    // 读的人以为池子烂了。构成串来自 -Record（`panel:61,city3d:11`），本页只负责渲染。
+    const byRaw = (typeof Q.superseded_by_group === 'string') ? Q.superseded_by_group : '';
+    const by = byRaw ? byRaw.split(',').map(function (p) {
+      const i = p.indexOf(':');
+      if (i <= 0) return p;
+      const g = p.slice(0, i) === 'panel' ? '自拍' : p.slice(0, i);
+      return g + ' ' + p.slice(i + 1);
+    }).join(' · ') : '';
+    sp.textContent = head + ' · 同族已有更新帧 ' + Q.superseded_cited + ' 件' +
+      (by ? '（' + by + '）' : '') + (age ? ' · ' + age : '');
     el.appendChild(sp);
   })();
 

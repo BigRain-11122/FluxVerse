@@ -1244,6 +1244,7 @@ function Resolve-QaCiteAudit
         exists = $false; path_rel = ''; url = ''; error = ''
         utc = ''; images = -1; cited = -1; stale_days = -1
         stale_cited = -1; superseded_cited = -1; newer_sibling_cited = -1
+        superseded_by_group = ''
         age_hours = -1.0; max_age_hours = $MaxAgeHours; overdue = $false
     }
     if ([string]::IsNullOrEmpty($Path)) { return $r }
@@ -1264,6 +1265,10 @@ function Resolve-QaCiteAudit
         $v = $o.PSObject.Properties[$k]
         if ($null -ne $v -and $null -ne $v.Value) { $r[$k] = [int]$v.Value }
     }
+    # Group breakdown of the superseded count ("panel:61,city3d:11"). A string,
+    # not a number: the record is the single source and the page only renders it.
+    $vb = $o.PSObject.Properties['superseded_by_group']
+    if ($null -ne $vb -and $null -ne $vb.Value) { $r.superseded_by_group = [string]$vb.Value }
 
     # How old the reading is (queue main#119). This is the one part of the row
     # that decides whether the numbers above are a statement about today: the

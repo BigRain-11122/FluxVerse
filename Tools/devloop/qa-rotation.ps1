@@ -240,6 +240,7 @@ function Get-QaPoolCensus
         groups = @(); cited = 0; cited_kept = 0
         stale_cited = 0; stale_cited_bytes = [int64]0
         superseded_cited = 0; newer_sibling_cited = 0
+        superseded_by_group = [ordered]@{}
     })
     if ([string]::IsNullOrWhiteSpace($Pool)) { return $res }
     if (-not (Test-Path -LiteralPath $Pool)) { return $res }
@@ -397,6 +398,16 @@ function Get-QaPoolCensus
         $res.stale_cited = [int]$res.stale_cited + $staleNames.Count
         $res.stale_cited_bytes = [int64]$res.stale_cited_bytes + $staleBytes
         $res.superseded_cited = [int]$res.superseded_cited + $supNames.Count
+        # How the superseded count splits by group. The panel family is almost
+        # always its own bucket: every self-shot is named with its own timestamp,
+        # so each one IS its own capture session and "a newer frame exists in the
+        # same session" is structurally true for all of them (r782 honest edge).
+        # Printed as a breakdown so a reader can see that 61 of 72 is the
+        # self-shot bucket and not 72 pieces of evidence going stale.
+        if ($supNames.Count -gt 0) {
+            $gk = ([string]$k).TrimEnd('-')
+            $res.superseded_by_group[$gk] = [int]$supNames.Count
+        }
         $res.newer_sibling_cited = [int]$res.newer_sibling_cited + $sibNames.Count
     }
     $res.groups = @($groups)
@@ -612,6 +623,14 @@ foreach ($k in @($cite.names.Keys)) { $citedSet[[string]$k] = $true }
 
 $census = Get-QaPoolCensus -Pool $Dir -Files $poolFiles.files -Cited $citedSet
 
+# Compact group breakdown for the superseded count (e.g. "panel:61,city3d:11").
+# Computed once here so the record and the console line can never disagree.
+$supByCompact = ''
+if ($null -ne $census.superseded_by_group -and $census.superseded_by_group.Count -gt 0) {
+    $supByCompact = ((@($census.superseded_by_group.Keys) | ForEach-Object {
+        [string]$_ + ':' + [string]$census.superseded_by_group[$_] }) -join ',')
+}
+
 $dangling = @()
 foreach ($n in $archNames) { if ($citedSet.ContainsKey([string]$n)) { $dangling += [string]$n } }
 
@@ -635,6 +654,7 @@ if (-not [string]::IsNullOrWhiteSpace($RecordPath)) {
         stale_cited = [int]$census.stale_cited
         stale_cited_bytes = [int64]$census.stale_cited_bytes
         superseded_cited = [int]$census.superseded_cited
+        superseded_by_group = [string]$supByCompact
         newer_sibling_cited = [int]$census.newer_sibling_cited
         sibling_margin_min = [int]$SiblingMarginMin
         archive_cited = @($dangling).Count
@@ -673,6 +693,7 @@ if ($Json) {
         stale_cited = $census.stale_cited
         stale_cited_bytes = $census.stale_cited_bytes
         superseded_cited = $census.superseded_cited
+        superseded_by_group = [string]$supByCompact
         newer_sibling_cited = $census.newer_sibling_cited
         cite_scanned = $cite.scanned
         cite_mode = $cite.mode
@@ -704,9 +725,10 @@ $head = 'QA POOL: images=' + $census.images + ' bytes=' + (Format-QaBytes -Bytes
 Write-Host ($head + ' dir=' + $Dir)
 Write-Host ('QA CITE: cited=' + $census.cited + '/' + $census.images + ' in pool, archive_cited=' +
     @($dangling).Count + ' (index=' + $cite.mode + ' scanned=' + $cite.scanned + ' md/txt)')
+$supByTok = $(if ($supByCompact) { ' superseded_by=' + $supByCompact } else { '' })
 Write-Host ('QA STALE: stale_cited=' + $census.stale_cited + '/' + $census.cited +
     ' older_than=' + $StaleDays + 'd bytes=' + (Format-QaBytes -Bytes $census.stale_cited_bytes) +
-    ' superseded_cited=' + $census.superseded_cited +
+    ' superseded_cited=' + $census.superseded_cited + $supByTok +
     ' newer_sibling_cited=' + $census.newer_sibling_cited +
     ' sibling_margin=' + $SiblingMarginMin + 'min' +
     ' (report only: a cited file is never moved)')

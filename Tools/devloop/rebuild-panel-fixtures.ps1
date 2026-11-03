@@ -138,6 +138,13 @@ foreach ($t in $targets) {
 # the page cannot go red for a reason other than the three injected faults.
 $poisonSnap = Join-Path $logs 'panel-fixture-bad-snap.json'
 $poisonOut  = Join-Path $logs 'panel-fixture-bad.html'
+# A fixture build must NOT append to the live cross-round history. Without this
+# the builder falls back to logs\panel-history.jsonl and writes the FROZEN
+# snapshot's record into the production series -- which is what r802 shipped and
+# caught: two rows of 05:56:03Z sitting between 09:21 and 09:26, rendered as
+# "2 out of order" on the panel's own track-consistency row. Fixture history is a
+# throwaway next to the fixture (it is a build product, like the html).
+$poisonHist = Join-Path $logs 'panel-fixture-bad-hist.jsonl'
 $poisonObj = [IO.File]::ReadAllText($frozen, [Text.Encoding]::UTF8) | ConvertFrom-Json
 $poisonTail = @($poisonObj.events_tail)
 if ($poisonTail.Count -lt 4) {
@@ -152,9 +159,13 @@ for ($i = 2; $i -le ($poisonTail.Count - 2); $i++) {
     if (($origMs[$i] -ne $TsUnparsable) -and ($origMs[0] -ne $TsUnparsable) -and ($origMs[$i] -gt $origMs[0])) { $bIdx = $i; break }
 }
 if ($bIdx -lt 1) {
-    # All stamps equal (or the head is unparseable): move the head ahead of the
-    # tail instead of swapping. Anchor is <= anchor+5min, so it is not a future stamp.
-    $poisonTail[0].ts_utc = $dto.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", $inv)
+    # Every stamp is equal (a whole window can be flat: measured 50/50 at the
+    # same second), so there is no strictly-increasing pair to swap. Move the
+    # head to anchor+4min: strictly greater than the flat tail, still inside the
+    # anchor+5min window the panel uses for "future", so the only reading that
+    # changes is the ordering one. (Using anchor itself does nothing here -- the
+    # whole tail already IS anchor, which shipped a back=0 fixture in r802.)
+    $poisonTail[0].ts_utc = $dto.ToUniversalTime().AddMinutes(4).ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", $inv)
 } else {
     $swap = [string]$poisonTail[0].ts_utc
     $poisonTail[0].ts_utc = [string]$poisonTail[$bIdx].ts_utc
@@ -166,7 +177,7 @@ $poisonObj.events_tail = $poisonTail
 [IO.File]::WriteAllText($poisonSnap, ($poisonObj | ConvertTo-Json -Depth 32), $utf8)
 Write-Output ('POISON ' + $poisonSnap + ' tail=' + $poisonTail.Count + ' faults=ts@' + $uIdx + ',swap0@' + $bIdx + ',future@' + ($poisonTail.Count - 1))
 
-$log = (& $builder -SnapPath $poisonSnap -OutPath $poisonOut) -join "`n"
+$log = (& $builder -SnapPath $poisonSnap -HistoryPath $poisonHist -OutPath $poisonOut) -join "`n"
 if ($log -notmatch 'PANEL OK') {
     Write-Output 'BUILD bad FAIL'
     Write-Output $log

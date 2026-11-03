@@ -19,6 +19,7 @@
 #   i) empty required key       -> still refused (prior contract intact)
 #   j) rule parity              -> lint module pattern == builder $artPattern
 #   k) module is ASCII-only     -> no byte > 127
+#   l) token fidelity           -> `.jsonl` keeps its `l` (r803: prefix order)
 # Rejection cases also assert: no `.new` residue, no half-written face.
 # ASCII-only law: no CJK in this file.
 # ---------------------------------------------------------------------------
@@ -191,6 +192,19 @@ Check 'k: lint module ascii=0'        ($badLint -eq 0)
 $badWriter = 0
 foreach ($b in (Read-Bytes $writer)) { if ($b -gt 127) { $badWriter++ } }
 Check 'k: writer ascii=0'             ($badWriter -eq 0)
+
+# ---------- l) token fidelity: a longer extension must not be cut to its prefix
+Write-Output '--- l) token fidelity ---'
+$tok = @(Get-FaceArtTokens -Raw 'history ./logs/panel-history.jsonl and ./logs/panel-fixture-bad-hist.jsonl plus ./TECH.md ./Tools/devloop/rebuild-panel-fixtures.ps1 ./state/status-face.json')
+Check 'l: jsonl token kept whole'     ($tok -contains './logs/panel-history.jsonl')
+Check 'l: jsonl not cut to .json'     (-not ($tok -contains './logs/panel-history.json'))
+Check 'l: second jsonl kept whole'    ($tok -contains './logs/panel-fixture-bad-hist.jsonl')
+Check 'l: json token still kept'      ($tok -contains './state/status-face.json')
+Check 'l: md token kept'              ($tok -contains './TECH.md')
+Check 'l: ps1 token kept'             ($tok -contains './Tools/devloop/rebuild-panel-fixtures.ps1')
+Check 'l: token count'                ($tok.Count -eq 5)
+$bareJsonl = @(Get-FaceBareNames -Raw 'wrote panel-history.jsonl in prose')
+Check 'l: bare jsonl still flagged'   ($bareJsonl -contains 'panel-history.jsonl')
 
 # ---------- summary ----------
 Write-Output ('SUITES total=' + ($pass + $fail) + ' pass=' + $pass + ' fail=' + $fail)

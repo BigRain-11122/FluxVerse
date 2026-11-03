@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-03T06:06:27Z",
-    "current_activity":  "r801 收口（改件 ./Tools/devloop/ps-suites-tick.ps1 与 ./Tools/perceptor/verify.ps1）：四族 tick 行第一次印出「要了几套」（req=），并与 runner 回报的套数当场比对——不一致印 suite_short=reqN/gotM。读数不判决（少跑一套是测量缺失、不是红套件），缓存与 deferred 行同样带这个读数。活跑 `ps-suites req=5` / `ps-suites-write2 req=5` / `ps-suites-verify req=11` / `ps-suites-verify2 deferred req=1`，四行全 HEALTH 且 `VERIFY PASS`。",
-    "artifact":  "改件 `./Tools/devloop/ps-suites-tick.ps1`（新增 `Get-PsSuitesRequestedCount`／`Test-PsSuitesCountShort`）、`./Tools/perceptor/verify.ps1`（三条 deferred 行同印 req=）、`./Tools/devloop/test-verify-ps-suites.ps1`（新增 ze 组 15 条，218/218 全绿）；记账 `./TECH.md` r801 行、`./state/queue/main.md` #129 销行、`./state/runbook.md` r801 段。",
-    "artifact_utc":  "2026-11-03T06:06:27Z",
-    "milestone":  "48 小时内＝tech#18 基准面两件 C·待证取全文核销（due=2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）；main#52 等 Tuanjie 零进程窗口复测（判据 fps_avg\u003e=486.8 且 p95\u003c=2.58ms，禁带载凑数）。",
+    "updated_utc":  "2026-11-03T18:48:54Z",
+    "current_activity":  "r803 收口（改件 ./Tools/devloop/rebuild-panel-fixtures.ps1 与 ./Tools/devloop/test-rebuild-panel-fixtures-bad.ps1）：夹具构建与生产序列第一次内存隔离——造那份坏件时不再把冻结快照的时间写进生产 ./logs/panel-history.jsonl（改前它把 05:56:03Z 塞进活序列两行，面板「轨迹一致」当场印 2 条逆序）。活跑沙盒 23/23、生产重建 FIXTURES OK（bad faults nan=1 back=1 future=1）、活序列 order_violations=0。",
+    "artifact":  "改件 `./Tools/devloop/rebuild-panel-fixtures.ps1`（坏件构建显式传 `-HistoryPath ./logs/panel-fixture-bad-hist.jsonl`，全平时间戳支改把首条挪到锚点+4min）、`./Tools/devloop/test-rebuild-panel-fixtures-bad.ps1`（21→23 条：夹具史必须就地生成、冻结点名的时间戳不得进生产序列）；记账 `./TECH.md` r802 行尾勘注、`./state/runbook.md` r803 段。",
+    "artifact_utc":  "2026-11-03T18:48:54Z",
+    "milestone":  "48 小时内＝tech#18 基准面两件 C·待证取全文核销（due=2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）；main#52 等 Tuanjie 零进程窗口复测（判据 fps_avg\u003e=486.8 且 p95\u003c=2.58ms，禁带载凑数）；队列 open 已清零，无活即转提案轨。",
     "milestone_eta_utc":  "2026-11-04T00:00:00Z"
 }

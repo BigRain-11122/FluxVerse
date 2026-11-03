@@ -64,12 +64,26 @@ chk('good.sum=consistent', good.sum === (expectedChecks + ' 项通过') ||
 // third: 城市证据 goes red while the soak sits >20% under the accepted baseline
 // (main#52 open). r717 (main#57) adds a fourth: 街区落位 goes red while the R2
 // block still stands over the water mesh -- an explained, in-register debt.
-// Any warn on a different row is still a defect, so assert by exclusion.
+// r803 adds a fifth: 跨轮单调 reds for up to two hours after a group repository
+// rewrites its history (the counter is a rev-list SUM over every repo the probe
+// reads, so a sibling rebase/squash makes it fall and then climb back). The row
+// is DESIGNED to stay red inside that 2h window, so asserting "no stray warn"
+// against live data made this suite a calendar bomb (r787 same lesson): it passed
+// at 09:33Z and failed at 18:5xZ on the same code. Any warn on a different row is
+// still a defect, so assert by exclusion -- and pin the one allowed shape.
 const warnRows = good.body.split('<div class="chk">').slice(1).filter(c => c.indexOf('>注意<') >= 0);
-const WARN_OK = ['<span class="nm">取景帧</span>', '<span class="nm">应办令</span>', '<span class="nm">城市证据</span>', '<span class="nm">街区落位</span>'];
+const WARN_OK = ['<span class="nm">取景帧</span>', '<span class="nm">应办令</span>', '<span class="nm">城市证据</span>', '<span class="nm">街区落位</span>', '<span class="nm">跨轮单调</span>'];
 const strayWarn = warnRows.filter(c => !WARN_OK.some(nm => c.indexOf(nm) >= 0));
 chk('good.no-unexplained-warn', strayWarn.length === 0,
   'warn=' + warnRows.length + ' stray=' + strayWarn.length);
+// A 跨轮单调 warn is only acceptable when it names the falling counter, the two
+// values and the minute -- i.e. it reports a measured event rather than a bump.
+const monoWarn = warnRows.filter(c => c.indexOf('<span class="nm">跨轮单调</span>') >= 0);
+monoWarn.forEach((c, i) => {
+  const vd = (c.match(/vd">([^<]*)</) || [])[1] || '';
+  chk('good.mono-warn-shape[' + i + ']',
+    /^窗口内回落 \d+ 处：(提交|渲染) \d+→\d+ @\d\d:\d\dZ/.test(vd), 'vd=' + JSON.stringify(vd));
+});
 
 const bad = runPanel('logs/panel-fixture-bad.html');
 // The fixture is a frozen build (its own old template), and snapshot age moves

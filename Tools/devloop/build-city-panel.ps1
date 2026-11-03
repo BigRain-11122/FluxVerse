@@ -216,7 +216,11 @@ $faceJs = To-JsLiteral -Obj $face -Label 'status-face'
 # keeps its OWN item list -- merging them into one list would let a token from
 # one line link up text in another line, and the page could not tell which line
 # a miss belongs to.
-$artPattern = '[A-Za-z0-9_\-./\\]+\.(?:html|htm|png|jpg|jpeg|svg|md|json|jsonl|ps1|py|js|log|txt|mp4|webm|csv|yaml|yml|asset|unity|cs|zip)'
+# Alternation is leftmost-first, so a longer extension MUST come before its own
+# prefix: with `json|jsonl` a token ending in `.jsonl` matched `.json` and the
+# face counted `./logs/panel-history.jsonl` as a MISSING artifact (r803 measured
+# art_missing=2 on two such paths). Keep every prefix pair in that order.
+$artPattern = '[A-Za-z0-9_\-./\\]+\.(?:jsonl|json|html|htm|png|jpg|jpeg|svg|md|ps1|py|js|log|txt|mp4|webm|csv|yaml|yml|asset|unity|cs|zip)'
 
 function Resolve-ArtItems
 {

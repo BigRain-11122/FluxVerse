@@ -19,7 +19,12 @@
 # ASCII-only body (PS5.1 GBK law). No auto-variable locals ($pid family, r164).
 # ---------------------------------------------------------------------------
 
-$script:FaceArtPattern = '[A-Za-z0-9_\-./\\]+\.(?:html|htm|png|jpg|jpeg|svg|md|json|jsonl|ps1|py|js|log|txt|mp4|webm|csv|yaml|yml|asset|unity|cs|zip)'
+# Alternation is leftmost-first: a longer extension must precede its own prefix
+# or the token gets truncated (`json|jsonl` reads `.jsonl` as `.json`). r803
+# found that on the reader side (two live `.jsonl` artifacts counted missing);
+# this literal must stay byte-equal to the builder's, so the order is fixed here
+# too and pinned by test-write-status-face-bare group l.
+$script:FaceArtPattern = '[A-Za-z0-9_\-./\\]+\.(?:jsonl|json|html|htm|png|jpg|jpeg|svg|md|ps1|py|js|log|txt|mp4|webm|csv|yaml|yml|asset|unity|cs|zip)'
 
 function Get-FaceArtTokens
 {

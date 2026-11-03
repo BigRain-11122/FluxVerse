@@ -95,6 +95,22 @@ $realFiles = @(
     (Join-Path $realLogs 'panel-fixture-regress.html')
 )
 $realBefore = Get-Fingerprint $realFiles
+# The live series CANNOT be fingerprinted: the tick rebuilds the panel every
+# minute and appends its own record, so a byte comparison would race the tick
+# and go red for a reason that is not ours. What must not happen is narrower and
+# checkable: a fixture build must never inject the FROZEN snapshot's ts into the
+# live series (r802 shipped exactly that and the panel rendered "2 out of order").
+$frozenTs = [string](([IO.File]::ReadAllText((Join-Path $realLogs 'panel-fixture-snap.json'), [Text.Encoding]::UTF8) | ConvertFrom-Json).ts_utc)
+$liveHist = Join-Path $realLogs 'panel-history.jsonl'
+function Get-TsRowCount {
+    param([string]$HistPath, [string]$Ts)
+    if (-not (Test-Path -LiteralPath $HistPath)) { return -1 }
+    $needle = '"ts":"' + $Ts + '"'
+    $n = 0
+    foreach ($ln in [IO.File]::ReadAllLines($HistPath, [Text.Encoding]::UTF8)) { if ($ln.Contains($needle)) { $n++ } }
+    return $n
+}
+$frozenRowsBefore = if ($frozenTs) { Get-TsRowCount $liveHist $frozenTs } else { -1 }
 
 $tmpRoot = Join-Path ([IO.Path]::GetTempPath()) ('fv-badfix-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 New-Item -ItemType Directory -Path $tmpRoot -Force | Out-Null
@@ -111,6 +127,8 @@ try {
     Chk 'a.bad.html written' (Test-Path -LiteralPath $badHtmlA) 'missing bad.html'
     Chk 'a.bad.snap written' (Test-Path -LiteralPath $badSnapA) 'missing bad-snap.json'
     Chk 'a.no prev build (-BadOnly)' (-not (Test-Path -LiteralPath (Join-Path $a 'panel-fixture-prev.html'))) 'prev.html appeared'
+    # The history must land beside the fixture, not in the live series.
+    Chk 'a.fixture history stayed local' (Test-Path -LiteralPath (Join-Path $a 'panel-fixture-bad-hist.jsonl')) 'no panel-fixture-bad-hist.jsonl in the fixture dir'
     if (Test-Path -LiteralPath $badSnapA) {
         $fa = Get-FaultCounts $badSnapA
         Chk 'a.faults nan=1' ($fa.nan -eq 1) ('nan=' + $fa.nan)
@@ -172,6 +190,8 @@ try {
     # ---- d: the real logs\ tree must not move -------------------------------
     $realAfter = Get-Fingerprint $realFiles
     Chk 'd.real logs untouched' ($realBefore -eq $realAfter) ('before=' + $realBefore + ' after=' + $realAfter)
+    $frozenRowsAfter = if ($frozenTs) { Get-TsRowCount $liveHist $frozenTs } else { -1 }
+    Chk 'd.no frozen ts injected into live history' ($frozenTs -and $frozenRowsAfter -eq $frozenRowsBefore) ('frozen_ts=' + $frozenTs + ' before=' + $frozenRowsBefore + ' after=' + $frozenRowsAfter)
 }
 finally {
     if (Test-Path -LiteralPath $tmpRoot) { Remove-Item -LiteralPath $tmpRoot -Recurse -Force -ErrorAction SilentlyContinue }

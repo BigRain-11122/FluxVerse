@@ -251,9 +251,21 @@ const SERIES = __SERIES_JSON__;
 // TREND = the whole local cross-round log inside a 24h window (newest last).
 const TREND = __TREND_JSON__;
 // TICK = today's tick log probe ({exists,file,size,mtime_utc,age_min,scan_lines,
-// rounds,read_ok}) - the panel is built BY that tick, so this is the only honest
-// way to tell whether the 10-minute loop actually ran.
+// rounds,rounds_seen,skip_rounds,last_kind,read_ok}) - the panel is built BY that
+// tick, so this is the only honest way to tell whether the 10-minute loop
+// actually ran. rounds_seen/skip_rounds count today's rounds and how many of them
+// bailed at the round head (queue main#134): last_kind answers only "what did the
+// LAST round do", so two consecutive backoffs read as one isolated event.
 const TICK = __TICK_JSON__;
+// Today's skipped-round tally, or '' when the log cannot answer (older builds
+// have no counts). Never invent a 0: "not measured" and "nothing skipped" are
+// different truths (r799/r810 precedent).
+function tickSkipText(tk) {
+  const t = tk || {};
+  if (typeof t.skip_rounds !== 'number' || typeof t.rounds_seen !== 'number') return '';
+  if (t.rounds_seen <= 0 || t.skip_rounds <= 0) return '';
+  return '今日退避 ' + t.skip_rounds + '/' + t.rounds_seen + ' 轮';
+}
 // ARCH = the log-archive duty's own day stamp ({exists,stamp,stamp_day,today,
 // is_today,remain,ran_utc}). `stamp` is the local yyyyMMdd of the last SUCCESSFUL
 // sweep and `remain` is the backlog that sweep measured (-1 = that stamp predates
@@ -572,6 +584,19 @@ function artTitle(it){
       r2.style.marginLeft = '6px';
       r2.textContent = '上轮尚无门结论';
       $('f-tick').appendChild(r2);
+    }
+    // 当日退避总量（queue main#134）：一行只说最后一轮时，两次连着的退避会被
+    // 读成一次孤立事件。有计数才挂，读数不参与红绿；上轮就是退避时这一格与
+    // 上面那格同时出现（一格说「上轮」，一格说「今天几轮」）。
+    const skTxt = tickSkipText(tk);
+    if (skTxt) {
+      const sk = document.createElement('span');
+      sk.className = 'tag' + (tk.last_kind === 'backoff' ? ' warn' : '');
+      sk.style.marginLeft = '6px';
+      sk.textContent = skTxt;
+      sk.title = '当日日志里共有 ' + tk.rounds_seen + ' 轮，其中 ' + tk.skip_rounds +
+        ' 轮在轮首退避（scan/verify 未跑）；按轮自己的起始标记切段计数';
+      $('f-tick').appendChild(sk);
     }
   })();
 
@@ -1473,6 +1498,9 @@ function artTitle(it){
   if (tk.exists && tk.read_ok) {
     if (tk.last_kind === 'backoff') tVd = tVd + ' · 上轮跳过 scan/gate（轮首退避）';
     else if (tk.last_kind === 'running') tVd = tVd + ' · 上轮尚无门结论';
+    // 当日总量（queue main#134）：只报最后一轮会把连续退避读成孤立事件。
+    const skT = tickSkipText(tk);
+    if (skT) tVd = tVd + ' · ' + skT;
   }
   selfcheck.push({ ok: tOk, nm: 'tick 覆盖', vd: tVd });
 

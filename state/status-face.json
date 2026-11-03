@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-03T20:15:53Z",
-    "current_activity":  "r805 收口（改件 ./Tools/devloop/city-panel-template.html）：面板「跨轮单调」的红标从此只在真的还在跌时亮——回落已涨回但不满 2 小时原先仍按红标印「窗口内回落」（那行代表「现在正在跌，需查上游」），现在单独成绿色一档并写明「已涨回（未满 2h，暂不判历史）」；2 小时门槛一字未动，只决定升不升格成历史事件。同轮补销队列 #131 行（r804 已收口却没打勾）。活跑面板 31 套全绿、compile OK、390 取证 offenders=0、活门 VERIFY PASS。",
-    "artifact":  "改件 `./Tools/devloop/city-panel-template.html`（回落分类两桶→三桶）、判据 `./logs/devloop-r804-panel-monoattr-test.js`（12→16/16）与 `./logs/devloop-r711-panel-mono-test.js`（C 组按新契约 7/7）、产品面 `./world-public/city-panel.html`（每 tick 重建）、390 窄屏取证 `./qa/city-panel-narrow.png`（390x6839 offenders=0）、记账 `./TECH.md` r805 行与 `./state/queue/main.md` #131 销行。",
-    "artifact_utc":  "2026-11-03T20:15:53Z",
-    "milestone":  "48 小时内＝tech#18 基准面两件 C·待证取全文核销（due=2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）；main#52 等 Tuanjie 零进程窗口复测（判据 fps_avg\u003e=486.8 且 p95\u003c=2.58ms，禁带载凑数）；队列 open 清零，无活即转提案轨（提案落 `./TECH.md` 自驱提案行）。",
+    "updated_utc":  "2026-11-03T20:33:57Z",
+    "current_activity":  "r806 收口（改件 ./Tools/devloop/queue-due.ps1、./Tools/devloop/build-city-panel.ps1、./Tools/devloop/city-panel-template.html）：CEO 页上那个「在队 N 件」第一次说得出这 N 件是哪来的——`open` 是三条队列的合计（主线 5 个位／技术 16 个观察位／研究线 181 条绪），合起来读作「202 件待办」。现在同一趟扫描顺带记逐队列件数，页面追加「在队构成 explore 181 · tech 16 · main 5」，读不出的队列件印 `?` 而不是 0。同轮销掉队列 #127（余面早由 #128 在 r796 办完、行仍是 open 形）。活跑面板 31 套全绿、compile OK、390 取证 offenders=0、活门 VERIFY PASS。",
+    "artifact":  "改件 `./Tools/devloop/queue-due.ps1`（`by_file` 逐队列分账·不可读件记 -1）、`./Tools/devloop/build-city-panel.ps1`（`PANEL OK` 增 `qdue_split=`）、`./Tools/devloop/city-panel-template.html`（三态分支统一追加构成段）；判据 `./Tools/devloop/test-queue-due.ps1`（143→156/156）与 `./logs/devloop-r745-panel-queue-test.js`（71→78/78）；产品面 `./world-public/city-panel.html`（每 tick 重建，`qdue_split=explore:181,tech:16,main:5`）、390 窄屏取证 `./qa/city-panel-narrow.png`（390x6930 offenders=0）、记账 `./TECH.md` r806 行与 `./state/queue/main.md` #127 销行。",
+    "artifact_utc":  "2026-11-03T20:30:00Z",
+    "milestone":  "48 小时内＝候 `./state/queue/tech.md` 的 tech#18（基准面两件 C·待证取全文核销，due=2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）；`./state/queue/main.md` #52 等 Tuanjie 零进程窗口复测（判据 fps_avg\u003e=486.8 且 p95\u003c=2.58ms，禁带载凑数）；队列 open 清零，无活即转提案轨（提案落 `./TECH.md` 自驱提案行）。",
     "milestone_eta_utc":  "2026-11-05T04:00:00Z"
 }

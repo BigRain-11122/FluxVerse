@@ -795,6 +795,21 @@ function artTitle(it){
         (dupe > dupeIds.length ? ' …' : '') +
         ' · ' + dupeRows + ' 行同号（同号不同事，「#N 已销」不替另一行作保）</span>')
       : '';
+    // 在队数的构成：`open` 是三条队列的合计，而它们的行义完全不同——主线的少数
+    // 可领位与研究线的长存卷池加在一起，读起来就是「203 件待办」，看不出这堆
+    // 数量其实是被研究绪撑起来的。这里把合计拆开逐条点名（builder 已按件数降序
+    // 排好，同数按名）；某条队列读不出（`open < 0`）印 `?` 而不是 0——“没读到”
+    // 不是“零件”，这条同源规矩在本页各处一致。目录不可读时整行不走这里。
+    const splitList = (Array.isArray(Q.by_file) ? Q.by_file : [])
+      .map(function (it) {
+        if (!it || !it.name) return '';
+        const n = (typeof it.open === 'number' && it.open >= 0) ? String(it.open) : '?';
+        return String(it.name) + ' ' + n;
+      })
+      .filter(function (s) { return s !== ''; });
+    const splitTxt = splitList.length
+      ? ('<span class="muted"> · 在队构成 ' + esc(splitList.join(' · ')) + '</span>')
+      : '';
     if (late > 0) {
       // r749（main#87）：点名「哪几行」逾期，而不只是「几件」。此前只有最久
       // 一行的 id，读者还得自己翻文件去数；标记面本就带每一行，直接印前五条。
@@ -810,13 +825,13 @@ function artTitle(it){
         (lateIds.length
           ? ('<span class="muted"> · 逾期行 ' + esc(lateIds.join(' · ')) +
             (late > lateIds.length ? ' …' : '') + '</span>')
-          : '') + rowTxt + badTxt + codeTxt + longTxt + dupeTxt;
+          : '') + rowTxt + badTxt + codeTxt + longTxt + dupeTxt + splitTxt;
     } else if (dueBad > 0 || rowTxt !== '') {
-      el.innerHTML = rowTxt + badTxt + codeTxt + longTxt + dupeTxt;
+      el.innerHTML = rowTxt + badTxt + codeTxt + longTxt + dupeTxt + splitTxt;
     } else {
       el.innerHTML = '<span class="tag ok">无逾期</span>' +
         '<span class="muted"> 在队 ' + open + ' 件（带期限 ' + dated + '）</span>' +
-        codeTxt + longTxt + dupeTxt;
+        codeTxt + longTxt + dupeTxt + splitTxt;
     }
   })();
 

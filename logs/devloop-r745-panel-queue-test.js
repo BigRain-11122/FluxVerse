@@ -293,5 +293,40 @@ chk('dupe.not-hidden-by-late', e17.innerHTML.indexOf('重复 id 1 组') >= 0 &&
 const e18 = runPanel(withQueue(calm), 'calm4')('f-queue');
 chk('dupe.absent-when-zero', e18.innerHTML.indexOf('重复 id') < 0, e18.innerHTML);
 
+// --- 13) the open count split by queue (r806) -----------------------------
+// `在队 N 件` alone reads as "N things pending", but N sums three queues whose
+// rows mean very different things - the research corpus dwarfs the claimable
+// slots. The page names what the total is made of, and an unreadable queue file
+// prints `?` (unknown is not zero), so the breakdown cannot launder a missing
+// reading into a clean one.
+const splitOnly = {
+  exists: true, dir_rel: 'state/queue', files: 2, scanned: 12, open: 9, dated: 0, late: 0,
+  max_days: 0, max_id: '', bad: 0, code: 0, long: 0, long_max: 0, long_max_id: '',
+  long_limit: 3000, dupe: 0, dupe_rows: 0, as_of: '2026-11-01', items: [],
+  by_file: [{ name: 'explore', open: 6 }, { name: 'main', open: 3 }]
+};
+const e19 = runPanel(withQueue(splitOnly), 'split')('f-queue');
+chk('split.names-each-queue', e19.innerHTML.indexOf('在队构成 explore 6 · main 3') >= 0, e19.innerHTML);
+chk('split.keeps-total', e19.innerHTML.indexOf('在队 9 件') >= 0, e19.innerHTML);
+chk('split.keeps-ok-chip', e19.innerHTML.indexOf('tag ok') >= 0, e19.innerHTML);
+
+const splitUnknown = Object.assign({}, splitOnly, {
+  by_file: [{ name: 'explore', open: 6 }, { name: 'locked', open: -1 }]
+});
+const e20 = runPanel(withQueue(splitUnknown), 'splitunknown')('f-queue');
+chk('split.unknown-is-question-mark', e20.innerHTML.indexOf('locked ?') >= 0, e20.innerHTML);
+chk('split.unknown-is-not-zero', e20.innerHTML.indexOf('locked 0') < 0, e20.innerHTML);
+
+const splitLate = Object.assign({}, splitOnly, {
+  dated: 1, late: 1, max_days: 5, max_id: '23',
+  items: [{ id: '23', file: 'main.md', due: '2026-10-27', days: 5 }]
+});
+const e21 = runPanel(withQueue(splitLate), 'splitlate')('f-queue');
+chk('split.not-hidden-by-late', e21.innerHTML.indexOf('在队构成') >= 0 &&
+  e21.innerHTML.indexOf('逾期 1 件') >= 0, e21.innerHTML);
+
+const e22 = runPanel(withQueue(calm), 'calm5')('f-queue');
+chk('split.absent-without-data', e22.innerHTML.indexOf('在队构成') < 0, e22.innerHTML);
+
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 if (fail > 0) process.exit(1);

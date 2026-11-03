@@ -228,6 +228,7 @@ function Get-QueueDue
         code_items = @()
         long_items = @()
         dupe_items = @()
+        by_file  = @()
     }
     if ([string]::IsNullOrEmpty($Dir)) {
         # No path ever arrived. Say which parameter was rejected instead of
@@ -275,10 +276,28 @@ function Get-QueueDue
         $found = @(Get-ChildItem -LiteralPath $Dir -Filter '*.md' -File -ErrorAction Stop | Sort-Object Name)
     } catch { return $r }
 
+    $byFile = New-Object System.Collections.ArrayList
+
     foreach ($f in $found) {
         $files++
+        # Per-file open counts (`by_file`): `open` is a single sum over three
+        # queues with very different meanings - the main line's handful of
+        # engineering slots and the research queue's long corpus add up to one
+        # number that reads as "N things pending". The page shows the total;
+        # this breakdown says which queue the total is made of. Counted here so
+        # the sum is not re-derived from a second parse that could disagree.
+        $fileOpens = 0
         $txt = ''
-        try { $txt = [IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8) } catch { continue }
+        try { $txt = [IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8) }
+        catch {
+            # Present but unreadable is UNKNOWN, never a zero (same law as the
+            # cached censuses): the page prints `?` for it.
+            $null = $byFile.Add([ordered]@{
+                name = [IO.Path]::GetFileNameWithoutExtension($f.Name)
+                open = -1
+            })
+            continue
+        }
         $lineNo = 0
         foreach ($line in ($txt -split "`r?`n")) {
             $lineNo++
@@ -312,6 +331,7 @@ function Get-QueueDue
             # The queue's closed convention is a struck-through subject cell.
             if ($t.Contains('~~')) { continue }
             $opens++
+            $fileOpens++
 
             # Only the remark cell (last cell) declares a marker; every other
             # cell is prose about markers (main#87). Inline code is masked
@@ -409,6 +429,10 @@ function Get-QueueDue
             })
             if ($days -gt [int]$r.max_days) { $r.max_days = $days; $r.max_id = $idTxt }
         }
+        $null = $byFile.Add([ordered]@{
+            name = [IO.Path]::GetFileNameWithoutExtension($f.Name)
+            open = $fileOpens
+        })
     }
 
     # Duplicate ids, per file (main#112). Ids are numbered by hand and a
@@ -446,6 +470,14 @@ function Get-QueueDue
     $r.files = $files
     $r.scanned = $rows
     $r.open = $opens
+    # Biggest queue first, ties by name, so the breakdown is deterministic
+    # (a page rebuilt twice from the same tree must be byte-identical, r744).
+    if ($byFile.Count -gt 0) {
+        $r.by_file = @($byFile | Sort-Object -Property @(
+            @{ Expression = { [int]$_.open }; Descending = $true },
+            @{ Expression = { [string]$_.name }; Descending = $false }
+        ))
+    }
     $r.dated = $dated
     $r.late = $items.Count
     $r.bad = $badItems.Count

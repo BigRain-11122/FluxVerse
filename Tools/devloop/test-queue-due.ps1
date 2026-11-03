@@ -246,6 +246,50 @@ $rowN2 = @"
 "@
 Write-TextFile (Join-Path $qdirN 'queue-n2.md') $rowN2
 
+# --- O) the open count split by queue (r806) ---------------------------------
+# `open` is one sum over three queues whose rows mean very different things:
+# the main line's handful of claimable slots and the research corpus add up to
+# a number that reads as "N things pending". The page now prints the breakdown,
+# which is only honest if the parts add up to the same total (so the split is
+# counted in the same pass, never re-derived), struck rows stay excluded, and
+# the order is deterministic (biggest first, ties by name) so two rebuilds of
+# the same tree stay byte-identical. `open = -1` is the unreadable-file case:
+# unknown is never a zero.
+$qdirO = Join-Path $sandbox 'queueO'
+New-Item -ItemType Directory -Path $qdirO -Force | Out-Null
+$rowO1 = @"
+# fixture queue: the biggest
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | open | p | nothing here |
+| 2 | open | p | nothing here |
+| 3 | open | p | nothing here |
+| 4 | open | p | nothing here |
+| 5 | ~~closed work~~ | p | nothing here |
+| x | not a data row | p | nothing here |
+"@
+Write-TextFile (Join-Path $qdirO 'queue-o1.md') $rowO1
+$rowO2 = @"
+# fixture queue: two open, one closed
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | open | p | nothing here |
+| 2 | open | p | nothing here |
+| 3 | ~~closed work~~ | p | nothing here |
+"@
+Write-TextFile (Join-Path $qdirO 'queue-o2.md') $rowO2
+$rowO3 = @"
+# fixture queue: ties with o2 on purpose
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | open | p | nothing here |
+| 2 | open | p | nothing here |
+"@
+Write-TextFile (Join-Path $qdirO 'queue-o3.md') $rowO3
+
 # --- results ---------------------------------------------------------------
 $A = Get-QueueDue -Dir $qdirA -Today $today
 $B = Get-QueueDue -Dir $qdirB -Today $today
@@ -256,6 +300,7 @@ $QI = Get-QueueDue -Dir $qdirI -Today $today
 $QJ = Get-QueueDue -Dir $qdirJ -Today $today
 $QK = Get-QueueDue -Dir $qdirK -Today $today
 $QN = Get-QueueDue -Dir $qdirN -Today $today
+$QO = Get-QueueDue -Dir $qdirO -Today $today
 $QLat = Get-QueueDue -Dir $qdirL -Today $today -MaxRowChars $lenL
 $QLover = Get-QueueDue -Dir $qdirL -Today $today -MaxRowChars ($lenL - 1)
 
@@ -388,6 +433,13 @@ $logN = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
         -OutPath $outN -HistoryPath (Join-Path $sandbox 'hist-n.jsonl')) -join "`n"
 $htmlN = ''
 if (Test-Path -LiteralPath $outN) { $htmlN = [IO.File]::ReadAllText($outN) }
+
+$outO = Join-Path $sandbox 'panel-o.html'
+$logO = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
+        -ProofRoot $repoDir -QueueDir $qdirO `
+        -OutPath $outO -HistoryPath (Join-Path $sandbox 'hist-o.jsonl')) -join "`n"
+$htmlO = ''
+if (Test-Path -LiteralPath $outO) { $htmlO = [IO.File]::ReadAllText($outO) }
 
 $pass = 0
 $fail = 0
@@ -571,6 +623,55 @@ Check 'N: builder reports the duplicate group count' ($logN -match 'PANEL OK' -a
 Check 'N: builder reports how many rows share an id' ($logN -match 'qdue_dupe_rows=4(?!\d)')
 Check 'N: the duplicate rows reach the page data' ($htmlN.Contains('dupe_items'))
 Check 'N: the page ships the line numbers for the fix' ($htmlN.Contains('"line":6'))
+
+# --- O) the open count split by queue (r806) --------------------------------
+# The split exists to stop one number from hiding which queue the work is in,
+# so the assertions are about honesty rather than formatting: the parts are the
+# per-file open counts (struck rows out), they add up to the SAME total, the
+# order is deterministic, an unreadable file is `?` and not a zero, and both
+# the builder line and the page data carry the same answer.
+$oNames = (@($QO.by_file | ForEach-Object { $_.name }) -join ',')
+$oOpens = (@($QO.by_file | ForEach-Object { $_.open }) -join ',')
+$oSum = 0
+foreach ($it in @($QO.by_file)) { if ([int]$it.open -gt 0) { $oSum += [int]$it.open } }
+Check 'O: every queue in the dir is named in the split' ($oNames -eq 'queue-o1,queue-o2,queue-o3')
+Check 'O: the split is ordered biggest first, ties by name' ($oOpens -eq '4,2,2')
+Check 'O: the parts add up to the total' ($QO.open -eq 8 -and $oSum -eq [int]$QO.open)
+Check 'O: struck rows never enter the split' ((@($QO.by_file | Where-Object { $_.name -eq 'queue-o2' })[0].open) -eq 2)
+Check 'O: struck rows are still scanned (the total is not the split)' ($QO.scanned -eq 10)
+Check 'O: a missing directory ships no split at all' (@($B.by_file).Count -eq 0)
+
+# An unreadable queue file: the row cannot be counted, and a zero would claim
+# "nothing queued there". Hold the file exclusive so the read really fails.
+$o4 = Join-Path $qdirO 'queue-o4.md'
+$o4Body = @"
+# fixture queue: unreadable while held
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | open | p | nothing here |
+"@
+Write-TextFile $o4 $o4Body
+$QLocked = $null
+try {
+    $fsO = [IO.File]::Open($o4, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::None)
+    try { $QLocked = Get-QueueDue -Dir $qdirO -Today $today } finally { $fsO.Close() }
+} catch { $QLocked = $null }
+$oLockedRec = @()
+if ($null -ne $QLocked) { $oLockedRec = @($QLocked.by_file | Where-Object { $_.name -eq 'queue-o4' }) }
+Check 'O: a held file is reported as unknown, not zero' ($oLockedRec.Count -eq 1 -and [int]$oLockedRec[0].open -eq -1)
+Check 'O: one unreadable file does not disturb the other parts' ($null -ne $QLocked -and [int]$QLocked.open -eq 8)
+
+Check 'O: builder ships the split as machine text' ($logO -match 'qdue_split=queue-o1:4,queue-o2:2,queue-o3:2')
+Check 'O: the split reaches the page data' ($htmlO.Contains('by_file'))
+Check 'O: a missing directory says split=missing, not empty' ($logE -match 'qdue_split=missing')
+
+# Live queue: the split must be the same count as the total, not a second parse
+# that can disagree (the r800 lesson about two counts drifting apart).
+$liveSplitSum = 0
+foreach ($it in @($C.by_file)) { if ([int]$it.open -gt 0) { $liveSplitSum += [int]$it.open } }
+Check 'O: live split adds up to the live total' ($liveSplitSum -eq [int]$C.open)
+Check 'O: live split names every queue file' (@($C.by_file).Count -eq @(Get-ChildItem -LiteralPath $qdirLive -Filter '*.md' -File).Count)
 
 if (Test-Path -LiteralPath $sandbox) { Remove-Item -LiteralPath $sandbox -Recurse -Force }
 

@@ -251,7 +251,8 @@ const SERIES = __SERIES_JSON__;
 // TREND = the whole local cross-round log inside a 24h window (newest last).
 const TREND = __TREND_JSON__;
 // TICK = today's tick log probe ({exists,file,size,mtime_utc,age_min,scan_lines,
-// rounds,rounds_seen,skip_rounds,last_kind,read_ok}) - the panel is built BY that
+// rounds,rounds_seen,skip_rounds,last_kind,probes,probes_bad,quarantined,degraded,
+// read_ok}) - the panel is built BY that
 // tick, so this is the only honest way to tell whether the 10-minute loop
 // actually ran. rounds_seen/skip_rounds count today's rounds and how many of them
 // bailed at the round head (queue main#134): last_kind answers only "what did the
@@ -265,6 +266,33 @@ function tickSkipText(tk) {
   if (typeof t.skip_rounds !== 'number' || typeof t.rounds_seen !== 'number') return '';
   if (t.rounds_seen <= 0 || t.skip_rounds <= 0) return '';
   return '今日退避 ' + t.skip_rounds + '/' + t.rounds_seen + ' 轮';
+}
+// What the last round's scan actually covered (r815): the row's "scan N 行" counts
+// LOG LINES, so a probe that crashed, degraded or got quarantined still leaves a
+// perfectly healthy looking page. builder counts that round's own
+// `probe <name>: <status>` lines plus the scan's own quarantined=/degraded=
+// tallies. Unknown stays -1 => the sentence is not printed at all (never a
+// fabricated 0, r799/r810 precedent); a backed-off round has no scan, so probes=0
+// keeps it quiet too.
+function tickProbeText(tk) {
+  const t = tk || {};
+  if (typeof t.probes !== 'number' || t.probes <= 0) return '';
+  const bad = (typeof t.probes_bad === 'number' && t.probes_bad > 0) ? t.probes_bad : 0;
+  let s = bad > 0
+    ? ('上轮探针 ' + (t.probes - bad) + '/' + t.probes + '（坏 ' + bad + '）')
+    : ('上轮探针 ' + t.probes + ' 全 OK');
+  if (typeof t.quarantined === 'number' && t.quarantined > 0) s += ' · 隔离 ' + t.quarantined;
+  if (typeof t.degraded === 'number' && t.degraded > 0) s += ' · 降级 ' + t.degraded;
+  return s;
+}
+// Does that sentence deserve a warn tint? Only when a probe reported non-OK or
+// the scan itself admitted quarantine/degrade. A reading, not a verdict: the ok
+// criteria of the tick coverage row stay untouched.
+function tickProbeWarn(tk) {
+  const t = tk || {};
+  return (typeof t.probes_bad === 'number' && t.probes_bad > 0) ||
+    (typeof t.quarantined === 'number' && t.quarantined > 0) ||
+    (typeof t.degraded === 'number' && t.degraded > 0);
 }
 // ARCH = the log-archive duty's own day stamp ({exists,stamp,stamp_day,today,
 // is_today,remain,ran_utc}). `stamp` is the local yyyyMMdd of the last SUCCESSFUL
@@ -597,6 +625,23 @@ function artTitle(it){
       sk.title = '当日日志里共有 ' + tk.rounds_seen + ' 轮，其中 ' + tk.skip_rounds +
         ' 轮在轮首退避（scan/verify 未跑）；按轮自己的起始标记切段计数';
       $('f-tick').appendChild(sk);
+    }
+    // 上一轮扫描到底查了几件事（r815）：上面那格只说「scan 多少行」，那是日志
+    // 行数——探针崩了、降级了、被隔离了，页面照样一字不差。这里补最后一轮自己的
+    // 逐针结果；该轮退避（没扫）或旧日志没这些读数时整句不出现，回一个像读数的
+    // 0 是最坏的做法（r799/r810）。
+    const pTxt = tickProbeText(tk);
+    if (pTxt) {
+      const p = document.createElement('span');
+      p.className = 'tag' + (tickProbeWarn(tk) ? ' warn' : '');
+      p.style.marginLeft = '6px';
+      p.textContent = pTxt;
+      p.title = '上一轮 tick 的 perceptor 扫描逐针结果：共 ' + tk.probes + ' 枚探针，' +
+        ((typeof tk.probes_bad === 'number') ? tk.probes_bad : 0) + ' 枚非 OK；scan 自报隔离 ' +
+        ((typeof tk.quarantined === 'number' && tk.quarantined >= 0) ? tk.quarantined : '未记录') +
+        ' 条、零读/降级 ' +
+        ((typeof tk.degraded === 'number' && tk.degraded >= 0) ? tk.degraded : '未记录') + ' 枚';
+      $('f-tick').appendChild(p);
     }
   })();
 
@@ -1501,6 +1546,10 @@ function artTitle(it){
     // 当日总量（queue main#134）：只报最后一轮会把连续退避读成孤立事件。
     const skT = tickSkipText(tk);
     if (skT) tVd = tVd + ' · ' + skT;
+    // 逐针覆盖（r815）：scan 行数答不了「探针有没有坏/降级/被隔离」，同句补上；
+    // 判据不随读数改（日志仍在写是真的，探针读数另说一件事）。
+    const pT = tickProbeText(tk);
+    if (pT) tVd = tVd + ' · ' + pT;
   }
   selfcheck.push({ ok: tOk, nm: 'tick 覆盖', vd: tVd });
 

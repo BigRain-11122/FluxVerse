@@ -958,6 +958,47 @@ Check 'zd14 restoring the source heals the family at once' ("$($zdHealed.status)
 Check 'zd15 the healed pass spawned the runner' (Test-Path -LiteralPath $zMark) $zMark
 Remove-Item 'Env:\FV_MARK_OUT' -ErrorAction SilentlyContinue
 
+# ---------- ze: request size vs reported size (main#129, r801) --------------
+# r800 found a write-family ticket printing `suites=4 assertions=203` while the
+# module had asked for five suites; the clean re-run read `suites=5`. Nobody
+# noticed because nothing compared the request with the answer - a family that
+# silently ran four of five suites looked exactly like a green one. The fix is
+# a READING, not a verdict: record what we asked for, print it, and flag a
+# mismatch without changing pass/red.
+$zeRunner = New-Runner 'runner-ze.ps1' @'
+Write-Output 'PASS  suite-a  exit=0  ALL PASS'
+Write-Output 'PS SUITES suites=1 assertions=5 counted=1 failing=0 parity=skipped'
+Write-Output 'PS SUITES VERDICT: ALL PASS'
+exit 0
+'@
+Check 'ze1 the request count is read from the -Suites list' ((Get-PsSuitesRequestedCount -ArgList @('-Suites', 'a.ps1,b.ps1')) -eq 2) ([string](Get-PsSuitesRequestedCount -ArgList @('-Suites', 'a.ps1,b.ps1')))
+Check 'ze2 no -Suites means the request is unknown, not zero suites' ((Get-PsSuitesRequestedCount -ArgList @('-All')) -eq 0) ([string](Get-PsSuitesRequestedCount -ArgList @('-All')))
+Check 'ze3 an unknown request is never a mismatch' ((Test-PsSuitesCountShort -Requested 0 -Reported 1) -eq $false) 'req=0 got=1'
+Check 'ze4 a matching request is not a mismatch' ((Test-PsSuitesCountShort -Requested 2 -Reported 2) -eq $false) 'req=2 got=2'
+Check 'ze5 fewer suites than requested is a mismatch' ((Test-PsSuitesCountShort -Requested 2 -Reported 1) -eq $true) 'req=2 got=1'
+
+$zeRepo = Split-Path $root -Parent
+$zeTicket = Join-Path $sandbox 'ze-short.json'
+$ze1 = Invoke-PsSuitesTick -RepoDir $zeRepo -Family write -TicketPath $zeTicket -RunnerPath $zeRunner -TimeoutSec 8 -ExtraArgs @('-Suites', 'a.ps1,b.ps1')
+Check 'ze6 a short run records the request it was measured against' ([int]$ze1.req_suites -eq 2 -and [int]$ze1.suites -eq 1) ('req=' + $ze1.req_suites + ' got=' + $ze1.suites)
+Check 'ze7 a short run is flagged as a reading' ($ze1.suites_short -eq $true) ([string]$ze1.suites_short)
+Check 'ze8 the short reading does not turn a green run into a red one' ("$($ze1.status)" -eq 'pass' -and (Test-PsSuitesHealthy $ze1)) ("status=$($ze1.status)")
+$zeLine = Format-PsSuitesLine $ze1
+Check 'ze9 the printed line carries the request size' ($zeLine -match ' req=2\b') $zeLine
+Check 'ze10 the printed line shows both halves when they disagree' ($zeLine -match 'suite_short=req2/got1') $zeLine
+Check 'ze11 the short reading carries no verdict word' (-not ($zeLine -match '(?i)fail')) $zeLine
+$zeObj = $null
+try { $zeObj = [System.IO.File]::ReadAllText($zeTicket, [System.Text.Encoding]::UTF8) | ConvertFrom-Json } catch { $zeObj = $null }
+Check 'ze12 the ticket keeps the request and the reading' ($null -ne $zeObj -and [int]$zeObj.req_suites -eq 2 -and $zeObj.suites_short -eq $true) ([string]$zeObj)
+$zeCached = Invoke-PsSuitesTick -RepoDir $zeRepo -Family write -TicketPath $zeTicket -RunnerPath $zeRunner -TimeoutSec 8 -ExtraArgs @('-Suites', 'a.ps1,b.ps1') -CheckOnly
+Check 'ze13 the cached pass keeps the short reading' ($zeCached.suites_short -eq $true -and $zeCached.needs_run -eq $false) ('short=' + $zeCached.suites_short + ' needs_run=' + $zeCached.needs_run)
+
+# The matching control: same fixture runner, a one-suite request this time.
+$ze2 = Invoke-PsSuitesTick -RepoDir $zeRepo -Family write -TicketPath (Join-Path $sandbox 'ze-match.json') -RunnerPath $zeRunner -TimeoutSec 8 -ExtraArgs @('-Suites', 'a.ps1')
+Check 'ze14 a matching request raises no flag' ([int]$ze2.req_suites -eq 1 -and $ze2.suites_short -eq $false) ('req=' + $ze2.req_suites + ' short=' + $ze2.suites_short)
+$zeLine2 = Format-PsSuitesLine $ze2
+Check 'ze15 the matching line still shows the request size' ($zeLine2 -match ' req=1\b' -and -not ($zeLine2 -match 'suite_short=')) $zeLine2
+
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Output ('RESULT pass=' + ($script:checks - $script:fails) + ' fail=' + $script:fails)

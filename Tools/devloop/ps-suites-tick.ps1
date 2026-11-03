@@ -333,6 +333,8 @@ function Write-PsSuitesTicket {
         redlog     = [string]$Result.redlog
         runs       = [string]$Result.runs
         gaps       = [string]$Result.gaps
+        req_suites = [int]$Result.req_suites
+        suites_short = [bool]$Result.suites_short
     }
     $dir = Split-Path -Parent $Path
     if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
@@ -540,6 +542,14 @@ function Copy-PsSuitesTicketFields {
     # warning would appear on the tick that found it and never again.
     $Result.gaps = ''
     if ($Ticket.PSObject.Properties['gaps']) { $Result.gaps = [string]$Ticket.gaps }
+    # main#129: a cached verdict must still say whether that run covered every
+    # suite this tick asked for, otherwise the reading disappears the moment
+    # the cache answers. The request is the CURRENT one; the count is the
+    # ticket's, so a changed suite list shows up as a short reading.
+    $Result.suites_short = Test-PsSuitesCountShort -Requested ([int]$Result.req_suites) -Reported ([int]$Result.suites)
+    if ($Result.suites_short -and [string]$Result.status -eq 'pass') {
+        $Result.note = ('requested ' + [int]$Result.req_suites + ' suite(s), runner reported ' + [int]$Result.suites)
+    }
     if ([string]$Result.status -eq 'gap' -and $Result.gaps -ne '') {
         $Result.note = 'guarded source(s) absent: ' + $Result.gaps
     }
@@ -604,6 +614,37 @@ function Get-PsSuitesRedTail {
     return [string]$tails[0]
 }
 
+function Get-PsSuitesRequestedCount {
+    # main#129: how many suites did THIS tick actually ask the runner for?
+    # Returns 0 when the request is unknown (no explicit -Suites -> the runner
+    # falls back to its own default list, and this module has no business
+    # guessing what that list holds today).
+    # NOTE: the parameter is $ArgList on purpose - $Args is an automatic
+    # variable and a parameter named $Args reads as "no path given" (r793).
+    param($ArgList)
+    if ($null -eq $ArgList) { return 0 }
+    $list = @($ArgList)
+    for ($i = 0; $i -lt $list.Count; $i++) {
+        if ([string]$list[$i] -eq '-Suites' -and ($i + 1) -lt $list.Count) {
+            $val = [string]$list[$i + 1]
+            $parts = @($val -split '[,;]' | Where-Object { $_.Trim() -ne '' })
+            return $parts.Count
+        }
+    }
+    return 0
+}
+
+function Test-PsSuitesCountShort {
+    # main#129: true only when we KNOW the request and the runner reported a
+    # different number of suites. 0 means "unknown request", never a mismatch.
+    # This is a READING, not a verdict: r800 found a ticket printing
+    # `suites=4` for a five-suite request for a while, and every line stayed
+    # green because nothing compared the two halves.
+    param([int]$Requested, [int]$Reported)
+    if ($Requested -le 0) { return $false }
+    return ($Reported -ne $Requested)
+}
+
 function Invoke-PsSuitesTick {
     param(
         [Parameter(Mandatory=$true)][string]$RepoDir,
@@ -654,10 +695,17 @@ function Invoke-PsSuitesTick {
     # families share one fingerprint - caught by the r752 sandbox case l5).
     if ($null -eq $Paths -or $Paths.Count -eq 0) { $Paths = @(Get-PsSuitesTickDefaults -Family $Family) }
 
+    # main#129: remember the size of the request we are about to make. Every
+    # family above names its suites explicitly, so this is normally a real
+    # number and the runner's summary has something to be compared against.
+    $reqSuites = Get-PsSuitesRequestedCount -ArgList $ExtraArgs
+
     $res = [ordered]@{
         family     = $Family
         status     = 'unknown'
         sha        = ''
+        req_suites = $reqSuites
+        suites_short = $false
         suites     = 0
         assertions = 0
         failing    = 0
@@ -888,6 +936,14 @@ function Invoke-PsSuitesTick {
     $res.assertions = [int]$m.Groups[2].Value
     $res.failing = [int]$m.Groups[4].Value
     $res.parity = [string]$m.Groups[5].Value
+    # main#129: the request lives in this module, the count is reported only by
+    # the runner's summary - nothing compared them, so a family could run four
+    # of its five suites and still read `pass`. Recorded as a reading (the
+    # verdict is unchanged): a short run is a missing measurement, not a red.
+    $res.suites_short = Test-PsSuitesCountShort -Requested ([int]$res.req_suites) -Reported ([int]$res.suites)
+    if ($res.suites_short) {
+        $res.note = ($res.note + ' requested ' + [int]$res.req_suites + ' suite(s), runner reported ' + [int]$res.suites).Trim()
+    }
     # Scope change (main#99 moved the heavy sandbox out: 9 suites -> 8): the old
     # durations measured a different family, so averaging across the change
     # would keep the budget WARN ringing for three runs after the fix. Restart
@@ -933,6 +989,11 @@ function Format-PsSuitesLine {
     $parityText = [string]$Result.parity
     if ($parityText -eq 'FAIL') { $parityText = 'drift' }
     $head = 'ps-suites: suites=' + $Result.suites + ' red=' + $Result.failing + ' assertions=' + $Result.assertions + ' parity=' + $parityText + ' sha=' + $Result.sha
+    # main#129: the size of the request, printed every tick. Without it the
+    # reader cannot tell "five suites passed" from "five were asked for, four
+    # answered" - those looked identical for a whole round in r800.
+    if ([int]$Result.req_suites -gt 0) { $head = $head + ' req=' + [int]$Result.req_suites }
+    if ($Result.suites_short -eq $true) { $head = $head + ' suite_short=req' + [int]$Result.req_suites + '/got' + [int]$Result.suites }
     if ($Result.status -eq 'pass' -or $Result.status -eq 'red') {
         if ($Result.ran) { $head = $head + ' ran=' + $Result.ms + 'ms' }
         elseif ($Result.age_min -ge 0) { $head = $head + ' cached=' + $Result.age_min + 'm' }

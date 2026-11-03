@@ -657,7 +657,7 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
           try { $w2Res = Invoke-PsSuitesTick @w2Args } catch { $w2Res = $null }
           Write-PsSuitesVerdict -Label 'ps-suites-write2' -Res $w2Res -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-nolivecheck-census.ps1,Tools\devloop\test-qa-rotation.ps1'
         } elseif ($psWriteRan) {
-          $deferW2 = 'VERIFY HEALTH: ps-suites-write2: deferred (write-side ran ' + $psWriteMs + 'ms this tick) sha=' + $w2Chk.sha
+          $deferW2 = 'VERIFY HEALTH: ps-suites-write2: deferred (write-side ran ' + $psWriteMs + 'ms this tick) sha=' + $w2Chk.sha + ' req=' + [int]$w2Chk.req_suites
           if ([int]$w2Chk.base_ms -gt 0) { $deferW2 = $deferW2 + ' base=' + [int]$w2Chk.base_ms + 'ms' }
           Write-Output $deferW2
         } else {
@@ -692,7 +692,7 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
         } elseif ($psWriteRan -or $psWrite2Ran) {
           $why = 'write-side ran ' + $psWriteMs + 'ms'
           if (-not $psWriteRan) { $why = 'face-side ran ' + $psWrite2Ms + 'ms' }
-          $deferLine = 'VERIFY HEALTH: ps-suites-verify: deferred (' + $why + ' this tick) sha=' + $vChk.sha
+          $deferLine = 'VERIFY HEALTH: ps-suites-verify: deferred (' + $why + ' this tick) sha=' + $vChk.sha + ' req=' + [int]$vChk.req_suites
           if ([int]$vChk.base_ms -gt 0) { $deferLine = $deferLine + ' base=' + [int]$vChk.base_ms + 'ms' }
           Write-Output $deferLine
         } else {
@@ -732,7 +732,7 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
             if ($psWrite2Ran) { $why = 'face-side ran ' + $psWrite2Ms + 'ms' }
             else { $why = 'verify-side ran ' + $psVerifyMs + 'ms' }
           }
-          $deferLine2 = 'VERIFY HEALTH: ps-suites-verify2: deferred (' + $why + ' this tick) sha=' + $v2Chk.sha
+          $deferLine2 = 'VERIFY HEALTH: ps-suites-verify2: deferred (' + $why + ' this tick) sha=' + $v2Chk.sha + ' req=' + [int]$v2Chk.req_suites
           if ([int]$v2Chk.base_ms -gt 0) { $deferLine2 = $deferLine2 + ' base=' + [int]$v2Chk.base_ms + 'ms' }
           Write-Output $deferLine2
         } else {

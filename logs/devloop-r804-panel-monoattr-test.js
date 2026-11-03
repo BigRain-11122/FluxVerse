@@ -116,5 +116,35 @@ const six = runPanel(withTrend([
 ]), 'two');
 chk('two.names-both', six.vd.indexOf('（fluxgroup 36000→35990、minigame 300→290）') >= 0, 'vd=' + JSON.stringify(six.vd));
 
+// --- 7) fell and already climbed back, but under 2 h -----------------------
+// The row used to report this as 窗口内回落 (red, "still falling") for two
+// hours after the counters had recovered. Green, and it says it came back.
+const seven = runPanel(withTrend([
+  rec('2026-11-04T01:00:00Z', 36340, 105),
+  rec('2026-11-04T01:05:00Z', 36335, 105),
+  rec('2026-11-04T01:10:00Z', 36345, 105)
+]), 'fresh');
+chk('fresh.not-warn', seven.vd.indexOf('窗口内回落') < 0, 'vd=' + JSON.stringify(seven.vd));
+chk('fresh.says-back', /^回落 1 处已涨回（未满 2h，暂不判历史）：提交 36340→36335 @01:05Z/.test(seven.vd), 'vd=' + JSON.stringify(seven.vd));
+
+// --- 8) same shape, but the drop is older than 2 h ------------------------
+// Unchanged behaviour: promoted to the historical wording.
+const eight = runPanel(withTrend([
+  rec('2026-11-04T01:00:00Z', 36340, 105),
+  rec('2026-11-04T01:05:00Z', 36335, 105),
+  rec('2026-11-04T04:30:00Z', 36345, 105)
+]), 'old');
+chk('old.historical', /^历史回落 1 处已恢复（外部计数事件）：提交 36340→36335 @01:05Z/.test(eight.vd), 'vd=' + JSON.stringify(eight.vd));
+
+// --- 9) one still down + one recovered: the red line stays, and only the
+//        still-down one is listed there (the recovered one is not "falling").
+const nine = runPanel(withTrend([
+  rec('2026-11-04T01:00:00Z', 36340, 105),
+  rec('2026-11-04T01:05:00Z', 36335, 105),
+  rec('2026-11-04T01:10:00Z', 36345, 105),
+  rec('2026-11-04T01:15:00Z', 36340, 105)
+]), 'mixed');
+chk('mixed.still-warn', /^窗口内回落 1 处：提交 36345→36340 @01:15Z$/.test(nine.vd), 'vd=' + JSON.stringify(nine.vd));
+
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 process.exit(fail ? 1 : 0);

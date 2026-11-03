@@ -5,8 +5,10 @@
 // forever and made the r670 selfcheck suite fail on an "unexplained warn".
 // Contract now: a dip that (a) climbs back to its pre-dip level later in the
 // window AND (b) sits more than 2h behind the newest sample is reported as a
-// green historical event with the numbers still spelled out; anything else
-// stays a red live regression.
+// green historical event with the numbers still spelled out. A dip that
+// climbed back but is still inside that 2h is green too, and says it came back
+// (r805) - red is reserved for "has not climbed back", because that is the only
+// state where "still falling" is true.
 'use strict';
 const fs = require('fs');
 const vm = require('vm');
@@ -75,10 +77,13 @@ const b = monoRow(runPanel(
   [rec(0.5, 100), rec(0.17, 97), rec(0, 97)], 'B').body);
 chk('B.row=live', /class="st warn"/.test(b) && b.indexOf('\u7a97\u53e3\u5185\u56de\u843d') >= 0, b.slice(0, 200));
 
-// C: climbed back but only 20 minutes ago -> still red (too soon to call it history).
+// C: climbed back but only 20 minutes ago -> green, and it must say it came
+//    back (r805: it is not "still falling", so a warn row here would be a lie);
+//    the 2h rule only decides whether it is promoted to the historical wording.
 const c = monoRow(runPanel(
   [rec(0.5, 100), rec(0.33, 97), rec(0, 101)], 'C').body);
-chk('C.row=recent-recovered-live', /class="st warn"/.test(c) && c.indexOf('\u7a97\u53e3\u5185\u56de\u843d') >= 0, c.slice(0, 200));
+chk('C.row=recent-recovered', /class="st ok"/.test(c) && c.indexOf('\u7a97\u53e3\u5185\u56de\u843d') < 0, c.slice(0, 200));
+chk('C.says-back', c.indexOf('\u5df2\u6da8\u56de') >= 0 && c.indexOf('97') >= 0, c.slice(0, 200));
 
 // D: no dip at all -> green, plain wording.
 const d = monoRow(runPanel(

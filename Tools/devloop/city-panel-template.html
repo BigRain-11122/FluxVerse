@@ -1429,7 +1429,7 @@ function artTitle(it){
       return out.length ? '（' + out.join('、') + '）' : '';
     };
     const endTs = Date.parse(monoSrc[monoSrc.length - 1].ts);
-    const hist = [], live = [];
+    const hist = [], fresh = [], live = [];
     for (let i = 1; i < monoSrc.length; i++) {
       ['c', 'r'].forEach(k => {
         const x = Number(monoSrc[i - 1][k]), y = Number(monoSrc[i][k]);
@@ -1442,16 +1442,25 @@ function artTitle(it){
           const ageH = (!isNaN(endTs) && !isNaN(t)) ? (endTs - t) / 3600000 : 0;
           const txt = nmOf[k] + ' ' + x + '→' + y + ' @' + String(monoSrc[i].ts).slice(11, 16) + 'Z' +
             (k === 'c' ? crOf(monoSrc[i - 1], monoSrc[i]) : '');
-          if (recovered && ageH > 2) hist.push(txt); else live.push(txt);
+          // 已涨回但距末点不满 2 小时：不再算「正在跌」。原先一并落进红标，
+          // 于是一次几分钟内自愈的外部改写会在页面上「正在跌」两小时——
+          // 红标说的话必须是真的（r805）。仍不进 hist：涨回未满 2h 的证据
+          // 还不足以判成外部历史事件，只报「已涨回」。
+          if (!recovered) live.push(txt);
+          else if (ageH > 2) hist.push(txt);
+          else fresh.push(txt);
         }
       });
     }
     mono = live.length
       ? { ok: false, vd: '窗口内回落 ' + live.length + ' 处：' + live.slice(0, 2).join(' / ') + (live.length > 2 ? ' …' : '') }
-      : (hist.length
-        ? { ok: true, vd: '历史回落 ' + hist.length + ' 处已恢复（外部计数事件）：' + hist.slice(0, 2).join(' / ') + (hist.length > 2 ? ' …' : '') }
-        : { ok: true, vd: '提交/渲染全窗未回落（' + monoSrc.length + ' 点，末点 ' +
-            String(monoSrc[monoSrc.length - 1].ts).slice(11, 19) + 'Z）' });
+      : (fresh.length
+        ? { ok: true, vd: '回落 ' + fresh.length + ' 处已涨回（未满 2h，暂不判历史）：' + fresh.slice(0, 2).join(' / ') + (fresh.length > 2 ? ' …' : '') +
+            (hist.length ? ' · 另有历史回落 ' + hist.length + ' 处' : '') }
+        : (hist.length
+          ? { ok: true, vd: '历史回落 ' + hist.length + ' 处已恢复（外部计数事件）：' + hist.slice(0, 2).join(' / ') + (hist.length > 2 ? ' …' : '') }
+          : { ok: true, vd: '提交/渲染全窗未回落（' + monoSrc.length + ' 点，末点 ' +
+              String(monoSrc[monoSrc.length - 1].ts).slice(11, 19) + 'Z）' }));
   }
   selfcheck.push({ ok: mono.ok, nm: '跨轮单调', vd: mono.vd });
 

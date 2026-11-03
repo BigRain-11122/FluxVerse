@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-03T19:58:37Z",
-    "current_activity":  "r804 收口（改件 ./Tools/perceptor/probes/git.ps1、./Tools/perceptor/scan.ps1 与 ./Tools/devloop/build-city-panel.ps1）：面板「跨轮单调」那行红第一次说得清是哪个仓掉了提交数——记录开始带逐仓计数，判词在原有求和读数后面点名（如 fluxgroup 36000→35995），只进内部态，公开快照白名单未动。活跑新套件 12/12、面板 31 套全绿、scan+verify 双绿。",
-    "artifact":  "新套件 `./logs/devloop-r804-panel-monoattr-test.js`（12/12·六种落注/不落注态）、390 窄屏取证 `./qa/city-panel-r804-narrow-bm-a.png`（390x6863 offenders=0）、回执 `./HQ-FEEDBACK.md` 的 F-20261104-01（D-20261101-05 只受权的③日志轮转）、记账 `./TECH.md` r804 行。",
-    "artifact_utc":  "2026-11-03T19:58:37Z",
-    "milestone":  "48 小时内＝tech#18 基准面两件 C·待证取全文核销（due=2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）；main#52 等 Tuanjie 零进程窗口复测（判据 fps_avg\u003e=486.8 且 p95\u003c=2.58ms，禁带载凑数）；main#131 已随本轮收口，队列 open 清零，无活即转提案轨。",
+    "updated_utc":  "2026-11-03T20:15:53Z",
+    "current_activity":  "r805 收口（改件 ./Tools/devloop/city-panel-template.html）：面板「跨轮单调」的红标从此只在真的还在跌时亮——回落已涨回但不满 2 小时原先仍按红标印「窗口内回落」（那行代表「现在正在跌，需查上游」），现在单独成绿色一档并写明「已涨回（未满 2h，暂不判历史）」；2 小时门槛一字未动，只决定升不升格成历史事件。同轮补销队列 #131 行（r804 已收口却没打勾）。活跑面板 31 套全绿、compile OK、390 取证 offenders=0、活门 VERIFY PASS。",
+    "artifact":  "改件 `./Tools/devloop/city-panel-template.html`（回落分类两桶→三桶）、判据 `./logs/devloop-r804-panel-monoattr-test.js`（12→16/16）与 `./logs/devloop-r711-panel-mono-test.js`（C 组按新契约 7/7）、产品面 `./world-public/city-panel.html`（每 tick 重建）、390 窄屏取证 `./qa/city-panel-narrow.png`（390x6839 offenders=0）、记账 `./TECH.md` r805 行与 `./state/queue/main.md` #131 销行。",
+    "artifact_utc":  "2026-11-03T20:15:53Z",
+    "milestone":  "48 小时内＝tech#18 基准面两件 C·待证取全文核销（due=2026-11-19 深潜窗，落 `./docs/global-benchmarks.md`）；main#52 等 Tuanjie 零进程窗口复测（判据 fps_avg\u003e=486.8 且 p95\u003c=2.58ms，禁带载凑数）；队列 open 清零，无活即转提案轨（提案落 `./TECH.md` 自驱提案行）。",
     "milestone_eta_utc":  "2026-11-05T04:00:00Z"
 }

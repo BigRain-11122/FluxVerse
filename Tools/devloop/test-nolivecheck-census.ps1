@@ -49,14 +49,19 @@ function Write-Text([string]$Rel, [string]$Body) {
 function New-CleanTree {
     if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
     [void](New-Item -ItemType Directory -Path $root -Force)
-    # owner of the switch: one comment mention + one argument-style mention
+    # owner of the switch: one comment mention
     Write-Text 'Tools\devloop\write-fastpath-state.ps1' ("# the drill switch `r`n# " + $flag + " exists for sandbox drills`r`nparam([switch]`$Skip)`r`n")
     # whitelisted drill: a real call site
     Write-Text 'logs\devloop-r197-writer-test.ps1' ("`$full = @(`$ArgList) + @('" + $flag + "')`r`n")
-    # whitelisted drill: an argument string
-    Write-Text 'logs\devloop-r271-keep-negcon.ps1' ("`$psi.Arguments = '-File ""' + `$writer + '"" " + $flag + "'`r`n")
-    # whitelisted but names the switch nowhere (the stale case)
-    Write-Text 'Tools\devloop\test-fastpath-state-live.ps1' ("# this drill checks the live-hash path itself`r`n`$x = 1`r`n")
+    # whitelisted but names the switch nowhere (the stale case).
+    # r737 also listed Tools\devloop\test-fastpath-state-live.ps1, which has never
+    # needed the switch - it drills the live check itself. r800 dropped that entry
+    # (it read 'stale' on every tick for 60+ rounds); the stale branch is now
+    # drilled through a listed file that genuinely stopped naming the switch, and
+    # group j stops the live list from growing such an entry again.
+    Write-Text 'logs\devloop-r271-keep-negcon.ps1' ("# this drill keeps the KEEP arguments`r`n`$x = 1`r`n")
+    # a fourth script file: scanned, listed nowhere, and naming the switch nowhere
+    Write-Text 'Tools\devloop\plain-helper.ps1' ("# unrelated helper`r`n`$y = 2`r`n")
 }
 
 function Invoke-Census([string]$ScanRoot, [switch]$Fail, [string[]]$Extra) {
@@ -80,14 +85,14 @@ $body = Invoke-Census $root -Fail
 Eq 'a1 clean tree exit code is 0' ([string]$script:lastCode) '0'
 Has 'a2 summary line is present' $body 'nolivecheck-census:'
 Eq 'a3 four script files scanned' (Get-Field $body 'files') '4'
-Eq 'a4 three hits found' (Get-Field $body 'hits') '3'
-Eq 'a5 all three hits are allowed' (Get-Field $body 'allowed') '3'
+Eq 'a4 two hits found' (Get-Field $body 'hits') '2'
+Eq 'a5 both hits are allowed' (Get-Field $body 'allowed') '2'
 Eq 'a6 nothing unexpected' (Get-Field $body 'unexpected') '0'
 Eq 'a7 one whitelisted file is stale' (Get-Field $body 'stale') '1'
 Has 'a8 the pruned trees are printed, not just skipped' $body 'pruned: City3D\Assets'
 
 # ---------------- g. the stale entry is named, not just counted
-Has 'g1 stale row names the live-check drill' $body 'stale    Tools\devloop\test-fastpath-state-live.ps1'
+Has 'g1 stale row names the drill that stopped using the switch' $body 'stale    logs\devloop-r271-keep-negcon.ps1'
 Has 'g2 stale row says why it is listed' $body 'names the switch nowhere'
 
 # ---------------- h. hits are classified, and carry file:line
@@ -106,7 +111,7 @@ Write-Text 'node_modules\pkg\cli.cmd' ('REM ' + $flag + "`r`n")
 Write-Text 'City3D\Assets\Editor\stray.ps1' ($flag + "`r`n")
 $body = Invoke-Census $root -Fail
 Eq 'd1 a markdown mention is not scanned' (Get-Field $body 'files') '4'
-Eq 'd2 and adds no hit' (Get-Field $body 'hits') '3'
+Eq 'd2 and adds no hit' (Get-Field $body 'hits') '2'
 Eq 'e1 .git tree is pruned' (Get-Field $body 'unexpected') '0'
 Eq 'f1 Library tree is pruned' (Get-Field $body 'unexpected') '0'
 Eq 'f2 vendor tree is pruned' (Get-Field $body 'unexpected') '0'
@@ -149,6 +154,11 @@ $selfText = [System.IO.File]::ReadAllText($PSCommandPath, [System.Text.Encoding]
 if ($selfText.IndexOf($flag, [System.StringComparison]::Ordinal) -lt 0) { Ok 'j4 this sandbox does not name the token either' }
 else { No 'j4 this sandbox does not name the token either' 'sandbox source contains the literal token' }
 Has 'j5 live tree still names the owner' $body 'write-fastpath-state.ps1'
+# r800: the live whitelist must be self-proving. Until now this suite asserted the
+# FIXTURE tree's stale behaviour and said nothing about the live list, so a real
+# entry could rot (Tools\devloop\test-fastpath-state-live.ps1 sat stale for 60+
+# rounds) with every run green - a guard whose own list is not guarded.
+Eq 'j6 live whitelist is self-proving (no stale entry)' (Get-Field $body 'stale') '0'
 
 # ---------------- m. cost budget (main#104): the per-tick slice is spoken for
 # The census runs inside every tick, so its cost is part of the gate's own 3 s

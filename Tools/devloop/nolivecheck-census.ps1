@@ -78,9 +78,14 @@ $hitText = '-' + 'NoLiveCheck'
 
 # Owner of the switch (defines and guards it) plus the sandboxes that drill it.
 # A production call path must never appear here.
+# r800: Tools\devloop\test-fastpath-state-live.ps1 was listed from r737 but has
+# named the switch nowhere since the writer's live check became its own suite -
+# it drills the check itself, so bypassing it is exactly what it cannot do. The
+# entry read 'stale' on every tick for 60+ rounds (r789 recorded it as a known
+# leftover); a list entry nobody prunes is the r759 disease seen from the other
+# side, so it is gone rather than tolerated.
 $allowList = @(
     'Tools\devloop\write-fastpath-state.ps1',
-    'Tools\devloop\test-fastpath-state-live.ps1',
     'logs\devloop-r197-writer-test.ps1',
     'logs\devloop-r271-keep-negcon.ps1'
 )

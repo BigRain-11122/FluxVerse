@@ -810,6 +810,22 @@ function artTitle(it){
     const splitTxt = splitList.length
       ? ('<span class="muted"> · 在队构成 ' + esc(splitList.join(' · ')) + '</span>')
       : '';
+    // 最近到期（r808）：这一行原先只说「带期限 3」，从不说是哪天——安静的日子里
+    // 「无逾期 · 在队 202 件（带期限 3）」读起来就是「没事」，而期限可能就在明天。
+    // 同一页的应办卡早就会点名「最近到期」，队列卡这里补齐：只印最近那一条
+    // （到期日 · #id · N 天后／今天）。口径三条：①只作读数，muted 永不转红——
+    // 「还没到期」不是违规；②逾期行另有各自的红标，不在这一句里重复；③没有
+    // 可解析的未到期期限（或读不到队列）时整句不出现，绝不印一个「0 天后」。
+    const nd = (typeof Q.next_due === 'string') ? Q.next_due : '';
+    const ndDays = (typeof Q.next_days_left === 'number' && Q.next_days_left >= 0)
+      ? Q.next_days_left : null;
+    const nextTxt = (nd !== '' && ndDays !== null)
+      ? ('<span class="muted"> · 最近到期 ' + esc(nd) +
+        (Q.next_id !== undefined && Q.next_id !== null && String(Q.next_id) !== ''
+          ? ('（#' + esc(String(Q.next_id)) + '，' + (ndDays === 0 ? '今天' : (ndDays + ' 天后')) + '）')
+          : '') +
+        '</span>')
+      : '';
     if (late > 0) {
       // r749（main#87）：点名「哪几行」逾期，而不只是「几件」。此前只有最久
       // 一行的 id，读者还得自己翻文件去数；标记面本就带每一行，直接印前五条。
@@ -825,13 +841,13 @@ function artTitle(it){
         (lateIds.length
           ? ('<span class="muted"> · 逾期行 ' + esc(lateIds.join(' · ')) +
             (late > lateIds.length ? ' …' : '') + '</span>')
-          : '') + rowTxt + badTxt + codeTxt + longTxt + dupeTxt + splitTxt;
+          : '') + rowTxt + badTxt + codeTxt + longTxt + dupeTxt + splitTxt + nextTxt;
     } else if (dueBad > 0 || rowTxt !== '') {
-      el.innerHTML = rowTxt + badTxt + codeTxt + longTxt + dupeTxt + splitTxt;
+      el.innerHTML = rowTxt + badTxt + codeTxt + longTxt + dupeTxt + splitTxt + nextTxt;
     } else {
       el.innerHTML = '<span class="tag ok">无逾期</span>' +
         '<span class="muted"> 在队 ' + open + ' 件（带期限 ' + dated + '）</span>' +
-        codeTxt + longTxt + dupeTxt + splitTxt;
+        codeTxt + longTxt + dupeTxt + splitTxt + nextTxt;
     }
   })();
 
@@ -1699,7 +1715,15 @@ function artTitle(it){
     dt = { ok: false, vd: dfRows.length + ' 项待办，其中 ' + dfLate.length + ' 项逾期（' +
       dfLate.map(r => r.id || '无号').join('、') + '）' };
   } else {
-    const next = dfRows.find(r => r.due_utc);
+    // 「最近到期」必须是**最早**那个到期日，而不是表里第一行带日期的行
+    // （r808）：dvRows 的顺序是 decisions.md 的书写顺序，与新近程度无关，
+    // 所以 `find(r => r.due_utc)` 只是在「恰好表序与日期序一致」时才说对。
+    // 同一页的队列卡这一轮起也是按日期排序取最近的，两处口径现在一致。
+    // 解析不出来的时点不参与排序（未知≠最近），全都解析不出来时整句不出现。
+    const dfDated = dfRows
+      .filter(r => r.due_utc && !isNaN(Date.parse(r.due_utc)))
+      .sort((a, b) => Date.parse(a.due_utc) - Date.parse(b.due_utc));
+    const next = dfDated.length ? dfDated[0] : null;
     dt = { ok: true, vd: dfRows.length + ' 项待办，无逾期' +
       (next ? '（最近到期 ' + stampLocal(next.due_utc).text + '）' : '') };
   }

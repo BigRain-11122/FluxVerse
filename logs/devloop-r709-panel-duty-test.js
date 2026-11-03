@@ -245,5 +245,43 @@ const pushN = (template.match(/selfcheck\.push\(/g) || []).length;
 const chkN = String(real.get('selfcheck').innerHTML).split('<div class="chk">').length - 1;
 chk('self-check rows === template push count', chkN === pushN, 'rendered=' + chkN + ' push=' + pushN);
 
+// 10. 「最近到期」must be the EARLIEST due date, not the first dated row (r808)
+// The row order is decisions.md's writing order, which has nothing to do with
+// how soon something is due, so `find(r => r.due_utc)` only told the truth by
+// accident. Two future dates, the later one written first: the self-check must
+// name the earlier one. Dates are relative to now so this cannot rot into a
+// red on a future calendar day.
+const stampOf = (iso) => {
+  const d = new Date(Date.parse(iso));
+  const p2 = (n) => (n < 10 ? '0' + n : String(n));
+  return p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + ' ' +
+    p2(d.getHours()) + ':' + p2(d.getMinutes());
+};
+const soonIso = new Date(Date.now() + 3 * 86400000).toISOString();
+const laterIso = new Date(Date.now() + 9 * 86400000).toISOString();
+const near = runPanelHtml(withDuty(realHtml, {
+  exists: true, path_rel: 'x', url: '', as_of_utc: '2026-11-01T00:00:00Z',
+  scanned: 90, matched: 2, open: 2, late: 0, receipts_exists: true, receipts_count: 1,
+  rows: [
+    { id: 'D-LATER-01', subject: 'written first, due last', status: 'dispatched', due_txt: '', due_utc: laterIso, action: '' },
+    { id: 'D-SOON-02', subject: 'written second, due first', status: 'dispatched', due_txt: '', due_utc: soonIso, action: '' }
+  ]
+}), 'duty-nearest');
+const nearRow = rowOf(near, '应办令') || { vd: '' };
+chk('nearest-due: names the earliest date, not the first row',
+  nearRow.vd.indexOf(stampOf(soonIso)) >= 0 && nearRow.vd.indexOf(stampOf(laterIso)) < 0, nearRow.vd);
+chk('nearest-due: still a clean (green) row when nothing is late', nearRow.ok === true, nearRow.vd);
+
+// An unparseable due time cannot be ranked - it must not be shown as "soon",
+// and if it is the only dated row the parenthetical disappears entirely.
+const unparseable = runPanelHtml(withDuty(realHtml, {
+  exists: true, path_rel: 'x', url: '', as_of_utc: '2026-11-01T00:00:00Z',
+  scanned: 90, matched: 1, open: 1, late: 0, receipts_exists: true, receipts_count: 1,
+  rows: [{ id: 'D-BAD-03', subject: 'broken time', status: 'dispatched', due_txt: 'not-a-date', due_utc: 'not-a-date', action: '' }]
+}), 'duty-unparseable');
+const badRow = rowOf(unparseable, '应办令') || { vd: '' };
+chk('nearest-due: an unrankable time is not shown as the nearest',
+  badRow.vd.indexOf('最近到期') < 0 && badRow.ok === true, badRow.vd);
+
 console.log('\nRESULT: pass=' + pass + ' fail=' + fail);
 process.exit(fail > 0 ? 2 : 0);

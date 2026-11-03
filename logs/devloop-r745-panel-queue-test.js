@@ -328,5 +328,39 @@ chk('split.not-hidden-by-late', e21.innerHTML.indexOf('在队构成') >= 0 &&
 const e22 = runPanel(withQueue(calm), 'calm5')('f-queue');
 chk('split.absent-without-data', e22.innerHTML.indexOf('在队构成') < 0, e22.innerHTML);
 
+// --- 14) the nearest upcoming deadline (r808) -----------------------------
+// The row said 「在队 N 件（带期限 K）」 and never WHEN, so a quiet day read as
+// 「没事」 even when the nearest deadline was tomorrow. Same reading the duty
+// card already prints, here in muted text only: an un-passed deadline is a
+// fact, not a violation, so it never borrows the red chip that late rows earn.
+const nextSoon = Object.assign({}, splitOnly, {
+  dated: 3, next_due: '2026-11-16', next_days_left: 12, next_id: '121',
+  next_items: [{ id: '121', file: 'main.md', due: '2026-11-16', days_left: 12 }]
+});
+const e23 = runPanel(withQueue(nextSoon), 'nextsoon')('f-queue');
+chk('next.names-date-and-id', e23.innerHTML.indexOf('最近到期 2026-11-16（#121，12 天后）') >= 0, e23.innerHTML);
+// Not a red chip: the segment lives in a muted span, and no warn class is
+// added by it (the green 「无逾期」 chip of this branch is the only tag here).
+chk('next.stays-muted-not-warn', e23.innerHTML.indexOf('class="muted"> · 最近到期 ') >= 0 &&
+  e23.innerHTML.indexOf('tag warn') < 0, e23.innerHTML);
+
+const nextToday = Object.assign({}, nextSoon, {
+  next_due: '2026-11-01', next_days_left: 0, next_id: '2'
+});
+const e24 = runPanel(withQueue(nextToday), 'nexttoday')('f-queue');
+chk('next.due-today-says-today', e24.innerHTML.indexOf('（#2，今天）') >= 0, e24.innerHTML);
+chk('next.due-today-not-zero-days', e24.innerHTML.indexOf('0 天后') < 0, e24.innerHTML);
+
+const noNext = Object.assign({}, splitOnly, { next_due: '2026-11-16', next_days_left: -1 });
+const e25 = runPanel(withQueue(noNext), 'nonext')('f-queue');
+chk('next.unmeasured-prints-nothing', e25.innerHTML.indexOf('最近到期') < 0, e25.innerHTML);
+
+const lateAndNext = Object.assign({}, splitLate, {
+  next_due: '2026-11-16', next_days_left: 12, next_id: '121'
+});
+const e26 = runPanel(withQueue(lateAndNext), 'nextlate')('f-queue');
+chk('next.coexists-with-late-chip', e26.innerHTML.indexOf('逾期 1 件') >= 0 &&
+  e26.innerHTML.indexOf('最近到期 2026-11-16') >= 0, e26.innerHTML);
+
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 if (fail > 0) process.exit(1);

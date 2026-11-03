@@ -42,6 +42,12 @@
 #      parameter, so a typo'd `-QueueDir` used to read as an empty queue. The
 #      builder's spelling must bind, and any other spelling must self-report
 #      "no path" (dir_rel='<unresolved>' + note) instead of a silent zero.
+#   O) the open count split by queue (r806): `open` sums three queues whose rows
+#      mean different things, so the parts are printed and must add up.
+#   R) upcoming deadlines (r808): `dated` said how many rows carry a deadline,
+#      never when. The nearest un-passed deadline is named (due today = 0 days
+#      left), ordered nearest first, and a passed or unreadable date never
+#      appears in it.
 # ASCII-only law: fixtures are ASCII; the live CJK rows are only counted.
 
 $ErrorActionPreference = 'Stop'
@@ -672,6 +678,83 @@ $liveSplitSum = 0
 foreach ($it in @($C.by_file)) { if ([int]$it.open -gt 0) { $liveSplitSum += [int]$it.open } }
 Check 'O: live split adds up to the live total' ($liveSplitSum -eq [int]$C.open)
 Check 'O: live split names every queue file' (@($C.by_file).Count -eq @(Get-ChildItem -LiteralPath $qdirLive -Filter '*.md' -File).Count)
+
+# --- R) upcoming deadlines (r808) -------------------------------------------
+# `dated` counted HOW MANY rows carry a deadline but never WHEN, so the queue
+# card said "202 in queue (3 dated)" and a reader could not tell whether the
+# nearest one is tomorrow or next month - the same blind spot the duty card had
+# before it started naming its nearest due date. The new reading mirrors the
+# late list: the nearest deadline that has NOT passed (due today = 0 days left).
+$qdirR = Join-Path $sandbox 'queueR'
+New-Item -ItemType Directory -Path $qdirR -Force | Out-Null
+$rowR = @"
+# fixture queue: upcoming deadlines
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | three days out | p | due=2026-11-04 |
+| 2 | due today | p | due=2026-11-01 |
+| 3 | already late | p | due=2026-10-25 |
+| 4 | unreadable date | p | due=2026-13-45 |
+| 5 | ten days out | p | due=2026-11-11 |
+| 6 | ~~closed work~~ | p | due=2026-11-02 |
+"@
+Write-TextFile (Join-Path $qdirR 'queue-r1.md') $rowR
+$qdirR2 = Join-Path $sandbox 'queueR2'
+New-Item -ItemType Directory -Path $qdirR2 -Force | Out-Null
+$rowR2 = @"
+# fixture queue: nothing ahead
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 1 | already late | p | due=2026-10-25 |
+"@
+Write-TextFile (Join-Path $qdirR2 'queue-r2.md') $rowR2
+
+$R = Get-QueueDue -Dir $qdirR -Today $today
+$R2 = Get-QueueDue -Dir $qdirR2 -Today $today
+$rIds = (@($R.next_items | ForEach-Object { [string]$_.id }) -join ',')
+$rDays = (@($R.next_items | ForEach-Object { [int]$_.days_left }) -join ',')
+
+Check 'R: the nearest deadline is the one due today' ($R.next_due -eq '2026-11-01' -and [int]$R.next_days_left -eq 0 -and [string]$R.next_id -eq '2')
+Check 'R: upcoming deadlines are ordered nearest first' ($rIds -eq '2,1,5')
+Check 'R: days_left counts forward, not backward' ($rDays -eq '0,3,10')
+Check 'R: a passed deadline stays in the late list, never ahead' ($rIds -notmatch '3' -and [int]$R.late -eq 1)
+Check 'R: an unreadable date is in neither list' ($rIds -notmatch '4' -and @($R.items | Where-Object { $_.id -eq '4' }).Count -eq 0)
+Check 'R: a struck row with a future date declares nothing' ($rIds -notmatch '6')
+Check 'R: dated still counts every marker it counted before' ($R.dated -eq 4)
+
+Check 'R: a queue with only passed deadlines ships no next at all' ([string]::IsNullOrEmpty([string]$R2.next_due) -and [int]$R2.next_days_left -eq -1 -and @($R2.next_items).Count -eq 0)
+Check 'R: an absent directory ships no next either' ([string]::IsNullOrEmpty([string]$B.next_due))
+
+# The builder reads the REAL clock (it takes no -Today on purpose: the page must
+# never carry a pinned date). So the builder fixture has to compute its deadline
+# from today instead of hard-coding one - a fixed date here would pass today and
+# fail in two weeks (the r787 "test must not be a calendar bomb" lesson).
+$qdirR3 = Join-Path $sandbox 'queueR3'
+New-Item -ItemType Directory -Path $qdirR3 -Force | Out-Null
+$plus5 = (Get-Date).Date.AddDays(5).ToString('yyyy-MM-dd')
+$plus20 = (Get-Date).Date.AddDays(20).ToString('yyyy-MM-dd')
+$rowR3 = @"
+# fixture queue: deadlines relative to the real clock
+
+| # | task | ptr | note |
+|---|---|---|---|
+| 7 | five days out | p | due=$plus5 |
+| 8 | twenty days out | p | due=$plus20 |
+"@
+Write-TextFile (Join-Path $qdirR3 'queue-r3.md') $rowR3
+$outR = Join-Path $sandbox 'panel-r.html'
+$logR = (& powershell -NoProfile -ExecutionPolicy Bypass -File $builder `
+        -ProofRoot $repoDir -QueueDir $qdirR3 `
+        -OutPath $outR -HistoryPath (Join-Path $sandbox 'hist-r.jsonl')) -join "`n"
+$htmlR = ''
+if (Test-Path -LiteralPath $outR) { $htmlR = [IO.File]::ReadAllText($outR) }
+# 4 or 5 days left: the only drift is a run that straddles midnight, and that
+# must not turn into a red either way.
+Check 'R: builder ships the nearest deadline as machine text' ($logR -match ('qdue_next=' + [regex]::Escape($plus5) + '/(4|5)d/#7'))
+Check 'R: the nearest deadline reaches the page data' ($htmlR.Contains('next_days_left'))
+Check 'R: an unreadable queue says qdue_next=missing, not none' ($logE -match 'qdue_next=missing')
 
 if (Test-Path -LiteralPath $sandbox) { Remove-Item -LiteralPath $sandbox -Recurse -Force }
 

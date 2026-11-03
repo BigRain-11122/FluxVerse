@@ -87,6 +87,16 @@
 #    element, without one it is the last. A missing trailing `|` is still a
 #    malformed row, so it is reported as bad with reason `row` (token
 #    `missing-trailing-pipe`) - visible on the panel, never a silent read.
+#  - UPCOMING DEADLINES (r808). `dated` says HOW MANY rows carry a deadline but
+#    never WHEN, so on a quiet day the card read "no overdue - 202 in queue
+#    (3 dated)" and nobody could tell whether the nearest one is tomorrow or
+#    next month. The duty card on the same page already names its nearest due
+#    date; the queue card now gets the same reading: `next_due` / `next_id` /
+#    `next_file` / `next_days_left` = the nearest deadline that is NOT yet late
+#    (due today counts, days_left = 0), plus `next_items` in that order.
+#    A deadline that already passed lives in `items` (late), never here; a row
+#    whose date does not parse stays out of both - unknown is not "soon".
+#    This is a reading, not a verdict: the page prints it muted, never red.
 # Read-only, fail-soft: a missing/empty directory ships exists=false and the
 # page says so instead of printing a comfortable zero.
 # ASCII-only (PS 5.1 GBK law): the CJK rows live in the UTF-8 queue files.
@@ -214,6 +224,10 @@ function Get-QueueDue
         late     = 0
         max_days = 0
         max_id   = ''
+        next_due = ''
+        next_id  = ''
+        next_file = ''
+        next_days_left = -1
         bad      = 0
         code     = 0
         long     = 0
@@ -224,6 +238,7 @@ function Get-QueueDue
         dupe_rows = 0
         as_of    = $Today.Date.ToString('yyyy-MM-dd')
         items    = @()
+        next_items = @()
         bad_items = @()
         code_items = @()
         long_items = @()
@@ -260,6 +275,7 @@ function Get-QueueDue
     $r.exists = $true
 
     $items = New-Object System.Collections.ArrayList
+    $upcomingItems = New-Object System.Collections.ArrayList
     $badItems = New-Object System.Collections.ArrayList
     $codeItems = New-Object System.Collections.ArrayList
     $longItems = New-Object System.Collections.ArrayList
@@ -420,7 +436,18 @@ function Get-QueueDue
             $dated++
 
             $days = [int]([math]::Floor(($Today.Date - $due.Date).TotalDays))
-            if ($days -le 0) { continue }
+            if ($days -le 0) {
+                # Not late yet - but a deadline nobody can see coming is a
+                # deadline nobody plans for (r808). Same row facts, opposite
+                # direction: due today is days_left 0, not "no deadline".
+                $null = $upcomingItems.Add([ordered]@{
+                    id        = $idTxt
+                    file      = $f.Name
+                    due       = $due.ToString('yyyy-MM-dd')
+                    days_left = [int](-$days)
+                })
+                continue
+            }
             $null = $items.Add([ordered]@{
                 id   = $idTxt
                 file = $f.Name
@@ -490,6 +517,21 @@ function Get-QueueDue
     if ($codeItems.Count -gt 0) { $r.code_items = @($codeItems) }
     if ($items.Count -gt 0) {
         $r.items = @($items | Sort-Object -Property @{ Expression = { $_.days } } -Descending)
+    }
+    # Nearest upcoming deadline first; ties broken by file then numeric id so
+    # two rebuilds from the same tree produce the same page bytes (r744).
+    if ($upcomingItems.Count -gt 0) {
+        $upSorted = @($upcomingItems | Sort-Object -Property @(
+            @{ Expression = { [int]$_.days_left }; Descending = $false },
+            @{ Expression = { [string]$_.file }; Descending = $false },
+            @{ Expression = { [int]$_.id }; Descending = $false }
+        ))
+        $r.next_items = $upSorted
+        $n0 = $upSorted[0]
+        $r.next_due = [string]$n0.due
+        $r.next_id = [string]$n0.id
+        $r.next_file = [string]$n0.file
+        $r.next_days_left = [int]$n0.days_left
     }
     return $r
 }

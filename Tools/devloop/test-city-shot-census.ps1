@@ -76,15 +76,28 @@ Check 'half page passes shape'    ($half.shape_ok)
 Check 'half page not kept'        (-not $half.keep)
 
 # ---------- b) real verify.ps1 wiring ----------
+# main#139: this suite drives the whole gate as a child. Without the nested
+# marker the gate spawns every ps-suites family underneath it, so a cold run
+# measured 176 s (the families' cold start, paid twice) and, worse, putting this
+# suite in a family would recurse into that family. The marker makes the gate
+# print `skipped (nested sandbox run)` for 2h..2j and costs ~2.6 s. Restored to
+# whatever it was before, so the parent's own marker still survives (r790).
 $env:FLUXVERSE_SHOT_DIR = $shots
 $env:FLUXVERSE_SHOT_CACHE = (Join-Path $sandbox 'cache\shot-census.json')
+$prevChild = $env:FLUXVERSE_PS_SUITES_CHILD
+$env:FLUXVERSE_PS_SUITES_CHILD = '1'
 try {
     $log = (& powershell -NoProfile -ExecutionPolicy Bypass -File $verify) -join "`n"
 } finally {
+    if ($null -eq $prevChild) { Remove-Item Env:\FLUXVERSE_PS_SUITES_CHILD -ErrorAction SilentlyContinue }
+    else { $env:FLUXVERSE_PS_SUITES_CHILD = $prevChild }
     Remove-Item Env:\FLUXVERSE_SHOT_DIR -ErrorAction SilentlyContinue
     Remove-Item Env:\FLUXVERSE_SHOT_CACHE -ErrorAction SilentlyContinue
 }
 Check 'verify emitted census line' ($log -match 'city-shot-census:')
+# The marker must actually reach the child gate: every family line says skipped.
+# Without this, the 176 s cold run could come back silently.
+Check 'child gate skips every family' (@($log -split "`n" | Where-Object { $_ -match 'skipped \(nested sandbox run\)' }).Count -ge 5)
 # unregistered counts only images the shape gate would let through: the half
 # page (1000x1800). The 390-wide phone strip is already excluded by shape, so
 # naming it would be noise.

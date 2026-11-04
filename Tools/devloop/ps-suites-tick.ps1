@@ -87,7 +87,7 @@ function Get-PsSuitesTickDefaults {
     # site-verdict.ps1 must not buy a write-side run, and the ~51 s
     # gate-of-the-gate sandbox must not ride along with the eight light verify
     # suites (main#99: together they measured 121.6 s = 68% of the 180 s cap).
-    param([ValidateSet('write','write2','write3','verify','verify2')][string]$Family = 'write')
+    param([ValidateSet('write','write2','write3','write4','write5','verify','verify2')][string]$Family = 'write')
     if ($Family -eq 'write2') {
         # main#117: the seven-suite write family measured 32.0 s against a 45 s
         # cap - past the 2/3 budget line, so every tick printed a WARN. Timed
@@ -157,6 +157,44 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\simple-param-census.ps1',
             'Tools\devloop\rebuild-panel-fixtures.ps1',
             'Tools\devloop\resident-verdict.ps1',
+            'Tools\devloop\fixtures\*\*'
+        )
+    }
+    if ($Family -eq 'write4') {
+        # r832 (main#139): the census found five sandboxes that no family
+        # spawned - written, never run, the main#86/#88/#120 shape. Timed one
+        # at a time: test-city-duty 20.1 s, test-city-shot-shape 2.2 s,
+        # test-panel-bare-artifact 5.3 s, test-city-shot-census 7.9 s,
+        # test-archive-logs 2.6 s. All five in one family measured 38.2 s, past
+        # the 30 s line (2/3 of the 45 s cap), and the first split put 28.6 s
+        # here - 1.4 s of headroom is how main#133 started. So: the one heavy
+        # suite keeps its own half, and the cheap ones share the other.
+        return @(
+            'Tools\devloop\test-city-duty.ps1',
+            'Tools\devloop\test-city-shot-shape.ps1',
+            'Tools\devloop\build-city-panel.ps1',
+            'Tools\devloop\city-panel-template.html',
+            'Tools\devloop\city-shot-shape.ps1',
+            'Tools\devloop\run-ps-suites.ps1',
+            'Tools\devloop\fixtures\*\*'
+        )
+    }
+    if ($Family -eq 'write5') {
+        # r832 (main#139): the remaining three exempt suites, 5.3 + 7.9 + 2.6 s.
+        # test-city-shot-census measured 176 s on a cold run before this round -
+        # not because the suite is slow but because it drove the whole gate as a
+        # child and the gate spawned every family underneath it. It now carries
+        # FLUXVERSE_PS_SUITES_CHILD=1 for that child call, which is also why it
+        # can sit in a family without recursing.
+        return @(
+            'Tools\devloop\test-city-shot-census.ps1',
+            'Tools\devloop\test-archive-logs.ps1',
+            'Tools\devloop\test-panel-bare-artifact.ps1',
+            'Tools\devloop\build-city-panel.ps1',
+            'Tools\devloop\city-shot-shape.ps1',
+            'Tools\devloop\archive-logs.ps1',
+            'Tools\perceptor\verify.ps1',
+            'Tools\devloop\run-ps-suites.ps1',
             'Tools\devloop\fixtures\*\*'
         )
     }
@@ -398,11 +436,13 @@ function Write-PsSuitesTicket {
 }
 
 function Get-PsSuitesFamilyTicketName {
-    param([ValidateSet('write','write2','write3','verify','verify2')][string]$Family = 'write')
+    param([ValidateSet('write','write2','write3','write4','write5','verify','verify2')][string]$Family = 'write')
     if ($Family -eq 'verify2') { return 'logs\.ps-suites-verify2-last.json' }
     if ($Family -eq 'verify') { return 'logs\.ps-suites-verify-last.json' }
     if ($Family -eq 'write2') { return 'logs\.ps-suites-write2-last.json' }
     if ($Family -eq 'write3') { return 'logs\.ps-suites-write3-last.json' }
+    if ($Family -eq 'write4') { return 'logs\.ps-suites-write4-last.json' }
+    if ($Family -eq 'write5') { return 'logs\.ps-suites-write5-last.json' }
     return 'logs\.ps-suites-last.json'
 }
 
@@ -474,7 +514,7 @@ function Get-PsSuitesFamilyTimeout {
     # (80.5 s -> 161 -> 165 s, headroom 84.5 s). It stays under the light
     # family's 180 s (one sandbox must not get more rope than eight) and inside
     # the rule that no family cap may exceed 1/3 of the 600 s tick.
-    param([ValidateSet('write','write2','write3','verify','verify2')][string]$Family = 'write')
+    param([ValidateSet('write','write2','write3','write4','write5','verify','verify2')][string]$Family = 'write')
     if ($Family -eq 'verify') { return 180 }
     if ($Family -eq 'verify2') { return 165 }
     # main#117: both write-side halves keep the 45 s cap. Measured 11.6 s
@@ -694,7 +734,7 @@ function Test-PsSuitesCountShort {
 function Invoke-PsSuitesTick {
     param(
         [Parameter(Mandatory=$true)][string]$RepoDir,
-        [ValidateSet('write','write2','write3','verify','verify2')][string]$Family = 'write',
+        [ValidateSet('write','write2','write3','write4','write5','verify','verify2')][string]$Family = 'write',
         [string]$TicketPath = '',
         [string[]]$Paths = @(),
         [string]$RunnerPath = '',
@@ -736,6 +776,11 @@ function Invoke-PsSuitesTick {
     # main#133: the tooling half names its own three suites for the same reason -
     # the runner's default list has no idea which half asked.
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write3') { $ExtraArgs = @('-Suites', 'Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-simple-param-census.ps1,Tools\devloop\test-rebuild-panel-fixtures-bad.ps1,Tools\devloop\test-verify-residents.ps1,Tools\devloop\test-suite-registry-census.ps1,Tools\devloop\test-panel-url.ps1') }
+    # r832 (main#139): both new halves pass an explicit list. Without it the
+    # runner falls back to its own nine-suite default and the "split" would pay
+    # the full list under a new name (the r779 lesson).
+    if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write4') { $ExtraArgs = @('-Suites', 'Tools\devloop\test-city-duty.ps1,Tools\devloop\test-city-shot-shape.ps1') }
+    if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write5') { $ExtraArgs = @('-Suites', 'Tools\devloop\test-city-shot-census.ps1,Tools\devloop\test-archive-logs.ps1,Tools\devloop\test-panel-bare-artifact.ps1') }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify') {
         $lightSuites = @(Get-PsSuitesTickDefaults -Family 'verify' | Where-Object { $_ -match 'test-[^\\]+\.ps1$' })
         $ExtraArgs = @('-Suites', ($lightSuites -join ','))

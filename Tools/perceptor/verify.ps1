@@ -631,14 +631,22 @@ $psWrite2Ms = 0
 # rotation, bare-parameter census, panel fixture generator) now ride write3.
 $psWrite3Ran = $false
 $psWrite3Ms = 0
+# r832 (main#139): two more write-side halves, so the five sandboxes that no
+# family spawned get a turn (city duty + shot shape / shot census + archive +
+# bare artifact). Same one-turn-per-tick rule.
+$psWrite4Ran = $false
+$psWrite4Ms = 0
+$psWrite5Ran = $false
+$psWrite5Ms = 0
 $psVerifyRan = $false
 $psVerifyMs = 0
 
-function Write-PsSuitesVerdict {
+function Get-PsSuitesVerdictLines {
+  # Same judgement as Write-PsSuitesVerdict, but RETURNED so a caller that
+  # assigns the result can print it (r832).
   param([string]$Label, $Res, [string]$Rerun)
   if ($null -eq $Res) {
-    Write-Output ('VERIFY WARN: ' + $Label + ': ps-suites-tick.ps1 threw - sandboxes not measured this tick')
-    return
+    return @('VERIFY WARN: ' + $Label + ': ps-suites-tick.ps1 threw - sandboxes not measured this tick')
   }
   $line = Format-PsSuitesLine $Res
   $line = $line -replace '^ps-suites:', ($Label + ':')
@@ -647,23 +655,83 @@ function Write-PsSuitesVerdict {
     # say so, and say what to do about it, before the first timeout says it.
     if ($Res.budget_over -eq $true) {
       $capNs = Get-PsSuitesFamilyTimeout -Family ([string]$Res.family)
-      Write-Output ('VERIFY WARN: ' + $line + ' - family baseline over 2/3 of the ' + $capNs + 's cap; split the family or run it every other tick')
-    } else {
-      Write-Output ('VERIFY HEALTH: ' + $line)
+      return @('VERIFY WARN: ' + $line + ' - family baseline over 2/3 of the ' + $capNs + 's cap; split the family or run it every other tick')
     }
+    return @('VERIFY HEALTH: ' + $line)
   } elseif ($Res.status -eq 'timeout') {
-    Write-Output ('VERIFY WARN: ' + $line + ' - ' + $Res.note + '; re-run: ' + $Rerun)
+    return @('VERIFY WARN: ' + $line + ' - ' + $Res.note + '; re-run: ' + $Rerun)
   } elseif ($Res.status -eq 'missing' -or $Res.status -eq 'unreadable' -or $Res.status -eq 'gap') {
-    Write-Output ('VERIFY WARN: ' + $line + ' - ' + $Res.note)
-  } else {
-    Write-Output ('VERIFY WARN: ' + $line + ' - sandbox red; re-run: ' + $Rerun)
+    return @('VERIFY WARN: ' + $line + ' - ' + $Res.note)
   }
+  return @('VERIFY WARN: ' + $line + ' - sandbox red; re-run: ' + $Rerun)
+}
+
+function Write-PsSuitesVerdict {
+  param([string]$Label, $Res, [string]$Rerun)
+  foreach ($l in @(Get-PsSuitesVerdictLines -Label $Label -Res $Res -Rerun $Rerun)) { Write-Output $l }
+}
+
+function Invoke-PsSuitesFamilyTurn {
+  # r832 (main#139): one family's turn, factored out so that adding a family
+  # does not mean copying forty lines of deferral logic. Same contract as the
+  # hand-written 2h2/2h3 blocks: ask -CheckOnly first, run when the fingerprint
+  # moved (or when a cached ticket wants re-checking), and defer when another
+  # family already really ran this tick. The env knobs are read through
+  # [Environment] so the name can be built from the family string.
+  param(
+    [Parameter(Mandatory=$true)][string]$Family,
+    [Parameter(Mandatory=$true)][string]$Label,
+    [Parameter(Mandatory=$true)][string]$Rerun,
+    [Parameter(Mandatory=$true)][string]$OffEnv,
+    [Parameter(Mandatory=$true)][string]$WarnNote,
+    [bool]$AnotherRan = $false,
+    [string]$AnotherWhy = ''
+  )
+  # Every message is RETURNED, never written: the caller assigns the result, and
+  # in PowerShell a function's Write-Output would be captured into that variable
+  # instead of reaching the log (this is how the first draft printed nothing).
+  $msgs = @()
+  if ([Environment]::GetEnvironmentVariable($OffEnv) -eq 'off') {
+    $msgs += ('VERIFY HEALTH: ' + $Label + ': disabled by ' + $OffEnv + '=off')
+    return @{ ran = $false; ms = 0; lines = $msgs }
+  }
+  $upper = $Family.ToUpperInvariant()
+  $argsHash = @{ RepoDir = $repoRoot; Family = $Family }
+  $runnerEnv = [Environment]::GetEnvironmentVariable('FLUXVERSE_PS_SUITES_' + $upper + '_RUNNER')
+  if ($runnerEnv) { $argsHash['RunnerPath'] = $runnerEnv }
+  $ticketEnv = [Environment]::GetEnvironmentVariable('FLUXVERSE_PS_SUITES_' + $upper + '_TICKET')
+  if ($ticketEnv) { $argsHash['TicketPath'] = $ticketEnv }
+  $toEnv = [Environment]::GetEnvironmentVariable('FLUXVERSE_PS_SUITES_' + $upper + '_TIMEOUT')
+  if ($toEnv) {
+    $to = 0
+    if ([int]::TryParse($toEnv, [ref]$to) -and $to -gt 0) { $argsHash['TimeoutSec'] = $to }
+  }
+  if ([Environment]::GetEnvironmentVariable('FLUXVERSE_PS_SUITES_' + $upper + '_FORCE') -eq '1') { $argsHash['Force'] = $true }
+  $chk = $null
+  try { $chk = Invoke-PsSuitesTick @argsHash -CheckOnly } catch { $chk = $null }
+  if ($null -eq $chk) {
+    $msgs += ('VERIFY WARN: ' + $Label + ': ps-suites-tick.ps1 threw - ' + $WarnNote)
+    return @{ ran = $false; ms = 0; lines = $msgs }
+  }
+  if ((-not $chk.needs_run) -or (-not $AnotherRan)) {
+    $res = $null
+    try { $res = Invoke-PsSuitesTick @argsHash } catch { $res = $null }
+    $msgs += @(Get-PsSuitesVerdictLines -Label $Label -Res $res -Rerun $Rerun)
+    if ($null -ne $res -and $res.ran) { return @{ ran = $true; ms = [int]$res.ms; lines = $msgs } }
+    return @{ ran = $false; ms = 0; lines = $msgs }
+  }
+  $line = 'VERIFY HEALTH: ' + $Label + ': deferred (' + $AnotherWhy + ' this tick) sha=' + $chk.sha + ' req=' + [int]$chk.req_suites
+  if ([int]$chk.base_ms -gt 0) { $line = $line + ' base=' + [int]$chk.base_ms + 'ms' }
+  $msgs += $line
+  return @{ ran = $false; ms = 0; lines = $msgs }
 }
 
 if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
   Write-Output 'VERIFY HEALTH: ps-suites: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-write2: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-write3: skipped (nested sandbox run)'
+  Write-Output 'VERIFY HEALTH: ps-suites-write4: skipped (nested sandbox run)'
+  Write-Output 'VERIFY HEALTH: ps-suites-write5: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-verify: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-verify2: skipped (nested sandbox run)'
 } else {
@@ -672,6 +740,8 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
     Write-Output 'VERIFY WARN: ps-suites: ps-suites-tick.ps1 missing - write-side sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-write2: ps-suites-tick.ps1 missing - face-side sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-write3: ps-suites-tick.ps1 missing - tooling-side sandboxes not run this tick'
+    Write-Output 'VERIFY WARN: ps-suites-write4: ps-suites-tick.ps1 missing - city-duty/shape sandboxes not run this tick'
+    Write-Output 'VERIFY WARN: ps-suites-write5: ps-suites-tick.ps1 missing - census/archive sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-verify: ps-suites-tick.ps1 missing - verify-side sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-verify2: ps-suites-tick.ps1 missing - heavy verify sandbox not run this tick'
   } else {
@@ -776,6 +846,38 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
         }
       }
 
+      # ---- 2h4/2h5. the sandboxes no family spawned (main#139, r832) ----
+      # The registry census found five written-but-never-run suites. Timed one
+      # at a time: city-duty 20.1 s, shot-shape 2.2 s, panel-bare-artifact
+      # 5.3 s, shot-census 7.9 s, archive-logs 2.6 s. All five in one family
+      # = 38.2 s, past the 30 s line; splitting 3+2 put 28.6 s on one half,
+      # which is exactly how main#133 began. So the heavy one keeps its own
+      # half (write4) and the three cheap ones share write5.
+      # Why-sentence for the deferral line, same shape the hand-written blocks use.
+      $why4 = ''
+      $why5 = ''
+      if ($psWriteRan) { $why4 = 'write-side ran ' + $psWriteMs + 'ms' }
+      elseif ($psWrite2Ran) { $why4 = 'face-side ran ' + $psWrite2Ms + 'ms' }
+      elseif ($psWrite3Ran) { $why4 = 'tooling-side ran ' + $psWrite3Ms + 'ms' }
+      $why5 = $why4
+
+      $w4Turn = Invoke-PsSuitesFamilyTurn -Family 'write4' -Label 'ps-suites-write4' `
+        -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-city-duty.ps1,Tools\devloop\test-city-shot-shape.ps1' `
+        -OffEnv 'FLUXVERSE_PS_SUITES_WRITE4' -WarnNote 'city-duty/shape sandboxes not measured this tick' `
+        -AnotherRan ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran) -AnotherWhy $why4
+      $psWrite4Ran = [bool]$w4Turn.ran
+      $psWrite4Ms = [int]$w4Turn.ms
+      foreach ($l in @($w4Turn.lines)) { Write-Output $l }
+      if ($psWrite4Ran) { $why5 = 'city/shape half ran ' + $psWrite4Ms + 'ms' }
+
+      $w5Turn = Invoke-PsSuitesFamilyTurn -Family 'write5' -Label 'ps-suites-write5' `
+        -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-city-shot-census.ps1,Tools\devloop\test-archive-logs.ps1,Tools\devloop\test-panel-bare-artifact.ps1' `
+        -OffEnv 'FLUXVERSE_PS_SUITES_WRITE5' -WarnNote 'census/archive sandboxes not measured this tick' `
+        -AnotherRan ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran -or $psWrite4Ran) -AnotherWhy $why5
+      $psWrite5Ran = [bool]$w5Turn.ran
+      $psWrite5Ms = [int]$w5Turn.ms
+      foreach ($l in @($w5Turn.lines)) { Write-Output $l }
+
       # ---- 2i. verify-side family (same rules, own ticket, one heavy run per tick) ----
       if ($env:FLUXVERSE_PS_SUITES_VERIFY -eq 'off') {
         Write-Output 'VERIFY HEALTH: ps-suites-verify: disabled by FLUXVERSE_PS_SUITES_VERIFY=off'
@@ -797,11 +899,13 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
           try { $vRes = Invoke-PsSuitesTick @vArgs } catch { $vRes = $null }
           if ($null -ne $vRes -and $vRes.ran) { $psVerifyRan = $true; $psVerifyMs = [int]$vRes.ms }
           Write-PsSuitesVerdict -Label 'ps-suites-verify' -Res $vRes -Rerun 'Tools\devloop\run-ps-suites.ps1 -Verify'
-        } elseif ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran) {
+        } elseif ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran -or $psWrite4Ran -or $psWrite5Ran) {
           $why = 'write-side ran ' + $psWriteMs + 'ms'
           if (-not $psWriteRan) {
             if ($psWrite2Ran) { $why = 'face-side ran ' + $psWrite2Ms + 'ms' }
-            else { $why = 'tooling-side ran ' + $psWrite3Ms + 'ms' }
+            elseif ($psWrite3Ran) { $why = 'tooling-side ran ' + $psWrite3Ms + 'ms' }
+            elseif ($psWrite4Ran) { $why = 'city/shape half ran ' + $psWrite4Ms + 'ms' }
+            else { $why = 'census/archive half ran ' + $psWrite5Ms + 'ms' }
           }
           $deferLine = 'VERIFY HEALTH: ps-suites-verify: deferred (' + $why + ' this tick) sha=' + $vChk.sha + ' req=' + [int]$vChk.req_suites
           if ([int]$vChk.base_ms -gt 0) { $deferLine = $deferLine + ' base=' + [int]$vChk.base_ms + 'ms' }
@@ -837,11 +941,13 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
           $v2Res = $null
           try { $v2Res = Invoke-PsSuitesTick @v2Args } catch { $v2Res = $null }
           Write-PsSuitesVerdict -Label 'ps-suites-verify2' -Res $v2Res -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-verify-ps-suites.ps1'
-        } elseif ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran -or $psVerifyRan) {
+        } elseif ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran -or $psWrite4Ran -or $psWrite5Ran -or $psVerifyRan) {
           $why = 'write-side ran ' + $psWriteMs + 'ms'
           if (-not $psWriteRan) {
             if ($psWrite2Ran) { $why = 'face-side ran ' + $psWrite2Ms + 'ms' }
             elseif ($psWrite3Ran) { $why = 'tooling-side ran ' + $psWrite3Ms + 'ms' }
+            elseif ($psWrite4Ran) { $why = 'city/shape half ran ' + $psWrite4Ms + 'ms' }
+            elseif ($psWrite5Ran) { $why = 'census/archive half ran ' + $psWrite5Ms + 'ms' }
             else { $why = 'verify-side ran ' + $psVerifyMs + 'ms' }
           }
           $deferLine2 = 'VERIFY HEALTH: ps-suites-verify2: deferred (' + $why + ' this tick) sha=' + $v2Chk.sha + ' req=' + [int]$v2Chk.req_suites

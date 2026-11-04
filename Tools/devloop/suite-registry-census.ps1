@@ -40,13 +40,15 @@ param(
 # Exemptions: suites that are known not to be spawned yet, each with the date by
 # which that has to change and the cost that makes registering them a family
 # shape decision instead of a one-line edit.
-$script:SuiteRegistryExempt = @(
-    [pscustomobject]@{ Name = 'test-archive-logs.ps1'; Due = '2026-11-19'; Ms = 2559; Note = 'log archive tool sandbox; overlaps test-log-archive-duty.ps1, keep-or-retire undecided' },
-    [pscustomobject]@{ Name = 'test-city-duty.ps1'; Due = '2026-11-19'; Ms = 19726; Note = 'panel duty card (42 assertions); heavy, needs a 4th write family' },
-    [pscustomobject]@{ Name = 'test-city-shot-census.ps1'; Due = '2026-11-19'; Ms = 25608; Note = 'shot census shape gate (44 assertions); heavy, needs a 4th write family' },
-    [pscustomobject]@{ Name = 'test-city-shot-shape.ps1'; Due = '2026-11-19'; Ms = 2190; Note = 'shot shape helpers (11 assertions); light, fits a family as is' },
-    [pscustomobject]@{ Name = 'test-panel-bare-artifact.ps1'; Due = '2026-11-19'; Ms = 4999; Note = 'pre-r746 bare-name check; test-write-status-face-bare.ps1 may already supersede it' }
-)
+# r832 (main#139): the five exemptions this list carried are gone - they were
+# registered into write4 (city-duty 20.1 s + shot-shape 2.2 s) and write5
+# (shot-census 7.9 s + archive-logs 2.6 s + panel-bare-artifact 5.3 s). Both
+# retired-or-kept calls are answered in the family comments: test-panel-bare
+# was NOT superseded (r746 guards the writer's inputs, this one guards the
+# builder's resolver), and test-archive-logs keeps the -DryRun and missing-dir
+# cases test-log-archive-duty does not cover. Empty list = every suite on disk
+# is spawned by some family, and the census now proves it every tick.
+$script:SuiteRegistryExempt = @()
 
 function Get-SuiteRegistryReading
 {

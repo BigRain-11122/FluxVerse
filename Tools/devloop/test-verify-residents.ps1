@@ -182,6 +182,48 @@ Write-Output '--- h) red-scan token ---'
 Check 'verdict lines carry 3+ samples'  ($allLines.Count -ge 3)
 Check 'no verdict line says FAIL'       (@($allLines | Where-Object { $_ -match 'FAIL' }).Count -eq 0)
 
+# ---------- i) city roster (r835) ----------
+# The page names the residents (r835). Both halves of that read are proven here:
+# the card title carries the display name, world-state carries the last word
+# time and the routine place. Same rules as the voice face: a missing age is
+# null (= never spoke, never 0), a missing cards dir is exists=false (= not a
+# zero-resident city), and a heading without a separator yields name=''.
+Write-Output '--- i) city roster ---'
+$tmpR = Join-Path ([System.IO.Path]::GetTempPath()) ('fv-roster-' + $PID)
+if (Test-Path $tmpR) { Remove-Item $tmpR -Recurse -Force }
+New-Item -ItemType Directory -Path $tmpR | Out-Null
+try {
+    $sep = [string][char]0xFF1A
+    $cards = Join-Path $tmpR 'cards'
+    New-Item -ItemType Directory -Path $cards | Out-Null
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText((Join-Path $cards 'A-1.md'), ('# CARD (A-1)' + $sep + 'Alpha One' + "`n" + '- job: test' + "`n"), $utf8)
+    [System.IO.File]::WriteAllText((Join-Path $cards 'B-2.md'), ('# CARD (B-2)' + "`n"), $utf8)
+    $now = [DateTimeOffset]::Parse('2026-01-01T12:00:00Z')
+    $state = ConvertFrom-Json '{"residents":{"A-1":{"ts":"2026-01-01T11:00:00Z","location":"night-shift"},"B-2":{"ts":"2025-12-31T12:00:00Z","location":"made-up"}}}'
+    $ro = Get-ResidentRoster -CardsDir $cards -State $state -NowUtc $now
+    Check 'roster read ok'               ($ro.exists -eq $true)
+    Check 'roster counts every card'     ([int]$ro.n -eq 2)
+    Check 'roster counts talked rows'    ([int]$ro.talked_n -eq 2)
+    $rowA = @($ro.rows | Where-Object { $_.id -eq 'A-1' })[0]
+    $rowB = @($ro.rows | Where-Object { $_.id -eq 'B-2' })[0]
+    Check 'card title carries the name'  ($rowA.name -eq 'Alpha One')
+    Check 'no separator -> empty name'   ($rowB.name -eq '')
+    Check 'age measured from ts'         ([math]::Abs([double]$rowA.age_h - 1.0) -lt 0.01)
+    Check 'routine place carried'        ($rowA.place -eq 'night-shift')
+    Check 'unknown place carried as-is'  ($rowB.place -eq 'made-up')
+    $noState = Get-ResidentRoster -CardsDir $cards -State (ConvertFrom-Json '{}') -NowUtc $now
+    Check 'no state -> age null not 0'   ($null -eq (@($noState.rows)[0].age_h) -and [int]$noState.talked_n -eq 0)
+    $missDir = Get-ResidentRoster -CardsDir (Join-Path $tmpR 'nope') -State $state -NowUtc $now
+    Check 'missing cards dir is not zero' ($missDir.exists -eq $false -and [int]$missDir.n -eq 0)
+    $futureState = ConvertFrom-Json '{"residents":{"A-1":{"ts":"2026-01-02T00:00:00Z","location":"ji-dui-su-she"}}}'
+    $roF = Get-ResidentRoster -CardsDir $cards -State $futureState -NowUtc $now
+    Check 'future ts -> age null'        ($null -eq (@($roF.rows | Where-Object { $_.id -eq 'A-1' })[0].age_h))
+    Check 'roster row carries no speech' ($null -eq ($rowA.PSObject.Properties['line']))
+} finally {
+    if (Test-Path $tmpR) { Remove-Item $tmpR -Recurse -Force -ErrorAction SilentlyContinue }
+}
+
 Write-Output ''
 Write-Output ('RESULT: pass=' + $pass + ' fail=' + $fail)
 if ($fail -gt 0) { exit 1 }

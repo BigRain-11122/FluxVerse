@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-04T21:46:18Z",
-    "current_activity":  "r834（本轮·FASTPATH 七查全静·队列取活 main#140）：同一个目录的五种写法各自算出五把缓存钥匙——`./Tools/devloop/simple-param-census.ps1` 的 `Get-SimpleParamFingerprint` 把调用方原样输入的路径串放进了键（`Get-Item(...).FullName` 救不了，它原样交回输入写法，连尾分隔符与 `..` 段都保留），于是 D 写法写完缓存、C 写法读回来是 stale，一棵没动过的树被读数说成「变了」。改法＝新纯函数 `Get-SimpleParamRootIdentity` 让指纹改记目录对象自身的创建戳，读不到身份就拒绝写键。",
-    "artifact":  "实物＝`./Tools/devloop/simple-param-census.ps1`（指纹改吃目录创建戳 + 缓存侧新增 no-identity 一支）＋`./Tools/devloop/test-simple-param-census.ps1`（新 p 组 8 条：四种写法同指纹、身份令牌不含路径串、一种写法写的缓存另一种能命中、清单相同但目录不同必须不同钥匙、跨目录不许命中、缺档无钥匙）50→58/58；活锚五种写法同一指纹 `fp=d226815be033` 且 `cached=True`（改前 5 把钥匙、两次 stale）；重建面板 `PANEL OK … sparam_cached=1 sparam_note=none`。",
-    "artifact_utc":  "2026-11-04T21:46:18Z",
-    "milestone":  "48 小时内：① `./state/queue/main.md` #52 空载复跑候 0 个 Tuanjie 进程窗（判据 fps_avg 不低于 486.8 且 p95 不超过 2.58ms）② `./state/queue/main.md` #121 候委员会（due 2026-11-16）③ `./docs/global-benchmarks.md` 两件待证取全文核销（due 2026-11-19）",
+    "updated_utc":  "2026-11-04T22:25:34Z",
+    "current_activity":  "r836 收口（FULL-ROUND·triggers=c2-tree/c4-tech/c6-dec）。上一窗 r835 的住客名单已在盘但没提交，本轮先验后收：面板重建 `PANEL ROSTER: n=5 talked=5 ids=BG-A,BG-B,BG-C,bm-a,bm-b`、写侧 9 套 447 断言、verify 侧 11 套 735 断言、面板 41 套全跑。同时修掉一条真红：实况「当前活」一行原先只写目录 `./docs/residents/`，破 r739「三行各携至少一个真实路径」契约（r691 两红），已改由 `./Tools/devloop/resident-verdict.ps1` 指路。",
+    "artifact":  "实物＝`./world-public/city-panel.html`（现实锚卡新增住客名单，5 行全部带真实年龄）＋`./Tools/devloop/resident-verdict.ps1`（新 `Get-ResidentCardTitle`／`Get-ResidentRoster`，名册与语音读数共用同一事实源）＋`./Tools/devloop/build-city-panel.ps1`（roster 占位符注入与 `PANEL ROSTER:` 机器行）＋`./Tools/devloop/city-panel-template.html`（`renderRoster()` 与地点词表）＋新沙盒 `./logs/devloop-r835-panel-roster-test.js`（29/29）。本轮验证：`./Tools/devloop/test-verify-residents.ps1` 65/65、写侧 447 断言 `parity=ok`、verify 侧 735 断言 `failing=0 timeouts=0`、面板 41 套、`./logs/devloop-r702-compile-check.js` `COMPILE OK`。",
+    "artifact_utc":  "2026-11-04T22:25:34Z",
+    "milestone":  "48 小时内：候 `./state/queue/main.md` #52 空载复跑（0 个 Tuanjie 进程窗，判据 fps_avg≥486.8 且 p95≤2.58ms）；`./state/queue/main.md` #121 候委员会（due 2026-11-16）；`./state/queue/tech.md` #18 基准面 C·待证取全文（due 2026-11-19）与 #19 qa 轮转引用分成常驻/台账两类（due 2026-11-19）。",
     "milestone_eta_utc":  "2026-11-07T04:00:00Z"
 }

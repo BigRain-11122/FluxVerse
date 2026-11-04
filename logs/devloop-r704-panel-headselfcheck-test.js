@@ -160,6 +160,15 @@ const GREEN = {
     model: 'qwen3:4b-instruct', model_present: true, model_known: true,
     roster_n: 4, speakers_n: 5, silent_n: 0,
     last_say_utc: T1, last_say_age_h: 0.1
+  },
+  // r835: the reality-anchor card also names the residents; calm = two rows,
+  // both with a last word inside the day.
+  ROSTER: {
+    exists: true, n: 2, talked_n: 2,
+    rows: [
+      { id: 'bm-a', name: 'Ace', place: 'night-shift', age_h: 0.2, talked: true },
+      { id: 'BG-A', name: 'Bee', place: 'game-city-studio', age_h: 3, talked: true }
+    ]
   }
 };
 

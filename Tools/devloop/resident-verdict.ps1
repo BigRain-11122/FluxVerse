@@ -115,3 +115,75 @@ function Get-ResidentVoiceVerdict {
   }
   return @{ verdict = 'health'; line = $line; reason = '' }
 }
+
+# --- city roster: WHO lives here (r835) ------------------------------------
+# The page has printed "N residents" since r829 and never named one of them.
+# A count answers "is the city alive"; a name answers "who lives in it", and
+# the second question is the product. Sources are the two that already exist:
+#   - docs\residents\<id>.md   -> the card's title line carries the display name
+#   - world-state.json.residents.<id> -> last word time + routine location
+# Speech itself stays internal (the public whitelist carries no lines), so a
+# roster row only carries id / name / place / age.
+#
+# Judgement rules (same family as the voice face):
+#   - a missing age is `null` = never spoke, never 0 (= "spoke just now");
+#   - a missing cards dir is exists=$false, not "a city with no residents";
+#   - a card whose title has no separator keeps name='' rather than the id,
+#     so the page can show the id alone instead of inventing a name.
+
+function Get-ResidentCardTitle {
+  # '# <label>(<id>)<separator><name>' -> '<name>'.
+  # The separator in the data files is a full-width colon; code-point
+  # construction keeps this script body ASCII (encoding law, PS5.1 GBK).
+  param([string]$Heading)
+  $h = [string]$Heading
+  if ([string]::IsNullOrWhiteSpace($h)) { return '' }
+  $cut = -1
+  foreach ($sep in @([string][char]0xFF1A, ':')) {
+    $idx = $h.LastIndexOf($sep)
+    if ($idx -gt $cut) { $cut = $idx }
+  }
+  if ($cut -lt 0) { return '' }
+  return $h.Substring($cut + 1).Trim()
+}
+
+function Get-ResidentRoster {
+  param([string]$CardsDir, $State, [datetimeoffset]$NowUtc)
+  $rows = New-Object System.Collections.ArrayList
+  $exists = $false
+  if (-not [string]::IsNullOrEmpty($CardsDir) -and (Test-Path -LiteralPath $CardsDir)) {
+    $exists = $true
+    $cards = @(Get-ChildItem -LiteralPath $CardsDir -Filter '*.md' -File -ErrorAction SilentlyContinue | Sort-Object Name)
+    foreach ($cf in $cards) {
+      $rid = [string]$cf.BaseName
+      $name = ''
+      try {
+        foreach ($ln in @(Get-Content -LiteralPath $cf.FullName -Encoding UTF8 -TotalCount 20)) {
+          if ($ln -match '^\s*#\s') { $name = Get-ResidentCardTitle -Heading $ln; break }
+        }
+      } catch { $name = '' }
+      $ts = ''
+      $place = ''
+      if ($null -ne $State -and $null -ne $State.PSObject.Properties['residents']) {
+        $all = $State.residents
+        if ($null -ne $all -and $null -ne $all.PSObject.Properties[$rid]) {
+          $entry = $all.$rid
+          if ($null -ne $entry) {
+            if ($null -ne $entry.PSObject.Properties['ts']) { $ts = [string]$entry.ts }
+            if ($null -ne $entry.PSObject.Properties['location']) { $place = [string]$entry.location }
+          }
+        }
+      }
+      $ageH = $null
+      $dto = [DateTimeOffset]::MinValue
+      if (-not [string]::IsNullOrWhiteSpace($ts) -and [DateTimeOffset]::TryParse($ts, [ref]$dto)) {
+        $diff = ($NowUtc.UtcDateTime - $dto.UtcDateTime).TotalHours
+        if ($diff -ge 0) { $ageH = $diff }
+      }
+      $rows.Add(@{ id = $rid; name = $name; place = $place; age_h = $ageH; talked = ($null -ne $ageH) }) | Out-Null
+    }
+  }
+  $talked = 0
+  foreach ($r in $rows) { if ($r.talked) { $talked = $talked + 1 } }
+  return @{ exists = $exists; rows = $rows; n = $rows.Count; talked_n = $talked }
+}

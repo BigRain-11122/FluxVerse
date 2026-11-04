@@ -43,6 +43,7 @@
   .num small{font-size:12px;color:var(--dim);font-weight:400;margin-left:4px}
   .rowline{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
   .rowline:last-child{border-bottom:0}
+  .roster .rowline{border-bottom:0;padding:3px 0}
   .dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;background:var(--accent)}
   .zone-gaming{background:#4cc9f0}.zone-quant{background:#ffb703}.zone-media{background:#f72585}
   .zone-governance{background:#9aa7b8}
@@ -161,6 +162,7 @@
       <div class="rowline"><span class="tag">北京时间</span><span id="r-clock">—</span></div>
       <div class="rowline"><span class="tag">季节</span><span id="r-season">—</span></div>
       <div class="rowline"><span class="tag">居民</span><span id="r-residents">—</span></div>
+      <div class="roster" id="r-roster">—</div>
     </div>
   </div>
 
@@ -506,6 +508,64 @@ function residentsText(m) {
   txt += ' · 最近 ' + residentsAgeText(m.last_say_age_h);
   if (m.last_error) txt += ' · ' + String(m.last_error);
   return txt;
+}
+
+// r835: WHO lives here. The line above counts residents; this block names them
+// (docs/residents/<id>.md title + that resident's last word time and routine
+// place from the internal world state). Speech stays internal by design, so a
+// row carries id / name / place / age only. Absent readings print 未记录 -
+// never "0 名居民", and a resident with no recorded word prints 未开口,
+// never "0 分钟前".
+const ROSTER = __ROSTER_JSON__;
+const ROSTER_PLACES = {
+  'ji-dui-su-she': '宿舍',
+  'night-shift': '夜班',
+  'quant-computing-tower': '量化塔',
+  'game-city-studio': '游戏城工作室'
+};
+function rosterPlaceText(p) {
+  const k = String(p == null ? '' : p);
+  if (!k) return '';
+  return ROSTER_PLACES[k] || k;   // unknown slug prints as-is; the page never invents a place
+}
+function rosterAgeText(h) {
+  if (h === null || h === undefined || h === '' || isNaN(h) || Number(h) < 0) return '未开口';
+  const m = Math.round(Number(h) * 60);
+  if (m < 60) return m + ' 分钟前';
+  if (m < 1440) return Math.floor(m / 60) + ' 小时前';
+  return Math.floor(m / 1440) + ' 天前';
+}
+function rosterRows(r) {
+  if (!r || r.exists !== true) return [];
+  if (Array.isArray(r.rows)) return r.rows;
+  return r.rows ? [r.rows] : [];
+}
+function renderRoster() {
+  const box = $('r-roster');
+  if (!box) return;
+  if (!ROSTER || ROSTER.exists !== true) { box.textContent = '未记录（居民卡目录不可读）'; return; }
+  const rows = rosterRows(ROSTER);
+  if (!rows.length) { box.textContent = '未记录（名册为空）'; return; }
+  box.innerHTML = '';
+  for (const r of rows) {
+    const row = document.createElement('div');
+    row.className = 'rowline';
+    const id = (r && r.id) ? String(r.id) : '';
+    const name = (r && r.name) ? String(r.name) : '';
+    const nm = document.createElement('span');
+    nm.className = 'nm';
+    nm.textContent = name || id || '?';
+    const v = document.createElement('span');
+    const parts = [];
+    if (id && name && id !== name) parts.push(id);
+    const pl = rosterPlaceText(r ? r.place : '');
+    if (pl) parts.push(pl);
+    parts.push(rosterAgeText(r ? r.age_h : null));
+    v.textContent = parts.join(' · ');
+    row.appendChild(nm);
+    row.appendChild(v);
+    box.appendChild(row);
+  }
 }
 
 function ago(iso){
@@ -1414,6 +1474,8 @@ function artTitle(it){
   // r828 (main#138): three states for the model (installed / not / unknown),
   // and "never spoke" is distinct from "spoke 0 minutes ago".
   $('r-residents').textContent = residentsText(RESIDENTS);
+  // r835: the names behind that count.
+  renderRoster();
 
   const zones = snap.zones || [];
   $('zones').innerHTML = zones.length ? zones.map(z =>

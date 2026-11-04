@@ -231,21 +231,58 @@ function Get-SimpleParamSha12
     } catch { return '' }
 }
 
+function Get-SimpleParamRootIdentity
+{
+    # Spelling-independent identity of the DIRECTORY OBJECT, not of the string
+    # the caller happened to type (queue main#140, r834).
+    #
+    # Measured r834 on this box: `...\Tools\devloop`, the same path with a
+    # trailing separator, with `.`, with `..`, and the same directory reached
+    # through its second drive letter all addressed one directory object - yet
+    # the raw string went into the fingerprint, so every spelling produced its
+    # own key and the cache said `stale` for a tree that had not moved. Note
+    # `Get-Item(...).FullName` does NOT help: it hands back the input spelling
+    # (it kept the trailing separator and the `..` segment verbatim).
+    #
+    # What IS shared by all spellings of one object and not shared by two
+    # different directories: the creation stamp of the directory itself. It is
+    # a property of the filesystem object, so it cannot be produced by copying
+    # the file LIST - which is exactly what the r834 criterion asked for (do
+    # not just delete the root: two distinct directories whose *.ps1 listing
+    # happens to match must not share an answer).
+    #
+    # Returns '' when no identity can be read; the caller then refuses to cache
+    # (recompute every time) rather than key on something unproven.
+    param([string]$Root)
+    if ([string]::IsNullOrWhiteSpace($Root)) { return '' }
+    if (-not (Test-Path -LiteralPath $Root)) { return '' }
+    try {
+        $it = Get-Item -LiteralPath $Root -Force -ErrorAction Stop
+        if ($null -eq $it) { return '' }
+        $ticks = [long]$it.CreationTimeUtc.Ticks
+        if ($ticks -le 0) { return '' }
+        return ('dir|' + $ticks)
+    } catch { return '' }
+}
+
 function Get-SimpleParamFingerprint
 {
     # What has to be identical for a cached answer to still be true: the file
-    # list (name|length|mtime), the root itself, AND this module - the parse
-    # rules live here, so editing a rule must invalidate every cached count
-    # (same law as the city-shot census, r769).
+    # list (name|length|mtime), the directory identity (spelling-independent,
+    # r834), AND this module - the parse rules live here, so editing a rule
+    # must invalidate every cached count (same law as the city-shot census,
+    # r769).
     param([string]$Root, [string]$ModulePath = '')
     if ([string]::IsNullOrWhiteSpace($Root)) { return '' }
     if (-not (Test-Path -LiteralPath $Root)) { return '' }
+    $identity = Get-SimpleParamRootIdentity -Root $Root
+    if ([string]::IsNullOrWhiteSpace($identity)) { return '' }
     $fileList = @()
     try {
         $fileList = @(Get-ChildItem -LiteralPath $Root -File -Filter '*.ps1' -ErrorAction Stop | Sort-Object -Property Name)
     } catch { return '' }
     $parts = New-Object System.Collections.ArrayList
-    [void]$parts.Add($Root)
+    [void]$parts.Add($identity)
     foreach ($f in $fileList) {
         [void]$parts.Add($f.Name + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
     }
@@ -269,8 +306,10 @@ function Get-SimpleParamCensusCached
     # `reason` says WHY the cache did not answer, so the page can tell "the key
     # never matches" from "the cache was never written" - the same vocabulary as
     # the city-shot census (r770): '' (hit or genuine first run) / stale /
-    # unreadable / unwritable / no-cache-path / no-dir. Never a zero standing in
-    # for "not measured": a missing root reports `<missing>` plus no-dir.
+    # unreadable / unwritable / no-cache-path / no-dir / no-identity (r834: the
+    # directory has no spelling-independent identity, so nothing is cached).
+    # Never a zero standing in for "not measured": a missing root reports
+    # `<missing>` plus no-dir.
     param(
         [string]$Root,
         [string]$RepoDir = '',
@@ -305,7 +344,12 @@ function Get-SimpleParamCensusCached
     if ([string]::IsNullOrWhiteSpace($CachePath)) {
         $census = Get-SimpleParamCensus -Root $Root -RepoDir $RepoDir
         $res.reason = 'no-cache-path'
-    } elseif ($fp -and (Test-Path -LiteralPath $CachePath)) {
+    } elseif ([string]::IsNullOrWhiteSpace($fp)) {
+        # A cache path was offered but the directory has no identity we trust:
+        # answer fresh and NEVER write a key we could not re-derive (r834).
+        $census = Get-SimpleParamCensus -Root $Root -RepoDir $RepoDir
+        $res.reason = 'no-identity'
+    } elseif (Test-Path -LiteralPath $CachePath) {
         try {
             $cache = Get-Content -LiteralPath $CachePath -Raw -Encoding UTF8 | ConvertFrom-Json
             if ($cache -and $cache.PSObject.Properties['fingerprint'] -and ([string]$cache.fingerprint -eq $fp)) {

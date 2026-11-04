@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-04T21:18:04Z",
-    "current_activity":  "r833（本轮·FASTPATH 七查全静·自领面板实况面上的真事）：上一轮「隔离 N 条 / 降级 N 次」会读到自己上一轮的回显——末轮读数段按整块扫「quarantined=」，把上一轮写在块尾的 `panel: PANEL OK … quarantined=N` 也算作本轮扫描结果，于是退避轮（根本没扫）继承了前一轮的数字（实测前一轮 3 就报 3、前一轮 0 就报一个没量过的 0），而紧邻注释写着「两数保持 -1」。改法＝把该段锚定到 scan 自己的摘要行/WARN 行（与同日累计账同一形状），改写 `./Tools/devloop/build-city-panel.ps1` 一处两行。",
-    "artifact":  "实物＝`./Tools/devloop/build-city-panel.ps1`（末轮读数锚定 scan 行）＋`./logs/devloop-r815-panel-tickprobe-test.js`（新增 F/G/H 三组共 13 条：退避轮不继承 3、不继承降级 2、真扫轮仍报自己的 3/2、两条正则锚定不变式）41/41；活跑 `PANEL OK … probes=26 probes_bad=0 quarantined=0 degraded=0`；复现夹具改前 `quarantined=3`、改后 `quarantined=-1`。",
-    "artifact_utc":  "2026-11-04T21:18:04Z",
+    "updated_utc":  "2026-11-04T21:46:18Z",
+    "current_activity":  "r834（本轮·FASTPATH 七查全静·队列取活 main#140）：同一个目录的五种写法各自算出五把缓存钥匙——`./Tools/devloop/simple-param-census.ps1` 的 `Get-SimpleParamFingerprint` 把调用方原样输入的路径串放进了键（`Get-Item(...).FullName` 救不了，它原样交回输入写法，连尾分隔符与 `..` 段都保留），于是 D 写法写完缓存、C 写法读回来是 stale，一棵没动过的树被读数说成「变了」。改法＝新纯函数 `Get-SimpleParamRootIdentity` 让指纹改记目录对象自身的创建戳，读不到身份就拒绝写键。",
+    "artifact":  "实物＝`./Tools/devloop/simple-param-census.ps1`（指纹改吃目录创建戳 + 缓存侧新增 no-identity 一支）＋`./Tools/devloop/test-simple-param-census.ps1`（新 p 组 8 条：四种写法同指纹、身份令牌不含路径串、一种写法写的缓存另一种能命中、清单相同但目录不同必须不同钥匙、跨目录不许命中、缺档无钥匙）50→58/58；活锚五种写法同一指纹 `fp=d226815be033` 且 `cached=True`（改前 5 把钥匙、两次 stale）；重建面板 `PANEL OK … sparam_cached=1 sparam_note=none`。",
+    "artifact_utc":  "2026-11-04T21:46:18Z",
     "milestone":  "48 小时内：① `./state/queue/main.md` #52 空载复跑候 0 个 Tuanjie 进程窗（判据 fps_avg 不低于 486.8 且 p95 不超过 2.58ms）② `./state/queue/main.md` #121 候委员会（due 2026-11-16）③ `./docs/global-benchmarks.md` 两件待证取全文核销（due 2026-11-19）",
     "milestone_eta_utc":  "2026-11-07T04:00:00Z"
 }

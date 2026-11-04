@@ -27,6 +27,10 @@
 #      source invalidates, a corrupt cache reads 'unreadable', a missing root
 #      reads 'no-dir', an unwritable cache keeps the answer - and no miss ever
 #      hands back a zero that looks measured
+#   p) root identity (r834, queue main#140): four spellings of ONE directory
+#      share one fingerprint and one cache entry; two genuinely different
+#      directories with byte-identical *.ps1 listings never share a key (that
+#      is the criterion that forbids "just drop the root from the hash")
 #
 # ASCII-only (no CJK typed here).
 
@@ -281,6 +285,67 @@ $blocker = New-Fixture 'blocker.bin' @('x')
 $badCache = Join-Path $blocker 'cache.json'
 $c7 = Get-SimpleParamCensusCached -Root $cDir -RepoDir $sandbox -CachePath $badCache -ModulePath $module
 Check 'o12 an unwritable cache keeps the answer and says so' ($c7.reason -eq 'unwritable' -and $c7.risky -eq $c3.risky) ('reason=' + [string]$c7.reason + ' risky=' + [string]$c7.risky)
+
+Write-Output '--- p) root identity: one object, one key; two objects, two keys ---'
+# r834 (queue main#140). The fingerprint used to add the RAW root string, so
+# every spelling of one directory minted its own key: the cache said 'stale'
+# for a tree that had not moved, which is the cache vouching "something changed"
+# when nothing did. The fix keys on the directory object's own creation stamp.
+# These checks are the criterion: (1) spellings of one directory agree, (2) two
+# genuinely different directories never agree even when their *.ps1 listing is
+# byte-identical.
+$pA = Join-Path $sandbox 'proot-a'
+New-Item -ItemType Directory -Force -Path $pA | Out-Null
+$pLeaf = Split-Path -Leaf $pA
+$null = New-Fixture 'proot-a\p1.ps1' @(
+    'function Get-Bare3 {',
+    '    param([string]$FilePath)',
+    '    return [ordered]@{ ok = 0 }',
+    '}'
+)
+$spellings = @(
+    $pA,
+    ($pA + '\'),
+    (Join-Path $pA '.'),
+    (Join-Path $pA ('..\' + $pLeaf))
+)
+$fps = @()
+foreach ($sp in $spellings) { $fps += (Get-SimpleParamFingerprint -Root $sp -ModulePath $module) }
+$distinct = @($fps | Sort-Object -Unique)
+Check 'p1 four spellings of one directory share one fingerprint' ($distinct.Count -eq 1 -and $distinct[0] -ne '') ('fps=' + ($fps -join ','))
+$ident = Get-SimpleParamRootIdentity -Root ($pA + '\')
+Check 'p2 the identity token is not the path string' ($ident -ne '' -and $ident.StartsWith('dir|') -and $ident.IndexOf('proot-a', [System.StringComparison]::OrdinalIgnoreCase) -lt 0) $ident
+$pCache = Join-Path $sandbox 'spc-cache-identity.json'
+$s1 = Get-SimpleParamCensusCached -Root $pA -RepoDir $sandbox -CachePath $pCache -ModulePath $module
+$s2 = Get-SimpleParamCensusCached -Root (Join-Path $pA ('..\' + $pLeaf)) -RepoDir $sandbox -CachePath $pCache -ModulePath $module
+Check 'p3 a cache written under one spelling answers another spelling' ($s1.cached -eq $false -and $s1.wrote -eq $true -and $s2.cached -eq $true) ('run1=' + [string]$s1.cached + '/' + [string]$s1.reason + ' run2=' + [string]$s2.cached + '/' + [string]$s2.reason)
+Check 'p4 the answered spelling reports the same counts' ($s2.files -eq $s1.files -and $s2.risky -eq $s1.risky) ('files=' + [string]$s2.files + ' risky=' + [string]$s2.risky)
+
+# Two different directories, identical listing: same name, same length, same
+# mtime - only the directory object differs. A fingerprint that ignores the
+# directory identity (or keys on the raw string) would either cross-answer or,
+# in the raw-string version, differ for the wrong reason.
+$pB = Join-Path $sandbox 'proot-b'
+New-Item -ItemType Directory -Force -Path $pB | Out-Null
+$pSrc = Join-Path $pA 'p1.ps1'
+$pDst = Join-Path $pB 'p1.ps1'
+[System.IO.File]::WriteAllBytes($pDst, [System.IO.File]::ReadAllBytes($pSrc))
+$stamp = [datetime]::new(2026, 1, 2, 3, 4, 5, [System.DateTimeKind]::Utc)
+[System.IO.File]::SetLastWriteTimeUtc($pSrc, $stamp)
+[System.IO.File]::SetLastWriteTimeUtc($pDst, $stamp)
+[System.IO.Directory]::SetCreationTimeUtc($pA, $stamp.AddDays(-3))
+[System.IO.Directory]::SetCreationTimeUtc($pB, $stamp.AddDays(-2))
+$fpA = Get-SimpleParamFingerprint -Root $pA -ModulePath $module
+$fpB = Get-SimpleParamFingerprint -Root $pB -ModulePath $module
+$listA = @(Get-ChildItem -LiteralPath $pA -File -Filter '*.ps1' | ForEach-Object { $_.Name + '|' + $_.Length + '|' + $_.LastWriteTimeUtc.Ticks }) -join ';'
+$listB = @(Get-ChildItem -LiteralPath $pB -File -Filter '*.ps1' | ForEach-Object { $_.Name + '|' + $_.Length + '|' + $_.LastWriteTimeUtc.Ticks }) -join ';'
+Check 'p5 the two fixture listings really are identical' ($listA -eq $listB -and $listA -ne '') $listA
+Check 'p6 identical listings in different directories do not share a key' ($fpA -ne '' -and $fpB -ne '' -and $fpA -ne $fpB) ('a=' + $fpA + ' b=' + $fpB)
+$s3 = Get-SimpleParamCensusCached -Root $pB -RepoDir $sandbox -CachePath $pCache -ModulePath $module
+Check 'p7 and the cache is not answered across them' ($s3.cached -eq $false -and $s3.reason -eq 'stale') ('cached=' + [string]$s3.cached + ' reason=' + [string]$s3.reason)
+$noIdent = Get-SimpleParamRootIdentity -Root (Join-Path $sandbox 'nope')
+$noFp = Get-SimpleParamFingerprint -Root (Join-Path $sandbox 'nope') -ModulePath $module
+Check 'p8 a missing root has no identity and therefore no key' ($noIdent -eq '' -and $noFp -eq '') ('ident=' + $noIdent + ' fp=' + $noFp)
 
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 

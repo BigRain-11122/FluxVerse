@@ -251,7 +251,7 @@ const SERIES = __SERIES_JSON__;
 // TREND = the whole local cross-round log inside a 24h window (newest last).
 const TREND = __TREND_JSON__;
 // TICK = today's tick log probe ({exists,file,size,mtime_utc,age_min,scan_lines,
-// rounds,rounds_seen,skip_rounds,last_kind,probes,probes_bad,probes_all,
+// rounds,rounds_seen,skip_rounds,last_kind,last_gate,gate_rounds,gate_red_rounds,probes,probes_bad,probes_all,
 // probes_bad_all,probe_bad_rounds,probe_bad_first,probe_bad_last,quarantined,degraded,
 // quarantined_all,degraded_all,
 // read_ok}) - the panel is built BY that
@@ -268,6 +268,20 @@ function tickSkipText(tk) {
   if (typeof t.skip_rounds !== 'number' || typeof t.rounds_seen !== 'number') return '';
   if (t.rounds_seen <= 0 || t.skip_rounds <= 0) return '';
   return '今日退避 ' + t.skip_rounds + '/' + t.rounds_seen + ' 轮';
+}
+// Today's gate account (r823): r813 named the last round's disposition but folded
+// `gate: PASS` and `gate: FAIL` into the single token `gate`, so a round whose
+// verify failed read exactly like a healthy one - "the loop is running fine" and
+// "the loop is running and failing" were the same page. builder now keeps the
+// verdict (last_gate) and counts the red rounds in the same read pass; a
+// backed-off round has no verdict at all and counts as neither (unmeasured is not
+// green). Silence on a clean day and on older builds: never a fabricated 0
+// (r799/r810 precedent).
+function tickGateRedText(tk) {
+  const t = tk || {};
+  if (typeof t.gate_red_rounds !== 'number' || typeof t.gate_rounds !== 'number') return '';
+  if (t.gate_red_rounds <= 0) return '';
+  return '今日门失败 ' + t.gate_red_rounds + '/' + t.gate_rounds + ' 轮';
 }
 // What the last round's scan actually covered (r815): the row's "scan N 行" counts
 // LOG LINES, so a probe that crashed, degraded or got quarantined still leaves a
@@ -702,6 +716,19 @@ function artTitle(it){
       r2.style.marginLeft = '6px';
       r2.textContent = '上轮尚无门结论';
       $('f-tick').appendChild(r2);
+    } else if (tk.last_kind === 'gate' && tk.last_gate === 'red') {
+      // 上一轮的门是**失败**的（r823）：改前 `gate: PASS` 与 `gate: FAIL` 都落成
+      // last_kind='gate'，于是「门全绿」与「门失败」在页面上逐字相同。红标保留，
+      // 措辞只陈述日志里写着的事实（verify 非 0 退出），不解释原因、不猜影响面。
+      const gr = document.createElement('span');
+      gr.className = 'tag warn';
+      gr.style.marginLeft = '6px';
+      gr.textContent = '上轮门失败';
+      gr.title = '上一轮 tick 的 verify 门以非 0 退出（日志末行为 `gate: FAIL`）：该轮世界态未被提升，' +
+        '旧 world-state.json 保留；当日共 ' +
+        ((typeof tk.gate_rounds === 'number') ? tk.gate_rounds : '未记录') + ' 轮有门结论，其中 ' +
+        ((typeof tk.gate_red_rounds === 'number') ? tk.gate_red_rounds : '未记录') + ' 轮失败';
+      $('f-tick').appendChild(gr);
     }
     // 当日退避总量（queue main#134）：一行只说最后一轮时，两次连着的退避会被
     // 读成一次孤立事件。有计数才挂，读数不参与红绿；上轮就是退避时这一格与
@@ -715,6 +742,19 @@ function artTitle(it){
       sk.title = '当日日志里共有 ' + tk.rounds_seen + ' 轮，其中 ' + tk.skip_rounds +
         ' 轮在轮首退避（scan/verify 未跑）；按轮自己的起始标记切段计数';
       $('f-tick').appendChild(sk);
+    }
+    // 今日门失败总量（r823）：上面那格只说最后一轮——两次红轮连着的日子，会被
+    // 读成一次孤立事件（与 r814 治退避同型）。有计数才挂；轮首退避的轮没有门
+    // 结论，既不计绿也不计红，故分母是「产生过门结论的轮」。读数不参与红绿判定。
+    const gRedTxt = tickGateRedText(tk);
+    if (gRedTxt) {
+      const gRed = document.createElement('span');
+      gRed.className = 'tag warn';
+      gRed.style.marginLeft = '6px';
+      gRed.textContent = gRedTxt;
+      gRed.title = '当日日志里共 ' + tk.gate_rounds + ' 轮产生了门结论（`gate: PASS|FAIL`），其中 ' +
+        tk.gate_red_rounds + ' 轮以失败收场；轮首退避的轮没有门结论，既不计绿也不计红';
+      $('f-tick').appendChild(gRed);
     }
     // 上一轮扫描到底查了几件事（r815）：上面那格只说「scan 多少行」，那是日志
     // 行数——探针崩了、降级了、被隔离了，页面照样一字不差。这里补最后一轮自己的
@@ -1668,6 +1708,11 @@ function artTitle(it){
     // 当日总量（queue main#134）：只报最后一轮会把连续退避读成孤立事件。
     const skT = tickSkipText(tk);
     if (skT) tVd = tVd + ' · ' + skT;
+    // 门失败（r823）：上面那格只说最后一轮，这里把「今天几轮失败」同句补上；
+    // 两处读同一份 builder 读数，不可能各说各的。
+    if (tk.last_kind === 'gate' && tk.last_gate === 'red') tVd = tVd + ' · 上轮门失败';
+    const gRedT = tickGateRedText(tk);
+    if (gRedT) tVd = tVd + ' · ' + gRedT;
     // 逐针覆盖（r815）：scan 行数答不了「探针有没有坏/降级/被隔离」，同句补上；
     // 判据不随读数改（日志仍在写是真的，探针读数另说一件事）。
     const pT = tickProbeText(tk);

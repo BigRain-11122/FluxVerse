@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-04T23:01:59Z",
-    "current_activity":  "r837 收口（FASTPATH·七查全静·队列无可领件）。自领 CEO 页面上一处自相矛盾的读数：同一屏里「居民」行写「5 人说过 · 0 人从未开口」，住客名单却五个人全标「未开口」。根因是 `./Tools/perceptor/probes/residents.ps1` 的两条早退路径（无新事件／本轮无人可说话）交回空字典，而 `./Tools/perceptor/scan.ps1` 合并时整键替换，于是每轮安静期都把已发布的居民地图抹空。已抽出单一 `Get-ResidentSnapshot` 供三条返回路径共用。",
-    "artifact":  "实物＝`./world-public/city-panel.html`（住客名单恢复 5 行真实年龄，`PANEL ROSTER: n=5 talked=5` 与 `PANEL RESIDENTS: say=5 never=0` 首次对得上）＋`./Tools/perceptor/probes/residents.ps1`（新纯函数 `Get-ResidentSnapshot`，三条返回路径共用；两条早退不再交空字典）＋`./Tools/devloop/test-verify-residents.ps1`（新 j 组，65→76 断言全绿）。本轮验证：`./Tools/perceptor/scan.ps1` 与 `./Tools/perceptor/verify.ps1` 双绿 `VERIFY PASS`、面板 41 套 `failing=0`、`./logs/devloop-r702-compile-check.js` `COMPILE OK`、390 窄屏 `./qa/city-panel-narrow.png`（390x7442 offenders=0）、写侧 447 断言 `parity=ok`。",
-    "artifact_utc":  "2026-11-04T23:01:59Z",
-    "milestone":  "48 小时内：候 `./state/queue/main.md` #52 空载复跑（需 0 个 Tuanjie 进程窗，判据 fps_avg≥486.8 且 p95≤2.58ms）；`./state/queue/main.md` #121 候委员会（due 2026-11-16）；`./state/queue/tech.md` #18 基准面 C·待证取全文（due 2026-11-19）与 #19 qa 轮转引用分成常驻/台账两类（due 2026-11-19）；新债 `./state/queue/main.md` #141 名册的事件流回填支（due 2026-11-26）。",
+    "updated_utc":  "2026-11-04T23:18:59Z",
+    "current_activity":  "r838 收口（FULL-ROUND·c4-tech 传棒·队列取活 main#141）。治的是「游标丢了，整座城就变成没人说过话」：名册与居民读数本来每轮都只从 `./world/perceptor-state.txt` 的 cursor 重建，这份记忆一旦被轮转或丢失，五个人的名字还在、台词记录却清零，CEO 页面上变成「5 人从未开口」——而 `./world/world-events.jsonl` 与历史日档里明明躺着他们的 RESIDENT_SAY 行。修法＝探针新增 `Get-ResidentEventIndex`（新档优先、找到全员即停、上限 8 份），并把它同时交给名册与读数两半：只在 cursor 缺行时扫描，健康轮零成本；回填行标 src=events 且不编造作息地点，页面上写「事件流回填」。",
+    "artifact":  "实物＝`./Tools/perceptor/probes/residents.ps1`（新纯函数 `Get-ResidentEventIndex`／`Get-ResidentSnapshot` 增 EventIndex 与 src／`Get-ResidentVoiceMeta` 增 backfilled_n）＋`./Tools/devloop/resident-verdict.ps1`（读数行在有回填时带 backfilled=，名册行带 src）＋`./Tools/devloop/city-panel-template.html`（居民行与住客名单两处标「事件流回填」）＋`./world-public/city-panel.html`（重建产物）。只读实证：清空 cursor 后真事件流还原全部 5 名居民 `complete=True files_read=1 ms=86 backfilled=5`，健康轮读数与改前逐字相同。验证＝`./Tools/devloop/test-verify-residents.ps1` 76→105/105（k 组 29 条）、`./Tools/perceptor/scan.ps1`＋`./Tools/perceptor/verify.ps1` 双绿 `VERIFY PASS`。",
+    "artifact_utc":  "2026-11-04T23:18:59Z",
+    "milestone":  "48 小时内：候 `./state/queue/main.md` #52 空载复跑（需 0 个 Tuanjie 进程窗，判据 fps_avg≥486.8 且 p95≤2.58ms）；`./state/queue/main.md` #121 候委员会（due 2026-11-16）；`./state/queue/tech.md` #18 基准面 C·待证取全文（due 2026-11-19）与 #19 qa 轮转引用分常驻/台账两类（due 2026-11-19）。",
     "milestone_eta_utc":  "2026-11-07T04:00:00Z"
 }

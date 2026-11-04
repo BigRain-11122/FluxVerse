@@ -51,9 +51,69 @@ function Get-ResidentModelStatus {
   return @{ present = $hit; known = $true }
 }
 
+# --- event-stream backfill (main#141, r838) ---------------------------------
+# The roster is rebuilt every round from the perceptor cursor
+# (world\perceptor-state.txt). When that file is rotated or lost, every card
+# loses its `res:<id>:line` key and BOTH faces fall back to "never spoke" --
+# while world\world-events*.jsonl still holds their RESIDENT_SAY rows. That is
+# the same one-city-two-answers shape r830/r837 removed inside a single round,
+# just across a file boundary.
+# Bounded on purpose:
+#   - only called when at least one card has no cursor line, so a healthy quiet
+#     round pays nothing;
+#   - newest event files first, stop as soon as every card is covered;
+#   - a resident with no event row stays absent (never fabricated).
+function Get-ResidentEventIndex {
+  param([string]$WorldDir, [string[]]$ResidentIds, [int]$MaxFiles = 8)
+  $index = @{}
+  $want = @{}
+  foreach ($rid in @($ResidentIds)) { if ($rid) { $want[[string]$rid] = $true } }
+  if ($want.Count -eq 0 -or [string]::IsNullOrEmpty($WorldDir) -or -not (Test-Path -LiteralPath $WorldDir)) {
+    return @{ index = $index; files_read = 0; complete = ($want.Count -eq 0) }
+  }
+  $files = @()
+  $live = Join-Path $WorldDir 'world-events.jsonl'
+  if (Test-Path -LiteralPath $live) { $files += $live }
+  foreach ($f in @(Get-ChildItem -LiteralPath $WorldDir -Filter 'world-events-*.jsonl' -File -ErrorAction SilentlyContinue | Sort-Object Name -Descending)) {
+    if ($files.Count -ge $MaxFiles) { break }
+    $files += $f.FullName
+  }
+  $read = 0
+  foreach ($fp in $files) {
+    $read++
+    try {
+      foreach ($ln in @(Get-Content -LiteralPath $fp -Encoding UTF8)) {
+        if ([string]::IsNullOrEmpty($ln)) { continue }
+        # cheap pre-filter: most lines in a day file are not resident speech
+        if ($ln.IndexOf('RESIDENT_SAY') -lt 0) { continue }
+        try { $e = $ln | ConvertFrom-Json } catch { continue }
+        if ([string]$e.type -ne 'RESIDENT_SAY') { continue }
+        $rid = [string]$e.actor
+        if (-not $want.ContainsKey($rid)) { continue }
+        $ts = [string]$e.ts_utc
+        if ([string]::IsNullOrEmpty($ts)) { continue }
+        if ($index.ContainsKey($rid) -and [string]$index[$rid].ts -ge $ts) { continue }
+        $index[$rid] = @{ ts = $ts; line = [string]$e.summary }
+      }
+    } catch { }
+    $covered = $true
+    foreach ($rid in @($want.Keys)) { if (-not $index.ContainsKey($rid)) { $covered = $false; break } }
+    if ($covered) { break }
+  }
+  $complete = $true
+  foreach ($rid in @($want.Keys)) { if (-not $index.ContainsKey($rid)) { $complete = $false; break } }
+  return @{ index = $index; files_read = $read; complete = $complete }
+}
+
 function Get-ResidentVoiceMeta {
   # Readings only. `last_say_age_h` = $null means "never spoke / timestamp
   # unreadable", never 0.
+  # main#141 (r838): `EventIndex` is the event-stream backfill. It is consulted
+  # ONLY where the cursor has no stamp, so the two faces (roster rows and this
+  # reading) can never disagree about who spoke -- the failure r830/r837 fixed
+  # inside one round would otherwise reappear across a lost cursor file.
+  # `backfilled_n` counts the residents whose stamp came from the event stream;
+  # 0 means "the cursor answered everything" and is a real reading, not a guess.
   # r830: `silent_n` used to mix two different facts (never spoke + line older
   # than 24h) while `speakers_n` counted every resident that ever spoke, so
   # "say=5 silent=2" could exceed the card count and no reader could reconcile
@@ -65,16 +125,21 @@ function Get-ResidentVoiceMeta {
   # line that printed only the model count next to `say=` read as "4 residents
   # spoke 5 times" - impossible on its face. Both numbers are published under
   # names that cannot be confused: models_n vs residents_n.
-  param($Cursor, [string[]]$ResidentIds, [string]$Model, $ModelState, [int]$ModelN)
+  param($Cursor, [string[]]$ResidentIds, [string]$Model, $ModelState, [int]$ModelN, $EventIndex = $null)
   $nowUtc = (Get-Date).ToUniversalTime()
   $sayN = 0
   $lastUtc = ''
   $never = 0
   $stale = 0
+  $backfilled = 0
   foreach ($rid in @($ResidentIds)) {
     $k = 'res:' + $rid + ':ts'
-    if (-not $Cursor.ContainsKey($k)) { $never++; continue }
-    $t = [string]$Cursor[$k]
+    $t = ''
+    if ($Cursor.ContainsKey($k)) { $t = [string]$Cursor[$k] }
+    if ([string]::IsNullOrEmpty($t) -and $null -ne $EventIndex -and $EventIndex.ContainsKey($rid)) {
+      $t = [string]$EventIndex[$rid].ts
+      if (-not [string]::IsNullOrEmpty($t)) { $backfilled++ }
+    }
     if ([string]::IsNullOrEmpty($t)) { $never++; continue }
     $sayN++
     if ($t -gt $lastUtc) { $lastUtc = $t }
@@ -107,6 +172,7 @@ function Get-ResidentVoiceMeta {
     never_n        = $never
     stale_n        = $stale
     silent_n       = $silent
+    backfilled_n   = $backfilled
     last_say_utc   = $lastUtc
     last_say_age_h = $ageH
   }
@@ -126,21 +192,38 @@ function New-ResidentState {
 # from the SAME cursor, said say=5. One probe, two faces, opposite answers.
 # Now every return path carries the last known line/location per resident.
 function Get-ResidentSnapshot {
-  param($ctx, [string]$CardsDir)
+  # main#141 (r838): `EventIndex` is the same backfill the voice reading uses.
+  # A row built from it carries src='events' and NO routine place (the event
+  # line records where the resident works, not where it slept), so the page can
+  # say "rebuilt from the event stream" instead of silently claiming a place.
+  param($ctx, [string]$CardsDir, $EventIndex = $null)
   $residents = @{}
   if ([string]::IsNullOrEmpty($CardsDir) -or -not (Test-Path -LiteralPath $CardsDir)) { return $residents }
   foreach ($cf in (Get-ChildItem -LiteralPath $CardsDir -Filter *.md -File -ErrorAction SilentlyContinue | Sort-Object Name)) {
     $rid = $cf.BaseName
     $kLine = 'res:' + $rid + ':line'
+    $line = ''
+    $ts = ''
+    $src = ''
     if ($ctx.cursor.ContainsKey($kLine)) {
-      $kTs = 'res:' + $rid + ':ts'
-      $kLoc = 'res:' + $rid + ':loc'
+      $line = [string]$ctx.cursor[$kLine]
+      $ts = [string]$ctx.cursor['res:' + $rid + ':ts']
+      $src = 'cursor'
+    } elseif ($null -ne $EventIndex -and $EventIndex.ContainsKey($rid)) {
+      $line = [string]$EventIndex[$rid].line
+      $ts = [string]$EventIndex[$rid].ts
+      $src = 'events'
+    }
+    if ($src) {
       $locStr = ''
-      if ($ctx.cursor.ContainsKey($kLoc)) {
-        $locStr = [string]$ctx.cursor[$kLoc]
-        if ($locStr -eq 'ji-dui-su-she') { $locStr = 'sleep' } elseif ($locStr -eq 'night-shift') { $locStr = 'night-shift' } else { $locStr = 'work' }
+      if ($src -eq 'cursor') {
+        $kLoc = 'res:' + $rid + ':loc'
+        if ($ctx.cursor.ContainsKey($kLoc)) {
+          $locStr = [string]$ctx.cursor[$kLoc]
+          if ($locStr -eq 'ji-dui-su-she') { $locStr = 'sleep' } elseif ($locStr -eq 'night-shift') { $locStr = 'night-shift' } else { $locStr = 'work' }
+        }
       }
-      $residents[$rid] = @{ id = $rid; line = [string]$ctx.cursor[$kLine]; ts = [string]$ctx.cursor[$kTs]; location = $locStr }
+      $residents[$rid] = @{ id = $rid; line = $line; ts = $ts; location = $locStr; src = $src }
     }
   }
   return $residents
@@ -163,7 +246,20 @@ function Probe-residents {
     $roster = Get-ResidentModelRoster $ollamaBase
     $modelState = Get-ResidentModelStatus $residentModel $roster
     $cardIds = @(Get-ChildItem $cardsDir -Filter *.md | Sort-Object Name | ForEach-Object { $_.BaseName })
-    $voiceMeta = Get-ResidentVoiceMeta $ctx.cursor $cardIds $residentModel $modelState @($roster.names).Count
+    # main#141 (r838): the cursor is the primary memory; the event stream is the
+    # backup. Scan it only when at least one card has lost its cursor line, so a
+    # healthy round pays nothing and a lost cursor stops reading as "nobody ever
+    # spoke in this city".
+    $eventIndex = $null
+    $cursorGaps = 0
+    foreach ($rid in @($cardIds)) {
+      if (-not $ctx.cursor.ContainsKey('res:' + $rid + ':line')) { $cursorGaps++ }
+    }
+    if ($cursorGaps -gt 0) {
+      $evBackfill = Get-ResidentEventIndex $worldDir $cardIds
+      if (@($evBackfill.index.Keys).Count -gt 0) { $eventIndex = $evBackfill.index }
+    }
+    $voiceMeta = Get-ResidentVoiceMeta $ctx.cursor $cardIds $residentModel $modelState @($roster.names).Count $eventIndex
     $sayError = ''
 
     # --- gather real facts (read-only) ---
@@ -173,7 +269,7 @@ function Probe-residents {
       $all = @(Get-Content $evFile -Encoding UTF8 | ForEach-Object { [string]$_ } | Where-Object { $_.Trim() })
       if ($all.Count -gt 12) { $evLines = @($all | Select-Object -Last 12) } else { $evLines = $all }
     }
-    if ($evLines.Count -eq 0) { return (New-ResidentState (Get-ResidentSnapshot $ctx $cardsDir) $voiceMeta) }
+    if ($evLines.Count -eq 0) { return (New-ResidentState (Get-ResidentSnapshot $ctx $cardsDir $eventIndex) $voiceMeta) }
 
     # context: previous-round world-state (time / weather / fleet online states)
     $nowTxt = ''
@@ -226,7 +322,7 @@ function Probe-residents {
       }
       $eligible += $cf
     }
-    if ($eligible.Count -eq 0) { return (New-ResidentState (Get-ResidentSnapshot $ctx $cardsDir) $voiceMeta) }
+    if ($eligible.Count -eq 0) { return (New-ResidentState (Get-ResidentSnapshot $ctx $cardsDir $eventIndex) $voiceMeta) }
 
     # --- chat mode: every 4th speaking round, two residents talk (v2 pulled forward) ---
     $chatCount = 0
@@ -332,10 +428,10 @@ function Probe-residents {
     # --- state: all residents' latest lines + locations (from cursor memory) ---
     # r837: same builder as the early returns, so the quiet rounds and the
     # speaking rounds publish the identical shape.
-    $residents = Get-ResidentSnapshot $ctx $cardsDir
+    $residents = Get-ResidentSnapshot $ctx $cardsDir $eventIndex
     # Recompute the voice readings AFTER speaking: this round's lines move both
     # the speaker count and the last-say age.
-    $voiceMeta = Get-ResidentVoiceMeta $ctx.cursor $cardIds $residentModel $modelState @($roster.names).Count
+    $voiceMeta = Get-ResidentVoiceMeta $ctx.cursor $cardIds $residentModel $modelState @($roster.names).Count $eventIndex
     if ($sayError) { $voiceMeta['last_error'] = $sayError }
     return (New-ResidentState $residents $voiceMeta)
   } catch { return $null }

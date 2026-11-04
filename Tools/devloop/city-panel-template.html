@@ -505,6 +505,10 @@ function residentsText(m) {
   // key and omits both segments - never a fabricated 0.
   if (typeof m.never_n === 'number') txt += ' · ' + m.never_n + ' 人从未开口';
   if (typeof m.stale_n === 'number') txt += ' · ' + m.stale_n + ' 人超过一天未更新';
+  // r838 (main#141): the perceptor cursor can be rotated away; the event stream
+  // then answers instead. Say so instead of letting the numbers look like a
+  // fresh read - and a pre-r838 reading has no key, so no segment appears.
+  if (typeof m.backfilled_n === 'number' && m.backfilled_n > 0) txt += ' · ' + m.backfilled_n + ' 人读数由事件流回填';
   txt += ' · 最近 ' + residentsAgeText(m.last_say_age_h);
   if (m.last_error) txt += ' · ' + String(m.last_error);
   return txt;
@@ -560,6 +564,9 @@ function renderRoster() {
     if (id && name && id !== name) parts.push(id);
     const pl = rosterPlaceText(r ? r.place : '');
     if (pl) parts.push(pl);
+    // r838: this row's last word came from the event stream, not the cursor -
+    // no routine place was recorded there, so say which half answered.
+    if (r && r.src === 'events') parts.push('事件流回填');
     parts.push(rosterAgeText(r ? r.age_h : null));
     v.textContent = parts.join(' · ');
     row.appendChild(nm);

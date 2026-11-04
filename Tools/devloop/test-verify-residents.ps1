@@ -273,6 +273,114 @@ try {
     if (Test-Path $tmpS) { Remove-Item $tmpS -Recurse -Force -ErrorAction SilentlyContinue }
 }
 
+# ---------- k) event-stream backfill (main#141, r838) ----------
+# The roster is rebuilt from the perceptor cursor. Lose that file and both faces
+# used to answer "never spoke" while world\world-events*.jsonl still held the
+# RESIDENT_SAY rows. These cases prove the backup answers, that it is only
+# consulted when the cursor is missing an entry, and that a healthy round is
+# byte-for-byte what it was before.
+Write-Output '--- k) event-stream backfill ---'
+$tmpE = Join-Path ([System.IO.Path]::GetTempPath()) ('fv-evback-' + $PID)
+if (Test-Path $tmpE) { Remove-Item $tmpE -Recurse -Force }
+New-Item -ItemType Directory -Path $tmpE | Out-Null
+try {
+    $utf8e = New-Object System.Text.UTF8Encoding($false)
+    # today's live file: only E-1 spoke; yesterday's rotated file: E-2 spoke.
+    $evLive = Join-Path $tmpE 'world-events.jsonl'
+    $evOld = Join-Path $tmpE 'world-events-20260101.jsonl'
+    $lines1 = @(
+        '{"ts_utc":"2026-01-02T09:00:00Z","type":"CITY_WAKE","actor":"x","summary":"noise"}',
+        '{"ts_utc":"2026-01-02T10:00:00Z","type":"RESIDENT_SAY","actor":"E-1","summary":"live line one"}',
+        '{"ts_utc":"2026-01-02T09:30:00Z","type":"RESIDENT_SAY","actor":"E-1","summary":"older line one"}'
+    )
+    [System.IO.File]::WriteAllLines($evLive, $lines1, $utf8e)
+    $lines2 = @(
+        '{"ts_utc":"2026-01-01T20:00:00Z","type":"RESIDENT_SAY","actor":"E-2","summary":"rotated line two"}',
+        '{"ts_utc":"2026-01-01T21:00:00Z","type":"RESIDENT_SAY","actor":"Z-9","summary":"not a card here"}'
+    )
+    [System.IO.File]::WriteAllLines($evOld, $lines2, $utf8e)
+
+    $ev = Get-ResidentEventIndex $tmpE @('E-1', 'E-2', 'E-3')
+    Check 'index finds live speaker'       ([string]$ev.index['E-1'].ts -eq '2026-01-02T10:00:00Z')
+    Check 'index keeps the newest line'    ([string]$ev.index['E-1'].line -eq 'live line one')
+    Check 'index reaches rotated file'     ([string]$ev.index['E-2'].line -eq 'rotated line two')
+    Check 'index refuses unknown actor'    (-not $ev.index.ContainsKey('Z-9'))
+    Check 'index leaves missing card out'  (-not $ev.index.ContainsKey('E-3'))
+    Check 'index reports incomplete'        ($ev.complete -eq $false -and [int]$ev.files_read -ge 2)
+    $evFull = Get-ResidentEventIndex $tmpE @('E-1', 'E-2')
+    Check 'complete when every card found'  ($evFull.complete -eq $true)
+    Check 'stops once everyone is covered'  ([int]$evFull.files_read -le [int]$ev.files_read)
+
+    # cards on disk, cursor wiped (= the rotation the debt describes)
+    $cardsE = Join-Path $tmpE 'cards'
+    New-Item -ItemType Directory -Path $cardsE | Out-Null
+    foreach ($nm in @('E-1', 'E-2', 'E-3')) {
+        [System.IO.File]::WriteAllText((Join-Path $cardsE ($nm + '.md')), ('# CARD (' + $nm + ')' + "`n"), $utf8e)
+    }
+    $snapEv = Get-ResidentSnapshot @{ cursor = @{} } $cardsE $ev.index
+    Check 'lost cursor -> rows from events' (@($snapEv.Keys).Count -eq 2)
+    Check 'backfilled row marks its source' ([string]$snapEv['E-1'].src -eq 'events')
+    Check 'backfilled row keeps the line'   ([string]$snapEv['E-1'].line -eq 'live line one')
+    Check 'backfilled row invents no place' ([string]::IsNullOrEmpty([string]$snapEv['E-1'].location))
+    Check 'card with no history stays out'  (-not $snapEv.ContainsKey('E-3'))
+
+    # the reading must agree with the rows (one city, one answer)
+    $mBf = Get-ResidentVoiceMeta @{} @('E-1', 'E-2', 'E-3') 'm' @{ present = $true; known = $true } 1 $ev.index
+    Check 'reading: 2 speakers, 1 never'     ([int]$mBf.speakers_n -eq 2 -and [int]$mBf.never_n -eq 1)
+    Check 'reading: say+never=residents'     (([int]$mBf.speakers_n + [int]$mBf.never_n) -eq [int]$mBf.residents_n)
+    Check 'reading: backfilled=2'            ([int]$mBf.backfilled_n -eq 2)
+    Check 'reading: last is the newest'      ([string]$mBf.last_say_utc -eq '2026-01-02T10:00:00Z')
+
+    # a healthy cursor round: the stream is NOT consulted, so backfilled=0
+    $curOk = @{ 'res:E-1:line' = 'cursor line'; 'res:E-1:ts' = '2026-01-02T11:00:00Z' }
+    $mOk = Get-ResidentVoiceMeta $curOk @('E-1') 'm' @{ present = $true; known = $true } 1 $ev.index
+    Check 'cursor wins over the stream'      ([int]$mOk.backfilled_n -eq 0 -and [int]$mOk.speakers_n -eq 1)
+    $snapOk = Get-ResidentSnapshot @{ cursor = $curOk } $cardsE $ev.index
+    Check 'cursor row still says cursor'     ([string]$snapOk['E-1'].src -eq 'cursor')
+
+    # absent world dir: no index, no fabrication, no crash
+    $evNone = Get-ResidentEventIndex (Join-Path $tmpE 'nope') @('E-1')
+    Check 'missing world dir -> empty'       (@($evNone.index.Keys).Count -eq 0 -and $evNone.complete -eq $false)
+    $snapNone2 = Get-ResidentSnapshot @{ cursor = @{} } $cardsE $null
+    Check 'no index -> no rows (not fake)'   (@($snapNone2.Keys).Count -eq 0)
+
+    # verdict line: printed only when someone was backfilled
+    $rBf = @{ exists = $true; unreadable = $false; meta = [PSCustomObject]@{
+        model = 'm'; model_present = $true; model_known = $true;
+        residents_n = 3; models_n = 1; speakers_n = 2; never_n = 1; stale_n = 0;
+        backfilled_n = 2; last_say_utc = '2026-01-02T10:00:00Z'; last_say_age_h = 0.5 } }
+    $vBf = Get-ResidentVoiceVerdict $rBf
+    Check 'verdict names the backfill'       ($vBf.line -match 'backfilled=2')
+    Check 'verdict stays healthy'            ($vBf.verdict -eq 'health')
+    [void]$allLines.Add($vBf.line)
+    $rNoBf = @{ exists = $true; unreadable = $false; meta = [PSCustomObject]@{
+        model = 'm'; model_present = $true; model_known = $true;
+        residents_n = 3; models_n = 1; speakers_n = 3; never_n = 0; stale_n = 0;
+        backfilled_n = 0; last_say_utc = '2026-01-02T10:00:00Z'; last_say_age_h = 0.5 } }
+    $vNoBf = Get-ResidentVoiceVerdict $rNoBf
+    Check 'zero backfill -> no segment'      ($vNoBf.line -notmatch 'backfilled=')
+    $rPre = @{ exists = $true; unreadable = $false; meta = [PSCustomObject]@{
+        model = 'm'; model_present = $true; model_known = $true;
+        residents_n = 3; models_n = 1; speakers_n = 3; never_n = 0; stale_n = 0;
+        last_say_utc = '2026-01-02T10:00:00Z'; last_say_age_h = 0.5 } }
+    $vPre = Get-ResidentVoiceVerdict $rPre
+    Check 'pre-r838 reading -> no segment'   ($vPre.line -notmatch 'backfilled=')
+
+    # roster: the row carries the source so the page can mark it
+    $stateBf = ConvertFrom-Json '{"residents":{"E-1":{"ts":"2026-01-02T10:00:00Z","location":"","src":"events"}}}'
+    $roBf = Get-ResidentRoster -CardsDir $cardsE -State $stateBf -NowUtc ([DateTimeOffset]::Parse('2026-01-02T12:00:00Z'))
+    $rowE1 = @($roBf.rows | Where-Object { $_.id -eq 'E-1' })[0]
+    Check 'roster row carries src'           ([string]$rowE1.src -eq 'events')
+    Check 'roster row still no speech'       ($null -eq ($rowE1.PSObject.Properties['line']))
+
+    # cost discipline: the scan is gated on a missing cursor line
+    $probeSrc2 = [System.IO.File]::ReadAllText($probe)
+    Check 'scan gated on cursor gaps'        ($probeSrc2 -match 'cursorGaps -gt 0')
+    Check 'both faces share one index'       (@([regex]::Matches($probeSrc2, '\$eventIndex')).Count -ge 5)
+} finally {
+    if (Test-Path $tmpE) { Remove-Item $tmpE -Recurse -Force -ErrorAction SilentlyContinue }
+}
+
 Write-Output ''
 Write-Output ('RESULT: pass=' + $pass + ' fail=' + $fail)
 if ($fail -gt 0) { exit 1 }

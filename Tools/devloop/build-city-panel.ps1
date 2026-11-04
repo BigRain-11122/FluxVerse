@@ -1879,7 +1879,15 @@ if ($null -eq $residentsMeta) {
     if ($null -ne $residentsMeta.PSObject.Properties['never_n']) { try { $resNever = [string][int]$residentsMeta.never_n } catch { $resNever = '?' } }
     $resStale = '?'
     if ($null -ne $residentsMeta.PSObject.Properties['stale_n']) { try { $resStale = [string][int]$residentsMeta.stale_n } catch { $resStale = '?' } }
-    Write-Output ('PANEL RESIDENTS: model=' + [string]$residentsMeta.model + ' present=' + $resPres + ' residents=' + $resRes + ' say=' + $resSay + ' never=' + $resNever + ' stale=' + $resStale + ' models=' + $resMod)
+    # r838 (main#141): only printed when the event stream answered for someone,
+    # so a healthy round keeps the exact line it had before this change.
+    $resBack = ''
+    if ($null -ne $residentsMeta.PSObject.Properties['backfilled_n']) {
+        $bfN = -1
+        try { $bfN = [int]$residentsMeta.backfilled_n } catch { $bfN = -1 }
+        if ($bfN -gt 0) { $resBack = ' backfilled=' + $bfN }
+    }
+    Write-Output ('PANEL RESIDENTS: model=' + [string]$residentsMeta.model + ' present=' + $resPres + ' residents=' + $resRes + ' say=' + $resSay + ' never=' + $resNever + ' stale=' + $resStale + ' models=' + $resMod + $resBack)
 }
 
 # r835: machine face for the roster. `n` counts cards on disk, `talked` counts

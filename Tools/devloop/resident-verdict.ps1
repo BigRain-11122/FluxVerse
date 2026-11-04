@@ -97,10 +97,21 @@ function Get-ResidentVoiceVerdict {
   $age = $null
   if ($null -ne $m.PSObject.Properties['last_say_age_h']) { $age = $m.last_say_age_h }
 
+  # main#141 (r838): when the cursor memory is lost, the event stream answers
+  # instead. `backfilled=N` says how many residents' stamps came from there.
+  # It is printed only when > 0, so a pre-r838 reading keeps the exact line it
+  # had -- and "absent" never reads as "zero were backfilled".
+  $backfillTxt = ''
+  if ($null -ne $m.PSObject.Properties['backfilled_n']) {
+    $bf = -1
+    try { $bf = [int]$m.backfilled_n } catch { $bf = -1 }
+    if ($bf -gt 0) { $backfillTxt = ' backfilled=' + $bf }
+  }
+
   $line = 'residents: model=' + $model + ' present=' + $presentTxt +
     ' residents=' + $residentsTxt + ' say=' + $speakers +
     ' never=' + $neverTxt + ' stale=' + $staleTxt +
-    ' models=' + $modelsTxt +
+    ' models=' + $modelsTxt + $backfillTxt +
     ' last=' + $(if ($last) { $last } else { 'never' }) +
     ' age=' + (Format-ResidentAge $age)
   if ($null -ne $m.PSObject.Properties['last_error'] -and -not [string]::IsNullOrEmpty([string]$m.last_error)) {
@@ -164,6 +175,7 @@ function Get-ResidentRoster {
       } catch { $name = '' }
       $ts = ''
       $place = ''
+      $src = ''
       if ($null -ne $State -and $null -ne $State.PSObject.Properties['residents']) {
         $all = $State.residents
         if ($null -ne $all -and $null -ne $all.PSObject.Properties[$rid]) {
@@ -171,6 +183,9 @@ function Get-ResidentRoster {
           if ($null -ne $entry) {
             if ($null -ne $entry.PSObject.Properties['ts']) { $ts = [string]$entry.ts }
             if ($null -ne $entry.PSObject.Properties['location']) { $place = [string]$entry.location }
+            # main#141 (r838): rows rebuilt from the event stream carry src=events
+            # and no routine place. The page marks them instead of inventing one.
+            if ($null -ne $entry.PSObject.Properties['src']) { $src = [string]$entry.src }
           }
         }
       }
@@ -180,7 +195,7 @@ function Get-ResidentRoster {
         $diff = ($NowUtc.UtcDateTime - $dto.UtcDateTime).TotalHours
         if ($diff -ge 0) { $ageH = $diff }
       }
-      $rows.Add(@{ id = $rid; name = $name; place = $place; age_h = $ageH; talked = ($null -ne $ageH) }) | Out-Null
+      $rows.Add(@{ id = $rid; name = $name; place = $place; age_h = $ageH; talked = ($null -ne $ageH); src = $src }) | Out-Null
     }
   }
   $talked = 0

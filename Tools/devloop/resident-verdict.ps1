@@ -67,15 +67,27 @@ function Get-ResidentVoiceVerdict {
   if ($null -ne $m.PSObject.Properties['speakers_n']) { try { $speakers = [int]$m.speakers_n } catch { $speakers = 0 } }
   $silent = 0
   if ($null -ne $m.PSObject.Properties['silent_n']) { try { $silent = [int]$m.silent_n } catch { $silent = 0 } }
-  $rosterN = 0
-  if ($null -ne $m.PSObject.Properties['roster_n']) { try { $rosterN = [int]$m.roster_n } catch { $rosterN = 0 } }
+  # r829: the two counts are printed under names that cannot be confused. The
+  # old line printed `roster=<installed models>` right next to `say=<speakers>`,
+  # so "roster=4 say=5" read as "4 residents, 5 of them spoke" - impossible.
+  # Readings published before r829 have NEITHER key (their `roster_n` was the
+  # model count), so both print `?` - never borrow a number from the other side.
+  $residentsTxt = '?'
+  if ($null -ne $m.PSObject.Properties['residents_n']) {
+    try { $residentsTxt = [string][int]$m.residents_n } catch { $residentsTxt = '?' }
+  }
+  $modelsTxt = '?'
+  if ($null -ne $m.PSObject.Properties['models_n']) {
+    try { $modelsTxt = [string][int]$m.models_n } catch { $modelsTxt = '?' }
+  }
   $last = ''
   if ($null -ne $m.PSObject.Properties['last_say_utc']) { $last = [string]$m.last_say_utc }
   $age = $null
   if ($null -ne $m.PSObject.Properties['last_say_age_h']) { $age = $m.last_say_age_h }
 
-  $line = 'residents: model=' + $model + ' present=' + $presentTxt + ' roster=' + $rosterN +
-    ' say=' + $speakers + ' silent=' + $silent +
+  $line = 'residents: model=' + $model + ' present=' + $presentTxt +
+    ' residents=' + $residentsTxt + ' say=' + $speakers + ' silent=' + $silent +
+    ' models=' + $modelsTxt +
     ' last=' + $(if ($last) { $last } else { 'never' }) +
     ' age=' + (Format-ResidentAge $age)
   if ($null -ne $m.PSObject.Properties['last_error'] -and -not [string]::IsNullOrEmpty([string]$m.last_error)) {

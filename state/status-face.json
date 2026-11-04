@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-04T19:26:48Z",
-    "current_activity":  "r828（本轮·FULL-ROUND·triggers=2 c3-ledger/c4-tech·队列无可领新件·自领 main#138 居民声面）：探针 `./Tools/perceptor/probes/residents.ps1` 每轮留下读数（用哪个模型／是否在盘／谁最近说过话），新判定模块 `./Tools/devloop/resident-verdict.ps1` 把它变成 tick 行 `residents: model=qwen3:4b-instruct present=1 roster=4 say=5 silent=0 last=2026-11-04T19:21:29Z age=0m`；同轮抓出真缺陷——`ParseExact` 里的 `Z` 是字面量，45 分钟冷却被主机 +8 时区吃成 0，出生即修（bm-b 三周沉默后本轮 19:21:29Z 首次开口）。",
-    "artifact":  "实物＝`./world-public/city-panel.html`「现实锚」卡新增「居民」行：`qwen3:4b-instruct · 模型在盘 · 5 人说过 · 沉默 0 · 最近 0 分钟前`（三态区分模型在盘／不在盘／模型表读不到，缺读数印「未记录」）；机器面 `PANEL RESIDENTS: model=qwen3:4b-instruct present=1 say=5`；验证＝`./Tools/devloop/test-verify-residents.ps1` 37/37、`VERIFY PASS` exit 0（residents 段 39ms）、面板套件 40 套全绿。",
-    "artifact_utc":  "2026-11-04T19:26:48Z",
-    "milestone":  "48 小时内：①把 `./Tools/devloop/test-verify-residents.ps1` 挂进沙盒族（write3 有余量，verify 族 r790 已禁扩容）②居民对话模式在冷却修正后按 45 分钟真实节奏复跑，观察是否过频 ③`./state/queue/main.md` #52 性能漂移仍候 0 个 Tuanjie 进程窗口（fps_avg\u003e=486.8 / p95\u003c=2.58ms）。",
+    "updated_utc":  "2026-11-04T20:01:07Z",
+    "current_activity":  "r829（本轮·FASTPATH 七查全静·队列无新可领件·自领 r828 面上的真事）：修 CEO 面上一句不成立的读数——`residents:` 行原先印 `roster=` 的是 Ollama 模型表条数（4）却紧挨 `say=`（说过话的居民 5），读起来是「4 名居民、5 人说过」；同页也从没说过这座城市有几名居民。改法＝`./Tools/perceptor/probes/residents.ps1` 分开发布 `residents_n`（`./docs/residents` 实读 5 张）与 `models_n`（模型表 4 条），`./Tools/devloop/resident-verdict.ps1` 行面并列显示，旧世界态两键皆无时一律印 `?` 而不借旧键。",
+    "artifact":  "实物＝`./world-public/city-panel.html`「居民」行现为 `qwen3:4b-instruct · 模型在盘 · 5 名居民 · 5 人说过 · 沉默 0 · 最近 6 分钟前`；机器面 `PANEL RESIDENTS: model=qwen3:4b-instruct present=1 residents=5 say=5 models=4`；验证＝`./Tools/devloop/test-verify-residents.ps1` 44/44、面板套件 40 套全绿、verify 十一套 735 断言全绿、`VERIFY PASS`。",
+    "artifact_utc":  "2026-11-04T20:01:07Z",
+    "milestone":  "48 小时内：①`./state/queue/main.md` #52 性能漂移仍候 0 个 Tuanjie 进程窗口（fps_avg\u003e=486.8 / p95\u003c=2.58ms）②`main#17` 浸泡复跑窗逾期（收据 177 小时前、漂移 -32.7%）③`tech#18` 基准面两件 C·待证取全文核销（due 2026-11-19 深潜窗）。",
     "milestone_eta_utc":  "2026-11-06T22:00:00Z"
 }

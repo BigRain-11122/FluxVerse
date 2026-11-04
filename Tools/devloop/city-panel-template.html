@@ -468,7 +468,7 @@ const PROOF = __PROOF_JSON__;
 // rows through Array.isArray before trusting it.
 const DUTY = __DUTY_JSON__;
 // RESIDENTS = resident-voice READINGS from the internal world state
-// ({model,model_present,model_known,roster_n,speakers_n,silent_n,
+// ({model,model_present,model_known,residents_n,models_n,speakers_n,silent_n,
 // last_say_utc,last_say_age_h,last_error?}). null = the probe has not
 // published readings, and the card says "unknown" - never "0 speakers".
 // Three model states on purpose: installed / not installed / unknown.
@@ -491,6 +491,10 @@ function residentsText(m) {
   let pres = '模型表读不到';
   if (m.model_known === true) pres = m.model_present ? '模型在盘' : '模型不在盘';
   let txt = model + ' · ' + pres;
+  // r829: the city's roster and the model table are different counts. Printing
+  // only "N 人说过" left the page unable to say how many residents exist; an
+  // old reading has no residents_n and simply omits the segment (never 0).
+  if (typeof m.residents_n === 'number') txt += ' · ' + m.residents_n + ' 名居民';
   if (typeof m.speakers_n === 'number') txt += ' · ' + m.speakers_n + ' 人说过';
   if (typeof m.silent_n === 'number') txt += ' · 沉默 ' + m.silent_n;
   txt += ' · 最近 ' + residentsAgeText(m.last_say_age_h);

@@ -55,7 +55,12 @@ function Get-ResidentVoiceMeta {
   # Readings only. `last_say_age_h` = $null means "never spoke / timestamp
   # unreadable", never 0. `silent_n` counts residents with no line or a line
   # older than 24h.
-  param($Cursor, [string[]]$ResidentIds, [string]$Model, $ModelState, [int]$RosterN)
+  # r829: `RosterN` counts the OLLAMA MODEL ROSTER (`/api/tags` names), while
+  # the city's own roster is the resident CARD count. Both are readings, but a
+  # line that printed only the model count next to `say=` read as "4 residents
+  # spoke 5 times" - impossible on its face. Both numbers are published under
+  # names that cannot be confused: models_n vs residents_n.
+  param($Cursor, [string[]]$ResidentIds, [string]$Model, $ModelState, [int]$ModelN)
   $nowUtc = (Get-Date).ToUniversalTime()
   $sayN = 0
   $lastUtc = ''
@@ -88,7 +93,8 @@ function Get-ResidentVoiceMeta {
     model          = $Model
     model_present  = $ModelState.present
     model_known    = $ModelState.known
-    roster_n       = $RosterN
+    models_n       = $ModelN
+    residents_n    = @($ResidentIds).Count
     speakers_n     = $sayN
     silent_n       = $silent
     last_say_utc   = $lastUtc

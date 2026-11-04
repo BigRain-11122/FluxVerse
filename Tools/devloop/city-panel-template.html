@@ -253,6 +253,7 @@ const TREND = __TREND_JSON__;
 // TICK = today's tick log probe ({exists,file,size,mtime_utc,age_min,scan_lines,
 // rounds,rounds_seen,skip_rounds,last_kind,probes,probes_bad,probes_all,
 // probes_bad_all,probe_bad_rounds,probe_bad_first,probe_bad_last,quarantined,degraded,
+// quarantined_all,degraded_all,
 // read_ok}) - the panel is built BY that
 // tick, so this is the only honest way to tell whether the 10-minute loop
 // actually ran. rounds_seen/skip_rounds count today's rounds and how many of them
@@ -311,6 +312,24 @@ function tickProbeTotalText(tk) {
     ? (' · ' + t.probe_bad_rounds + ' 轮')
     : '';
   return '今日探针坏 ' + t.probes_bad_all + ' 处（' + t.probes_all + ' 枚' + rounds + tickProbeWhen(t) + '）';
+}
+// Today's cumulative scan account (debt r818): quarantined= and the perceptor
+// WARN tally are per-ROUND readings, so the two sentences above can only speak
+// about the last round. A probe quarantined at 09:00 and released by 09:10
+// leaves no trace on the page. builder sums every round that really ran a scan
+// (a backed-off round has none and contributes nothing). Both totals stay -1
+// when no round scanned, so "measured zero" and "never measured" never collapse
+// into the same fabricated 0 (r799/r810 precedent); all-zero days stay silent.
+function tickScanTotalText(tk) {
+  const t = tk || {};
+  const q = (typeof t.quarantined_all === 'number') ? t.quarantined_all : -1;
+  const d = (typeof t.degraded_all === 'number') ? t.degraded_all : -1;
+  if (q < 0 || d < 0) return '';
+  if (q <= 0 && d <= 0) return '';
+  const parts = [];
+  if (q > 0) parts.push('隔离 ' + q + ' 条事件');
+  if (d > 0) parts.push('探针降级 ' + d + ' 次');
+  return '今日 scan ' + parts.join(' · ');
 }
 // WHICH rounds, not just how many (queue main#135, narrowed in r818). "2 spots
 // in 1 round" still sends the reader into a 100+ round log; but naming only the
@@ -696,6 +715,23 @@ function artTitle(it){
       pa.title = '当日日志里各轮逐针结果合计：共 ' + tk.probes_all + ' 枚探针，' +
         tk.probes_bad_all + ' 枚非 OK，出现在 ' + tk.probe_bad_rounds + ' 轮里（按轮自己的起始标记切段计数）';
       $('f-tick').appendChild(pa);
+    }
+    // 今日 scan 隔离/降级合计（r819·债 r818）：上面两句都只看最后一轮。早先被
+    // 隔离或降级过、后来又恢复的，页面上一个字都不剩。合计只累加真跑过 scan 的
+    // 轮（退避轮没有 scan，不计入），且「没扫过」与「跑了是 0」绝不合并成同一个
+    // 0——没有读数时这一格整句不出现。
+    const sAllTxt = tickScanTotalText(tk);
+    if (sAllTxt) {
+      const sa = document.createElement('span');
+      sa.className = 'tag warn';
+      sa.style.marginLeft = '6px';
+      sa.textContent = sAllTxt;
+      sa.title = '当日日志里各轮 scan 自报合计：隔离事件 ' +
+        ((typeof tk.quarantined_all === 'number') ? tk.quarantined_all : '未记录') +
+        ' 条、零读/降级 ' +
+        ((typeof tk.degraded_all === 'number') ? tk.degraded_all : '未记录') +
+        ' 次（只累加真跑过 scan 的轮；退避轮没有 scan，不计入）';
+      $('f-tick').appendChild(sa);
     }
   })();
 
@@ -1607,6 +1643,10 @@ function artTitle(it){
     // 今日累计坏针（r816）：上句只看最后一轮，今天早先坏过的轮次同句补上。
     const pAllT = tickProbeTotalText(tk);
     if (pAllT) tVd = tVd + ' · ' + pAllT;
+    // 今日 scan 隔离/降级合计（r819）：前两句只看最后一轮，早先被隔离/降级过
+    // 的轮次同句补上；没有读数时一个字不加。
+    const sAllT = tickScanTotalText(tk);
+    if (sAllT) tVd = tVd + ' · ' + sAllT;
   }
   selfcheck.push({ ok: tOk, nm: 'tick 覆盖', vd: tVd });
 

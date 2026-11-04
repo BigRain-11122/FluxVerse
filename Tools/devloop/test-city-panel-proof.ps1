@@ -1,4 +1,4 @@
-﻿# test-city-panel-proof.ps1 - sandbox proof for the city proof rows (queue main#48)
+# test-city-panel-proof.ps1 - sandbox proof for the city proof rows (queue main#48)
 # --------------------------------------------------------------------------
 # The framing card showed what the city looks like but not whether it had been
 # built, measured, or how old its code was. The builder now reads three existing
@@ -41,6 +41,11 @@ function Write-TextFile([string]$path, [string]$body) {
 }
 
 # --- A) healthy fixture -----------------------------------------------------
+# r825: the receipt's age is part of the verdict now (48h re-run window), so a
+# fixture with a frozen timestamp becomes a calendrical bomb - the same trap
+# r787 hit. Anchor it to the run moment instead (6h old = inside the window).
+$freshTs = [DateTime]::UtcNow.AddHours(-6).ToString('yyyy-MM-ddTHH:mm:ssZ',
+    [Globalization.CultureInfo]::InvariantCulture)
 $rootA = New-FixtureRoot 'rootA'
 Write-TextFile (Join-Path $rootA 'City3D-staging\r2-ignite.done') @'
 {
@@ -54,15 +59,15 @@ Write-TextFile (Join-Path $rootA 'City3D-staging\r2-ignite.done') @'
 }
 '@
 Write-TextFile (Join-Path $rootA 'City3D-staging\r2-report.md') "fixture report`r`n"
-Write-TextFile (Join-Path $rootA 'qa\smoke-r680-bm-a-soak.json') @'
+Write-TextFile (Join-Path $rootA 'qa\smoke-r680-bm-a-soak.json') @"
 {
   "probe": "R2SoakProbe",
-  "ts_utc": "2026-10-26T10:31:42Z",
+  "ts_utc": "$freshTs",
   "render": {"frames": 182561, "fps_avg": 608.536},
   "errors": 0,
   "exceptions": 0
 }
-'@
+"@
 
 # --- B) empty fixture -------------------------------------------------------
 $rootB = New-FixtureRoot 'rootB'
@@ -76,8 +81,39 @@ Write-TextFile (Join-Path $rootC 'qa\smoke-r680-bm-a-soak.json') @'
 { "ts_utc": "2026-10-26T10:31:42Z", "render": {"fps_avg": 120.5}, "errors": 2, "exceptions": 1 }
 '@
 
+# --- D) drift fixture (r825): fresh receipt, render 33% below baseline ------
+# The page's city-evidence row already turns red on a >20% drift (main#52); the tick
+# line must not keep calling that receipt "ok".
+$rootD = New-FixtureRoot 'rootD'
+Write-TextFile (Join-Path $rootD 'qa\smoke-r680-bm-a-soak.json') @"
+{ "ts_utc": "$freshTs", "render": {"fps_avg": 600.0}, "errors": 0, "exceptions": 0 }
+"@
+Write-TextFile (Join-Path $rootD 'qa\r2-soak-20260101-000000.json') @"
+{ "ts_utc": "$freshTs", "render": {"fps_avg": 400.0}, "errors": 0, "exceptions": 0 }
+"@
+# The builder picks the NEWEST receipt by file mtime; two files written in the
+# same tick tie, and a tie silently falls back to the baseline (drift 0). Pin
+# the order instead of racing the clock.
+(Get-Item -LiteralPath (Join-Path $rootD 'qa\smoke-r680-bm-a-soak.json')).LastWriteTimeUtc = [DateTime]::UtcNow.AddMinutes(-10)
+(Get-Item -LiteralPath (Join-Path $rootD 'qa\r2-soak-20260101-000000.json')).LastWriteTimeUtc = [DateTime]::UtcNow.AddMinutes(-5)
+
+# --- E) stale fixture (r825): equal numbers, receipt 10 days old -----------
+# Inside the numbers but outside the 48h re-run window - the third way the
+# page goes red and the third way the log used to say "ok".
+$oldTs = [DateTime]::UtcNow.AddDays(-10).ToString('yyyy-MM-ddTHH:mm:ssZ',
+    [Globalization.CultureInfo]::InvariantCulture)
+$rootE = New-FixtureRoot 'rootE'
+Write-TextFile (Join-Path $rootE 'qa\smoke-r680-bm-a-soak.json') @"
+{ "ts_utc": "$oldTs", "render": {"fps_avg": 500.0}, "errors": 0, "exceptions": 0 }
+"@
+Write-TextFile (Join-Path $rootE 'qa\r2-soak-20260101-000000.json') @"
+{ "ts_utc": "$oldTs", "render": {"fps_avg": 500.0}, "errors": 0, "exceptions": 0 }
+"@
+(Get-Item -LiteralPath (Join-Path $rootE 'qa\smoke-r680-bm-a-soak.json')).LastWriteTimeUtc = [DateTime]::UtcNow.AddMinutes(-10)
+(Get-Item -LiteralPath (Join-Path $rootE 'qa\r2-soak-20260101-000000.json')).LastWriteTimeUtc = [DateTime]::UtcNow.AddMinutes(-5)
+
 $results = @{}
-foreach ($k in @('A', 'B', 'C')) {
+foreach ($k in @('A', 'B', 'C', 'D', 'E')) {
     $root = (Get-Variable ('root' + $k)).Value
     $outHtml = Join-Path $sandbox ('panel-' + $k + '.html')
     $hist = Join-Path $sandbox ('hist-' + $k + '.jsonl')
@@ -96,10 +132,12 @@ function Check([string]$name, [bool]$cond) {
 }
 
 $A = $results['A']; $B = $results['B']; $C = $results['C']
+$D = $results['D']; $E = $results['E']
 
 Check 'A: builder reported PANEL OK' ($A.log -match 'PANEL OK')
 Check 'A: proof_build=0' ($A.log -match 'proof_build=0(?!\d)')
 Check 'A: proof_soak=ok' ($A.log -match 'proof_soak=ok(?![a-z])')
+Check 'A: proof_soak_age_h inside the 48h window' ($A.log -match 'proof_soak_age_h=[5-7](?!\d)')
 Check 'A: proof_code=none (fixture root is not a repo)' ($A.log -match 'proof_code=none')
 Check 'A: build exit/ts in page' ($A.html.Contains('"exit_code":0') -and $A.html.Contains('2026-10-10T16:21:35Z'))
 Check 'A: soak fps carried verbatim' ($A.html.Contains('"fps_avg":608.536'))
@@ -113,10 +151,16 @@ Check 'B: proof_code=none' ($B.log -match 'proof_code=none')
 Check 'B: page carries exists=false' ($B.html.Contains('"exists":false'))
 
 Check 'C: proof_build reports the real exit code' ($C.log -match 'proof_build=7(?!\d)')
+Check 'C: soak errors surface in the token' ($C.log -match 'proof_soak=errors:e2/x1')
 Check 'C: exit code surfaces in the page' ($C.html.Contains('"exit_code":7'))
 Check 'C: soak errors carried, not laundered' ($C.html.Contains('"errors":2') -and $C.html.Contains('"exceptions":1'))
 
-Check 'no unreadable receipt crashes a build' ((@($A.log, $B.log, $C.log) | Where-Object { $_ -match 'FAIL:' }).Count -eq 0)
+Check 'D: >20% drift is not recorded as ok' ($D.log -match 'proof_soak=drift:-33\.3%')
+Check 'D: age still measured when the token short-circuits' ($D.log -match 'proof_soak_age_h=[5-7](?!\d)')
+Check 'E: receipt older than 48h is not recorded as ok' ($E.log -match 'proof_soak=old:\d+h')
+Check 'E: the age is carried, not inferred' ($E.log -match 'proof_soak_age_h=2[34][0-9](?!\d)')
+
+Check 'no unreadable receipt crashes a build' ((@($A.log, $B.log, $C.log, $D.log, $E.log) | Where-Object { $_ -match 'FAIL:' }).Count -eq 0)
 
 # --- main#57: site verdict rows ---------------------------------------------
 # The builder runs the site checker itself; -SiteSkip keeps this sandbox free of

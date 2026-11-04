@@ -108,8 +108,16 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\test-write-status-face-bare.ps1',
             'logs\devloop-r247-facewriter-test.ps1',
             'Tools\devloop\test-status-face-screen.ps1',
+            # r825: the proof-row sandbox (28 -> 34 assertions) guarded the same
+            # builder this half already protects but was in NO family, so an
+            # edit to the proof block would have rotted silently - the exact
+            # "written, nobody runs it" shape of main#86/main#88/main#120.
+            # Measured 8.4 s alone; this half last ticked 13.2 s, so the pair
+            # stays under the 30 s (2/3 of 45 s) line.
+            'Tools\devloop\test-city-panel-proof.ps1',
             'Tools\devloop\run-ps-suites.ps1',
             'Tools\devloop\build-city-panel.ps1',
+            'Tools\devloop\city-panel-template.html',
             'Tools\devloop\face-path-lint.ps1',
             'Tools\devloop\status-face-screen.ps1',
             'Tools\tick\export-public-snapshot.ps1',
@@ -703,7 +711,10 @@ function Invoke-PsSuitesTick {
         $ExtraArgs = @('-Suites', 'Tools\devloop\test-fastpath-state-live.ps1,logs\devloop-r197-writer-test.ps1,logs\devloop-r271-keep-negcon.ps1,Tools\devloop\test-nolivecheck-census.ps1,Tools\devloop\test-runbook-sync.ps1')
     }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write2') {
-        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-status-face-screen.ps1')
+        # r825: the proof-row sandbox rides this half (its guarded sources are
+        # here too) - a family that guards a file but never runs its suite is
+        # the r758 "split and nothing changed" trap.
+        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-status-face-screen.ps1,Tools\devloop\test-city-panel-proof.ps1')
     }
     # main#133: the tooling half names its own three suites for the same reason -
     # the runner's default list has no idea which half asked.

@@ -1034,6 +1034,58 @@ function Get-ProofFileInfo
     return $r
 }
 
+# Soak verdict for the tick line (r825). The page's "city evidence" row already
+# turns red on errors/exceptions, a >20% render drift (main#52) and a receipt
+# older than the 48h re-run window (main#17) - but `PANEL OK` printed
+# `proof_soak=ok` whenever the FILE existed, so the machine face and the page
+# face answered the same question differently (live anchor 2026-11-05: receipt
+# 2026-10-28T10:59Z, drift -32.7%, so the page was red while the log said ok).
+# Same order, same thresholds as the template; the template stays the renderer,
+# this only stops the log from laundering the reading. Never a fabricated 0:
+# numbers that never parsed read as `unreadable`, not as healthy.
+function Get-ProofSoakReading
+{
+    # $Now is deliberately untyped and optional: an unpassed [datetime]
+    # parameter still arrives as MinValue from some call shapes, and the
+    # script-scope clock here is a DateTimeOffset - accept both, default UtcNow.
+    param($Soak, $Now)
+    $res = [ordered]@{ token = 'missing'; age_h = -1 }
+    if ($null -eq $Soak) { return $res }
+    if (-not $Soak.exists) { return $res }
+    $n = [DateTime]::UtcNow
+    if ($Now -is [DateTimeOffset]) { $n = $Now.UtcDateTime }
+    elseif (($Now -is [datetime]) -and ($Now -ne [DateTime]::MinValue)) { $n = $Now.ToUniversalTime() }
+    $fps = $Soak.fps_avg
+    if ($null -eq $fps -or (-not ($fps -is [double])) -or ([double]$fps -lt 0)) {
+        $res.token = 'unreadable'; return $res
+    }
+    if (($null -eq $Soak.errors) -or ([int]$Soak.errors -lt 0)) {
+        $res.token = 'unreadable'; return $res
+    }
+    # Age is measured before any early return: "how old is this receipt" stays
+    # answerable even when the token short-circuits on errors or drift (-1 must
+    # mean "timestamp unreadable", not "we stopped looking").
+    $ts = [string]$Soak.ts_utc
+    if (-not [string]::IsNullOrEmpty($ts)) {
+        $parsed = [DateTime]::MinValue
+        $ok = [DateTime]::TryParse($ts, [Globalization.CultureInfo]::InvariantCulture,
+            ([Globalization.DateTimeStyles]::AdjustToUniversal -bor [Globalization.DateTimeStyles]::AssumeUniversal),
+            [ref]$parsed)
+        if ($ok) { $res.age_h = [int][Math]::Round(($n - $parsed.ToUniversalTime()).TotalHours, 0) }
+    }
+    if (([int]$Soak.errors -ne 0) -or ([int]$Soak.exceptions -ne 0)) {
+        $res.token = 'errors:e' + [int]$Soak.errors + '/x' + [int]$Soak.exceptions
+        return $res
+    }
+    if (($null -ne $Soak.drift_pct) -and ([double]$Soak.drift_pct -le -20)) {
+        $res.token = 'drift:' + ([string]$Soak.drift_pct) + '%'
+        return $res
+    }
+    if ($res.age_h -gt 48) { $res.token = 'old:' + [int]$res.age_h + 'h'; return $res }
+    $res.token = 'ok'
+    return $res
+}
+
 function Resolve-CityProof
 {
     # Mandatory: an omitted root used to produce an all-empty proof block that
@@ -1752,5 +1804,11 @@ if ($qdue.exists) {
     if ($parts.Count -gt 0) { $qdueSplit = ($parts -join ',') }
 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' art_bare=' + [int]$artBare.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds + ' last=' + $lastKind + ' last_gate=' + $(if ([string]::IsNullOrEmpty($lastGate)) { 'none' } else { [string]$lastGate }) + ' gate_red=' + [int]$gateRedRounds + '/' + [int]$gateRounds + ' skip=' + [int]$skipRounds + '/' + [int]$roundsSeen + ' probes=' + [int]$probeTotal + ' probes_bad=' + [int]$probeBad + ' probes_all=' + [int]$probesAll + ' probes_bad_all=' + [int]$probeBadAll + ' probe_bad_rounds=' + [int]$probeBadRounds + ' probe_bad_first=' + $(if ([string]::IsNullOrEmpty($probeBadFirst)) { 'none' } else { [string]$probeBadFirst }) + ' probe_bad_last=' + $(if ([string]::IsNullOrEmpty($probeBadLast)) { 'none' } else { [string]$probeBadLast }) + ' probe_bad_stamps=' + $(if ($probeBadStamps.Count -eq 0) { 'none' } else { ($probeBadStamps -join ',') }) + ' quarantined=' + [int]$quarantined + ' degraded=' + [int]$degraded + ' quarantined_all=' + [int]$quarantinedAll + ' degraded_all=' + [int]$degradedAll + ' degraded_probes=' + [int]$degProbes + ' degraded_rounds=' + [int]$degRounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' shots_sha=' + [int]$(if ($null -ne $script:shotsSha) { $script:shotsSha } else { 0 }) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + $(if ($proof.soak.exists) { 'ok' } else { 'missing' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' duty_receipted=' + [int]$duty.receipted + ' duty_receipts=' + $(if ($duty.receipts_exists) { [string]$duty.receipts_count } else { 'missing' }) + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' qacite=' + $(if ($qacite.exists) { 'ok' } elseif ($qacite.error) { $qacite.error } else { 'missing' }) + ' qacite_stale=' + $(if ($qacite.exists) { [string]$qacite.stale_cited } else { 'missing' }) + ' qacite_cited=' + $(if ($qacite.exists) { [string]$qacite.cited } else { 'missing' }) + ' qacite_age=' + $(if ($qacite.exists) { [string]$qacite.age_hours } else { 'missing' }) + ' qacite_overdue=' + $(if ($qacite.exists) { if ($qacite.overdue) { '1' } else { '0' } } else { 'missing' }) + ' sparam_risky=' + $(if ($sparam.reason -eq 'no-dir') { 'missing' } else { [string]$sparam.risky }) + ' sparam_cached=' + $(if ($sparam.cached) { '1' } else { '0' }) + ' sparam_note=' + $(if ([string]::IsNullOrEmpty($sparam.reason)) { 'none' } else { $sparam.reason }) + ' qdue=' + $(if ($qdue.exists) { [string]$qdue.late } else { 'missing' }) + ' qdue_note=' + $(if ([string]::IsNullOrEmpty($qdue.note)) { 'none' } else { [string]$qdue.note }) + ' qdue_bad=' + $(if ($qdue.exists) { [string]$qdue.bad } else { 'missing' }) + ' qdue_code=' + $(if ($qdue.exists) { [string]$qdue.code } else { 'missing' }) + ' qdue_long=' + $(if ($qdue.exists) { [string]$qdue.long } else { 'missing' }) + ' qdue_longmax=' + $(if ($qdue.exists) { [string]$qdue.long_max } else { 'missing' }) + ' qdue_dupe=' + $(if ($qdue.exists) { [string]$qdue.dupe } else { 'missing' }) + ' qdue_dupe_rows=' + $(if ($qdue.exists) { [string]$qdue.dupe_rows } else { 'missing' }) + ' qdue_split=' + $qdueSplit + ' qdue_next=' + $(if (-not $qdue.exists) { 'missing' } elseif ([string]::IsNullOrEmpty([string]$qdue.next_due)) { 'none' } else { [string]$qdue.next_due + '/' + [string]$qdue.next_days_left + 'd/#' + [string]$qdue.next_id }) + ' qdue_max=' + [int]$qdue.max_days + ' qdue_open=' + [int]$qdue.open + ' qdue_dated=' + [int]$qdue.dated + ' built=' + $built + ' path=' + $OutPath)
+# r825: the soak receipt's own verdict, so the tick line cannot call a red
+# receipt "ok" (see Get-ProofSoakReading). No -Now injection: PowerShell
+# variables are case-insensitive, so the script-scope `$now` (a DateTimeOffset,
+# set for the duty-due pass) IS `$Now` here and the typed parameter rejected it.
+$soakRead = Get-ProofSoakReading -Soak $proof.soak
+
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' art_bare=' + [int]$artBare.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds + ' last=' + $lastKind + ' last_gate=' + $(if ([string]::IsNullOrEmpty($lastGate)) { 'none' } else { [string]$lastGate }) + ' gate_red=' + [int]$gateRedRounds + '/' + [int]$gateRounds + ' skip=' + [int]$skipRounds + '/' + [int]$roundsSeen + ' probes=' + [int]$probeTotal + ' probes_bad=' + [int]$probeBad + ' probes_all=' + [int]$probesAll + ' probes_bad_all=' + [int]$probeBadAll + ' probe_bad_rounds=' + [int]$probeBadRounds + ' probe_bad_first=' + $(if ([string]::IsNullOrEmpty($probeBadFirst)) { 'none' } else { [string]$probeBadFirst }) + ' probe_bad_last=' + $(if ([string]::IsNullOrEmpty($probeBadLast)) { 'none' } else { [string]$probeBadLast }) + ' probe_bad_stamps=' + $(if ($probeBadStamps.Count -eq 0) { 'none' } else { ($probeBadStamps -join ',') }) + ' quarantined=' + [int]$quarantined + ' degraded=' + [int]$degraded + ' quarantined_all=' + [int]$quarantinedAll + ' degraded_all=' + [int]$degradedAll + ' degraded_probes=' + [int]$degProbes + ' degraded_rounds=' + [int]$degRounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' shots_sha=' + [int]$(if ($null -ne $script:shotsSha) { $script:shotsSha } else { 0 }) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + [string]$soakRead.token + ' proof_soak_age_h=' + [int]$soakRead.age_h + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' duty_receipted=' + [int]$duty.receipted + ' duty_receipts=' + $(if ($duty.receipts_exists) { [string]$duty.receipts_count } else { 'missing' }) + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' qacite=' + $(if ($qacite.exists) { 'ok' } elseif ($qacite.error) { $qacite.error } else { 'missing' }) + ' qacite_stale=' + $(if ($qacite.exists) { [string]$qacite.stale_cited } else { 'missing' }) + ' qacite_cited=' + $(if ($qacite.exists) { [string]$qacite.cited } else { 'missing' }) + ' qacite_age=' + $(if ($qacite.exists) { [string]$qacite.age_hours } else { 'missing' }) + ' qacite_overdue=' + $(if ($qacite.exists) { if ($qacite.overdue) { '1' } else { '0' } } else { 'missing' }) + ' sparam_risky=' + $(if ($sparam.reason -eq 'no-dir') { 'missing' } else { [string]$sparam.risky }) + ' sparam_cached=' + $(if ($sparam.cached) { '1' } else { '0' }) + ' sparam_note=' + $(if ([string]::IsNullOrEmpty($sparam.reason)) { 'none' } else { $sparam.reason }) + ' qdue=' + $(if ($qdue.exists) { [string]$qdue.late } else { 'missing' }) + ' qdue_note=' + $(if ([string]::IsNullOrEmpty($qdue.note)) { 'none' } else { [string]$qdue.note }) + ' qdue_bad=' + $(if ($qdue.exists) { [string]$qdue.bad } else { 'missing' }) + ' qdue_code=' + $(if ($qdue.exists) { [string]$qdue.code } else { 'missing' }) + ' qdue_long=' + $(if ($qdue.exists) { [string]$qdue.long } else { 'missing' }) + ' qdue_longmax=' + $(if ($qdue.exists) { [string]$qdue.long_max } else { 'missing' }) + ' qdue_dupe=' + $(if ($qdue.exists) { [string]$qdue.dupe } else { 'missing' }) + ' qdue_dupe_rows=' + $(if ($qdue.exists) { [string]$qdue.dupe_rows } else { 'missing' }) + ' qdue_split=' + $qdueSplit + ' qdue_next=' + $(if (-not $qdue.exists) { 'missing' } elseif ([string]::IsNullOrEmpty([string]$qdue.next_due)) { 'none' } else { [string]$qdue.next_due + '/' + [string]$qdue.next_days_left + 'd/#' + [string]$qdue.next_id }) + ' qdue_max=' + [int]$qdue.max_days + ' qdue_open=' + [int]$qdue.open + ' qdue_dated=' + [int]$qdue.dated + ' built=' + $built + ' path=' + $OutPath)
 exit 0

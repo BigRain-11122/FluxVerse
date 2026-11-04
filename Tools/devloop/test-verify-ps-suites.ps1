@@ -872,7 +872,11 @@ Check 'z30 the state half asks for exactly its five suites' ($zW -match '-Suites
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write2 -TicketPath (Join-Path $sandbox 'z-w2.json') -RunnerPath $runnerArgs -Force
 $zW2 = ''
 try { $zW2 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW2 = '' }
-Check 'z31 the face half asks for its three face suites only' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 3 -and $zW2 -match 'test-write-status-face-bare\.ps1' -and $zW2 -match 'test-status-face-screen\.ps1' -and $zW2 -notmatch 'test-qa-rotation\.ps1' -and $zW2 -notmatch 'test-simple-param-census\.ps1' -and $zW2 -notmatch 'test-runbook-sync\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
+Check 'z31 the face half asks for its four face suites only' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 4 -and $zW2 -match 'test-write-status-face-bare\.ps1' -and $zW2 -match 'test-status-face-screen\.ps1' -and $zW2 -match 'test-city-panel-proof\.ps1' -and $zW2 -notmatch 'test-qa-rotation\.ps1' -and $zW2 -notmatch 'test-simple-param-census\.ps1' -and $zW2 -notmatch 'test-runbook-sync\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
+# r825: the proof-row sandbox guards the builder's proof block; if its suite is
+# dropped from the command line while its sources stay guarded, the family keeps
+# a green badge over an unwatched file (r758 "split and nothing changed").
+Check 'z31c the proof-row sandbox is both guarded and run by the face half' ($tickTextNow -match 'test-city-panel-proof\.ps1' -and $tickTextNow -match 'city-panel-template\.html') 'write2 guarded+run'
 # main#133: the third half must name its own three, or the runner's default list
 # would make it pay for the face suites (z30/z31 same rule for the other halves).
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write3 -TicketPath (Join-Path $sandbox 'z-w3.json') -RunnerPath $runnerArgs -Force

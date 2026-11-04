@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-04T20:01:07Z",
-    "current_activity":  "r829（本轮·FASTPATH 七查全静·队列无新可领件·自领 r828 面上的真事）：修 CEO 面上一句不成立的读数——`residents:` 行原先印 `roster=` 的是 Ollama 模型表条数（4）却紧挨 `say=`（说过话的居民 5），读起来是「4 名居民、5 人说过」；同页也从没说过这座城市有几名居民。改法＝`./Tools/perceptor/probes/residents.ps1` 分开发布 `residents_n`（`./docs/residents` 实读 5 张）与 `models_n`（模型表 4 条），`./Tools/devloop/resident-verdict.ps1` 行面并列显示，旧世界态两键皆无时一律印 `?` 而不借旧键。",
-    "artifact":  "实物＝`./world-public/city-panel.html`「居民」行现为 `qwen3:4b-instruct · 模型在盘 · 5 名居民 · 5 人说过 · 沉默 0 · 最近 6 分钟前`；机器面 `PANEL RESIDENTS: model=qwen3:4b-instruct present=1 residents=5 say=5 models=4`；验证＝`./Tools/devloop/test-verify-residents.ps1` 44/44、面板套件 40 套全绿、verify 十一套 735 断言全绿、`VERIFY PASS`。",
-    "artifact_utc":  "2026-11-04T20:01:07Z",
-    "milestone":  "48 小时内：①`./state/queue/main.md` #52 性能漂移仍候 0 个 Tuanjie 进程窗口（fps_avg\u003e=486.8 / p95\u003c=2.58ms）②`main#17` 浸泡复跑窗逾期（收据 177 小时前、漂移 -32.7%）③`tech#18` 基准面两件 C·待证取全文核销（due 2026-11-19 深潜窗）。",
-    "milestone_eta_utc":  "2026-11-06T22:00:00Z"
+    "updated_utc":  "2026-11-04T20:41:40Z",
+    "current_activity":  "r831（本轮·FASTPATH 七查全静·队列无新可领件·自领「沙盒到底有没有人跑」面上的真事）：28 个 PS 沙盒里 6 个不在任何族的 spawn 清单里，其中一个已经红了 8 条——`./Tools/devloop/test-panel-url.ps1` 自 r796 给 `Get-RelPanelPath` 加存在性守卫后 15/23 红（夹具用的是合成树，纯路径数学整段不可测），而 r828 又把 `./Tools/devloop/test-verify-residents.ps1` 只加进 write3 的受保护源、没加进 `-Suites` spawn 清单，于是那个沙盒落地起一次没跑。改法＝`./Tools/devloop/panel-url.ps1` 拆出纯函数 `ConvertTo-RelPanelPath`＋守卫包装；新件 `./Tools/devloop/suite-registry-census.ps1` 每 tick 回答「每个 test-*.ps1 有没有族在 spawn 它」。",
+    "artifact":  "实物＝`./Tools/devloop/suite-registry-census.ps1` 可跑且已接进每 tick 巡检：`VERIFY HEALTH: suite-registry: files=29 spawned=24 exempt=5 unspawned=0 stale_exempt=0 guarded_only=0`（`./Tools/perceptor/verify.ps1` §2k2，192 ms）；`./Tools/devloop/test-panel-url.ps1` 由 15/23 红转 **26/26** 并登记进 write3；write3 族 3→6 套 `suites=6 assertions=273`（23.4 s，帽 45 s）全绿；门中门 `./Tools/devloop/test-verify-ps-suites.ps1` 225/225；verify 族 11 套 735 断言 `failing=0 timeouts=0`。",
+    "artifact_utc":  "2026-11-04T20:41:40Z",
+    "milestone":  "48 小时内：①`./state/queue/main.md` #139 把豁免表剩 5 件逐件判「建档/退役」（合计实测 55.1 s，需按 r812 先例拆第 4 个 write 族，禁抬帽）②`main#52` 性能漂移仍候 0 个 Tuanjie 进程窗口（fps_avg\u003e=486.8 / p95\u003c=2.58ms）③`tech#18` 基准面两件 C·待证取全文核销（due 2026-11-19 深潜窗）。",
+    "milestone_eta_utc":  "2026-11-07T04:00:00Z"
 }

@@ -465,7 +465,15 @@ $w2Suites = @(
 $w3Suites = @(
     'Tools\devloop\test-qa-rotation.ps1',
     'Tools\devloop\test-simple-param-census.ps1',
-    'Tools\devloop\test-rebuild-panel-fixtures-bad.ps1'
+    'Tools\devloop\test-rebuild-panel-fixtures-bad.ps1',
+    # r831 (main#139): r828 put the resident-voice sandbox in this family's
+    # GUARDED sources but not in its -Suites spawn list, so it never ran. Listing
+    # it here is what makes the census (and this assertion) able to see that.
+    'Tools\devloop\test-verify-residents.ps1',
+    'Tools\devloop\test-suite-registry-census.ps1',
+    # r831: the panel relative-link sandbox - red for ten rounds with no family
+    # running it, so it is registered (0.4 s) rather than exempted.
+    'Tools\devloop\test-panel-url.ps1'
 )
 $w3Defs = @(Get-PsSuitesTickDefaults -Family write3)
 $leak1 = @($wDefs | Where-Object { $w2Suites -contains $_ -or $w3Suites -contains $_ })
@@ -490,7 +498,7 @@ Check 'r4j the tooling half overlaps verify only on the runner and the fixture t
 # own default list has no idea which half asked, so a silent fallback would make
 # one family pay for another's suites (main#117 z30/z31 same rule).
 $tickTextNow = [System.IO.File]::ReadAllText($module, [Text.Encoding]::UTF8)
-Check 'r4k the tooling half names its three suites explicitly' ($tickTextNow -match "Family -eq 'write3'" -and $tickTextNow -match 'test-qa-rotation\.ps1,Tools\\devloop\\test-simple-param-census\.ps1,Tools\\devloop\\test-rebuild-panel-fixtures-bad\.ps1') 'write3 -Suites'
+Check 'r4k the tooling half names its six suites explicitly' ($tickTextNow -match "Family -eq 'write3'" -and $tickTextNow -match 'test-qa-rotation\.ps1,Tools\\devloop\\test-simple-param-census\.ps1,Tools\\devloop\\test-rebuild-panel-fixtures-bad\.ps1,Tools\\devloop\\test-verify-residents\.ps1,Tools\\devloop\\test-suite-registry-census\.ps1,Tools\\devloop\\test-panel-url\.ps1') 'write3 -Suites'
 $chkTicket = Join-Path $sandbox 'chk.json'
 $chk1 = Invoke-PsSuitesTick -RepoDir $repo -Family verify -TicketPath $chkTicket -RunnerPath $runnerGreen -CheckOnly
 Check 'r5 CheckOnly reports a due run without spawning' ($chk1.needs_run -eq $true -and $chk1.status -eq 'stale' -and -not (Test-Path -LiteralPath $chkTicket)) ([string]$chk1.status)
@@ -882,7 +890,7 @@ Check 'z31c the proof-row sandbox is both guarded and run by the face half' ($ti
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write3 -TicketPath (Join-Path $sandbox 'z-w3.json') -RunnerPath $runnerArgs -Force
 $zW3 = ''
 try { $zW3 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW3 = '' }
-Check 'z31b the tooling half asks for its three suites only' ($zW3 -match '-Suites' -and @(($zW3 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 3 -and $zW3 -match 'test-qa-rotation\.ps1' -and $zW3 -match 'test-simple-param-census\.ps1' -and $zW3 -match 'test-rebuild-panel-fixtures-bad\.ps1' -and $zW3 -notmatch 'test-write-status-face-bare\.ps1' -and $zW3 -notmatch 'test-runbook-sync\.ps1') $zW3
+Check 'z31b the tooling half asks for its six suites only' ($zW3 -match '-Suites' -and @(($zW3 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 6 -and $zW3 -match 'test-qa-rotation\.ps1' -and $zW3 -match 'test-simple-param-census\.ps1' -and $zW3 -match 'test-rebuild-panel-fixtures-bad\.ps1' -and $zW3 -match 'test-verify-residents\.ps1' -and $zW3 -match 'test-suite-registry-census\.ps1' -and $zW3 -match 'test-panel-url\.ps1' -and $zW3 -notmatch 'test-write-status-face-bare\.ps1' -and $zW3 -notmatch 'test-runbook-sync\.ps1') $zW3
 Remove-Item 'Env:\FV_ARGS_OUT' -ErrorAction SilentlyContinue
 
 # main#117 turn rule: when both write halves are due, the state half runs and

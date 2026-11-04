@@ -16,14 +16,22 @@
 #
 # ASCII-only law: no CJK in this file.
 
-function Get-RelPanelPath
+function ConvertTo-RelPanelPath
 {
-    param([string]$BaseDir, [string]$TargetFull)
-    if ([string]::IsNullOrWhiteSpace($BaseDir) -or [string]::IsNullOrWhiteSpace($TargetFull)) { return '' }
-    # The relative link is anchored at the panel's real directory: a missing
-    # anchor cannot be re-checked by the reader, so answer '' and let the caller
-    # fall back to the absolute url (queue main#128).
-    if (-not (Test-Path -LiteralPath $BaseDir)) { return '' }
+    # Pure path math: no filesystem calls, so a sandbox can pin it against
+    # synthetic trees (D:\a\b fixtures). r831 split this out because the r796
+    # existence guard below made the whole function answer '' for every
+    # synthetic anchor - eight assertions in test-panel-url had been red for
+    # ten rounds with nobody watching (no family ran that suite).
+    #
+    # Empty input is a caller bug here, not a fallback: the attributes say so,
+    # and the production wrapper Get-RelPanelPath keeps answering '' for an
+    # absent anchor. (simple-param-census flags a dir-named parameter with no
+    # guard; the attributes are the guard.)
+    param(
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$BaseDir,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$TargetFull
+    )
     $b = $BaseDir.Replace('/', '\')
     $t = $TargetFull.Replace('/', '\')
     $bRoot = ''
@@ -46,6 +54,18 @@ function Get-RelPanelPath
     for ($j = $i; $j -lt $ts.Count; $j++) { [void]$parts.Add($ts[$j]) }
     if ($parts.Count -eq 0) { return '' }
     return (($parts -join '/').Replace(' ', '%20'))
+}
+
+function Get-RelPanelPath
+{
+    # Production entry point: the relative link is anchored at the panel's real
+    # directory, and a missing anchor cannot be re-checked by the reader, so
+    # answer '' and let the caller fall back to the absolute url (main#128).
+    # The math itself lives in ConvertTo-RelPanelPath so it stays testable.
+    param([string]$BaseDir, [string]$TargetFull)
+    if ([string]::IsNullOrWhiteSpace($BaseDir) -or [string]::IsNullOrWhiteSpace($TargetFull)) { return '' }
+    if (-not (Test-Path -LiteralPath $BaseDir)) { return '' }
+    return (ConvertTo-RelPanelPath -BaseDir $BaseDir -TargetFull $TargetFull)
 }
 
 function New-PanelUrl

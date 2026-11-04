@@ -142,6 +142,16 @@ function Get-PsSuitesTickDefaults {
             # of its cap and forbade adding another entry. It also guards
             # resident-verdict.ps1, so an edit to the verdict cannot rot unseen.
             'Tools\devloop\test-verify-residents.ps1',
+            # r831 (main#139): the sandbox registry census. It guards "does some
+            # family actually spawn this suite?", so both the census and its own
+            # sandbox have to be spawned here - the point of the round.
+            'Tools\devloop\test-suite-registry-census.ps1',
+            # r831: the panel relative-link math. It was RED 15/23 from r796 to
+            # r831 because no family ran it; it costs 0.4 s, so it is registered
+            # outright instead of sitting on the exemption list.
+            'Tools\devloop\test-panel-url.ps1',
+            'Tools\devloop\panel-url.ps1',
+            'Tools\devloop\suite-registry-census.ps1',
             'Tools\devloop\run-ps-suites.ps1',
             'Tools\devloop\qa-rotation.ps1',
             'Tools\devloop\simple-param-census.ps1',
@@ -725,9 +735,7 @@ function Invoke-PsSuitesTick {
     }
     # main#133: the tooling half names its own three suites for the same reason -
     # the runner's default list has no idea which half asked.
-    if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write3') {
-        $ExtraArgs = @('-Suites', 'Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-simple-param-census.ps1,Tools\devloop\test-rebuild-panel-fixtures-bad.ps1')
-    }
+    if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write3') { $ExtraArgs = @('-Suites', 'Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-simple-param-census.ps1,Tools\devloop\test-rebuild-panel-fixtures-bad.ps1,Tools\devloop\test-verify-residents.ps1,Tools\devloop\test-suite-registry-census.ps1,Tools\devloop\test-panel-url.ps1') }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify') {
         $lightSuites = @(Get-PsSuitesTickDefaults -Family 'verify' | Where-Object { $_ -match 'test-[^\\]+\.ps1$' })
         $ExtraArgs = @('-Suites', ($lightSuites -join ','))

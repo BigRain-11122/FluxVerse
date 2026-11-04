@@ -753,7 +753,7 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
           if ([int]::TryParse($env:FLUXVERSE_PS_SUITES_WRITE3_TIMEOUT, [ref]$w3To) -and $w3To -gt 0) { $w3Args['TimeoutSec'] = $w3To }
         }
         if ($env:FLUXVERSE_PS_SUITES_WRITE3_FORCE -eq '1') { $w3Args['Force'] = $true }
-        $w3Rerun = 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-simple-param-census.ps1,Tools\devloop\test-rebuild-panel-fixtures-bad.ps1'
+        $w3Rerun = 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-qa-rotation.ps1,Tools\devloop\test-simple-param-census.ps1,Tools\devloop\test-rebuild-panel-fixtures-bad.ps1,Tools\devloop\test-verify-residents.ps1,Tools\devloop\test-suite-registry-census.ps1,Tools\devloop\test-panel-url.ps1'
         $w3Chk = $null
         try { $w3Chk = Invoke-PsSuitesTick @w3Args -CheckOnly } catch { $w3Chk = $null }
         if ($null -eq $w3Chk) {
@@ -915,6 +915,40 @@ if (Test-Path -LiteralPath $nlcScript) {
     Write-Output 'VERIFY WARN: nolivecheck-census produced no summary line'
   }
 }
+
+# ---------- 2k2. sandbox registry census (main#139, r831) ----------
+# r786 / r790 / r795 / r828 were all the same disease: a sandbox existed (one of
+# them RED) while no family ever spawned it, so its verdict never reached this
+# gate. The families carry two halves of one registry - the guarded source list
+# (editing it re-runs the family) and the -Suites spawn list (what the family
+# actually runs) - and nothing compared them. This reads ps-suites-tick.ps1 in
+# process (no child, r750) and names any Tools\devloop\test-*.ps1 that no family
+# asks for, any suite that is guarded but never spawned, and any exemption that
+# has outlived its meaning.
+# WARN, not FAIL - same standoff as 2b..2k: a registry gap is an observation.
+$srcCensus = Join-Path $repoRoot 'Tools\devloop\suite-registry-census.ps1'
+if (-not (Test-Path -LiteralPath $srcCensus)) {
+  Write-Output 'VERIFY WARN: suite-registry: suite-registry-census.ps1 missing - cannot say which sandboxes actually run'
+} else {
+  $srcLoaded = $true
+  try { . $srcCensus } catch { $srcLoaded = $false }
+  if (-not $srcLoaded -or -not (Get-Command Get-SuiteRegistryReading -ErrorAction SilentlyContinue)) {
+    Write-Output 'VERIFY WARN: suite-registry: census did not load - cannot say which sandboxes actually run'
+  } else {
+    $srcRes = $null
+    try { $srcRes = Get-SuiteRegistryReading -RepoDir $repoRoot } catch { $srcRes = $null }
+    if ($null -eq $srcRes -or -not $srcRes.ok) {
+      $whySrc = 'census produced no reading'
+      if ($null -ne $srcRes -and $srcRes.error) { $whySrc = $srcRes.error }
+      Write-Output ('VERIFY WARN: suite-registry: ' + $whySrc)
+    } elseif ($srcRes.unspawned.Count -eq 0 -and $srcRes.guarded_only.Count -eq 0 -and $srcRes.stale.Count -eq 0) {
+      Write-Output ('VERIFY HEALTH: ' + $srcRes.line)
+    } else {
+      Write-Output ('VERIFY WARN: ' + $srcRes.line + ' - a sandbox no family spawns never speaks again; name it in the family -Suites list in ps-suites-tick.ps1, or add a dated exemption in suite-registry-census.ps1')
+    }
+  }
+}
+Set-CostMark 'suite-registry'
 
 # ---------- 2l. citation-audit reading refresh duty (main#119, r783) ----------
 # r782 gave the panel a citation-audit reading written by

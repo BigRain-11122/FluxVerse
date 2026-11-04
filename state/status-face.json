@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-04T21:02:49Z",
-    "current_activity":  "r832（本轮·FULL-ROUND 传棒 c4-tech·main#139 收干）：五件「写了没人跑」的沙盒全部上膛——`./Tools/devloop/ps-suites-tick.ps1` 新增 write4（city-duty + shot-shape）22.4 s、write5（shot-census + archive-logs + panel-bare）16.2 s，登记表 `exempt=0 unspawned=0`；同轮修掉 `./Tools/devloop/test-city-shot-census.ps1` 的子门递归（冷跑 176.4 s→7.9 s）",
-    "artifact":  "实物＝`./TECH.md` §九 新增 r832 行；活跑 `VERIFY HEALTH: ps-suites-write4: suites=2 red=0 assertions=53 parity=ok req=2`、`ps-suites-write5: suites=3 red=0 assertions=92 parity=ok req=3`；门中门 `./Tools/devloop/test-verify-ps-suites.ps1` 225/225（调用研证）、登记表沙盒 `./Tools/devloop/test-suite-registry-census.ps1` 17/17；面板本轮未动（零 blast radius）",
-    "artifact_utc":  "2026-11-04T21:02:49Z",
-    "milestone":  "48 小时内：① 候 0 个 Tuanjie 进程窗复跑 `main#52` 性能漂移（判据 fps_avg\u003e=486.8 且 p95\u003c=2.58ms）② `main#121` 候委员会（due 2026-11-16）③ `tech#18` 基准面两件待证取全文核销（due 2026-11-19）",
+    "updated_utc":  "2026-11-04T21:18:04Z",
+    "current_activity":  "r833（本轮·FASTPATH 七查全静·自领面板实况面上的真事）：上一轮「隔离 N 条 / 降级 N 次」会读到自己上一轮的回显——末轮读数段按整块扫「quarantined=」，把上一轮写在块尾的 `panel: PANEL OK … quarantined=N` 也算作本轮扫描结果，于是退避轮（根本没扫）继承了前一轮的数字（实测前一轮 3 就报 3、前一轮 0 就报一个没量过的 0），而紧邻注释写着「两数保持 -1」。改法＝把该段锚定到 scan 自己的摘要行/WARN 行（与同日累计账同一形状），改写 `./Tools/devloop/build-city-panel.ps1` 一处两行。",
+    "artifact":  "实物＝`./Tools/devloop/build-city-panel.ps1`（末轮读数锚定 scan 行）＋`./logs/devloop-r815-panel-tickprobe-test.js`（新增 F/G/H 三组共 13 条：退避轮不继承 3、不继承降级 2、真扫轮仍报自己的 3/2、两条正则锚定不变式）41/41；活跑 `PANEL OK … probes=26 probes_bad=0 quarantined=0 degraded=0`；复现夹具改前 `quarantined=3`、改后 `quarantined=-1`。",
+    "artifact_utc":  "2026-11-04T21:18:04Z",
+    "milestone":  "48 小时内：① `./state/queue/main.md` #52 空载复跑候 0 个 Tuanjie 进程窗（判据 fps_avg 不低于 486.8 且 p95 不超过 2.58ms）② `./state/queue/main.md` #121 候委员会（due 2026-11-16）③ `./docs/global-benchmarks.md` 两件待证取全文核销（due 2026-11-19）",
     "milestone_eta_utc":  "2026-11-07T04:00:00Z"
 }

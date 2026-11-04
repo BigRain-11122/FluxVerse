@@ -216,6 +216,78 @@ const eTags = tags(runPanel(legacy, 'E'));
 ck(eTags.filter(t => t.text.indexOf(PROBE_LABEL) === 0).length === 0,
   'E: no invented 0 when the log cannot answer', JSON.stringify(eTags.map(t => t.text)));
 
+// --- F) a backed-off round must not inherit the round before it ------------
+// Measured defect (r833): the last-round loop matched `quarantined=(\d+)`
+// ANYWHERE inside the round block, including the page's own
+// `panel: PANEL OK ... quarantined=N ...` echo that the PREVIOUS round wrote at
+// its end. A round that never scanned therefore reported the round-before-it's
+// number as its own (3 stayed 3, 0 became a fabricated 0), while the comment
+// right above those lines promised both stay -1. Anchor = the scan's own
+// summary / WARN line, same shape the daily account already uses.
+function tickLogEcho(rounds) {
+  const lines = [];
+  rounds.forEach(function (kind, i) {
+    const hh = String(8 + i).padStart(2, '0');
+    lines.push('[' + '2026-11-04 ' + hh + ':00:00] FluxVerseTick round start');
+    if (kind === 'backoff') {
+      lines.push('  backoff: perceptor stack dirty (in-flight dev edits) - scan+verify skipped');
+      lines.push('  panel: PANEL OK bytes=1000 tick=1min last=backoff quarantined=3 degraded=2');
+    } else if (kind === 'scan3') {
+      lines.push('  scan: perceptor v0.7 done: events +8 quarantined=3 fleet=7 tasks=188');
+      lines.push('  scan:   probe census: OK');
+      lines.push('  scan: perceptor WARN: 2 probe(s) zero-read/degraded -> a; b');
+      lines.push('  gate: PASS');
+      lines.push('  panel: PANEL OK bytes=1000 tick=1min last=gate quarantined=3 degraded=2');
+    }
+    lines.push('[' + '2026-11-04 ' + hh + ':00:30] round end');
+  });
+  return lines.join('\r\n') + '\r\n';
+}
+
+function buildRaw(name, text) {
+  const logPath = path.join(tmp, name + '-tick.log');
+  fs.writeFileSync(logPath, text, 'utf8');
+  const outHtml = path.join(tmp, name + '.html');
+  const hist = path.join(tmp, name + '-hist.jsonl');
+  const r = spawnSync('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', builder,
+    '-TickLogPath', logPath, '-OutPath', outHtml, '-HistoryPath', hist], { encoding: 'utf8' });
+  const out = (r.stdout || '') + (r.stderr || '');
+  const html = fs.existsSync(outHtml) ? fs.readFileSync(outHtml, 'utf8') : '';
+  return { out: out, html: html, code: r.status };
+}
+
+const F = buildRaw('f', tickLogEcho(['scan3', 'backoff']));
+ck(F.code === 0, 'F: builder exit 0', 'code=' + F.code + ' out=' + F.out.slice(0, 400));
+ck(/ last=backoff\b/.test(F.out), 'F: last=backoff', (F.out.match(/last=\S+/) || [''])[0]);
+ck(/ quarantined=-1\b/.test(F.out),
+  'F: backoff round does not inherit the previous round quarantined=3',
+  (F.out.match(/quarantined=-?\d+/) || [''])[0]);
+ck(/ degraded=-1\b/.test(F.out),
+  'F: backoff round does not inherit the previous round degraded=2',
+  (F.out.match(/degraded=-?\d+/) || [''])[0]);
+ck(/ probes=0\b/.test(F.out), 'F: probes=0 for a round that never scanned',
+  (F.out.match(/probes=\d+/) || [''])[0]);
+const fTick = tickOf(F.html);
+ck(fTick.quarantined === -1 && fTick.degraded === -1,
+  'F: page carries the two unknowns, not the echo', JSON.stringify(fTick));
+const fSelf = selfcheckText(runPanel(F.html, 'F2'));
+ck(fSelf.indexOf(Q_PREFIX) < 0, 'F: self-check prints no quarantine count',
+  fSelf.slice(0, 240));
+
+const G = buildRaw('g', tickLogEcho(['scan3']));
+ck(G.code === 0, 'G: builder exit 0', 'code=' + G.code);
+ck(/ quarantined=3\b/.test(G.out),
+  'G: a round that really scanned still reports its own quarantined=3',
+  (G.out.match(/quarantined=-?\d+/) || [''])[0]);
+ck(/ degraded=2\b/.test(G.out), 'G: and its own degraded=2',
+  (G.out.match(/degraded=-?\d+/) || [''])[0]);
+
+// H) static: both last-round tallies are anchored to the scan's own lines.
+ck(bsrc.indexOf('(?:scan|gate):\\s+perceptor v') >= 0,
+  'H: last-round quarantined regex anchored to the scan summary line');
+ck(bsrc.indexOf('(?:scan|gate):\\s+perceptor WARN') >= 0,
+  'H: last-round degraded regex anchored to the scan WARN line');
+
 try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (e) { /* temp only */ }
 
 console.log('');

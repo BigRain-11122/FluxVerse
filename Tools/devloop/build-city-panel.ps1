@@ -797,8 +797,15 @@ try {
                     $probeTotal++
                     if ($Matches[1] -notmatch '^OK') { $probeBad++ }
                 }
-                if ($tickAllLines[$pj] -match 'quarantined=(\d+)') { $quarantined = [int]$Matches[1] }
-                if ($tickAllLines[$pj] -match 'perceptor WARN:\s*(\d+) probe') { $degraded = [int]$Matches[1] }
+                # Anchor on the scan's own summary/WARN line (same shape as the
+                # daily account above). Unanchored, these also matched the
+                # round's own `panel: PANEL OK ... quarantined=N ...` echo, so a
+                # backed-off round - which never scanned - inherited the number
+                # from the round before it (measured: a backoff block following
+                # quarantined=3 reported quarantined=3; following 0 it reported
+                # a fabricated 0) while its comment above promised -1.
+                if ($tickAllLines[$pj] -match '^\s*(?:scan|gate):\s+perceptor v[\d.]+ done:.*quarantined=(\d+)') { $quarantined = [int]$Matches[1] }
+                if ($tickAllLines[$pj] -match '^\s*(?:scan|gate):\s+perceptor WARN:\s*(\d+) probe') { $degraded = [int]$Matches[1] }
             }
             # scan.ps1 only prints that WARN line when the count is > 0, so for a
             # round that really scanned, a missing line means zero - not unknown.

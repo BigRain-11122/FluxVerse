@@ -251,7 +251,8 @@ const SERIES = __SERIES_JSON__;
 // TREND = the whole local cross-round log inside a 24h window (newest last).
 const TREND = __TREND_JSON__;
 // TICK = today's tick log probe ({exists,file,size,mtime_utc,age_min,scan_lines,
-// rounds,rounds_seen,skip_rounds,last_kind,probes,probes_bad,quarantined,degraded,
+// rounds,rounds_seen,skip_rounds,last_kind,probes,probes_bad,probes_all,
+// probes_bad_all,probe_bad_rounds,quarantined,degraded,
 // read_ok}) - the panel is built BY that
 // tick, so this is the only honest way to tell whether the 10-minute loop
 // actually ran. rounds_seen/skip_rounds count today's rounds and how many of them
@@ -293,6 +294,23 @@ function tickProbeWarn(tk) {
   return (typeof t.probes_bad === 'number' && t.probes_bad > 0) ||
     (typeof t.quarantined === 'number' && t.quarantined > 0) ||
     (typeof t.degraded === 'number' && t.degraded > 0);
+}
+// Today's cumulative probe account (r816): the sentence above answers only "is
+// the LAST round fine". A probe that broke for two rounds and healed itself
+// leaves a page that reads "上轮探针 26 全 OK" and says nothing about the two
+// rounds that were not - true, and useless for "did anything go wrong today".
+// builder accumulates every round's own `probe <name>: <status>` lines in the
+// same read pass it already does. Silence when nothing broke (a warn tag on a
+// clean day is noise) and silence when no probe line was ever seen (a fabricated
+// 0 would claim a measurement that never happened - r799/r810 precedent).
+function tickProbeTotalText(tk) {
+  const t = tk || {};
+  if (typeof t.probes_all !== 'number' || t.probes_all <= 0) return '';
+  if (typeof t.probes_bad_all !== 'number' || t.probes_bad_all <= 0) return '';
+  const rounds = (typeof t.probe_bad_rounds === 'number' && t.probe_bad_rounds > 0)
+    ? (' · ' + t.probe_bad_rounds + ' 轮')
+    : '';
+  return '今日探针坏 ' + t.probes_bad_all + ' 处（' + t.probes_all + ' 枚' + rounds + '）';
 }
 // ARCH = the log-archive duty's own day stamp ({exists,stamp,stamp_day,today,
 // is_today,remain,ran_utc}). `stamp` is the local yyyyMMdd of the last SUCCESSFUL
@@ -642,6 +660,20 @@ function artTitle(it){
         ' 条、零读/降级 ' +
         ((typeof tk.degraded === 'number' && tk.degraded >= 0) ? tk.degraded : '未记录') + ' 枚';
       $('f-tick').appendChild(p);
+    }
+    // 今日累计坏针（r816）：上面那格只说最后一轮。真实世界里探针坏两轮又自愈，
+    // 页面就只留一句「上轮全 OK」——真话，却答不了「今天有没有出过事」。只有真
+    // 坏过才挂这一格（干净的日子上多一个红标是噪声），旧日志没有这些读数时整句
+    // 不出现，绝不回一个像读数的 0。
+    const pAllTxt = tickProbeTotalText(tk);
+    if (pAllTxt) {
+      const pa = document.createElement('span');
+      pa.className = 'tag warn';
+      pa.style.marginLeft = '6px';
+      pa.textContent = pAllTxt;
+      pa.title = '当日日志里各轮逐针结果合计：共 ' + tk.probes_all + ' 枚探针，' +
+        tk.probes_bad_all + ' 枚非 OK，出现在 ' + tk.probe_bad_rounds + ' 轮里（按轮自己的起始标记切段计数）';
+      $('f-tick').appendChild(pa);
     }
   })();
 
@@ -1550,6 +1582,9 @@ function artTitle(it){
     // 判据不随读数改（日志仍在写是真的，探针读数另说一件事）。
     const pT = tickProbeText(tk);
     if (pT) tVd = tVd + ' · ' + pT;
+    // 今日累计坏针（r816）：上句只看最后一轮，今天早先坏过的轮次同句补上。
+    const pAllT = tickProbeTotalText(tk);
+    if (pAllT) tVd = tVd + ' · ' + pAllT;
   }
   selfcheck.push({ ok: tOk, nm: 'tick 覆盖', vd: tVd });
 

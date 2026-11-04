@@ -1858,28 +1858,59 @@ function artTitle(it){
 // an unparseable stamp) and no note when the frames are the newer side; the
 // page never turns a missing comparison into a clean claim.
 const SHOT_CODE_WINDOW_MIN = 60;
+// Version binding (main#137). A frame carries the code revision it was shot
+// from only when the capture tool wrote a provenance sidecar; older frames have
+// none. When both sides know a sha, that is the answer (same or moved on) and
+// the time gap stops mattering. When either side is missing, fall back to the
+// r821 time sentence and SAY that the frame is unbound - never infer a version.
+function shotShaKey(v) {
+  if (typeof v !== 'string') return '';
+  const t = v.trim().toLowerCase();
+  return /^[0-9a-f]{6,40}$/.test(t) ? t : '';
+}
+function shotShaSame(a, b) {
+  if (a === b) return true;
+  const n = Math.min(a.length, b.length);
+  return n >= 7 && a.slice(0, n) === b.slice(0, n);
+}
 function shotCodeNote(shotList, code) {
-  const out = { note: '', warn: false, gap_min: -1 };
+  const out = { note: '', warn: false, gap_min: -1, sha_mode: 'none' };
   if (!shotList || !shotList.length) return out;
   const c = code || {};
-  if (!c.exists || !c.ts_utc) return out;
+  const codeSha = shotShaKey(c.sha);
+  const shotSha = shotShaKey(shotList[0] && shotList[0].sha);
+  const unbound = (c.exists && codeSha && !shotSha) ? ' · 帧未绑定版本' : '';
+  if (shotSha && codeSha) {
+    if (shotShaSame(shotSha, codeSha)) {
+      return { note: ' · 帧与代码同版（@' + codeSha + '）', warn: false, gap_min: -1, sha_mode: 'same' };
+    }
+    return {
+      note: ' · 帧 @' + shotSha + '，代码已 @' + codeSha + '（帧未跟上）',
+      warn: true, gap_min: -1, sha_mode: 'diff'
+    };
+  }
+  if (!c.exists || !c.ts_utc) return { note: unbound, warn: false, gap_min: -1, sha_mode: 'none' };
   const codeTs = Date.parse(c.ts_utc);
   const shotTs = Date.parse(shotList[0] && shotList[0].shot_utc);
-  if (isNaN(codeTs) || isNaN(shotTs)) return out;
+  if (isNaN(codeTs) || isNaN(shotTs)) return { note: unbound, warn: false, gap_min: -1, sha_mode: 'none' };
   const gapMin = Math.round((codeTs - shotTs) / 60000);
   out.gap_min = gapMin;
-  if (gapMin <= 0) return { note: '', warn: false, gap_min: gapMin };
+  if (gapMin <= 0) return { note: unbound, warn: false, gap_min: gapMin, sha_mode: 'none' };
   const minTxt = gapMin < SHOT_CODE_WINDOW_MIN
     ? (gapMin + ' 分')
     : ((Math.round(gapMin / 6) / 10) + ' 小时');
   const sha = c.sha ? ('代码 ' + c.sha) : '代码';
   if (gapMin <= SHOT_CODE_WINDOW_MIN) {
-    return { note: ' · ' + sha + ' 比帧新 ' + minTxt + '（捕捉窗内）', warn: false, gap_min: gapMin };
+    return {
+      note: ' · ' + sha + ' 比帧新 ' + minTxt + '（捕捉窗内）' + unbound,
+      warn: false, gap_min: gapMin, sha_mode: 'none'
+    };
   }
   return {
-    note: ' · ' + sha + ' 比帧新 ' + minTxt + '（超出 1 小时捕捉窗：帧未跟上代码）',
+    note: ' · ' + sha + ' 比帧新 ' + minTxt + '（超出 1 小时捕捉窗：帧未跟上代码）' + unbound,
     warn: true,
-    gap_min: gapMin
+    gap_min: gapMin,
+    sha_mode: 'none'
   };
 }
 const shotList = (SHOTS && Array.isArray(SHOTS.items)) ? SHOTS.items : [];

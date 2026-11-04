@@ -65,6 +65,19 @@ $jpegCodec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() |
   Where-Object { $_.MimeType -eq 'image/jpeg' } | Select-Object -First 1
 $stamp = Get-Date -Format 'yyyyMMdd-HHmm'
 
+# Version binding (queue main#137). A frame that does not record the code
+# revision it was shot from can only ever be compared to code by TIME, so a
+# round that changes City3D and then reverts it, or two commits inside one
+# capture window, still leaves the page unable to say which build it shows.
+# Record the last commit that touched City3D at capture time in a sidecar next
+# to the frames. "No sha" is a real state (git query failed / not a repo) and
+# is written as such - the panel must never invent one.
+$codeSha = ''
+try {
+  $rawSha = (& git -C $root log -1 --format=%h -- City3D 2>$null | Out-String).Trim()
+  if ($rawSha -match '^[0-9a-fA-F]{6,40}$') { $codeSha = $rawSha.ToLowerInvariant() }
+} catch { $codeSha = '' }
+
 function Convert-ToQaJpeg {
   param([string]$Png, [int]$W, [int]$Q, [string]$Out)
   $img = [System.Drawing.Image]::FromFile($Png)
@@ -113,6 +126,25 @@ foreach ($f in $frames) {
   $written++
   if (-not $KeepPng) { }
 }
-Write-Output ("SHOTS_OK fresh_png=" + $frames.Count + " qa_jpg=" + $written + " rejected=" + $skipped)
+$provName = 'city3d-shots-' + $stamp + '-bm-a.provenance.json'
+$provWrote = 0
+if ($written -gt 0 -and $codeSha) {
+  $prov = [ordered]@{
+    session = 'city3d-shots-' + $stamp + '-bm-a'
+    ref     = 'City3D'
+    sha     = $codeSha
+    utc     = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+  }
+  try {
+    [System.IO.File]::WriteAllText(
+      (Join-Path $qa $provName),
+      (($prov | ConvertTo-Json -Compress) + "`n"),
+      (New-Object System.Text.UTF8Encoding($false)))
+    $provWrote = 1
+  } catch { $provWrote = 0 }
+}
+Write-Output ("SHOTS_OK fresh_png=" + $frames.Count + " qa_jpg=" + $written + " rejected=" + $skipped +
+  " sha=" + $(if ($codeSha) { $codeSha } else { 'none' }) +
+  " provenance=" + $(if ($provWrote) { $provName } else { 'none' }))
 if ($written -eq 0) { exit 1 }
 exit 0

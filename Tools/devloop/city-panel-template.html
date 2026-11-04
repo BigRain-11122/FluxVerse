@@ -252,7 +252,7 @@ const SERIES = __SERIES_JSON__;
 const TREND = __TREND_JSON__;
 // TICK = today's tick log probe ({exists,file,size,mtime_utc,age_min,scan_lines,
 // rounds,rounds_seen,skip_rounds,last_kind,probes,probes_bad,probes_all,
-// probes_bad_all,probe_bad_rounds,quarantined,degraded,
+// probes_bad_all,probe_bad_rounds,probe_bad_first,probe_bad_last,quarantined,degraded,
 // read_ok}) - the panel is built BY that
 // tick, so this is the only honest way to tell whether the 10-minute loop
 // actually ran. rounds_seen/skip_rounds count today's rounds and how many of them
@@ -310,7 +310,16 @@ function tickProbeTotalText(tk) {
   const rounds = (typeof t.probe_bad_rounds === 'number' && t.probe_bad_rounds > 0)
     ? (' · ' + t.probe_bad_rounds + ' 轮')
     : '';
-  return '今日探针坏 ' + t.probes_bad_all + ' 处（' + t.probes_all + ' 枚' + rounds + '）';
+  // WHICH rounds, not just how many (queue main#135): "2 spots in 1 round"
+  // still sends the reader into a 100+ round log. builder takes each round's
+  // own start timestamp, so name the first and last bad round. One bad round
+  // prints once; several print first-last. No stamp in the log => the clause
+  // is omitted and the sentence is exactly the r816 one (never a fake clock).
+  const bf = (typeof t.probe_bad_first === 'string') ? t.probe_bad_first : '';
+  const bl = (typeof t.probe_bad_last === 'string') ? t.probe_bad_last : '';
+  let when = '';
+  if (bf && bl) when = (bf === bl) ? (' · ' + bf) : (' · ' + bf + '\u2013' + bl);
+  return '今日探针坏 ' + t.probes_bad_all + ' 处（' + t.probes_all + ' 枚' + rounds + when + '）';
 }
 // ARCH = the log-archive duty's own day stamp ({exists,stamp,stamp_day,today,
 // is_today,remain,ran_utc}). `stamp` is the local yyyyMMdd of the last SUCCESSFUL

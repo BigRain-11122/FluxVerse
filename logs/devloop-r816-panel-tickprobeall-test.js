@@ -170,9 +170,14 @@ ck(bLast.length === 1 && bLast[0].text === PROBE_LABEL + '26' + ALL_OK,
   'B: last-round sentence is unchanged', bLast.length ? bLast[0].text : 'none');
 const bTot = bTags.filter(t => t.text.indexOf(TOTAL_LABEL) === 0);
 ck(bTot.length === 1, 'B: exactly one cumulative tag', JSON.stringify(bTags.map(t => t.text)));
-const bWant = TOTAL_LABEL + '2 ' + WEN + '\uff08' + '31' + MEI + ' \u00b7 1 \u8f6e\uff09';
-ck(bTot.length === 1 && bTot[0].text === bWant,
-  'B: tag reads 2 spots of 31 probes in 1 round', bTot.length ? bTot[0].text : 'none');
+const bWant = TOTAL_LABEL + '2 ' + WEN + '\uff08' + '31' + MEI + ' \u00b7 1 \u8f6e';
+ck(bTot.length === 1 && bTot[0].text.indexOf(bWant) === 0,
+  'B: tag reads 2 spots of 31 probes in 1 round',
+  bTot.length ? bTot[0].text : 'none');
+// r817 widened this sentence with the first/last bad-round stamp; the count
+// contract pinned here is the prefix, and r817 owns the clock shape.
+ck(bTot.length === 1 && bTot[0].text.indexOf('\u679a') > 0 && bTot[0].text.indexOf('\u5904') > 0,
+  'B: tag keeps the count words after the r817 widening', bTot.length ? bTot[0].text : 'none');
 ck(bTot.length === 1 && bTot[0].cls.indexOf('warn') >= 0,
   'B: a day that really had a broken probe is a warn tint', bTot.length ? bTot[0].cls : '');
 ck(bTot.length === 1 && String(bTot[0].title).indexOf('2') >= 0,

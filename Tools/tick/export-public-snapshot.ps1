@@ -46,7 +46,11 @@ if (-not $OutDir)   { $OutDir   = Join-Path $repoRoot 'world-public' }
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 
 # ---------- output contract: v0 whitelist (single declaration) ----------
-$WL_EVENT_TYPES = @('COMMIT','TASK_CLAIM','TASK_DONE','GAME_STAGE','MEDIA_OUTPUT','GITHUB_EVENT','WEATHER_ALERT')
+# r826: RESIDENT_SAY was registered in schema/events-registry.json (T2 2026-09-23)
+# and emitted by probe residents.ps1, but was absent from this tail whitelist --
+# so every resident line since the day it started was dropped before the public
+# snapshot. Only ts/type/zone are exposed here, never the line itself.
+$WL_EVENT_TYPES = @('COMMIT','TASK_CLAIM','TASK_DONE','GAME_STAGE','MEDIA_OUTPUT','GITHUB_EVENT','WEATHER_ALERT','RESIDENT_SAY')
 $WL_ZONES = @('id','name','status','activity')
 $WL_FLOWS = @('id','zone')
 $WL_CITY  = @('fleet_online','games_total','games_active','renders_total','last_render_utc','commits_total')

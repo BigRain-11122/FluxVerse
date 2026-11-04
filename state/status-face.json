@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-04T17:39:53Z",
-    "current_activity":  "r825 毕（FULL-ROUND·triggers=4 c2-tree/c3-ledger/c6-dec/c7-orders·队列 open 202 无可领件·自领面板实况面上的真事）：活跑 `PANEL OK … proof_soak=drift:-32.7% proof_soak_age_h=175`。产品面=浸泡收据第一次由 tick 行自己给出判词：页面「城市证据」那行早已按四件事判红（errors/exceptions、render 漂移 ≤-20%、超过 48 小时复跑窗、收据在盘但数字没解析出来），而 tick 的 `proof_soak=` 只看文件在不在——同一份 -32.7%、175 小时的收据在 CEO 页面上是红的、在机器面却写 ok。改法两处=`./Tools/devloop/build-city-panel.ps1` 新增纯函数 `Get-ProofSoakReading`（判词次序与模板逐条对齐 missing→unreadable→errors→drift→old→ok，年龄在任何短路之前先量），`PANEL OK` 增 `proof_soak_age_h=`；`./Tools/devloop/test-city-panel-proof.ps1` 28→34 条并并入 write2 族（受保护源加模板、显式 -Suites 加第四套、门中门 z31 3→4＋新 z31c）——它守着 builder 却长期挂在任何族清单之外。",
-    "artifact":  "改动件=`./Tools/devloop/build-city-panel.ps1`（Get-ProofSoakReading＋PANEL OK 两键）、`./Tools/devloop/test-city-panel-proof.ps1`（34/34，含 D 漂移与 E 陈旧夹具）、`./Tools/devloop/ps-suites-tick.ps1`（write2 族四套＋模板入受保护源）、`./Tools/devloop/test-verify-ps-suites.ps1`（z31 改判＋z31c，225/225）；正典=`./TECH.md` 第九节 r825 行与 `./state/runbook.md` r825 节；重建件 `./world-public/city-panel.html`（bytes=264797，proof_soak=drift:-32.7%）与 390 全长取证 `./qa/city-panel-narrow.png`（390x7471 offenders=0）。",
-    "artifact_utc":  "2026-11-04T17:39:53Z",
-    "milestone":  "48 小时内：①浸泡欠账本身未修——`./state/queue/main.md` #52 需 0 个 Tuanjie 进程的空载窗（判据 fps_avg\u003e=486.8 且 p95\u003c=2.58ms），#17 的 48 小时复跑窗已逾期 127 小时；②`./state/queue/main.md` #121 候委员会（due 2026-11-16）、`./state/queue/tech.md` #18 候深潜窗（2026-11-19）；③下一次取景（需关编辑器）才会让帧带上版本侧件，页面从「帧未绑定版本」进到版本句。",
-    "milestone_eta_utc":  "2026-11-06T06:00:00Z"
+    "updated_utc":  "2026-11-04T19:06:41Z",
+    "current_activity":  "r826 毕（FULL-ROUND·triggers=2 c2-tree/c4-tech·队列 open 202 无可领件·自领居民 AI 复活）：活锚＝`probe residents: OK` 并新增一条 `RESIDENT_SAY`（BG-A 2026-11-04T19:04:32Z）。根因＝探针写死模型名 `qwen2.5:7b-instruct`，本机模型表早已换成 qwen3 系列，调用每轮 404 却被 try/catch 吞掉，于是居民三周没说话（world-state 的 residents 停在 10-14）。修法两处＝①默认模型改 qwen3:4b-instruct（本机实测 1.8 秒一句）并可 `FLUXVERSE_RESIDENT_MODEL` 覆盖；②把 RESIDENT_SAY 加进公开快照事件白名单——此前即便有台词，导出器也在尾部静默丢弃（公开面只暴露 ts/type/zone，不含台词）。",
+    "artifact":  "改动＝`./Tools/perceptor/probes/residents.ps1`（模型默认值＋环境变量覆盖）、`./Tools/tick/export-public-snapshot.ps1`（事件白名单加 RESIDENT_SAY）；实物＝`./world-public/city-panel.html` 重建后 events=50 且含 RESIDENT_SAY、`./world-public/city-snapshot.json`（events_tail=50/493，发布闸五项全绿）、`./world/world-events-20261104.jsonl`（世界事件流当日档 1.15MB 收口）；体检＝`VERIFY PASS` exit 0。",
+    "artifact_utc":  "2026-11-04T19:06:41Z",
+    "milestone":  "48 小时内：①其余 4 名居民在 45 分钟冷却后陆续开口（本轮只等到 BG-A 一条），观察台词是否持续进入面板事件流；②`./state/queue/main.md` #52 浸泡空载复跑仍要 0 个 Tuanjie 进程的窗口（判据 fps_avg\u003e=486.8 且 p95\u003c=2.58ms），#17 复跑窗已逾期；③取景帧版本句要等下一次关编辑器取景。",
+    "milestone_eta_utc":  "2026-11-06T22:00:00Z"
 }

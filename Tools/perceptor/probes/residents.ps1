@@ -153,7 +153,13 @@ function Probe-residents {
 
       $line = ''
       try {
-        $body = @{ model = 'qwen2.5:7b-instruct'; prompt = $prompt; stream = $false; options = @{ num_predict = 60; temperature = 0.8 } } | ConvertTo-Json -Depth 4
+        # r826: the host model roster drifted (qwen2.5:7b-instruct no longer pulled),
+        # and because the call sits inside try/catch every round 404'd silently --
+        # residents stopped speaking on 2026-10-14 and nobody saw a red line.
+        # Default = a model measured on this host; env override for other machines.
+        $residentModel = 'qwen3:4b-instruct'
+        if ($env:FLUXVERSE_RESIDENT_MODEL) { $residentModel = [string]$env:FLUXVERSE_RESIDENT_MODEL }
+        $body = @{ model = $residentModel; prompt = $prompt; stream = $false; options = @{ num_predict = 60; temperature = 0.8 } } | ConvertTo-Json -Depth 4
         $resp = Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/generate' -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 30
         $line = ([string]$resp.response).Trim() -replace "`r`n", ' ' -replace "`n", ' '
       } catch { break }

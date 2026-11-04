@@ -1887,6 +1887,15 @@ if ($null -eq $residentsMeta) {
         try { $bfN = [int]$residentsMeta.backfilled_n } catch { $bfN = -1 }
         if ($bfN -gt 0) { $resBack = ' backfilled=' + $bfN }
     }
+    # main#142 (r839): a bounded event scan that came up short is not "never
+    # spoke". Same rule as `backfilled`: only printed when it is a real gap.
+    if ($null -ne $residentsMeta.PSObject.Properties['backfill_gap_n'] -and $null -ne $residentsMeta.PSObject.Properties['backfill_scanned']) {
+        $bfScanned = 0
+        $bfGap = -1
+        try { $bfScanned = [int]$residentsMeta.backfill_scanned } catch { $bfScanned = 0 }
+        try { $bfGap = [int]$residentsMeta.backfill_gap_n } catch { $bfGap = -1 }
+        if ($bfScanned -eq 1 -and $bfGap -gt 0) { $resBack = $resBack + ' backfill_gap=' + $bfGap }
+    }
     Write-Output ('PANEL RESIDENTS: model=' + [string]$residentsMeta.model + ' present=' + $resPres + ' residents=' + $resRes + ' say=' + $resSay + ' never=' + $resNever + ' stale=' + $resStale + ' models=' + $resMod + $resBack)
 }
 

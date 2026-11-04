@@ -22,6 +22,9 @@
 $ErrorActionPreference = 'Stop'
 $module = Join-Path $PSScriptRoot 'resident-verdict.ps1'
 $probe = Join-Path (Split-Path -Parent $PSScriptRoot) 'perceptor\probes\residents.ps1'
+# r839: the wiring checks below read the two face files by repository-relative
+# path (Tools\devloop is one level down, Tools\ is two).
+$repo = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 foreach ($p in @($module, $probe)) {
     if (-not (Test-Path -LiteralPath $p)) { Write-Output ('setup FAIL: missing ' + $p); exit 1 }
 }
@@ -377,6 +380,63 @@ try {
     $probeSrc2 = [System.IO.File]::ReadAllText($probe)
     Check 'scan gated on cursor gaps'        ($probeSrc2 -match 'cursorGaps -gt 0')
     Check 'both faces share one index'       (@([regex]::Matches($probeSrc2, '\$eventIndex')).Count -ge 5)
+
+    # ---------- l) what the bounded scan did NOT find (main#142, r839) ----------
+    # The backfill opens at most MaxFiles event files. "No row in the window" and
+    # "never spoke" used to print the same word, so a reader could not tell an
+    # old line from a silent resident. The census stays untouched; only the new
+    # readings say which case it is.
+    Write-Output '--- l) backfill window honesty ---'
+    $mGap = Get-ResidentVoiceMeta @{} @('E-1', 'E-2', 'E-3') 'm' @{ present = $true; known = $true } 1 $ev.index $ev
+    Check 'gap: scan was consulted'          ([int]$mGap.backfill_scanned -eq 1)
+    Check 'gap: files read is a real count'  ([int]$mGap.backfill_files_n -ge 2)
+    Check 'gap: incomplete scan reported'    ([int]$mGap.backfill_complete_n -eq 0)
+    Check 'gap: E-3 is the unanswered card'  ([int]$mGap.backfill_gap_n -eq 1)
+    Check 'gap: never count not massaged'    ([int]$mGap.never_n -eq 1 -and ([int]$mGap.speakers_n + [int]$mGap.never_n) -eq [int]$mGap.residents_n)
+
+    $mGapZero = Get-ResidentVoiceMeta @{} @('E-1', 'E-2') 'm' @{ present = $true; known = $true } 1 $evFull.index $evFull
+    Check 'gap: complete scan -> gap 0'      ([int]$mGapZero.backfill_gap_n -eq 0 -and [int]$mGapZero.backfill_complete_n -eq 1)
+
+    # no scan this round: every new reading is -1 (not measured), never 0
+    $mNoScan = Get-ResidentVoiceMeta @{} @('E-1') 'm' @{ present = $true; known = $true } 1 $ev.index
+    Check 'gap: unscanned round -> -1'       ([int]$mNoScan.backfill_scanned -eq 0 -and [int]$mNoScan.backfill_gap_n -eq -1 -and [int]$mNoScan.backfill_files_n -eq -1 -and [int]$mNoScan.backfill_complete_n -eq -1)
+
+    # verdict line: names the window only when a real gap exists
+    $rGap = @{ exists = $true; unreadable = $false; meta = [PSCustomObject]@{
+        model = 'm'; model_present = $true; model_known = $true;
+        residents_n = 3; models_n = 1; speakers_n = 2; never_n = 1; stale_n = 0;
+        backfilled_n = 2; backfill_scanned = 1; backfill_files_n = 8;
+        backfill_complete_n = 0; backfill_gap_n = 1;
+        last_say_utc = '2026-01-02T10:00:00Z'; last_say_age_h = 0.5 } }
+    $vGap = Get-ResidentVoiceVerdict $rGap
+    Check 'verdict names the window gap'     ($vGap.line -match 'backfill_gap=1')
+    Check 'verdict still healthy on a gap'   ($vGap.verdict -eq 'health')
+    [void]$allLines.Add($vGap.line)
+    $rNoGap = @{ exists = $true; unreadable = $false; meta = [PSCustomObject]@{
+        model = 'm'; model_present = $true; model_known = $true;
+        residents_n = 3; models_n = 1; speakers_n = 3; never_n = 0; stale_n = 0;
+        backfilled_n = 2; backfill_scanned = 1; backfill_files_n = 8;
+        backfill_complete_n = 1; backfill_gap_n = 0;
+        last_say_utc = '2026-01-02T10:00:00Z'; last_say_age_h = 0.5 } }
+    Check 'zero gap -> no segment'           ((Get-ResidentVoiceVerdict $rNoGap).line -notmatch 'backfill_gap=')
+    $rUnscanned = @{ exists = $true; unreadable = $false; meta = [PSCustomObject]@{
+        model = 'm'; model_present = $true; model_known = $true;
+        residents_n = 3; models_n = 1; speakers_n = 3; never_n = 0; stale_n = 0;
+        backfilled_n = 0; backfill_scanned = 0; backfill_files_n = -1;
+        backfill_complete_n = -1; backfill_gap_n = -1;
+        last_say_utc = '2026-01-02T10:00:00Z'; last_say_age_h = 0.5 } }
+    Check 'unscanned round -> no segment'    ((Get-ResidentVoiceVerdict $rUnscanned).line -notmatch 'backfill_gap=')
+
+    # wiring: the probe hands the whole scan over; both faces print the gap
+    $tplSrc = [System.IO.File]::ReadAllText((Join-Path $repo 'Tools\devloop\city-panel-template.html'))
+    $bldSrc = [System.IO.File]::ReadAllText((Join-Path $repo 'Tools\devloop\build-city-panel.ps1'))
+    $vdSrc = [System.IO.File]::ReadAllText((Join-Path $repo 'Tools\devloop\resident-verdict.ps1'))
+    Check 'probe passes the scan object'     ($probeSrc2 -match 'Get-ResidentVoiceMeta[^\r\n]*\$evBackfill' -and $probeSrc2 -match 'backfill_gap_n')
+    Check 'verdict formats the gap'          ($vdSrc -match 'backfill_gap_n' -and $vdSrc -match "backfill_gap='")
+    Check 'builder machine line has the gap' ($bldSrc -match "backfill_gap='")
+    # (ASCII-only law: the page sentence itself is CJK, so only its guard is
+    #  asserted here - the wording is proven by the panel sandbox that renders it.)
+    Check 'page prints the gap segment'      ($tplSrc -match 'backfill_scanned === 1' -and $tplSrc -match 'backfill_gap_n > 0')
 } finally {
     if (Test-Path $tmpE) { Remove-Item $tmpE -Recurse -Force -ErrorAction SilentlyContinue }
 }

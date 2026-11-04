@@ -509,6 +509,12 @@ function residentsText(m) {
   // then answers instead. Say so instead of letting the numbers look like a
   // fresh read - and a pre-r838 reading has no key, so no segment appears.
   if (typeof m.backfilled_n === 'number' && m.backfilled_n > 0) txt += ' · ' + m.backfilled_n + ' 人读数由事件流回填';
+  // r839 (main#142): the backfill only opens a bounded number of event files.
+  // When it was consulted and some residents still had no row, "未找到" is not
+  // "从未说过" - say which, instead of letting the never count stand alone.
+  if (m.backfill_scanned === 1 && typeof m.backfill_gap_n === 'number' && m.backfill_gap_n > 0) {
+    txt += ' · ' + m.backfill_gap_n + ' 人超出回填窗口（不等于从未开口）';
+  }
   txt += ' · 最近 ' + residentsAgeText(m.last_say_age_h);
   if (m.last_error) txt += ' · ' + String(m.last_error);
   return txt;

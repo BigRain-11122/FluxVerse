@@ -114,6 +114,13 @@ function Get-ResidentVoiceMeta {
   # inside one round would otherwise reappear across a lost cursor file.
   # `backfilled_n` counts the residents whose stamp came from the event stream;
   # 0 means "the cursor answered everything" and is a real reading, not a guess.
+  # main#142 (r839): the backfill only reads the newest MaxFiles event files, so
+  # "no row found" is NOT the same fact as "never spoke". When the stream was
+  # consulted this round, publish the shape of that scan (`backfill_scanned`,
+  # `backfill_files_n`, `backfill_complete_n`, `backfill_gap_n`); a resident in
+  # the gap still counts as `never` in the census - the number is not massaged -
+  # the new readings only let the faces say "not found in the window".
+  # -1 means "not measured" (no scan this round), never 0.
   # r830: `silent_n` used to mix two different facts (never spoke + line older
   # than 24h) while `speakers_n` counted every resident that ever spoke, so
   # "say=5 silent=2" could exceed the card count and no reader could reconcile
@@ -125,7 +132,7 @@ function Get-ResidentVoiceMeta {
   # line that printed only the model count next to `say=` read as "4 residents
   # spoke 5 times" - impossible on its face. Both numbers are published under
   # names that cannot be confused: models_n vs residents_n.
-  param($Cursor, [string[]]$ResidentIds, [string]$Model, $ModelState, [int]$ModelN, $EventIndex = $null)
+  param($Cursor, [string[]]$ResidentIds, [string]$Model, $ModelState, [int]$ModelN, $EventIndex = $null, $BackfillScan = $null)
   $nowUtc = (Get-Date).ToUniversalTime()
   $sayN = 0
   $lastUtc = ''
@@ -153,6 +160,27 @@ function Get-ResidentVoiceMeta {
       if ($age -gt 24) { $stale++ }
     } catch { $stale++ }
   }
+  # main#142: shape of the event-stream scan behind this reading.
+  #   backfill_scanned   = 1 only when the stream was actually read
+  #   backfill_files_n   = how many event files that scan opened
+  #   backfill_complete_n= 1 every card answered / 0 someone left unanswered
+  #   backfill_gap_n     = cards that neither cursor nor stream could answer for
+  #                        (their line may predate the window - NOT "never spoke")
+  $bfScanned = 0
+  $bfFiles = -1
+  $bfComplete = -1
+  $bfGap = -1
+  if ($null -ne $BackfillScan) {
+    $bfScanned = 1
+    try { $bfFiles = [int]$BackfillScan.files_read } catch { $bfFiles = -1 }
+    try { if ([bool]$BackfillScan.complete) { $bfComplete = 1 } else { $bfComplete = 0 } } catch { $bfComplete = -1 }
+    $bfGap = 0
+    foreach ($rid in @($ResidentIds)) {
+      $hasCursor = $Cursor.ContainsKey('res:' + $rid + ':ts')
+      $hasEvent = ($null -ne $EventIndex -and $EventIndex.ContainsKey($rid))
+      if (-not $hasCursor -and -not $hasEvent) { $bfGap++ }
+    }
+  }
   # `silent_n` keeps the old meaning (never + stale) for older consumers.
   $silent = $never + $stale
   $ageH = $null
@@ -173,6 +201,10 @@ function Get-ResidentVoiceMeta {
     stale_n        = $stale
     silent_n       = $silent
     backfilled_n   = $backfilled
+    backfill_scanned    = $bfScanned
+    backfill_files_n    = $bfFiles
+    backfill_complete_n = $bfComplete
+    backfill_gap_n      = $bfGap
     last_say_utc   = $lastUtc
     last_say_age_h = $ageH
   }
@@ -251,15 +283,19 @@ function Probe-residents {
     # healthy round pays nothing and a lost cursor stops reading as "nobody ever
     # spoke in this city".
     $eventIndex = $null
+    $evBackfill = $null
     $cursorGaps = 0
     foreach ($rid in @($cardIds)) {
       if (-not $ctx.cursor.ContainsKey('res:' + $rid + ':line')) { $cursorGaps++ }
     }
     if ($cursorGaps -gt 0) {
+      # main#142: keep the whole scan result (not just the index) so the reading
+      # can say "we looked, files read, N left unanswered" instead of passing a
+      # truncated search off as "this resident never spoke".
       $evBackfill = Get-ResidentEventIndex $worldDir $cardIds
       if (@($evBackfill.index.Keys).Count -gt 0) { $eventIndex = $evBackfill.index }
     }
-    $voiceMeta = Get-ResidentVoiceMeta $ctx.cursor $cardIds $residentModel $modelState @($roster.names).Count $eventIndex
+    $voiceMeta = Get-ResidentVoiceMeta $ctx.cursor $cardIds $residentModel $modelState @($roster.names).Count $eventIndex $evBackfill
     $sayError = ''
 
     # --- gather real facts (read-only) ---
@@ -431,7 +467,7 @@ function Probe-residents {
     $residents = Get-ResidentSnapshot $ctx $cardsDir $eventIndex
     # Recompute the voice readings AFTER speaking: this round's lines move both
     # the speaker count and the last-say age.
-    $voiceMeta = Get-ResidentVoiceMeta $ctx.cursor $cardIds $residentModel $modelState @($roster.names).Count $eventIndex
+    $voiceMeta = Get-ResidentVoiceMeta $ctx.cursor $cardIds $residentModel $modelState @($roster.names).Count $eventIndex $evBackfill
     if ($sayError) { $voiceMeta['last_error'] = $sayError }
     return (New-ResidentState $residents $voiceMeta)
   } catch { return $null }

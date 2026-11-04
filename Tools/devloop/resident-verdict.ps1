@@ -107,6 +107,17 @@ function Get-ResidentVoiceVerdict {
     try { $bf = [int]$m.backfilled_n } catch { $bf = -1 }
     if ($bf -gt 0) { $backfillTxt = ' backfilled=' + $bf }
   }
+  # main#142 (r839): the backfill reads at most a bounded number of event files,
+  # so "no row found" is not "never spoke". Printed only when the stream was
+  # actually consulted AND someone was left unanswered - a healthy round keeps
+  # the exact line it had, and `never=` is never massaged down to look better.
+  if ($null -ne $m.PSObject.Properties['backfill_gap_n'] -and $null -ne $m.PSObject.Properties['backfill_scanned']) {
+    $bfScanned = 0
+    $bfGap = -1
+    try { $bfScanned = [int]$m.backfill_scanned } catch { $bfScanned = 0 }
+    try { $bfGap = [int]$m.backfill_gap_n } catch { $bfGap = -1 }
+    if ($bfScanned -eq 1 -and $bfGap -gt 0) { $backfillTxt = $backfillTxt + ' backfill_gap=' + $bfGap }
+  }
 
   $line = 'residents: model=' + $model + ' present=' + $presentTxt +
     ' residents=' + $residentsTxt + ' say=' + $speakers +

@@ -328,6 +328,12 @@ foreach ($ck in @('total','generated_utc','wall')) {
 # resident minds (probe residents.ps1): latest AI line per resident -> state.residents
 $residents = @{}
 if ($stateParts.ContainsKey('residents')) { $residents = $stateParts.residents }
+# r828 (main#138): the voice READINGS ride next to the lines - which model the
+# probe used, whether it is on the local roster (three states), and when each
+# resident last spoke. Kept out of `residents` so that section stays exactly the
+# per-resident map every consumer already knows.
+$residentsMeta = $null
+if ($stateParts.ContainsKey('residents_meta')) { $residentsMeta = $stateParts['residents_meta'] }
 
 # r65: fleet inbox ingest face (probe inbox, P-43 case 2) - additive counters
 $inboxSec = @{}
@@ -408,6 +414,9 @@ $state = [ordered]@{
   game_tasks = $gameTasks
   residents = $residents
 }
+# r828: additive section - absent entirely while the probe has not published
+# readings (old probe / resident cards missing), so nothing invents a model name.
+if ($null -ne $residentsMeta) { $state['residents_meta'] = $residentsMeta }
 # T-FV-132: weather face - honest omission when the reality weather probe
 # degraded (canon sec 7 weather{kind,temp_c}; no fake weather, sec 3 honesty).
 if ($reality.ContainsKey('weather_kind') -and $reality.ContainsKey('weather_temp_c')) {

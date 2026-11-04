@@ -19,6 +19,88 @@ function Get-ResidentLocation([string]$rid, [bool]$online, [int]$hourBeijing) {
   return 'game-city-studio'                                 # at GAME city studio
 }
 
+# --- voice-face helpers (main#138, r828) -------------------------------------
+# r826 swapped the dead model name and revived the voices, but the face still
+# read "probe residents: OK" the whole three weeks they were silent. The probe
+# contract has no WARN channel, so the honest split is: the probe records
+# READINGS (which model, was it on disk, whose last line was when) and verify
+# says the warning. Both halves need the same facts, so they live here as pure
+# functions and are unit-testable without an Ollama server.
+function Get-ResidentModelRoster {
+  # Returns @{ ok = $true/$false; names = @() }.
+  # ok=$false means "the roster could not be read" (Ollama down / wrong port),
+  # which is NOT the same fact as "the model is not installed".
+  param([string]$BaseUri)
+  try {
+    $r = Invoke-RestMethod -Uri ($BaseUri.TrimEnd('/') + '/api/tags') -TimeoutSec 5
+    $names = @()
+    foreach ($m in @($r.models)) {
+      if ($null -ne $m -and $null -ne $m.PSObject.Properties['name']) { $names += [string]$m.name }
+    }
+    return @{ ok = $true; names = $names }
+  } catch { return @{ ok = $false; names = @() } }
+}
+
+function Get-ResidentModelStatus {
+  # Three states, never two: installed / not installed / unknown. A two-state
+  # reading would print "not installed" when Ollama is merely down.
+  param([string]$Model, $Roster)
+  if ($null -eq $Roster -or $Roster.ok -ne $true) { return @{ present = $null; known = $false } }
+  $hit = $false
+  foreach ($n in @($Roster.names)) { if ($n -eq $Model) { $hit = $true; break } }
+  return @{ present = $hit; known = $true }
+}
+
+function Get-ResidentVoiceMeta {
+  # Readings only. `last_say_age_h` = $null means "never spoke / timestamp
+  # unreadable", never 0. `silent_n` counts residents with no line or a line
+  # older than 24h.
+  param($Cursor, [string[]]$ResidentIds, [string]$Model, $ModelState, [int]$RosterN)
+  $nowUtc = (Get-Date).ToUniversalTime()
+  $sayN = 0
+  $lastUtc = ''
+  $silent = 0
+  foreach ($rid in @($ResidentIds)) {
+    $k = 'res:' + $rid + ':ts'
+    if (-not $Cursor.ContainsKey($k)) { $silent++; continue }
+    $t = [string]$Cursor[$k]
+    if ([string]::IsNullOrEmpty($t)) { $silent++; continue }
+    $sayN++
+    if ($t -gt $lastUtc) { $lastUtc = $t }
+    try {
+      # r828: the trailing Z is a LITERAL in ParseExact, so the old two-arg call
+      # produced a Kind=Local DateTime (11:10Z read as 11:10 local) and every age
+      # was off by the host offset (+8 here). datetimeoffset parses the stamp as
+      # the UTC instant it names.
+      $dt = [datetimeoffset]::ParseExact($t, 'yyyy-MM-ddTHH:mm:ssZ', [Globalization.CultureInfo]::InvariantCulture)
+      $age = ($nowUtc - $dt.UtcDateTime).TotalHours
+      if ($age -gt 24) { $silent++ }
+    } catch { $silent++ }
+  }
+  $ageH = $null
+  if ($lastUtc) {
+    try {
+      $dtL = [datetimeoffset]::ParseExact($lastUtc, 'yyyy-MM-ddTHH:mm:ssZ', [Globalization.CultureInfo]::InvariantCulture)
+      $ageH = [math]::Round(($nowUtc - $dtL.UtcDateTime).TotalHours, 1)
+    } catch { $ageH = $null }
+  }
+  return [ordered]@{
+    model          = $Model
+    model_present  = $ModelState.present
+    model_known    = $ModelState.known
+    roster_n       = $RosterN
+    speakers_n     = $sayN
+    silent_n       = $silent
+    last_say_utc   = $lastUtc
+    last_say_age_h = $ageH
+  }
+}
+
+function New-ResidentState {
+  param($Residents, $Meta)
+  return @{ state = @{ residents = $Residents; residents_meta = $Meta } }
+}
+
 function Probe-residents {
   param($ctx)
   try {
@@ -27,6 +109,18 @@ function Probe-residents {
     $promptFile = Join-Path $PSScriptRoot 'residents-prompt.txt'
     if (-not (Test-Path $cardsDir) -or -not (Test-Path $promptFile)) { return @{ state = @{ } } }
 
+    # r828: model + roster are resolved once, before any early return, so a
+    # quiet round still carries "which model, is it installed" to the page.
+    $residentModel = 'qwen3:4b-instruct'
+    if ($env:FLUXVERSE_RESIDENT_MODEL) { $residentModel = [string]$env:FLUXVERSE_RESIDENT_MODEL }
+    $ollamaBase = 'http://127.0.0.1:11434'
+    if ($env:FLUXVERSE_OLLAMA_BASE) { $ollamaBase = [string]$env:FLUXVERSE_OLLAMA_BASE }
+    $roster = Get-ResidentModelRoster $ollamaBase
+    $modelState = Get-ResidentModelStatus $residentModel $roster
+    $cardIds = @(Get-ChildItem $cardsDir -Filter *.md | Sort-Object Name | ForEach-Object { $_.BaseName })
+    $voiceMeta = Get-ResidentVoiceMeta $ctx.cursor $cardIds $residentModel $modelState @($roster.names).Count
+    $sayError = ''
+
     # --- gather real facts (read-only) ---
     $evLines = @()
     $evFile = Join-Path $worldDir 'world-events.jsonl'
@@ -34,7 +128,7 @@ function Probe-residents {
       $all = @(Get-Content $evFile -Encoding UTF8 | ForEach-Object { [string]$_ } | Where-Object { $_.Trim() })
       if ($all.Count -gt 12) { $evLines = @($all | Select-Object -Last 12) } else { $evLines = $all }
     }
-    if ($evLines.Count -eq 0) { return @{ state = @{ } } }
+    if ($evLines.Count -eq 0) { return (New-ResidentState @{} $voiceMeta) }
 
     # context: previous-round world-state (time / weather / fleet online states)
     $nowTxt = ''
@@ -77,13 +171,17 @@ function Probe-residents {
       if ($lastTs -and $newestEvTs -le $lastTs) { continue }
       if ($lastTs) {
         try {
-          $age = ((Get-Date).ToUniversalTime() - [datetime]::ParseExact($lastTs, 'yyyy-MM-ddTHH:mm:ssZ', [Globalization.CultureInfo]::InvariantCulture)).TotalMinutes
+          # r828: same literal-Z trap as the meta helper - ParseExact read the
+          # stamp as local time, so the 45 min cooldown was really 45 min minus
+          # the host offset (zero on this +8 host): every round was eligible.
+          $dtLast = [datetimeoffset]::ParseExact($lastTs, 'yyyy-MM-ddTHH:mm:ssZ', [Globalization.CultureInfo]::InvariantCulture)
+          $age = ((Get-Date).ToUniversalTime() - $dtLast.UtcDateTime).TotalMinutes
           if ($age -lt $cooldownMin) { continue }
         } catch { }
       }
       $eligible += $cf
     }
-    if ($eligible.Count -eq 0) { return @{ state = @{ } } }
+    if ($eligible.Count -eq 0) { return (New-ResidentState @{} $voiceMeta) }
 
     # --- chat mode: every 4th speaking round, two residents talk (v2 pulled forward) ---
     $chatCount = 0
@@ -156,13 +254,15 @@ function Probe-residents {
         # r826: the host model roster drifted (qwen2.5:7b-instruct no longer pulled),
         # and because the call sits inside try/catch every round 404'd silently --
         # residents stopped speaking on 2026-10-14 and nobody saw a red line.
-        # Default = a model measured on this host; env override for other machines.
-        $residentModel = 'qwen3:4b-instruct'
-        if ($env:FLUXVERSE_RESIDENT_MODEL) { $residentModel = [string]$env:FLUXVERSE_RESIDENT_MODEL }
+        # r828: model/base resolved once at the top; a failure now records WHY
+        # on the meta face instead of vanishing into `break`.
         $body = @{ model = $residentModel; prompt = $prompt; stream = $false; options = @{ num_predict = 60; temperature = 0.8 } } | ConvertTo-Json -Depth 4
-        $resp = Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/generate' -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 30
+        $resp = Invoke-RestMethod -Uri ($ollamaBase.TrimEnd('/') + '/api/generate') -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 30
         $line = ([string]$resp.response).Trim() -replace "`r`n", ' ' -replace "`n", ' '
-      } catch { break }
+      } catch {
+        $sayError = 'generate: ' + ([string]$_.Exception.Message -replace '[\r\n]+', ' ')
+        break
+      }
       if ($line.Length -eq 0) { break }
       if ($line.Length -gt 90) { $line = $line.Substring(0, 90) }
 
@@ -200,6 +300,10 @@ function Probe-residents {
         $residents[$rid] = @{ id = $rid; line = [string]$ctx.cursor[$kLine]; ts = [string]$ctx.cursor[$kTs]; location = $locStr }
       }
     }
-    return @{ state = @{ residents = $residents } }
+    # Recompute the voice readings AFTER speaking: this round's lines move both
+    # the speaker count and the last-say age.
+    $voiceMeta = Get-ResidentVoiceMeta $ctx.cursor $cardIds $residentModel $modelState @($roster.names).Count
+    if ($sayError) { $voiceMeta['last_error'] = $sayError }
+    return (New-ResidentState $residents $voiceMeta)
   } catch { return $null }
 }

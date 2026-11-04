@@ -1684,6 +1684,19 @@ if ([string]::IsNullOrEmpty($QueueDir)) {
 $qdue = Get-QueueDue -Dir $QueueDir -RepoRoot $repoDir
 $qdueJs = To-JsLiteral -Obj $qdue -Label 'qdue'
 
+# r828 (main#138): resident-voice readings for the "reality anchor" card.
+# Reads the INTERNAL state (world-state.json), not the public snapshot: the
+# public whitelist deliberately carries no resident face (lines are speech).
+# Absent readings ship as null so the page says "unknown", never "0 speakers".
+$residentsMeta = $null
+try {
+    if (Test-Path -LiteralPath $StatePath) {
+        $wsRes = ConvertFrom-Json ([IO.File]::ReadAllText($StatePath, [Text.Encoding]::UTF8))
+        if ($null -ne $wsRes -and $null -ne $wsRes.PSObject.Properties['residents_meta']) { $residentsMeta = $wsRes.residents_meta }
+    }
+} catch { $residentsMeta = $null }
+$residentsJs = To-JsLiteral -Obj $residentsMeta -Label 'residents_meta'
+
 $proof = Resolve-CityProof -Root $ProofRoot
 $proofJs = To-JsLiteral -Obj $proof -Label 'proof'
 
@@ -1718,7 +1731,7 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__DUTY_JSON__','__ARCH_JSON__','__QACITE_JSON__','__QUEUE_JSON__','__ART_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__DUTY_JSON__','__ARCH_JSON__','__QACITE_JSON__','__QUEUE_JSON__','__ART_JSON__','__RESIDENTS_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
@@ -1747,8 +1760,9 @@ $phMap = @{
     '__SPARAM_JSON__'   = $sparamJs
     '__QUEUE_JSON__'    = $qdueJs
     '__ART_JSON__'      = $artJs
+    '__RESIDENTS_JSON__' = $residentsJs
 }
-$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|DUTY|ARCH|QACITE|SPARAM|QUEUE|ART)_JSON__')
+$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|DUTY|ARCH|QACITE|SPARAM|QUEUE|ART|RESIDENTS)_JSON__')
 $evaluator = [System.Text.RegularExpressions.MatchEvaluator]{
     param($m)
     if (-not $phMap.ContainsKey($m.Value)) { return $m.Value }
@@ -1809,6 +1823,22 @@ if ($qdue.exists) {
 # variables are case-insensitive, so the script-scope `$now` (a DateTimeOffset,
 # set for the duty-due pass) IS `$Now` here and the typed parameter rejected it.
 $soakRead = Get-ProofSoakReading -Soak $proof.soak
+
+# r828: machine face for the resident-voice readings (the page shows the human
+# form). `present` is 1/0/unknown - an unreadable roster is never "0".
+if ($null -eq $residentsMeta) {
+    Write-Output 'PANEL RESIDENTS: model=none present=unknown say=unknown (no readings in world state)'
+} else {
+    $resPres = 'unknown'
+    $resKnown = $true
+    if ($null -ne $residentsMeta.PSObject.Properties['model_known']) { $resKnown = [bool]$residentsMeta.model_known }
+    $resPv = $null
+    if ($null -ne $residentsMeta.PSObject.Properties['model_present']) { $resPv = $residentsMeta.model_present }
+    if ($resKnown -and $resPv -eq $true) { $resPres = '1' } elseif ($resKnown -and $resPv -eq $false) { $resPres = '0' }
+    $resSay = 'unknown'
+    if ($null -ne $residentsMeta.PSObject.Properties['speakers_n']) { $resSay = [string]$residentsMeta.speakers_n }
+    Write-Output ('PANEL RESIDENTS: model=' + [string]$residentsMeta.model + ' present=' + $resPres + ' say=' + $resSay)
+}
 
 Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' art_bare=' + [int]$artBare.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds + ' last=' + $lastKind + ' last_gate=' + $(if ([string]::IsNullOrEmpty($lastGate)) { 'none' } else { [string]$lastGate }) + ' gate_red=' + [int]$gateRedRounds + '/' + [int]$gateRounds + ' skip=' + [int]$skipRounds + '/' + [int]$roundsSeen + ' probes=' + [int]$probeTotal + ' probes_bad=' + [int]$probeBad + ' probes_all=' + [int]$probesAll + ' probes_bad_all=' + [int]$probeBadAll + ' probe_bad_rounds=' + [int]$probeBadRounds + ' probe_bad_first=' + $(if ([string]::IsNullOrEmpty($probeBadFirst)) { 'none' } else { [string]$probeBadFirst }) + ' probe_bad_last=' + $(if ([string]::IsNullOrEmpty($probeBadLast)) { 'none' } else { [string]$probeBadLast }) + ' probe_bad_stamps=' + $(if ($probeBadStamps.Count -eq 0) { 'none' } else { ($probeBadStamps -join ',') }) + ' quarantined=' + [int]$quarantined + ' degraded=' + [int]$degraded + ' quarantined_all=' + [int]$quarantinedAll + ' degraded_all=' + [int]$degradedAll + ' degraded_probes=' + [int]$degProbes + ' degraded_rounds=' + [int]$degRounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' shots_sha=' + [int]$(if ($null -ne $script:shotsSha) { $script:shotsSha } else { 0 }) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + [string]$soakRead.token + ' proof_soak_age_h=' + [int]$soakRead.age_h + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' duty_receipted=' + [int]$duty.receipted + ' duty_receipts=' + $(if ($duty.receipts_exists) { [string]$duty.receipts_count } else { 'missing' }) + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' qacite=' + $(if ($qacite.exists) { 'ok' } elseif ($qacite.error) { $qacite.error } else { 'missing' }) + ' qacite_stale=' + $(if ($qacite.exists) { [string]$qacite.stale_cited } else { 'missing' }) + ' qacite_cited=' + $(if ($qacite.exists) { [string]$qacite.cited } else { 'missing' }) + ' qacite_age=' + $(if ($qacite.exists) { [string]$qacite.age_hours } else { 'missing' }) + ' qacite_overdue=' + $(if ($qacite.exists) { if ($qacite.overdue) { '1' } else { '0' } } else { 'missing' }) + ' sparam_risky=' + $(if ($sparam.reason -eq 'no-dir') { 'missing' } else { [string]$sparam.risky }) + ' sparam_cached=' + $(if ($sparam.cached) { '1' } else { '0' }) + ' sparam_note=' + $(if ([string]::IsNullOrEmpty($sparam.reason)) { 'none' } else { $sparam.reason }) + ' qdue=' + $(if ($qdue.exists) { [string]$qdue.late } else { 'missing' }) + ' qdue_note=' + $(if ([string]::IsNullOrEmpty($qdue.note)) { 'none' } else { [string]$qdue.note }) + ' qdue_bad=' + $(if ($qdue.exists) { [string]$qdue.bad } else { 'missing' }) + ' qdue_code=' + $(if ($qdue.exists) { [string]$qdue.code } else { 'missing' }) + ' qdue_long=' + $(if ($qdue.exists) { [string]$qdue.long } else { 'missing' }) + ' qdue_longmax=' + $(if ($qdue.exists) { [string]$qdue.long_max } else { 'missing' }) + ' qdue_dupe=' + $(if ($qdue.exists) { [string]$qdue.dupe } else { 'missing' }) + ' qdue_dupe_rows=' + $(if ($qdue.exists) { [string]$qdue.dupe_rows } else { 'missing' }) + ' qdue_split=' + $qdueSplit + ' qdue_next=' + $(if (-not $qdue.exists) { 'missing' } elseif ([string]::IsNullOrEmpty([string]$qdue.next_due)) { 'none' } else { [string]$qdue.next_due + '/' + [string]$qdue.next_days_left + 'd/#' + [string]$qdue.next_id }) + ' qdue_max=' + [int]$qdue.max_days + ' qdue_open=' + [int]$qdue.open + ' qdue_dated=' + [int]$qdue.dated + ' built=' + $built + ' path=' + $OutPath)
 exit 0

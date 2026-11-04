@@ -136,10 +136,17 @@ function Get-PsSuitesTickDefaults {
             'Tools\devloop\test-qa-rotation.ps1',
             'Tools\devloop\test-simple-param-census.ps1',
             'Tools\devloop\test-rebuild-panel-fixtures-bad.ps1',
+            # r828 (main#138): the resident-voice face (37 assertions, measured
+            # 631 ms end to end - no child processes, pure functions). It rides
+            # here, not in the verify family: r790 measured that family at 53%
+            # of its cap and forbade adding another entry. It also guards
+            # resident-verdict.ps1, so an edit to the verdict cannot rot unseen.
+            'Tools\devloop\test-verify-residents.ps1',
             'Tools\devloop\run-ps-suites.ps1',
             'Tools\devloop\qa-rotation.ps1',
             'Tools\devloop\simple-param-census.ps1',
             'Tools\devloop\rebuild-panel-fixtures.ps1',
+            'Tools\devloop\resident-verdict.ps1',
             'Tools\devloop\fixtures\*\*'
         )
     }

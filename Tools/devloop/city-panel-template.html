@@ -160,6 +160,7 @@
       <div class="rowline"><span class="tag">天气</span><span id="r-weather">—</span></div>
       <div class="rowline"><span class="tag">北京时间</span><span id="r-clock">—</span></div>
       <div class="rowline"><span class="tag">季节</span><span id="r-season">—</span></div>
+      <div class="rowline"><span class="tag">居民</span><span id="r-residents">—</span></div>
     </div>
   </div>
 
@@ -466,9 +467,36 @@ const PROOF = __PROOF_JSON__;
 // ConvertTo-Json flattens empty/single-element arrays, so the page normalises
 // rows through Array.isArray before trusting it.
 const DUTY = __DUTY_JSON__;
+// RESIDENTS = resident-voice READINGS from the internal world state
+// ({model,model_present,model_known,roster_n,speakers_n,silent_n,
+// last_say_utc,last_say_age_h,last_error?}). null = the probe has not
+// published readings, and the card says "unknown" - never "0 speakers".
+// Three model states on purpose: installed / not installed / unknown.
+const RESIDENTS = __RESIDENTS_JSON__;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// r828 (main#138): the resident-voice line. A missing age prints "从未" (never),
+// not "0 分钟前"; an unknown model state never prints "模型不在盘".
+function residentsAgeText(h) {
+  if (h === null || h === undefined || h === '' || isNaN(h) || Number(h) < 0) return '从未';
+  const n = Number(h);
+  if (n < 1) return Math.round(n * 60) + ' 分钟前';
+  return (Math.round(n * 10) / 10) + ' 小时前';
+}
+function residentsText(m) {
+  if (!m) return '未记录（探针尚未发布读数）';
+  const model = m.model || '未知模型';
+  let pres = '模型表读不到';
+  if (m.model_known === true) pres = m.model_present ? '模型在盘' : '模型不在盘';
+  let txt = model + ' · ' + pres;
+  if (typeof m.speakers_n === 'number') txt += ' · ' + m.speakers_n + ' 人说过';
+  if (typeof m.silent_n === 'number') txt += ' · 沉默 ' + m.silent_n;
+  txt += ' · 最近 ' + residentsAgeText(m.last_say_age_h);
+  if (m.last_error) txt += ' · ' + String(m.last_error);
+  return txt;
+}
 
 function ago(iso){
   const t = Date.parse(iso);
@@ -1373,6 +1401,9 @@ function artTitle(it){
   $('r-weather').textContent = (rp.weather_kind || '—') + (rp.weather_temp_c ? ' · ' + rp.weather_temp_c + '°C' : '');
   $('r-clock').textContent = rp.beijing_hhmm || '—';
   $('r-season').textContent = rp.season || '—';
+  // r828 (main#138): three states for the model (installed / not / unknown),
+  // and "never spoke" is distinct from "spoke 0 minutes ago".
+  $('r-residents').textContent = residentsText(RESIDENTS);
 
   const zones = snap.zones || [];
   $('zones').innerHTML = zones.length ? zones.map(z =>

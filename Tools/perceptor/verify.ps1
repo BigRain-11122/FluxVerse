@@ -553,6 +553,52 @@ if (-not (Test-Path -LiteralPath $qdueMod)) {
 
 Set-CostMark 'qdue'
 
+# ---------- 2j. resident voices (r828, main#138) ----------
+# r826 revived the resident lines (the probe had asked for a model the host no
+# longer carried since 2026-10-14, and every 404 died inside try/catch). This
+# section makes the READ visible: which model, is it on the roster, and how
+# long the city has been quiet. Readings only - a quiet city is honest, a quiet
+# city behind an uninstalled model is the warning. No 'FAIL' token here: the
+# tick red-scan keys on that word.
+$rvMod = Join-Path $repoRoot 'Tools\devloop\resident-verdict.ps1'
+if (-not (Test-Path -LiteralPath $rvMod)) {
+  Write-Output 'VERIFY WARN: residents: resident-verdict.ps1 missing - voice face not read'
+} else {
+  $rvLoaded = $true
+  try { . $rvMod } catch { $rvLoaded = $false }
+  if ($rvLoaded -and (Get-Command Get-ResidentVoiceVerdict -ErrorAction SilentlyContinue)) {
+    # The candidate state was already parsed in section 1 - reuse it, no second
+    # read of a file this tick just wrote.
+    $rvRead = $null
+    if ($null -ne $state) {
+      $rvMeta = $null
+      if ($null -ne $state.PSObject.Properties['residents_meta']) { $rvMeta = $state.residents_meta }
+      $rvRead = @{ exists = $true; unreadable = $false; meta = $rvMeta }
+    } else {
+      try { $rvRead = Get-ResidentVoiceReading -StatePath $cand } catch { $rvRead = $null }
+    }
+    if ($null -eq $rvRead) {
+      Write-Output 'VERIFY WARN: residents: verdict module threw - voice face not read this tick'
+    } else {
+      $rv = Get-ResidentVoiceVerdict $rvRead
+      if ($rv.verdict -eq 'health') {
+        Write-Output ('VERIFY HEALTH: ' + $rv.line)
+      } elseif ($rv.reason -eq 'model-not-installed') {
+        Write-Output ('VERIFY WARN: ' + $rv.line + ' - that model is not on the local Ollama roster (api/tags); residents stay silent until it is pulled or FLUXVERSE_RESIDENT_MODEL names an installed one')
+      } elseif ($rv.reason -eq 'roster-unreadable') {
+        Write-Output ('VERIFY WARN: ' + $rv.line + ' - the local Ollama roster could not be read (api/tags); model availability unknown, not zero')
+      } elseif ($rv.reason -eq 'no-readings') {
+        Write-Output ('VERIFY WARN: ' + $rv.line + ' - the probe has not published readings yet; the voice face is unknown, not healthy')
+      } else {
+        Write-Output ('VERIFY WARN: ' + $rv.line + ' - ' + $rv.reason)
+      }
+    }
+  } else {
+    Write-Output 'VERIFY WARN: resident-verdict.ps1 did not provide Get-ResidentVoiceVerdict'
+  }
+}
+Set-CostMark 'residents'
+
 # ---------- 2h/2i. sandbox families actually run (main#88 r750, main#94 r752) ----------
 # r748 built one entry for the PowerShell sandboxes (run-ps-suites.ps1), r750
 # armed the write-side family, r751 gave the verify-side family its own -Verify

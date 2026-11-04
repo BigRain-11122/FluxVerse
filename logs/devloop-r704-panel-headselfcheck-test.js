@@ -153,6 +153,13 @@ const GREEN = {
   QUEUE: {
     exists: true, dir_rel: 'state/queue', files: 3, scanned: 12, open: 12,
     dated: 3, late: 0, max_days: 0, max_id: '', as_of: YMD(), items: []
+  },
+  // r828 (main#138): the reality-anchor card gained a resident-voice row. A
+  // calm fixture = model installed, everyone spoke inside the last day.
+  RESIDENTS: {
+    model: 'qwen3:4b-instruct', model_present: true, model_known: true,
+    roster_n: 4, speakers_n: 5, silent_n: 0,
+    last_say_utc: T1, last_say_age_h: 0.1
   }
 };
 

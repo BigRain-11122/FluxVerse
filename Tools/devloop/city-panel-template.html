@@ -1853,9 +1853,48 @@ function artTitle(it){
   // 露出，自检区读不到——而取景卡是全页唯一「城市长什么样」的实物面，它空了或全
   // 旧了，自检就不该说全绿。三项判据：一帧都没有=注意；最新帧超 7 天=注意并写明
   // 几天（旧帧是事实，不因为不好看而藏，同 r702 立场）；其余=通过给出帧数与帧龄。
-  const shotList = (SHOTS && Array.isArray(SHOTS.items)) ? SHOTS.items : [];
+  // Frames vs code (r821): a pure reading of "is the picture older than the code
+// in it". Returns no note when it cannot answer (no frames, no code commit, or
+// an unparseable stamp) and no note when the frames are the newer side; the
+// page never turns a missing comparison into a clean claim.
+const SHOT_CODE_WINDOW_MIN = 60;
+function shotCodeNote(shotList, code) {
+  const out = { note: '', warn: false, gap_min: -1 };
+  if (!shotList || !shotList.length) return out;
+  const c = code || {};
+  if (!c.exists || !c.ts_utc) return out;
+  const codeTs = Date.parse(c.ts_utc);
+  const shotTs = Date.parse(shotList[0] && shotList[0].shot_utc);
+  if (isNaN(codeTs) || isNaN(shotTs)) return out;
+  const gapMin = Math.round((codeTs - shotTs) / 60000);
+  out.gap_min = gapMin;
+  if (gapMin <= 0) return { note: '', warn: false, gap_min: gapMin };
+  const minTxt = gapMin < SHOT_CODE_WINDOW_MIN
+    ? (gapMin + ' 分')
+    : ((Math.round(gapMin / 6) / 10) + ' 小时');
+  const sha = c.sha ? ('代码 ' + c.sha) : '代码';
+  if (gapMin <= SHOT_CODE_WINDOW_MIN) {
+    return { note: ' · ' + sha + ' 比帧新 ' + minTxt + '（捕捉窗内）', warn: false, gap_min: gapMin };
+  }
+  return {
+    note: ' · ' + sha + ' 比帧新 ' + minTxt + '（超出 1 小时捕捉窗：帧未跟上代码）',
+    warn: true,
+    gap_min: gapMin
+  };
+}
+const shotList = (SHOTS && Array.isArray(SHOTS.items)) ? SHOTS.items : [];
   const shotInlined = shotList.filter(s => s && s.data).length;
   const shotNewest = shotList.length ? ago(shotList[0].shot_utc) : null;
+  // Frames vs code (r821). The card below says "frames are 3 days old (7-day
+  // threshold)" and the proof card says "code 6c795977" — two readings taken
+  // side by side and never compared, so a round that landed City3D changes
+  // without re-shooting leaves a green frame badge standing over pictures of
+  // the OLD code. Live anchor (2026-11-04): newest frame 14:38:02Z, last
+  // City3D commit 14:40:46Z — 2m44s apart, which is NORMAL, because the capture
+  // round writes frames first and commits right after. So the honest reading is
+  // the gap itself; the window above (~20x that anchor) only decides when
+  // "frames have not caught up" stops being an artifact of commit ordering.
+  const shotCode = shotCodeNote(shotList, (PROOF && PROOF.code) || {});
   let sh;
   if (!shotList.length) {
     sh = { ok: false, vd: 'qa/ 还没有 City3D 证据帧，取景卡为空' };
@@ -1868,6 +1907,8 @@ function artTitle(it){
     sh = { ok: true, vd: shotList.length + ' 帧（内联 ' + shotInlined + '），最新 ' +
       fmtAge(shotNewest) + '（阈值 7 天）' };
   }
+  if (sh && shotCode.note) { sh.vd = sh.vd + shotCode.note; }
+  if (sh && sh.ok && shotCode.warn) { sh.ok = false; }
   sh.title = shotList.length ? absClock(shotList[0].shot_utc) : undefined;
   selfcheck.push({ ok: sh.ok, nm: '取景帧', vd: sh.vd, title: sh.title });
 

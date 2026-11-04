@@ -42,7 +42,9 @@ function scanLines(probes, opts) {
     lines.push('scan:   probe ' + p.name + ': ' + p.status);
   });
   if (o.degraded > 0) {
-    lines.push('scan: perceptor WARN: ' + o.degraded + ' probe(s) zero-read/degraded -> x; y');
+    const names = Array.isArray(o.degradedNames) ? o.degradedNames : ['x', 'y'];
+    lines.push('scan: perceptor WARN: ' + o.degraded + ' probe(s) zero-read/degraded -> ' +
+      names.map(n => n + '=null-result (probe degraded, no state returned)').join('; '));
   }
   return lines;
 }
@@ -71,6 +73,12 @@ function tickLog(rounds) {
     } else if (kind === 'quar2') {
       body = scanLines([{ name: 'a', status: 'OK' }], { quarantined: 1, degraded: 0 })
         .concat(['gate: PASS']);
+    } else if (kind === 'degFx') {
+      body = scanLines([{ name: 'a', status: 'OK' }], { quarantined: 0, degraded: 1, degradedNames: ['fx'] })
+        .concat(['gate: PASS']);
+    } else if (kind === 'degGh') {
+      body = scanLines([{ name: 'a', status: 'OK' }],
+        { quarantined: 0, degraded: 1, degradedNames: ['github_events'] }).concat(['gate: PASS']);
     } else {
       body = [];
     }
@@ -209,6 +217,58 @@ ck(/quarantined_all\s*=\s*\[int\]\$quarantinedAll/.test(bsrc) &&
   'D: builder emits quarantined_all and degraded_all');
 ck(/' quarantined_all='/.test(bsrc) && /' degraded_all='/.test(bsrc),
   'D: builder prints both tokens on PANEL OK');
+ck(/degraded_probes\s*=\s*\[int\]\$degProbes/.test(bsrc) &&
+  /degraded_rounds\s*=\s*\[int\]\$degRounds/.test(bsrc),
+  'D: builder ships the deduped counts in TICK');
+ck(/' degraded_probes='/.test(bsrc) && /' degraded_rounds='/.test(bsrc),
+  'D: builder prints them on PANEL OK too');
+ck((tpl.match(/function tickDegradedText\s*\(/g) || []).length === 1,
+  'D: template defines tickDegradedText exactly once');
+ck((tpl.match(/function degNameNote\s*\(/g) || []).length === 1,
+  'D: template defines degNameNote exactly once');
+
+// --- F) the same probe degrading twice is ONE probe, not two readings ------
+// (queue main#136) `degraded_all` is a per-round sum: one probe bad in two
+// rounds reads as "2 times", which a reader takes as "two things went wrong".
+const F1 = build('f1', ['degFx', 'degFx', 'many']);
+ck(/ degraded_all=2\b/.test(F1.out), 'F1: PANEL OK degraded_all=2 (sum unchanged)',
+  (F1.out.match(/degraded_all=-?\d+/) || [''])[0]);
+ck(/ degraded_probes=1\b/.test(F1.out), 'F1: PANEL OK degraded_probes=1 (deduped by name)',
+  (F1.out.match(/degraded_probes=-?\d+/) || [''])[0]);
+ck(/ degraded_rounds=2\b/.test(F1.out), 'F1: PANEL OK degraded_rounds=2',
+  (F1.out.match(/degraded_rounds=-?\d+/) || [''])[0]);
+const f1Tick = tickOf(F1.html);
+ck(f1Tick.degraded_probes === 1 && f1Tick.degraded_rounds === 2,
+  'F1: page carries the deduped counts', JSON.stringify({ p: f1Tick.degraded_probes, r: f1Tick.degraded_rounds }));
+const f1Scan = tags(runPanel(F1.html, 'F1')).filter(t => t.text.indexOf(SCAN_LABEL) === 0);
+const f1Want = SCAN_LABEL + DEG + '1 \u679a\uff082 \u8f6e\uff09';   // "probe degraded 1 (2 rounds)"
+ck(f1Scan.length === 1 && f1Scan[0].text === f1Want,
+  'F1: tag says 1 probe over 2 rounds, not 2 readings',
+  f1Scan.length ? JSON.stringify(f1Scan[0].text) : 'none');
+ck(f1Scan.length === 1 && f1Scan[0].text.indexOf(TIMES) < 0,
+  'F1: the per-reading 次 count is gone when names are known',
+  f1Scan.length ? f1Scan[0].text : '');
+ck(f1Scan.length === 1 && String(f1Scan[0].title).indexOf('fx') >= 0,
+  'F1: title names the probe', f1Scan.length ? f1Scan[0].title : '');
+
+// --- F2) two different probes, one round each = two probes ----------------
+const F2 = build('f2', ['degFx', 'degGh', 'many']);
+ck(/ degraded_all=2\b/.test(F2.out), 'F2: sum is still 2 readings');
+ck(/ degraded_probes=2\b/.test(F2.out) && / degraded_rounds=2\b/.test(F2.out),
+  'F2: two distinct probes over two rounds', (F2.out.match(/degraded_probes=-?\d+/) || [''])[0]);
+const f2Scan = tags(runPanel(F2.html, 'F2')).filter(t => t.text.indexOf(SCAN_LABEL) === 0);
+const f2Want = SCAN_LABEL + DEG + '2 \u679a\uff082 \u8f6e\uff09';
+ck(f2Scan.length === 1 && f2Scan[0].text === f2Want,
+  'F2: tag reads 2 probes, 2 rounds', f2Scan.length ? JSON.stringify(f2Scan[0].text) : 'none');
+
+// --- F3) a WARN line the builder cannot split => keep the raw sum ----------
+// B's fixture is exactly that shape (claims 1 probe, lists two). It must not
+// silently become "1 probe" - the sum is the only thing the log supports.
+ck(/ degraded_probes=-1\b/.test(B.out), 'F3: unsplittable WARN leaves the name account at -1',
+  (B.out.match(/degraded_probes=-?\d+/) || [''])[0]);
+const f3Scan = tags(runPanel(B.html, 'F3')).filter(t => t.text.indexOf(SCAN_LABEL) === 0);
+ck(f3Scan.length === 1 && f3Scan[0].text.indexOf(TIMES) > 0,
+  'F3: falls back to the per-reading count', f3Scan.length ? f3Scan[0].text : 'none');
 
 // --- E) older TICK payload (no scan-total keys) stays quiet ---------------
 const realHtml = fs.readFileSync(path.join('world-public', 'city-panel.html'), 'utf8');
@@ -226,6 +286,30 @@ ck(stripped && legacy !== realHtml, 'E: legacy fixture really removed the keys')
 const eTags = tags(runPanel(legacy, 'E'));
 ck(eTags.filter(t => t.text.indexOf(SCAN_LABEL) === 0).length === 0,
   'E: no invented 0 when the log cannot answer', JSON.stringify(eTags.map(t => t.text)));
+
+// --- E2) a TICK written before the name account existed: sum only ----------
+// Same debt shape as r818 would be for older logs - the page must fall back to
+// the per-reading count instead of claiming a dedupe it never ran.
+let stripped2 = false;
+const legacy2 = realHtml.replace(/const TICK = ([\s\S]*?);\r?\n/, function (m, body) {
+  let obj;
+  try { obj = JSON.parse(body); } catch (e) { return m; }
+  delete obj.degraded_probes;
+  delete obj.degraded_rounds;
+  delete obj.degraded_names;
+  if (typeof obj.degraded_all !== 'number' || obj.degraded_all <= 0) return m;
+  stripped2 = true;
+  const lines = Object.keys(obj).map(k => '  ' + k + ': ' + JSON.stringify(obj[k]));
+  return 'const TICK = {\n' + lines.join(',\n') + '\n};\n';
+});
+if (stripped2) {
+  const e2Tags = tags(runPanel(legacy2, 'E2')).filter(t => t.text.indexOf(SCAN_LABEL) === 0);
+  ck(e2Tags.length === 1 && e2Tags[0].text.indexOf(TIMES) > 0,
+    'E2: older payload falls back to the per-reading count',
+    e2Tags.length ? e2Tags[0].text : 'none');
+} else {
+  ck(true, 'E2: skipped (live log has no degraded reading to strip)');
+}
 
 try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (e) { /* temp only */ }
 

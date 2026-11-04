@@ -328,8 +328,39 @@ function tickScanTotalText(tk) {
   if (q <= 0 && d <= 0) return '';
   const parts = [];
   if (q > 0) parts.push('隔离 ' + q + ' 条事件');
-  if (d > 0) parts.push('探针降级 ' + d + ' 次');
-  return '今日 scan ' + parts.join(' · ');
+  const deg = tickDegradedText(t);
+  if (deg) parts.push(deg);
+  return '今日 scan ' + parts.join(' \u00b7 ');
+}
+// How many PROBES, not how many readings (queue main#136). `degraded_all` is a
+// per-round sum, so one probe degrading in three rounds reads as "3 things went
+// wrong today" while it was one thing. builder keeps the names off the WARN
+// line and counts them distinct; when it could not (older WARN shape, a line
+// it could not split) both counts are -1 and this falls back to the raw sum
+// rather than claiming a dedupe that never happened. Never a fabricated 0.
+function tickDegradedText(t) {
+  const d = (typeof t.degraded_all === 'number') ? t.degraded_all : -1;
+  if (d <= 0) return '';
+  const n = (typeof t.degraded_probes === 'number') ? t.degraded_probes : -1;
+  const r = (typeof t.degraded_rounds === 'number') ? t.degraded_rounds : -1;
+  if (n <= 0 || r <= 0) return '探针降级 ' + d + ' 次';
+  return '探针降级 ' + n + ' 枚（' + r + ' 轮）';
+}
+// Which probes, when the page can name them (main#136). Sorted by builder, at
+// most three kept; an unusable account (no names / older log) says so instead
+// of implying the dedupe happened.
+function degNameNote(tk) {
+  const t = tk || {};
+  const raw = t.degraded_names;
+  const names = Array.isArray(raw)
+    ? raw.filter(function (s) { return typeof s === 'string' && s; })
+    : ((typeof raw === 'string' && raw) ? [raw] : []);
+  const n = (typeof t.degraded_probes === 'number') ? t.degraded_probes : -1;
+  if (n > 0) {
+    if (!names.length) return '；枚数按探针名去重';
+    return '；按探针名去重，点名 ' + names.join('、') + (n > names.length ? ' 等' : '');
+  }
+  return '；读数为逐轮求和，当日日志未给出探针名';
 }
 // WHICH rounds, not just how many (queue main#135, narrowed in r818). "2 spots
 // in 1 round" still sends the reader into a 100+ round log; but naming only the
@@ -730,7 +761,8 @@ function artTitle(it){
         ((typeof tk.quarantined_all === 'number') ? tk.quarantined_all : '未记录') +
         ' 条、零读/降级 ' +
         ((typeof tk.degraded_all === 'number') ? tk.degraded_all : '未记录') +
-        ' 次（只累加真跑过 scan 的轮；退避轮没有 scan，不计入）';
+        ' 次（只累加真跑过 scan 的轮；退避轮没有 scan，不计入）' +
+        degNameNote(tk);
       $('f-tick').appendChild(sa);
     }
   })();

@@ -117,6 +117,35 @@ function New-ResidentState {
   return @{ state = @{ residents = $Residents; residents_meta = $Meta } }
 }
 
+# --- state snapshot from cursor memory (r837) --------------------------------
+# scan.ps1 merges probe state by REPLACING each key (stateParts[k] = res.state[k]),
+# so whatever this probe returns becomes world-state.residents wholesale. The
+# early returns (no events / nobody eligible to speak) used to carry @{} -- which
+# wiped the promoted map every quiet round. The page then named nobody: the
+# roster printed talked=0 ("nobody ever spoke") while residents_meta, computed
+# from the SAME cursor, said say=5. One probe, two faces, opposite answers.
+# Now every return path carries the last known line/location per resident.
+function Get-ResidentSnapshot {
+  param($ctx, [string]$CardsDir)
+  $residents = @{}
+  if ([string]::IsNullOrEmpty($CardsDir) -or -not (Test-Path -LiteralPath $CardsDir)) { return $residents }
+  foreach ($cf in (Get-ChildItem -LiteralPath $CardsDir -Filter *.md -File -ErrorAction SilentlyContinue | Sort-Object Name)) {
+    $rid = $cf.BaseName
+    $kLine = 'res:' + $rid + ':line'
+    if ($ctx.cursor.ContainsKey($kLine)) {
+      $kTs = 'res:' + $rid + ':ts'
+      $kLoc = 'res:' + $rid + ':loc'
+      $locStr = ''
+      if ($ctx.cursor.ContainsKey($kLoc)) {
+        $locStr = [string]$ctx.cursor[$kLoc]
+        if ($locStr -eq 'ji-dui-su-she') { $locStr = 'sleep' } elseif ($locStr -eq 'night-shift') { $locStr = 'night-shift' } else { $locStr = 'work' }
+      }
+      $residents[$rid] = @{ id = $rid; line = [string]$ctx.cursor[$kLine]; ts = [string]$ctx.cursor[$kTs]; location = $locStr }
+    }
+  }
+  return $residents
+}
+
 function Probe-residents {
   param($ctx)
   try {
@@ -144,7 +173,7 @@ function Probe-residents {
       $all = @(Get-Content $evFile -Encoding UTF8 | ForEach-Object { [string]$_ } | Where-Object { $_.Trim() })
       if ($all.Count -gt 12) { $evLines = @($all | Select-Object -Last 12) } else { $evLines = $all }
     }
-    if ($evLines.Count -eq 0) { return (New-ResidentState @{} $voiceMeta) }
+    if ($evLines.Count -eq 0) { return (New-ResidentState (Get-ResidentSnapshot $ctx $cardsDir) $voiceMeta) }
 
     # context: previous-round world-state (time / weather / fleet online states)
     $nowTxt = ''
@@ -197,7 +226,7 @@ function Probe-residents {
       }
       $eligible += $cf
     }
-    if ($eligible.Count -eq 0) { return (New-ResidentState @{} $voiceMeta) }
+    if ($eligible.Count -eq 0) { return (New-ResidentState (Get-ResidentSnapshot $ctx $cardsDir) $voiceMeta) }
 
     # --- chat mode: every 4th speaking round, two residents talk (v2 pulled forward) ---
     $chatCount = 0
@@ -301,21 +330,9 @@ function Probe-residents {
     }
 
     # --- state: all residents' latest lines + locations (from cursor memory) ---
-    $residents = @{}
-    foreach ($cf in (Get-ChildItem $cardsDir -Filter *.md | Sort-Object Name)) {
-      $rid = $cf.BaseName
-      $kLine = 'res:' + $rid + ':line'
-      if ($ctx.cursor.ContainsKey($kLine)) {
-        $kTs = 'res:' + $rid + ':ts'
-        $kLoc = 'res:' + $rid + ':loc'
-        $locStr = ''
-        if ($ctx.cursor.ContainsKey($kLoc)) {
-          $locStr = [string]$ctx.cursor[$kLoc]
-          if ($locStr -eq 'ji-dui-su-she') { $locStr = 'sleep' } elseif ($locStr -eq 'night-shift') { $locStr = 'night-shift' } else { $locStr = 'work' }
-        }
-        $residents[$rid] = @{ id = $rid; line = [string]$ctx.cursor[$kLine]; ts = [string]$ctx.cursor[$kTs]; location = $locStr }
-      }
-    }
+    # r837: same builder as the early returns, so the quiet rounds and the
+    # speaking rounds publish the identical shape.
+    $residents = Get-ResidentSnapshot $ctx $cardsDir
     # Recompute the voice readings AFTER speaking: this round's lines move both
     # the speaker count and the last-say age.
     $voiceMeta = Get-ResidentVoiceMeta $ctx.cursor $cardIds $residentModel $modelState @($roster.names).Count

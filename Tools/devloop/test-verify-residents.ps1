@@ -1,4 +1,4 @@
-﻿# test-verify-residents.ps1 - sandbox for the resident-voice face (r828 main#138)
+# test-verify-residents.ps1 - sandbox for the resident-voice face (r828 main#138)
 #
 # The face has two halves: probe residents.ps1 records READINGS (model name,
 # installed/not/unknown, who spoke when), Tools\devloop\resident-verdict.ps1
@@ -222,6 +222,55 @@ try {
     Check 'roster row carries no speech' ($null -eq ($rowA.PSObject.Properties['line']))
 } finally {
     if (Test-Path $tmpR) { Remove-Item $tmpR -Recurse -Force -ErrorAction SilentlyContinue }
+}
+
+# ---------- j) quiet rounds must not erase the roster (r837) ----------
+# scan.ps1 merges probe state by replacing each key, so whatever the probe
+# returns for `residents` wins outright. The early returns (no events / nobody
+# eligible) used to answer @{} -- so every quiet round wiped the promoted map
+# and the page named nobody (roster talked=0) while residents_meta -- built
+# from the SAME cursor -- still said say=5. Both halves must come from one
+# builder, or the two faces of one probe disagree on one screen.
+Write-Output '--- j) quiet-round snapshot ---'
+$tmpS = Join-Path ([System.IO.Path]::GetTempPath()) ('fv-snap-' + $PID)
+if (Test-Path $tmpS) { Remove-Item $tmpS -Recurse -Force }
+New-Item -ItemType Directory -Path $tmpS | Out-Null
+try {
+    $cardsJ = Join-Path $tmpS 'cards'
+    New-Item -ItemType Directory -Path $cardsJ | Out-Null
+    $utf8j = New-Object System.Text.UTF8Encoding($false)
+    foreach ($nm in @('S-1', 'S-2', 'S-3')) {
+        [System.IO.File]::WriteAllText((Join-Path $cardsJ ($nm + '.md')), ('# CARD (' + $nm + ')' + "`n"), $utf8j)
+    }
+    $curJ = @{
+        'res:S-1:line' = 'line one'
+        'res:S-1:ts'   = '2026-01-01T11:00:00Z'
+        'res:S-1:loc'  = 'ji-dui-su-she'
+        'res:S-2:line' = 'line two'
+        'res:S-2:ts'   = '2026-01-01T11:30:00Z'
+        'res:S-2:loc'  = 'night-shift'
+    }
+    $ctxJ = @{ cursor = $curJ }
+    $snap = Get-ResidentSnapshot $ctxJ $cardsJ
+    Check 'snapshot carries spoken rows'   (@($snap.Keys).Count -eq 2)
+    Check 'snapshot keeps ts'              ([string]$snap['S-1'].ts -eq '2026-01-01T11:00:00Z')
+    Check 'snapshot normalizes dorm place' ([string]$snap['S-1'].location -eq 'sleep')
+    Check 'snapshot keeps night shift'     ([string]$snap['S-2'].location -eq 'night-shift')
+    Check 'silent card gets no row'        (-not $snap.ContainsKey('S-3'))
+    $snapNone = Get-ResidentSnapshot @{ cursor = @{} } $cardsJ
+    Check 'empty cursor -> empty map'      (@($snapNone.Keys).Count -eq 0)
+    $snapNoDir = Get-ResidentSnapshot $ctxJ (Join-Path $tmpS 'nope')
+    Check 'missing cards dir -> empty'     (@($snapNoDir.Keys).Count -eq 0)
+    # The regression itself: the quiet-round return value must still carry rows.
+    $quiet = New-ResidentState (Get-ResidentSnapshot $ctxJ $cardsJ) @{ speakers_n = 2 }
+    Check 'quiet return carries rows'      (@($quiet.state.residents.Keys).Count -eq 2)
+    Check 'quiet return keeps meta'        ([int]$quiet.state.residents_meta.speakers_n -eq 2)
+    # Anti-drift: no return path may publish a bare empty map again.
+    $probeSrc = [System.IO.File]::ReadAllText($probe)
+    Check 'no bare @{} state return'       ($probeSrc -notmatch 'New-ResidentState\s+@\{\}')
+    Check 'one builder used on all paths'  (@([regex]::Matches($probeSrc, 'Get-ResidentSnapshot')).Count -ge 4)
+} finally {
+    if (Test-Path $tmpS) { Remove-Item $tmpS -Recurse -Force -ErrorAction SilentlyContinue }
 }
 
 Write-Output ''

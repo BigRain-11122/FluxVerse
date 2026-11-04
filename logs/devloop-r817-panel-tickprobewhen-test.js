@@ -4,7 +4,11 @@
 // badness was continuous. Measured counter-example: 'rich, clean, rich' printed
 // "08:00–10:00", which reads as "bad from 8 to 10" while 09:00 was clean.
 // r818 ships the stamps themselves: every bad round when there are three or
-// fewer, else the two ends plus the count.
+// fewer, else the two ends (the round count is printed once, earlier in the
+// sentence - r824 removed the duplicate "（共 N 轮）" tail).
+// r824 also fixed the units: probes_all is a sum of probe LINES ("6578 次读数"),
+// not a count of probes - adjacent sentences used 枚 for both readings and
+// distinct probes, so 39 / 6578 / 3 looked unreconcilable on the CEO page.
 // Method: build the REAL panel against fixture tick logs and run the produced
 // page's own script, then read the rendered tags (same harness as r813-r817).
 // Cases:
@@ -13,7 +17,7 @@
 //   C. clean day        -> no tag at all (regression of r816 behaviour)
 //   D. anti-drift       -> one helper, stamps emitted by the builder
 //   E. older payload (no stamps key) -> exactly the r816 sentence, no clock
-//   F. four bad rounds  -> first/last plus the count, never a bare range
+//   F. four bad rounds  -> first/last, round count only once, never a range
 'use strict';
 const fs = require('fs');
 const os = require('os');
@@ -25,7 +29,7 @@ const TOTAL_LABEL = '\u4eca\u65e5\u63a2\u9488\u574f ';    // "today probes bad "
 const KAI = '\uff08';                                      // "("
 const BI = '\uff09';                                       // ")"
 const WEN = '\u5904';                                      // " spots"
-const MEI = ' \u679a';                                     // " probes"
+const READ = ' \u6b21\u8bfb\u6570';                         // " readings" (r824: 枚 = probes)
 const DASH = '\u2013';                                     // en dash
 const SEP = '\u3001';                                      // "、"
 const SHOU = '\u9996';                                     // "first"
@@ -145,7 +149,7 @@ ck(Array.isArray(aTick.probe_bad_stamps) && aTick.probe_bad_stamps.length === 2 
   aTick.probe_bad_stamps[0] === '08:00' && aTick.probe_bad_stamps[1] === '10:00',
   'A: page carries the stamp list', JSON.stringify(aTick.probe_bad_stamps));
 const aTot = tags(runPanel(A.html, 'A')).filter(t => t.text.indexOf(TOTAL_LABEL) === 0);
-const aWant = TOTAL_LABEL + '4 ' + WEN + KAI + '9' + MEI + ' \u00b7 2 \u8f6e' +
+const aWant = TOTAL_LABEL + '4 ' + WEN + KAI + GONG + ' 9' + READ + ' \u00b7 2 \u8f6e' +
   ' \u00b7 08:00' + SEP + '10:00' + BI;
 ck(aTot.length === 1 && aTot[0].text === aWant,
   'A: names both rounds instead of a first-last span', aTot.length ? aTot[0].text : 'none');
@@ -162,7 +166,7 @@ ck(/ probe_bad_rounds=1\b/.test(B.out), 'B: PANEL OK probe_bad_rounds=1',
 ck(/ probe_bad_stamps=08:00\b/.test(B.out), 'B: PANEL OK carries the single stamp',
   (B.out.match(/probe_bad_stamps=[^\s]*/) || [''])[0]);
 const bTot = tags(runPanel(B.html, 'B')).filter(t => t.text.indexOf(TOTAL_LABEL) === 0);
-const bWant = TOTAL_LABEL + '2 ' + WEN + KAI + '31' + MEI + ' \u00b7 1 \u8f6e' + ' \u00b7 08:00' + BI;
+const bWant = TOTAL_LABEL + '2 ' + WEN + KAI + GONG + ' 31' + READ + ' \u00b7 1 \u8f6e' + ' \u00b7 08:00' + BI;
 ck(bTot.length === 1 && bTot[0].text === bWant,
   'B: one bad round prints its stamp once (no dash)', bTot.length ? bTot[0].text : 'none');
 ck(bTot.length === 1 && bTot[0].text.indexOf(DASH) < 0,
@@ -211,14 +215,14 @@ const eTick = (function () {
 ck(eTick.probes_bad_all === 4 && !('probe_bad_stamps' in eTick),
   'E: fixture keeps the count and drops the stamps', JSON.stringify(eTick.probes_bad_all));
 const eTot = tags(runPanel(strippedHtml, 'E')).filter(t => t.text.indexOf(TOTAL_LABEL) === 0);
-const eWant = TOTAL_LABEL + '4 ' + WEN + KAI + '9' + MEI + ' \u00b7 2 \u8f6e' + BI;
+const eWant = TOTAL_LABEL + '4 ' + WEN + KAI + GONG + ' 9' + READ + ' \u00b7 2 \u8f6e' + BI;
 ck(eTot.length === 1 && eTot[0].text === eWant,
   'E: falls back to the r816 sentence, no invented clock',
   eTot.length ? eTot[0].text : 'none');
 ck(eTot.length === 1 && !/\d{2}:\d{2}/.test(eTot[0].text) && eTot[0].text.indexOf(DASH) < 0,
   'E: no clock and no dash when the log cannot answer');
 
-// --- F) four bad rounds -> first/last + count, never a bare range ---------
+// --- F) four bad rounds -> first/last only, count printed once ------------
 const F = build('f', ['rich', 'gate', 'rich', 'gate', 'rich', 'gate', 'rich']);
 ck(/ probe_bad_rounds=4\b/.test(F.out), 'F: PANEL OK probe_bad_rounds=4',
   (F.out.match(/probe_bad_rounds=\d+/) || [''])[0]);
@@ -226,10 +230,10 @@ ck(/ probe_bad_stamps=08:00,14:00\b/.test(F.out),
   'F: PANEL OK keeps only the two ends when four rounds were bad',
   (F.out.match(/probe_bad_stamps=[^\s]*/) || [''])[0]);
 const fTot = tags(runPanel(F.html, 'F')).filter(t => t.text.indexOf(TOTAL_LABEL) === 0);
-const fWant = TOTAL_LABEL + '8 ' + WEN + KAI + '19' + MEI + ' \u00b7 4 \u8f6e' +
-  ' \u00b7 ' + SHOU + ' 08:00 / ' + MO + ' 14:00' + KAI + GONG + ' 4 \u8f6e' + BI + BI;
+const fWant = TOTAL_LABEL + '8 ' + WEN + KAI + GONG + ' 19' + READ + ' \u00b7 4 \u8f6e' +
+  ' \u00b7 ' + SHOU + ' 08:00 / ' + MO + ' 14:00' + BI;
 ck(fTot.length === 1 && fTot[0].text === fWant,
-  'F: says first/last and the count of named-or-not rounds',
+  'F: says first/last, and the round count only once (r824: no nested bracket)',
   fTot.length ? fTot[0].text : 'none');
 ck(fTot.length === 1 && fTot[0].text.indexOf(DASH) < 0,
   'F: four bad rounds still do not print a bare range',

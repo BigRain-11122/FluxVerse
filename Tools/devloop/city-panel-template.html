@@ -318,6 +318,11 @@ function tickProbeWarn(tk) {
 // same read pass it already does. Silence when nothing broke (a warn tag on a
 // clean day is noise) and silence when no probe line was ever seen (a fabricated
 // 0 would claim a measurement that never happened - r799/r810 precedent).
+// UNITS (r824): `probes_all` is sum of probe LINES across rounds (26 probes x
+// 253 rounds = 6578 today), not a count of probes. Calling that "6578 枚" was
+// the same counter word `tickDegradedText` uses for DISTINCT probes ("3 枚"),
+// so two adjacent sentences used 枚 for two different things; a reader had no
+// way to reconcile 39 / 6578 / 3. Readings are 次读数, probes stay 枚.
 function tickProbeTotalText(tk) {
   const t = tk || {};
   if (typeof t.probes_all !== 'number' || t.probes_all <= 0) return '';
@@ -325,7 +330,7 @@ function tickProbeTotalText(tk) {
   const rounds = (typeof t.probe_bad_rounds === 'number' && t.probe_bad_rounds > 0)
     ? (' · ' + t.probe_bad_rounds + ' 轮')
     : '';
-  return '今日探针坏 ' + t.probes_bad_all + ' 处（' + t.probes_all + ' 枚' + rounds + tickProbeWhen(t) + '）';
+  return '今日探针坏 ' + t.probes_bad_all + ' 处（共 ' + t.probes_all + ' 次读数' + rounds + tickProbeWhen(t) + '）';
 }
 // Today's cumulative scan account (debt r818): quarantined= and the perceptor
 // WARN tally are per-ROUND readings, so the two sentences above can only speak
@@ -381,9 +386,12 @@ function degNameNote(tk) {
 // first and last with an en dash reads as "bad from 08:00 to 10:00" while the
 // rounds in between were clean - a claim the log never made. builder now ships
 // the stamps themselves: every bad round when there are three or fewer, else
-// just the two ends plus the count. PowerShell's JSON writer flattens a
-// single-element array to a bare string, so accept both shapes. No stamp at all
-// => silence, never an invented clock (r799/r810 precedent).
+// just the two ends. PowerShell's JSON writer flattens a single-element array to
+// a bare string, so accept both shapes. No stamp at all => silence, never an
+// invented clock (r799/r810 precedent).
+// The round COUNT is not repeated here (r824): the only caller already prints
+// "· N 轮" one clause earlier, so the old "（共 4 轮）" tail said the same number
+// twice and nested a bracket inside a bracket.
 function tickProbeWhen(tk) {
   const t = tk || {};
   const raw = t.probe_bad_stamps;
@@ -394,7 +402,7 @@ function tickProbeWhen(tk) {
   const rounds = (typeof t.probe_bad_rounds === 'number' && t.probe_bad_rounds > 0) ? t.probe_bad_rounds : 0;
   if (rounds > 0 && stamps.length >= rounds) return ' · ' + stamps.join('\u3001');
   if (stamps.length >= 2) {
-    return ' · 首 ' + stamps[0] + ' / 末 ' + stamps[stamps.length - 1] + '（共 ' + rounds + ' 轮）';
+    return ' · 首 ' + stamps[0] + ' / 末 ' + stamps[stamps.length - 1];
   }
   return ' · ' + stamps[0];
 }
@@ -783,8 +791,8 @@ function artTitle(it){
       pa.className = 'tag warn';
       pa.style.marginLeft = '6px';
       pa.textContent = pAllTxt;
-      pa.title = '当日日志里各轮逐针结果合计：共 ' + tk.probes_all + ' 枚探针，' +
-        tk.probes_bad_all + ' 枚非 OK，出现在 ' + tk.probe_bad_rounds + ' 轮里（按轮自己的起始标记切段计数）';
+      pa.title = '当日日志里各轮逐针结果合计：共 ' + tk.probes_all + ' 次读数，' +
+        tk.probes_bad_all + ' 次非 OK，出现在 ' + tk.probe_bad_rounds + ' 轮里（按轮自己的起始标记切段计数）';
       $('f-tick').appendChild(pa);
     }
     // 今日 scan 隔离/降级合计（r819·债 r818）：上面两句都只看最后一轮。早先被

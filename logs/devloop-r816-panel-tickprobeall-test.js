@@ -11,7 +11,8 @@
 //                                             NO cumulative tag (a warn tag on a
 //                                             clean day is noise)
 //   B. one bad round earlier, last clean   -> last-round tag says all OK, plus a
-//                                             warn tag "今日探针坏 2 处(31 枚 · 1 轮)"
+//                                             warn tag "今日探针坏 2 处(共 31 次读数 · 1 轮)"
+//                                             (unit fixed in r824: 枚 = probes)
 //   C. every round backed off (no scan)    -> probes_all=0 and no tag, never a 0
 //   D. anti-drift: one helper, both call sites, builder emits the tokens
 //   E. older TICK payload (no cumulative keys) -> no tag, never an invented 0
@@ -26,7 +27,7 @@ const PROBE_LABEL = '\u4e0a\u8f6e\u63a2\u9488 ';        // "last round probes "
 const ALL_OK = ' \u5168 OK';                              // " all OK"
 const TOTAL_LABEL = '\u4eca\u65e5\u63a2\u9488\u574f ';    // "today probes bad "
 const WEN = '\u5904';                                     // " spots"
-const MEI = ' \u679a';                                    // " probes"
+const READ = ' \u6b21\u8bfb\u6570';                           // " readings" (r824)
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fv-r816-'));
 const builder = path.join('Tools', 'devloop', 'build-city-panel.ps1');
@@ -170,14 +171,17 @@ ck(bLast.length === 1 && bLast[0].text === PROBE_LABEL + '26' + ALL_OK,
   'B: last-round sentence is unchanged', bLast.length ? bLast[0].text : 'none');
 const bTot = bTags.filter(t => t.text.indexOf(TOTAL_LABEL) === 0);
 ck(bTot.length === 1, 'B: exactly one cumulative tag', JSON.stringify(bTags.map(t => t.text)));
-const bWant = TOTAL_LABEL + '2 ' + WEN + '\uff08' + '31' + MEI + ' \u00b7 1 \u8f6e';
+const bWant = TOTAL_LABEL + '2 ' + WEN + '\uff08' + '\u5171 31' + READ + ' \u00b7 1 \u8f6e';
 ck(bTot.length === 1 && bTot[0].text.indexOf(bWant) === 0,
-  'B: tag reads 2 spots of 31 probes in 1 round',
+  'B: tag reads 2 spots of 31 readings in 1 round',
   bTot.length ? bTot[0].text : 'none');
 // r817 widened this sentence with the first/last bad-round stamp; the count
 // contract pinned here is the prefix, and r817 owns the clock shape.
-ck(bTot.length === 1 && bTot[0].text.indexOf('\u679a') > 0 && bTot[0].text.indexOf('\u5904') > 0,
-  'B: tag keeps the count words after the r817 widening', bTot.length ? bTot[0].text : 'none');
+// r824 changed the unit: probes_all counts probe LINES (readings), and 枚 is
+// reserved for distinct probes (the degraded sentence next to it).
+ck(bTot.length === 1 && bTot[0].text.indexOf(READ) > 0 && bTot[0].text.indexOf('\u5904') > 0,
+  'B: tag keeps the count words (now in readings) after the r817 widening',
+  bTot.length ? bTot[0].text : 'none');
 ck(bTot.length === 1 && bTot[0].cls.indexOf('warn') >= 0,
   'B: a day that really had a broken probe is a warn tint', bTot.length ? bTot[0].cls : '');
 ck(bTot.length === 1 && String(bTot[0].title).indexOf('2') >= 0,

@@ -496,7 +496,13 @@ function residentsText(m) {
   // old reading has no residents_n and simply omits the segment (never 0).
   if (typeof m.residents_n === 'number') txt += ' · ' + m.residents_n + ' 名居民';
   if (typeof m.speakers_n === 'number') txt += ' · ' + m.speakers_n + ' 人说过';
-  if (typeof m.silent_n === 'number') txt += ' · 沉默 ' + m.silent_n;
+  // r830: "沉默 N" carried no unit and overlapped "人说过" (never-spoke + over
+  // 24h against every speaker ever), so the numbers could not be reconciled.
+  // The two halves are now named: never (say + never = residents) and stale
+  // (spoke, but that line is over a day old). A pre-r830 reading has neither
+  // key and omits both segments - never a fabricated 0.
+  if (typeof m.never_n === 'number') txt += ' · ' + m.never_n + ' 人从未开口';
+  if (typeof m.stale_n === 'number') txt += ' · ' + m.stale_n + ' 人超过一天未更新';
   txt += ' · 最近 ' + residentsAgeText(m.last_say_age_h);
   if (m.last_error) txt += ' · ' + String(m.last_error);
   return txt;

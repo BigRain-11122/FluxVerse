@@ -63,11 +63,20 @@ $m0 = Get-ResidentVoiceMeta $curEmpty @('bm-a', 'BG-A') 'qwen3:4b-instruct' @{ p
 Check 'no lines -> age is null'         ($null -eq $m0.last_say_age_h)
 Check 'no lines -> everyone silent'     ([int]$m0.silent_n -eq 2)
 Check 'no lines -> speakers 0'          ([int]$m0.speakers_n -eq 0)
+# r830: the census splits into two halves that always reconcile.
+Check 'no lines -> never 2'             ([int]$m0.never_n -eq 2)
+Check 'no lines -> stale 0'             ([int]$m0.stale_n -eq 0)
+Check 'no lines -> say+never=residents' (([int]$m0.speakers_n + [int]$m0.never_n) -eq [int]$m0.residents_n)
 Check 'no lines -> last none'           ([string]::IsNullOrEmpty([string]$m0.last_say_utc))
 $curMix = @{ 'res:bm-a:ts' = $old; 'res:BG-A:ts' = $fresh }
 $m1 = Get-ResidentVoiceMeta $curMix @('bm-a', 'BG-A') 'qwen3:4b-instruct' @{ present = $true; known = $true } 3
 Check 'mixed -> speakers 2'             ([int]$m1.speakers_n -eq 2)
 Check 'mixed -> one silent (30h)'       ([int]$m1.silent_n -eq 1)
+# A 30h-old line is stale but still a speaker - the old single count made
+# "say=2 silent=1" look like 3 residents out of 2.
+Check 'mixed -> stale 1, never 0'       ([int]$m1.stale_n -eq 1 -and [int]$m1.never_n -eq 0)
+Check 'mixed -> say+never=residents'    (([int]$m1.speakers_n + [int]$m1.never_n) -eq [int]$m1.residents_n)
+Check 'mixed -> stale is subset of say' ([int]$m1.stale_n -le [int]$m1.speakers_n)
 Check 'mixed -> last is the fresh one'  ([string]$m1.last_say_utc -eq $fresh)
 Check 'mixed -> age under 1h'           ($m1.last_say_age_h -ne $null -and [double]$m1.last_say_age_h -lt 1)
 Check 'meta carries model/presence'     ([string]$m1.model -eq 'qwen3:4b-instruct' -and $m1.model_present -eq $true)
@@ -90,13 +99,14 @@ Check 'negative -> never'               ((Format-ResidentAge -1) -eq 'never')
 Write-Output '--- d) verdict healthy ---'
 $rHealthy = @{ exists = $true; unreadable = $false; meta = [PSCustomObject]@{
     model = 'qwen3:4b-instruct'; model_present = $true; model_known = $true;
-    residents_n = 5; models_n = 4; speakers_n = 5; silent_n = 1;
+    residents_n = 5; models_n = 4; speakers_n = 5; never_n = 0; stale_n = 1; silent_n = 1;
     last_say_utc = $fresh; last_say_age_h = 0.2 } }
 $vH = Get-ResidentVoiceVerdict $rHealthy
 Check 'healthy -> health'               ($vH.verdict -eq 'health')
 Check 'healthy -> names model'          ($vH.line -match 'model=qwen3:4b-instruct')
 Check 'healthy -> present=1'            ($vH.line -match 'present=1')
-Check 'healthy -> residents/say/silent' ($vH.line -match 'residents=5 say=5 silent=1')
+Check 'healthy -> residents/say/never/stale' ($vH.line -match 'residents=5 say=5 never=0 stale=1')
+Check 'healthy -> no overlapping silent=' ($vH.line -notmatch 'silent=')
 Check 'healthy -> models is its own'    ($vH.line -match 'models=4')
 Check 'healthy -> never says roster='   ($vH.line -notmatch 'roster=')
 [void]$allLines.Add($vH.line)
@@ -129,6 +139,10 @@ $vL = Get-ResidentVoiceVerdict $rLegacy
 Check 'legacy reading -> residents=?'   ($vL.line -match 'residents=\?')
 Check 'legacy reading -> models=?'      ($vL.line -match 'models=\?')
 Check 'legacy reading -> never 4 as city' ($vL.line -notmatch 'residents=4')
+# r830: the old `silent_n` meant never+stale, so a legacy number must not be
+# borrowed as either new half.
+Check 'legacy reading -> never=?/stale=?' ($vL.line -match 'never=\? stale=\?')
+Check 'legacy reading -> silent 0 hidden' ($vL.line -notmatch 'never=0|stale=0')
 [void]$allLines.Add($vL.line)
 
 # ---------- f) verdict: no readings ----------

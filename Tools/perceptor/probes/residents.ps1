@@ -53,8 +53,13 @@ function Get-ResidentModelStatus {
 
 function Get-ResidentVoiceMeta {
   # Readings only. `last_say_age_h` = $null means "never spoke / timestamp
-  # unreadable", never 0. `silent_n` counts residents with no line or a line
-  # older than 24h.
+  # unreadable", never 0.
+  # r830: `silent_n` used to mix two different facts (never spoke + line older
+  # than 24h) while `speakers_n` counted every resident that ever spoke, so
+  # "say=5 silent=2" could exceed the card count and no reader could reconcile
+  # the line. Now split: `never_n` (no line at all) + `stale_n` (spoke, but the
+  # line is older than 24h) - `say + never = residents` always holds, and
+  # stale is a subset of say. `silent_n` is kept for older consumers.
   # r829: `RosterN` counts the OLLAMA MODEL ROSTER (`/api/tags` names), while
   # the city's own roster is the resident CARD count. Both are readings, but a
   # line that printed only the model count next to `say=` read as "4 residents
@@ -64,12 +69,13 @@ function Get-ResidentVoiceMeta {
   $nowUtc = (Get-Date).ToUniversalTime()
   $sayN = 0
   $lastUtc = ''
-  $silent = 0
+  $never = 0
+  $stale = 0
   foreach ($rid in @($ResidentIds)) {
     $k = 'res:' + $rid + ':ts'
-    if (-not $Cursor.ContainsKey($k)) { $silent++; continue }
+    if (-not $Cursor.ContainsKey($k)) { $never++; continue }
     $t = [string]$Cursor[$k]
-    if ([string]::IsNullOrEmpty($t)) { $silent++; continue }
+    if ([string]::IsNullOrEmpty($t)) { $never++; continue }
     $sayN++
     if ($t -gt $lastUtc) { $lastUtc = $t }
     try {
@@ -79,9 +85,11 @@ function Get-ResidentVoiceMeta {
       # the UTC instant it names.
       $dt = [datetimeoffset]::ParseExact($t, 'yyyy-MM-ddTHH:mm:ssZ', [Globalization.CultureInfo]::InvariantCulture)
       $age = ($nowUtc - $dt.UtcDateTime).TotalHours
-      if ($age -gt 24) { $silent++ }
-    } catch { $silent++ }
+      if ($age -gt 24) { $stale++ }
+    } catch { $stale++ }
   }
+  # `silent_n` keeps the old meaning (never + stale) for older consumers.
+  $silent = $never + $stale
   $ageH = $null
   if ($lastUtc) {
     try {
@@ -96,6 +104,8 @@ function Get-ResidentVoiceMeta {
     models_n       = $ModelN
     residents_n    = @($ResidentIds).Count
     speakers_n     = $sayN
+    never_n        = $never
+    stale_n        = $stale
     silent_n       = $silent
     last_say_utc   = $lastUtc
     last_say_age_h = $ageH

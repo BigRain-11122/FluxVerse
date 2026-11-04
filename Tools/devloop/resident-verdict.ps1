@@ -65,8 +65,20 @@ function Get-ResidentVoiceVerdict {
 
   $speakers = 0
   if ($null -ne $m.PSObject.Properties['speakers_n']) { try { $speakers = [int]$m.speakers_n } catch { $speakers = 0 } }
-  $silent = 0
-  if ($null -ne $m.PSObject.Properties['silent_n']) { try { $silent = [int]$m.silent_n } catch { $silent = 0 } }
+  # r830: `silent_n` used to mean "never spoke OR line older than 24h" while
+  # `say=` counted every resident that ever spoke - the two numbers overlapped,
+  # so the line could read "5 residents, 5 spoke, 2 silent" (7 > 5). The line
+  # now prints the two halves of the census separately: `never=` (no line at
+  # all; say + never = residents) and `stale=` (spoke, but > 24h ago; a subset
+  # of say). A reading published before r830 carries neither key -> both `?`.
+  $neverTxt = '?'
+  if ($null -ne $m.PSObject.Properties['never_n']) {
+    try { $neverTxt = [string][int]$m.never_n } catch { $neverTxt = '?' }
+  }
+  $staleTxt = '?'
+  if ($null -ne $m.PSObject.Properties['stale_n']) {
+    try { $staleTxt = [string][int]$m.stale_n } catch { $staleTxt = '?' }
+  }
   # r829: the two counts are printed under names that cannot be confused. The
   # old line printed `roster=<installed models>` right next to `say=<speakers>`,
   # so "roster=4 say=5" read as "4 residents, 5 of them spoke" - impossible.
@@ -86,7 +98,8 @@ function Get-ResidentVoiceVerdict {
   if ($null -ne $m.PSObject.Properties['last_say_age_h']) { $age = $m.last_say_age_h }
 
   $line = 'residents: model=' + $model + ' present=' + $presentTxt +
-    ' residents=' + $residentsTxt + ' say=' + $speakers + ' silent=' + $silent +
+    ' residents=' + $residentsTxt + ' say=' + $speakers +
+    ' never=' + $neverTxt + ' stale=' + $staleTxt +
     ' models=' + $modelsTxt +
     ' last=' + $(if ($last) { $last } else { 'never' }) +
     ' age=' + (Format-ResidentAge $age)

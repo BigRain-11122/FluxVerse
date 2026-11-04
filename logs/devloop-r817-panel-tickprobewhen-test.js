@@ -1,16 +1,19 @@
-// r817 panel test: the cumulative probe tag must say WHICH rounds were bad, not
-// just how many (queue main#135). r816 gave the page "今日探针坏 2 处（31 枚 · 1
-// 轮）" - the count is right, but a reader still has to open a 100+ round log to
-// find the round. builder already walks each round block, and each block's start
-// line carries its own clock, so name the first/last bad round.
+// r817 panel test (contract re-judged in r818): the cumulative probe tag must
+// say WHICH rounds were bad, not just how many (queue main#135).
+// r817 named the first and last bad round with an en dash - honest only if the
+// badness was continuous. Measured counter-example: 'rich, clean, rich' printed
+// "08:00–10:00", which reads as "bad from 8 to 10" while 09:00 was clean.
+// r818 ships the stamps themselves: every bad round when there are three or
+// fewer, else the two ends plus the count.
 // Method: build the REAL panel against fixture tick logs and run the produced
-// page's own script, then read the rendered tags (same harness as r813-r816).
+// page's own script, then read the rendered tags (same harness as r813-r817).
 // Cases:
-//   A. bad, clean, bad  -> first-last span 08:00-10:00 in both page and PANEL OK
+//   A. bad, clean, bad  -> BOTH stamps named, no en dash (the r818 fix)
 //   B. one bad round    -> a single stamp, no dash
 //   C. clean day        -> no tag at all (regression of r816 behaviour)
-//   D. anti-drift       -> one helper, tokens emitted by the builder
-//   E. older payload (no first/last keys) -> exactly the r816 sentence, no clock
+//   D. anti-drift       -> one helper, stamps emitted by the builder
+//   E. older payload (no stamps key) -> exactly the r816 sentence, no clock
+//   F. four bad rounds  -> first/last plus the count, never a bare range
 'use strict';
 const fs = require('fs');
 const os = require('os');
@@ -24,8 +27,12 @@ const BI = '\uff09';                                       // ")"
 const WEN = '\u5904';                                      // " spots"
 const MEI = ' \u679a';                                     // " probes"
 const DASH = '\u2013';                                     // en dash
+const SEP = '\u3001';                                      // "、"
+const SHOU = '\u9996';                                     // "first"
+const MO = '\u672b';                                       // "last"
+const GONG = '\u5171';                                     // "total"
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fv-r817-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fv-r818-'));
 const builder = path.join('Tools', 'devloop', 'build-city-panel.ps1');
 
 function scanLines(probes) {
@@ -126,35 +133,34 @@ function ck(cond, name, detail) {
   else { fail++; console.log('  FAIL ' + name + (detail ? ' :: ' + detail : '')); }
 }
 
-// --- A) bad, clean, bad -> first-last span ---------------------------------
+// --- A) bad, clean, bad -> BOTH stamps named, no dash ----------------------
 const A = build('a', ['rich', 'gate', 'rich']);
 ck(A.code === 0, 'A: builder exit 0', 'code=' + A.code + ' out=' + A.out.slice(0, 400));
 ck(/ probe_bad_rounds=2\b/.test(A.out), 'A: PANEL OK probe_bad_rounds=2',
   (A.out.match(/probes_bad_all=[^\r\n]*/) || [''])[0]);
-ck(/ probe_bad_first=08:00\b/.test(A.out), 'A: PANEL OK probe_bad_first=08:00',
-  (A.out.match(/probe_bad_first=[^\s]*/) || [''])[0]);
-ck(/ probe_bad_last=10:00\b/.test(A.out), 'A: PANEL OK probe_bad_last=10:00',
-  (A.out.match(/probe_bad_last=[^\s]*/) || [''])[0]);
+ck(/ probe_bad_stamps=08:00,10:00\b/.test(A.out), 'A: PANEL OK names both bad rounds',
+  (A.out.match(/probe_bad_stamps=[^\s]*/) || [''])[0]);
 const aTick = tickOf(A.html);
-ck(aTick.probe_bad_first === '08:00' && aTick.probe_bad_last === '10:00',
-  'A: page carries both stamps', JSON.stringify({ f: aTick.probe_bad_first, l: aTick.probe_bad_last }));
+ck(Array.isArray(aTick.probe_bad_stamps) && aTick.probe_bad_stamps.length === 2 &&
+  aTick.probe_bad_stamps[0] === '08:00' && aTick.probe_bad_stamps[1] === '10:00',
+  'A: page carries the stamp list', JSON.stringify(aTick.probe_bad_stamps));
 const aTot = tags(runPanel(A.html, 'A')).filter(t => t.text.indexOf(TOTAL_LABEL) === 0);
-ck(aTot.length === 1, 'A: exactly one cumulative tag', JSON.stringify(aTot.map(t => t.text)));
 const aWant = TOTAL_LABEL + '4 ' + WEN + KAI + '9' + MEI + ' \u00b7 2 \u8f6e' +
-  ' \u00b7 08:00' + DASH + '10:00' + BI;
+  ' \u00b7 08:00' + SEP + '10:00' + BI;
 ck(aTot.length === 1 && aTot[0].text === aWant,
-  'A: tag names the first-last span, not only the count', aTot.length ? aTot[0].text : 'none');
+  'A: names both rounds instead of a first-last span', aTot.length ? aTot[0].text : 'none');
+ck(aTot.length === 1 && aTot[0].text.indexOf(DASH) < 0,
+  'A: no en dash (it read as "bad from 8 to 10")', aTot.length ? aTot[0].text : 'none');
 const aSelf = selfcheckText(runPanel(A.html, 'A2'));
 ck(aSelf.indexOf('08:00') >= 0 && aSelf.indexOf('10:00') >= 0,
-  'A: self-check row carries the same span', aSelf.slice(0, 400));
+  'A: self-check row carries the same stamps', aSelf.slice(0, 400));
 
 // --- B) one bad round -> a single stamp, no dash ---------------------------
 const B = build('b', ['rich', 'gate', 'many']);
 ck(/ probe_bad_rounds=1\b/.test(B.out), 'B: PANEL OK probe_bad_rounds=1',
   (B.out.match(/probe_bad_rounds=\d+/) || [''])[0]);
-ck(/ probe_bad_first=08:00\b/.test(B.out) && / probe_bad_last=08:00\b/.test(B.out),
-  'B: PANEL OK carries the same stamp twice',
-  (B.out.match(/probe_bad_first=[^\s]* probe_bad_last=[^\s]*/) || [''])[0]);
+ck(/ probe_bad_stamps=08:00\b/.test(B.out), 'B: PANEL OK carries the single stamp',
+  (B.out.match(/probe_bad_stamps=[^\s]*/) || [''])[0]);
 const bTot = tags(runPanel(B.html, 'B')).filter(t => t.text.indexOf(TOTAL_LABEL) === 0);
 const bWant = TOTAL_LABEL + '2 ' + WEN + KAI + '31' + MEI + ' \u00b7 1 \u8f6e' + ' \u00b7 08:00' + BI;
 ck(bTot.length === 1 && bTot[0].text === bWant,
@@ -166,9 +172,9 @@ ck(bTot.length === 1 && bTot[0].text.indexOf(DASH) < 0,
 const C = build('c', ['gate', 'many']);
 ck(/ probes_bad_all=0\b/.test(C.out), 'C: PANEL OK probes_bad_all=0',
   (C.out.match(/probes_bad_all=\d+/) || [''])[0]);
-ck(/ probe_bad_first=none\b/.test(C.out) && / probe_bad_last=none\b/.test(C.out),
+ck(/ probe_bad_stamps=none\b/.test(C.out),
   'C: no stamps on a clean day (none, not an empty clock)',
-  (C.out.match(/probe_bad_first=[^\s]*/) || [''])[0]);
+  (C.out.match(/probe_bad_stamps=[^\s]*/) || [''])[0]);
 ck(tags(runPanel(C.html, 'C')).filter(t => t.text.indexOf(TOTAL_LABEL) === 0).length === 0,
   'C: no cumulative tag on a clean day');
 
@@ -176,26 +182,24 @@ ck(tags(runPanel(C.html, 'C')).filter(t => t.text.indexOf(TOTAL_LABEL) === 0).le
 const tpl = fs.readFileSync(path.join('Tools', 'devloop', 'city-panel-template.html'), 'utf8');
 ck((tpl.match(/function tickProbeTotalText\s*\(/g) || []).length === 1,
   'D: template still defines tickProbeTotalText once');
-ck(/probe_bad_first/.test(tpl) && /probe_bad_last/.test(tpl),
-  'D: template reads both stamps');
+ck((tpl.match(/function tickProbeWhen\s*\(/g) || []).length === 1,
+  'D: exactly one helper decides which rounds to name');
+ck(/probe_bad_stamps/.test(tpl), 'D: template reads the stamp list');
 ck((tpl.match(/tickProbeTotalText\(tk\)/g) || []).length >= 2,
   'D: both the row and the self-check call it',
   String((tpl.match(/tickProbeTotalText\(tk\)/g) || []).length));
 const bsrc = fs.readFileSync(builder, 'utf8');
-ck(/probe_bad_first\s*=\s*\[string\]\$probeBadFirst/.test(bsrc) &&
-  /probe_bad_last\s*=\s*\[string\]\$probeBadLast/.test(bsrc),
-  'D: builder emits both keys into the TICK payload');
-ck(/' probe_bad_first='/.test(bsrc) && /' probe_bad_last='/.test(bsrc),
-  'D: builder prints both tokens on PANEL OK');
+ck(/probe_bad_stamps\s*=\s*@\(\$probeBadStamps\)/.test(bsrc),
+  'D: builder emits the stamp list into the TICK payload');
+ck(/' probe_bad_stamps='/.test(bsrc), 'D: builder prints the token on PANEL OK');
 
-// --- E) older payload without the stamps -> the r816 sentence ------------
+// --- E) older payload without the stamps -> the r816 sentence -------------
 // Built from case A (which really had bad rounds), so this is the "count known,
 // clock unknown" shape rather than a clean day that would print nothing anyway.
 const strippedHtml = A.html.replace(/const TICK = ([\s\S]*?);\r?\n/, function (m, body) {
   let obj;
   try { obj = JSON.parse(body); } catch (e) { return m; }
-  delete obj.probe_bad_first;
-  delete obj.probe_bad_last;
+  delete obj.probe_bad_stamps;
   const lines = Object.keys(obj).map(k => '  ' + JSON.stringify(k) + ': ' + JSON.stringify(obj[k]));
   return 'const TICK = {\n' + lines.join(',\n') + '\n};\n';
 });
@@ -204,7 +208,7 @@ const eTick = (function () {
   const m = strippedHtml.match(/const TICK = ([\s\S]*?);\r?\n/);
   return m ? JSON.parse(m[1]) : {};
 })();
-ck(eTick.probes_bad_all === 4 && !('probe_bad_first' in eTick),
+ck(eTick.probes_bad_all === 4 && !('probe_bad_stamps' in eTick),
   'E: fixture keeps the count and drops the stamps', JSON.stringify(eTick.probes_bad_all));
 const eTot = tags(runPanel(strippedHtml, 'E')).filter(t => t.text.indexOf(TOTAL_LABEL) === 0);
 const eWant = TOTAL_LABEL + '4 ' + WEN + KAI + '9' + MEI + ' \u00b7 2 \u8f6e' + BI;
@@ -213,6 +217,23 @@ ck(eTot.length === 1 && eTot[0].text === eWant,
   eTot.length ? eTot[0].text : 'none');
 ck(eTot.length === 1 && !/\d{2}:\d{2}/.test(eTot[0].text) && eTot[0].text.indexOf(DASH) < 0,
   'E: no clock and no dash when the log cannot answer');
+
+// --- F) four bad rounds -> first/last + count, never a bare range ---------
+const F = build('f', ['rich', 'gate', 'rich', 'gate', 'rich', 'gate', 'rich']);
+ck(/ probe_bad_rounds=4\b/.test(F.out), 'F: PANEL OK probe_bad_rounds=4',
+  (F.out.match(/probe_bad_rounds=\d+/) || [''])[0]);
+ck(/ probe_bad_stamps=08:00,14:00\b/.test(F.out),
+  'F: PANEL OK keeps only the two ends when four rounds were bad',
+  (F.out.match(/probe_bad_stamps=[^\s]*/) || [''])[0]);
+const fTot = tags(runPanel(F.html, 'F')).filter(t => t.text.indexOf(TOTAL_LABEL) === 0);
+const fWant = TOTAL_LABEL + '8 ' + WEN + KAI + '19' + MEI + ' \u00b7 4 \u8f6e' +
+  ' \u00b7 ' + SHOU + ' 08:00 / ' + MO + ' 14:00' + KAI + GONG + ' 4 \u8f6e' + BI + BI;
+ck(fTot.length === 1 && fTot[0].text === fWant,
+  'F: says first/last and the count of named-or-not rounds',
+  fTot.length ? fTot[0].text : 'none');
+ck(fTot.length === 1 && fTot[0].text.indexOf(DASH) < 0,
+  'F: four bad rounds still do not print a bare range',
+  fTot.length ? fTot[0].text : 'none');
 
 try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (e) { /* temp only */ }
 

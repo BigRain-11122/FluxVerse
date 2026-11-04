@@ -310,16 +310,29 @@ function tickProbeTotalText(tk) {
   const rounds = (typeof t.probe_bad_rounds === 'number' && t.probe_bad_rounds > 0)
     ? (' · ' + t.probe_bad_rounds + ' 轮')
     : '';
-  // WHICH rounds, not just how many (queue main#135): "2 spots in 1 round"
-  // still sends the reader into a 100+ round log. builder takes each round's
-  // own start timestamp, so name the first and last bad round. One bad round
-  // prints once; several print first-last. No stamp in the log => the clause
-  // is omitted and the sentence is exactly the r816 one (never a fake clock).
-  const bf = (typeof t.probe_bad_first === 'string') ? t.probe_bad_first : '';
-  const bl = (typeof t.probe_bad_last === 'string') ? t.probe_bad_last : '';
-  let when = '';
-  if (bf && bl) when = (bf === bl) ? (' · ' + bf) : (' · ' + bf + '\u2013' + bl);
-  return '今日探针坏 ' + t.probes_bad_all + ' 处（' + t.probes_all + ' 枚' + rounds + when + '）';
+  return '今日探针坏 ' + t.probes_bad_all + ' 处（' + t.probes_all + ' 枚' + rounds + tickProbeWhen(t) + '）';
+}
+// WHICH rounds, not just how many (queue main#135, narrowed in r818). "2 spots
+// in 1 round" still sends the reader into a 100+ round log; but naming only the
+// first and last with an en dash reads as "bad from 08:00 to 10:00" while the
+// rounds in between were clean - a claim the log never made. builder now ships
+// the stamps themselves: every bad round when there are three or fewer, else
+// just the two ends plus the count. PowerShell's JSON writer flattens a
+// single-element array to a bare string, so accept both shapes. No stamp at all
+// => silence, never an invented clock (r799/r810 precedent).
+function tickProbeWhen(tk) {
+  const t = tk || {};
+  const raw = t.probe_bad_stamps;
+  const stamps = Array.isArray(raw)
+    ? raw.filter(function (s) { return typeof s === 'string' && s; })
+    : ((typeof raw === 'string' && raw) ? [raw] : []);
+  if (!stamps.length) return '';
+  const rounds = (typeof t.probe_bad_rounds === 'number' && t.probe_bad_rounds > 0) ? t.probe_bad_rounds : 0;
+  if (rounds > 0 && stamps.length >= rounds) return ' · ' + stamps.join('\u3001');
+  if (stamps.length >= 2) {
+    return ' · 首 ' + stamps[0] + ' / 末 ' + stamps[stamps.length - 1] + '（共 ' + rounds + ' 轮）';
+  }
+  return ' · ' + stamps[0];
 }
 // ARCH = the log-archive duty's own day stamp ({exists,stamp,stamp_day,today,
 // is_today,remain,ran_utc}). `stamp` is the local yyyyMMdd of the last SUCCESSFUL

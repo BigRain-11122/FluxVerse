@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-05T01:21:56Z",
-    "current_activity":  "r843 收口（FASTPATH·七查全静·队列取活 `./state/queue/tech.md` #19）。治的是 qa 池保留判据的死锁：`./Tools/devloop/qa-rotation.ps1` 的引用索引把「带日期的台账条目」和「常驻正文」一视同仁，于是每张自拍在出生当天就被算作被引，`QA PLAN: moves=0` 永不轮转。改法＝引用按行形状分两类：落在 `- YYYY-MM-DD` 条目内的算台账，只在文件年轻于 `-CiteLedgerDays`（默认 7 天）时保护；落在常驻正文的永久保护（老规则不动）。归档面同口径拆出 `QA ARCHIVE-LEDGER`，避免轮转伪造悬空引用。",
-    "artifact":  "实物＝`./Tools/devloop/qa-rotation.ps1`（新增 `Test-QaLedgerBulletAt` 与 `-CiteLedgerDays`，`QA CITE` 增 standing／ledger_only／protected／gate 四读数）＋`./Tools/devloop/test-qa-rotation.ps1`（104→124/124，负控打哑判据时 14 条转红）＋`./qa/_archive/MOVED.tsv`（新增 27 行）＋`./world-public/city-panel.html`（重建后 `qacite_cited=48`、`art_missing=0`）。即 27 件 panel 自拍已移到 `./qa/_archive`，qa 池 94→67 张、28.1MB→20.3MB，一件未删、可 `-Restore` 搬回。",
-    "artifact_utc":  "2026-11-05T01:21:56Z",
-    "milestone":  "48 小时内：`./state/queue/tech.md` #19 已收口（轮转恢复动手，复读 `moves=0` 确认闸把剩下的也守住了）；`./state/queue/main.md` #52 空载复跑仍候 0 个 Tuanjie 进程窗（判据 fps_avg≥486.8 且 p95≤2.58ms）；`./state/queue/main.md` #121 候委员会（due 2026-11-16）；`./state/queue/tech.md` #18 深潜窗（due 2026-11-19）。",
-    "milestone_eta_utc":  "2026-11-07T00:30:00Z"
+    "updated_utc":  "2026-11-05T01:35:11Z",
+    "current_activity":  "r844 收口：CEO 页面上那句「城市变慢 33%」第一次说清是谁慢的——`./Tools/devloop/build-city-panel.ps1` 在两份浸泡收据各自时刻解析「当时在位的 City3D 运行时提交」（排除 `City3D/Assets/Editor` 与 `City3D/ProjectSettings`，二者都不是浸泡所测的东西），并把整帧两半的单帧耗时一起带上：现场两份收据（10-26 基线 vs 10-28 复测）竟落在同一棵运行时树上（a7383446），而 logic（纯 CPU）与 render 同幅变慢 1.56× / 1.49× —— 全帧一起慢，不是场景变重。",
+    "artifact":  "实物＝`./world-public/city-panel.html` 城市证据卡的浸泡行现读「两份收据之间城市运行时树零变更（a7383446），logic 与 render 同幅变慢（1.56× / 1.49×）——指向同机负载，不是场景加重」；机器面 `PANEL OK` 新增 `proof_soak_code_same=true proof_soak_code=a7383446 proof_soak_ratio=1.56/1.49`；新沙盒 `./logs/devloop-r844-panel-soakcode-test.js` 22/22（三态：同树/换树/未知，未知与健康行逐字保持 r843 原样）；`./Tools/devloop/test-city-panel-proof.ps1` 34→39/39（git 答不出时不许说「未变」）。",
+    "artifact_utc":  "2026-11-05T01:35:11Z",
+    "milestone":  "48 小时内：①等兄弟窗腾出编辑器后重烧一份浸泡收据（`./Tools/devloop/r2-soak.ps1`），届时页面会自动判定「换树」还是「同机负载」；②`./state/queue/main.md` #52 仍候 0 个 Tuanjie 进程窗（实读编辑器进程占位）；③`./state/queue/tech.md` #18 深潜 due 2026-11-19；④新债＝write2 族实测 35.9 s（基线上次已 33.5 s）越过 45 s 帽的 2/3 线，须照 r812 拆族。",
+    "milestone_eta_utc":  "2026-11-07T01:30:00Z"
 }

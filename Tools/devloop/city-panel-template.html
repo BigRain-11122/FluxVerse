@@ -1353,8 +1353,33 @@ function artTitle(it){
         }
       }
       const driftBad = hasDrift && s.drift_pct <= -20;
+      // r844: a drift number cannot say WHAT moved. The builder resolves which
+      // City3D runtime commit was current when each receipt was taken (Editor
+      // tooling and ProjectSettings excluded, they are not what the soak
+      // measures) and the per-frame cost of both halves of the frame. Three
+      // states, never two: same tree / tree changed / tree unknown (no claim).
+      // Only the red case gets a sentence - a healthy row stays as short as it
+      // always was.
+      let whyTxt = '';
+      const sameCode = (typeof s.runtime_same === 'boolean') ? s.runtime_same : null;
+      const lr = (typeof s.logic_ratio === 'number') ? s.logic_ratio : null;
+      const rr = (typeof s.render_ratio === 'number') ? s.render_ratio : null;
+      if (driftBad && sameCode === true) {
+        whyTxt = ' · 两份收据之间城市运行时树零变更' +
+          (typeof s.code_at === 'string' && s.code_at ? ('（' + esc(s.code_at) + '）') : '');
+        // logic time is CPU-only; if it moved by the same factor as render time
+        // the frame got slower as a whole rather than heavier.
+        if (lr !== null && rr !== null && lr >= 1.15 && rr >= 1.15 && Math.abs(lr - rr) <= 0.15) {
+          whyTxt += '，logic 与 render 同幅变慢（' + lr.toFixed(2) + '× / ' + rr.toFixed(2) + '×）' +
+            '——指向同机负载，不是场景加重';
+        }
+      } else if (driftBad && sameCode === false) {
+        whyTxt = ' · 收据间城市运行时树已变（' +
+          esc((typeof s.baseline_code_at === 'string' && s.baseline_code_at) || '?') + ' → ' +
+          esc((typeof s.code_at === 'string' && s.code_at) || '?') + '），漂移可能来自场景';
+      }
       push('10 分钟浸泡', 'render ' + Number(s.fps_avg).toFixed(1) + ' fps · 错误 ' +
-        s.errors + ' · ' + fmtAge(ago(s.ts_utc)) + driftTxt,
+        s.errors + ' · ' + fmtAge(ago(s.ts_utc)) + driftTxt + whyTxt,
         (s.errors === 0 && s.exceptions === 0 && !driftBad), s.ts_utc, s.url, '收据');
     }
     const c = p.code || {};

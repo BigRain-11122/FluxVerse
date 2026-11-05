@@ -160,6 +160,17 @@ Check 'D: age still measured when the token short-circuits' ($D.log -match 'proo
 Check 'E: receipt older than 48h is not recorded as ok' ($E.log -match 'proof_soak=old:\d+h')
 Check 'E: the age is carried, not inferred' ($E.log -match 'proof_soak_age_h=2[34][0-9](?!\d)')
 
+# --- r844: drift attribution is fail-soft -----------------------------------
+# The builder resolves which City3D runtime commit was current at each receipt's
+# timestamp. These fixture roots are NOT git repos, so git cannot answer: that
+# must read as "unknown" (no claim), never as "unchanged", and no sha may be
+# invented. A receipt without per-frame costs also yields no ratio.
+Check 'D: non-repo root -> tree state unknown, not unchanged' ($D.log -match 'proof_soak_code_same=none')
+Check 'D: no runtime sha invented' ($D.log -match 'proof_soak_code=none')
+Check 'D: no ratio without per-frame costs' ($D.log -match 'proof_soak_ratio=none')
+Check 'A: single receipt (newest == baseline) claims nothing' ($A.log -match 'proof_soak_code_same=none')
+Check 'A: the page still renders without the new keys' ($A.html.Contains('"drift_pct":null') -or $A.html.Contains('"baseline_fps":'))
+
 Check 'no unreadable receipt crashes a build' ((@($A.log, $B.log, $C.log, $D.log, $E.log) | Where-Object { $_ -match 'FAIL:' }).Count -eq 0)
 
 # --- main#57: site verdict rows ---------------------------------------------

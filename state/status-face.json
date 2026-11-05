@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-05T00:56:48Z",
-    "current_activity":  "r842 收口（FASTPATH·七查全静·队列取活 `./state/queue/main.md` #144）。治的是上上轮留下的结构窗口：`./Tools/perceptor/scan.ps1` 此前用 `WriteAllText` 直写 `./world/world-state.json.new`（截断后写、读侧无重试），任何在窗口里读它的进程都可能拿到半个文件。改法＝把两相交接的写侧也收进 `./Tools/devloop/state-promote.ps1`：先写同目录唯一旁路件再 `Move-Item` 盖上目的地，读者只可能看到完整旧件或完整新件；空体在碰盘之前就被拒，写或搬失败一律 loud 退出并保留旧候选。",
-    "artifact":  "实物＝`./Tools/devloop/state-promote.ps1`（新增 `Write-StateCandidate`／`Remove-StateSideFile`，三种失败态各自专名）＋`./Tools/perceptor/scan.ps1`（dot-source 该模块，非 written 即印那条 FAIL 行并 exit 1）＋`./Tools/devloop/test-state-promote.ps1`（43→65/65，含写者中途死的旧候选留存、负控撕裂、独占锁让 rename 必败、空体不碰盘）＋`./world-public/city-panel.html`（重建产物）。验证＝verify 侧十一套 `assertions=757 failing=0`、写侧族 `suites=9 assertions=447 parity=ok`、活链路 `./Tools/perceptor/scan.ps1`→`./Tools/perceptor/verify.ps1` `VERIFY PASS`、`./world/world-state.json` 解析成功 20 键、`./world/` 零旁路件残留。",
-    "artifact_utc":  "2026-11-05T00:56:48Z",
-    "milestone":  "48 小时内：`./state/queue/main.md` #144 已由本轮关闭，队列 open 面转为观察位与物理阻塞——`./state/queue/main.md` #52 空载复跑仍候 0 个 Tuanjie 进程窗（判据 fps_avg≥486.8 且 p95≤2.58ms）；`./state/queue/main.md` #121 候委员会（due 2026-11-16）；`./state/queue/tech.md` #18／#19 深潜窗（due 2026-11-19）；下轮无活即转提案轨出 ≥1 条自驱提案（判据先立，可机械验收）。",
-    "milestone_eta_utc":  "2026-11-07T08:30:00Z"
+    "updated_utc":  "2026-11-05T01:21:56Z",
+    "current_activity":  "r843 收口（FASTPATH·七查全静·队列取活 `./state/queue/tech.md` #19）。治的是 qa 池保留判据的死锁：`./Tools/devloop/qa-rotation.ps1` 的引用索引把「带日期的台账条目」和「常驻正文」一视同仁，于是每张自拍在出生当天就被算作被引，`QA PLAN: moves=0` 永不轮转。改法＝引用按行形状分两类：落在 `- YYYY-MM-DD` 条目内的算台账，只在文件年轻于 `-CiteLedgerDays`（默认 7 天）时保护；落在常驻正文的永久保护（老规则不动）。归档面同口径拆出 `QA ARCHIVE-LEDGER`，避免轮转伪造悬空引用。",
+    "artifact":  "实物＝`./Tools/devloop/qa-rotation.ps1`（新增 `Test-QaLedgerBulletAt` 与 `-CiteLedgerDays`，`QA CITE` 增 standing／ledger_only／protected／gate 四读数）＋`./Tools/devloop/test-qa-rotation.ps1`（104→124/124，负控打哑判据时 14 条转红）＋`./qa/_archive/MOVED.tsv`（新增 27 行）＋`./world-public/city-panel.html`（重建后 `qacite_cited=48`、`art_missing=0`）。即 27 件 panel 自拍已移到 `./qa/_archive`，qa 池 94→67 张、28.1MB→20.3MB，一件未删、可 `-Restore` 搬回。",
+    "artifact_utc":  "2026-11-05T01:21:56Z",
+    "milestone":  "48 小时内：`./state/queue/tech.md` #19 已收口（轮转恢复动手，复读 `moves=0` 确认闸把剩下的也守住了）；`./state/queue/main.md` #52 空载复跑仍候 0 个 Tuanjie 进程窗（判据 fps_avg≥486.8 且 p95≤2.58ms）；`./state/queue/main.md` #121 候委员会（due 2026-11-16）；`./state/queue/tech.md` #18 深潜窗（due 2026-11-19）。",
+    "milestone_eta_utc":  "2026-11-07T00:30:00Z"
 }

@@ -430,6 +430,90 @@ if ($rec) {
 Check 'the record run left every fixture in place' (
     @(Get-ChildItem -LiteralPath $pool5 -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' }).Count -eq 14)
 
+# ---------------------------------------------------------------------------
+# Ledger-citation group (r843, queue tech#19): the retention rule "a tracked
+# document names it" was true but degenerate - every round appends a dated
+# ledger bullet that names that round's self-shots, so every screenshot was
+# cited within a day of being taken and QA PLAN moves=0 forever. The split is
+# by LINE SHAPE: a hit inside a dated bullet is history and shields only while
+# the file is younger than -CiteLedgerDays; a hit in standing prose still
+# shields forever. Four directions are pinned here, each on its own session:
+#   s1 standing prose, 20d old   -> kept forever (the old rule, unchanged)
+#   s2 ledger bullet,  12d old   -> past the 7d gate, so the window applies
+#   s3 ledger bullet,   6d old   -> inside the gate, so still shielded
+# -KeepFamily 1 puts s1..s3 outside the window, so "kept" can only be the gate.
+# ---------------------------------------------------------------------------
+$pool6 = Join-Path $sandbox 'qa6'
+New-Item -ItemType Directory -Path $pool6 -Force | Out-Null
+$g6 = [datetime]::UtcNow
+$s1 = '20260901-1000'
+$s2 = '20260902-1000'
+$s3 = '20260903-1000'
+$s4 = '20260904-1000'
+foreach ($v in $views) {
+    New-Fix2 (Join-Path $pool6 ('city3d-shots-' + $s1 + '-bm-a-' + $v + '.jpg')) 100
+    [System.IO.File]::SetLastWriteTimeUtc((Join-Path $pool6 ('city3d-shots-' + $s1 + '-bm-a-' + $v + '.jpg')), $g6.AddDays(-20))
+    New-Fix2 (Join-Path $pool6 ('city3d-shots-' + $s2 + '-bm-a-' + $v + '.jpg')) 100
+    [System.IO.File]::SetLastWriteTimeUtc((Join-Path $pool6 ('city3d-shots-' + $s2 + '-bm-a-' + $v + '.jpg')), $g6.AddDays(-12))
+    New-Fix2 (Join-Path $pool6 ('city3d-shots-' + $s3 + '-bm-a-' + $v + '.jpg')) 100
+    [System.IO.File]::SetLastWriteTimeUtc((Join-Path $pool6 ('city3d-shots-' + $s3 + '-bm-a-' + $v + '.jpg')), $g6.AddDays(-6))
+    New-Fix2 (Join-Path $pool6 ('city3d-shots-' + $s4 + '-bm-a-' + $v + '.jpg')) 100
+    [System.IO.File]::SetLastWriteTimeUtc((Join-Path $pool6 ('city3d-shots-' + $s4 + '-bm-a-' + $v + '.jpg')), $g6.AddDays(-1))
+}
+$citeLedger = Join-Path $sandbox 'cite-ledger.md'
+[System.IO.File]::WriteAllText($citeLedger, (
+    "Standing page link: qa/city3d-shots-" + $s1 + "-bm-a-overview.jpg`r`n" +
+    "- [2026-09-02 r1 close] took qa/city3d-shots-" + $s2 + "-bm-a-overview.jpg`r`n" +
+    "- [2026-09-03 r2 close] took qa/city3d-shots-" + $s3 + "-bm-a-overview.jpg`r`n"))
+
+$lgLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool6 -List -KeepFamily 1 -CiteFiles $citeLedger) -join "`n"
+$lgRc = $LASTEXITCODE
+Check 'ledger-split run exits 0' ($lgRc -eq 0)
+Check 'all three citations still count as cited' ($lgLog -match 'QA CITE: cited=3/24 in pool')
+Check 'standing and ledger-only are counted apart' ($lgLog -match 'standing=1 ledger_only=2\b')
+Check 'only the past-gate ledger citation expires' ($lgLog -match 'ledger_expired=1\b')
+Check 'the gate value is printed with the count' ($lgLog -match 'gate=7d\b')
+Check 'the standing citation is still kept forever' ($lgLog -match ('KEEP city3d-shots-' + $s1 + '-bm-a-overview\.jpg'))
+Check 'the past-gate ledger file is planned for a move' ($lgLog -match ('MOVE city3d-shots-' + $s2 + '-bm-a-overview\.jpg'))
+Check 'the inside-gate ledger file is not planned for a move' (-not ($lgLog -match ('MOVE city3d-shots-' + $s3 + '-bm-a-overview\.jpg')))
+Check 'the plan releases the expired file, not the whole session it lives in' ($lgLog -match 'QA PLAN: moves=16\b')
+Check 'the plan reports two citations kept (standing + inside gate)' ($lgLog -match 'cited_kept=2\b')
+Check 'the expired file is named as such in the list' ($lgLog -match ('LEDGER-EXPIRED city3d-shots-' + $s2 + '-bm-a-overview\.jpg'))
+
+# The gate is a real boundary: 5 days makes the 6-day-old file expire too.
+$tightGate = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool6 -KeepFamily 1 `
+    -CiteFiles $citeLedger -CiteLedgerDays 5) -join "`n"
+Check 'a tighter gate expires the second ledger citation' ($tightGate -match 'ledger_expired=2\b')
+Check 'a tighter gate moves one more file (per-file citation, not a session pardon)' ($tightGate -match 'QA PLAN: moves=17\b')
+Check 'a tighter gate keeps only the standing citation' ($tightGate -match 'cited_kept=1\b')
+
+$json6 = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool6 -Json -KeepFamily 1 `
+    -CiteFiles $citeLedger) -join "`n"
+$j6 = $null
+try { $j6 = $json6 | ConvertFrom-Json } catch { $j6 = $null }
+Check 'json carries the citation split' (
+    $null -ne $j6 -and [int]$j6.cited -eq 3 -and [int]$j6.standing_cited -eq 1 -and
+    [int]$j6.ledger_only_cited -eq 2 -and [int]$j6.protected_cited -eq 2 -and
+    [int]$j6.ledger_expired -eq 1 -and [int]$j6.cite_ledger_days -eq 7)
+
+# The archive split: after a rotation, a name only the ledger mentions is
+# expected history (not an injury), while a name standing prose points at is
+# still the dangling citation r778 repairs. Folding them together would make
+# every rotation manufacture fake injuries.
+$pool7 = Join-Path $sandbox 'qa7'
+New-Item -ItemType Directory -Path $pool7 -Force | Out-Null
+$pool7Arch = Join-Path $pool7 '_archive'
+New-Item -ItemType Directory -Path $pool7Arch -Force | Out-Null
+New-Fix2 (Join-Path $pool7Arch ('city3d-shots-' + $s1 + '-bm-a-overview.jpg')) 100
+New-Fix2 (Join-Path $pool7Arch ('city3d-shots-' + $s2 + '-bm-a-overview.jpg')) 100
+New-Fix2 (Join-Path $pool7 'notes.png') 10
+$archLog = (& powershell -NoProfile -ExecutionPolicy Bypass -File $tool -Dir $pool7 -List -CiteFiles $citeLedger) -join "`n"
+Check 'an archived standing citation is still dangling' ($archLog -match 'QA DANGLING: 1 cited name')
+Check 'the dangling name is the standing one' ($archLog -match ('DANGLING city3d-shots-' + $s1 + '-bm-a-overview\.jpg'))
+Check 'an archived ledger-only name is counted separately' ($archLog -match 'QA ARCHIVE-LEDGER: 1 name')
+Check 'the ledger-only archived name is named as such' ($archLog -match ('ARCHIVE-LEDGER city3d-shots-' + $s2 + '-bm-a-overview\.jpg'))
+Check 'archive_cited counts injuries, not history' ($archLog -match 'archive_cited=1\b')
+
 Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
 Write-Output ('test-qa-rotation: ' + $pass + ' passed, ' + $fail + ' failed (of ' + ($pass + $fail) + ')')
 if ($fail -gt 0) { exit 1 }

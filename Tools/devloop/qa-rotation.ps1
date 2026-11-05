@@ -55,6 +55,18 @@
 # plan. -Record writes the numbers to logs\.qa-cite-audit.json so a reader (the
 # panel) can show them with their own age instead of re-scanning 383 documents
 # per tick - the audit costs ~2.4 s and is not a per-tick job.
+# Step 8 (r843, queue tech#19): step 5's rule was true but degenerate. This repo
+# appends one dated ledger bullet per round, and those bullets name every
+# self-shot of the round, so "a committed document names it" meant "every
+# screenshot is cited within a day of being taken" - measured 2026-11-05:
+# cited=75 of 94, QA PLAN moves=0, the pool grew to 28.1MB with rotation that
+# could never act. A citation is therefore classified by the line it sits on: a
+# hit inside a dated ledger bullet ("- YYYY-MM-DD ...") is history and shields
+# only while the file is younger than -CiteLedgerDays; a hit in standing prose
+# still shields forever. The same split applies to _archive: a name that only
+# the ledger still mentions is counted as archive-ledger (expected history),
+# while a name a standing document points at remains the dangling injury r778
+# repairs - otherwise every rotation would manufacture fake dangling names.
 # Read-only, no network, ASCII-only (PS5.1 GBK law).
 [CmdletBinding()]
 param(
@@ -72,6 +84,21 @@ param(
     # land within seconds of each other, so a strict compare counts write order
     # as "replaced" (first cut reported 5 such files, all from one 10-28 capture).
     [int]$SiblingMarginMin = 60,
+    # Age gate for LEDGER-ONLY citations (queue tech#19). The retention rule is
+    # "a tracked document names this file", but this repo appends one dated
+    # ledger bullet per round and those bullets name every self-shot, so the rule
+    # degenerated into "keep everything forever" (measured 2026-11-05: cited=75
+    # of 94, QA PLAN moves=0). A citation that exists ONLY inside a dated ledger
+    # bullet (a line starting with "- YYYY-MM-DD") is history, not a live
+    # pointer: it shields the file until the file itself is older than this many
+    # days, then the normal window rules apply. A citation in standing prose
+    # shields forever, unchanged.
+    # 7 = the window's own order of magnitude: the pool keeps the newest 3
+    # sessions/files, and a week is more than twice that, so a file must be BOTH
+    # outside the window AND a week old before history stops shielding it. The
+    # gate is not "how long evidence lives" (nothing is deleted, ever) - it is
+    # "how long a past round's write-up keeps pinning a file in the pool".
+    [int]$CiteLedgerDays = 7,
     # Write the citation audit reading to a small JSON file (empty = no record).
     # Default location = <repo>/logs/.qa-cite-audit.json, which the panel reads
     # as a readout only; nothing rotates on the strength of this record.
@@ -158,11 +185,33 @@ function Get-QaPoolFiles
     return $out
 }
 
+# A hit that sits inside a DATED LEDGER BULLET is history, not a live pointer.
+# Shape is strict on purpose ("- " then an ISO date at line start): that is the
+# append-only round ledger this repo writes into TECH.md and the runbook. A
+# bullet someone edits to point at current evidence stops matching the shape and
+# turns back into a standing citation, which is the safe direction.
+function Test-QaLedgerBulletAt
+{
+    param([string]$Text, [int]$Index)
+    if ($null -eq $Text -or $Index -lt 0 -or $Index -ge $Text.Length) { return $false }
+    $start = [Math]::Max(0, $Index - 1)
+    $nl = $Text.LastIndexOf("`n", $start)
+    $lineStart = $(if ($nl -ge 0) { $nl + 1 } else { 0 })
+    $le = $Text.IndexOf("`n", $Index)
+    $lineEnd = $(if ($le -ge 0) { $le } else { $Text.Length })
+    if ($lineEnd -le $lineStart) { return $false }
+    $line = $Text.Substring($lineStart, $lineEnd - $lineStart)
+    return [bool]($line -match '^\s*-\s*\[\d{4}-\d{2}-\d{2}')
+}
+
 # Citation index: which of the given image names appear in a tracked text file.
 # A committed document that names qa/<file> is the only retention criterion this
 # repo can prove; a guess at "which sessions matter" is what main#113 objected
 # to. Matching is substring on the full file name (Ordinal, ASCII names only),
 # so "documented" means "somebody can find the exact string in the repo text".
+# Every hit is also classified as standing prose or a dated ledger bullet
+# (tech#19): the ledger names every self-shot of every round, so counting both
+# alike made the criterion mean "never rotate anything".
 function Get-QaCitationIndex
 {
     param(
@@ -173,7 +222,7 @@ function Get-QaCitationIndex
     )
     $res = New-Object PSObject -Property ([ordered]@{
         ok = $false; error = ''; mode = 'git'; scanned = 0; skipped = 0
-        names = @{}; sources = @{}
+        names = @{}; sources = @{}; standing = @{}; ledger = @{}
     })
     if ($null -eq $Names -or @($Names).Count -eq 0) { $res.ok = $true; return $res }
     $needles = @($Names | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
@@ -218,13 +267,35 @@ function Get-QaCitationIndex
         }
         $res.scanned++
         foreach ($n in $needles) {
-            if ($text.IndexOf($n, [StringComparison]::Ordinal) -ge 0) {
-                if (-not $res.names.ContainsKey($n)) { $res.names[$n] = 0 }
-                $res.names[$n] = [int]$res.names[$n] + 1
-                if (-not $res.sources.ContainsKey($n)) {
-                    $res.sources[$n] = New-Object System.Collections.ArrayList
-                }
-                [void]$res.sources[$n].Add([string]$rel)
+            # Every occurrence is classified, not just the first one: the same
+            # file can be named once in a standing paragraph and once in a dated
+            # ledger bullet, and only the standing mention keeps it forever
+            # (tech#19). Breaking out on the first standing hit keeps the cost
+            # of the extra scan bounded.
+            $hasStanding = $false
+            $hasLedger = $false
+            $idx = $text.IndexOf($n, [StringComparison]::Ordinal)
+            while ($idx -ge 0) {
+                if (Test-QaLedgerBulletAt -Text $text -Index $idx) { $hasLedger = $true }
+                else { $hasStanding = $true; break }
+                $idx = $text.IndexOf($n, $idx + 1, [StringComparison]::Ordinal)
+            }
+            if (-not ($hasStanding -or $hasLedger)) { continue }
+            if (-not $res.names.ContainsKey($n)) { $res.names[$n] = 0 }
+            $res.names[$n] = [int]$res.names[$n] + 1
+            if (-not $res.sources.ContainsKey($n)) {
+                $res.sources[$n] = New-Object System.Collections.ArrayList
+            }
+            [void]$res.sources[$n].Add([string]$rel)
+            # Per-name file counts, so "cited=75, standing=14, ledger_only=61"
+            # is one read pass and the split cannot drift from the total.
+            if ($hasStanding) {
+                if (-not $res.standing.ContainsKey($n)) { $res.standing[$n] = 0 }
+                $res.standing[$n] = [int]$res.standing[$n] + 1
+            }
+            if ($hasLedger) {
+                if (-not $res.ledger.ContainsKey($n)) { $res.ledger[$n] = 0 }
+                $res.ledger[$n] = [int]$res.ledger[$n] + 1
             }
         }
     }
@@ -234,10 +305,12 @@ function Get-QaCitationIndex
 
 function Get-QaPoolCensus
 {
-    param([string]$Pool, [object[]]$Files = $null, [hashtable]$Cited = @{})
+    param([string]$Pool, [object[]]$Files = $null, [hashtable]$Cited = @{},
+        [hashtable]$Standing = @{}, [int]$LedgerGateDays = 21)
     $res = New-Object PSObject -Property ([ordered]@{
         dir = $Pool; exists = $false; images = 0; bytes = 0; oldest_days = -1
         groups = @(); cited = 0; cited_kept = 0
+        protected_cited = 0; ledger_expired = 0
         stale_cited = 0; stale_cited_bytes = [int64]0
         superseded_cited = 0; newer_sibling_cited = 0
         superseded_by_group = [ordered]@{}
@@ -314,8 +387,21 @@ function Get-QaPoolCensus
         $moveList = @()
         $citedNames = @()
         $citedKept = @()
+        # Which cited files this rule actually shields (tech#19). A citation in
+        # standing prose shields forever; a citation that exists only inside a
+        # dated ledger bullet shields only while the file itself is young enough
+        # (LedgerGateDays), because the ledger names every self-shot of every
+        # round and would otherwise shield the whole pool for good.
+        $protectNames = @{}
+        $expiredNames = @()
         foreach ($f in $sorted) {
-            if ($Cited.ContainsKey([string]$f.Name)) { $citedNames += [string]$f.Name }
+            $nm = [string]$f.Name
+            if (-not $Cited.ContainsKey($nm)) { continue }
+            $citedNames += $nm
+            $isStanding = $Standing.ContainsKey($nm) -and ([int]$Standing[$nm] -gt 0)
+            $fresh = (($now - $f.LastWriteTimeUtc).TotalDays -le [double]$LedgerGateDays)
+            if ($isStanding -or $fresh) { $protectNames[$nm] = $true }
+            else { $expiredNames += $nm }
         }
 
         # Citation audit (main#116): independent of the retention window, and
@@ -356,10 +442,12 @@ function Get-QaPoolCensus
         if ($keep -ge 0 -and $sessions.Count -gt $keep) {
             foreach ($s in @($sessions[$keep..($sessions.Count - 1)])) {
                 foreach ($n in @($s.names | Sort-Object)) {
-                    # Cited evidence is outside the retention window's jurisdiction:
-                    # a committed document points at this name, so moving it would
-                    # leave the document pointing at nothing.
-                    if ($Cited.ContainsKey([string]$n)) { $citedKept += [string]$n; continue }
+                    # A shielded citation means a live document still points at
+                    # this name, so moving it would leave that document pointing
+                    # at nothing. A ledger-only citation past its age gate is
+                    # history text, so the normal window applies and the move is
+                    # recorded in the archive ledger (reversible, never deleted).
+                    if ($protectNames.ContainsKey([string]$n)) { $citedKept += [string]$n; continue }
                     $moveList += $n
                 }
             }
@@ -383,7 +471,10 @@ function Get-QaPoolCensus
             oldest_days = $(if ($oldestG) { [int][Math]::Floor(($now - $oldestG).TotalDays) } else { -1 })
             cited = [int]$citedNames.Count
             cited_kept = [int]$citedKept.Count
-            cited_names = @($citedNames)
+            protected_cited = [int]($citedNames.Count - $expiredNames.Count)
+            ledger_expired = [int]$expiredNames.Count
+            cited_names = @($protectNames.Keys | Sort-Object)
+            ledger_expired_names = @($expiredNames | Sort-Object)
             stale_cited = [int]$staleNames.Count
             stale_cited_bytes = [int64]$staleBytes
             stale_cited_names = @($staleNames)
@@ -395,6 +486,8 @@ function Get-QaPoolCensus
         }))
         $res.cited = [int]$res.cited + $citedNames.Count
         $res.cited_kept = [int]$res.cited_kept + $citedKept.Count
+        $res.protected_cited = [int]$res.protected_cited + [int]($citedNames.Count - $expiredNames.Count)
+        $res.ledger_expired = [int]$res.ledger_expired + $expiredNames.Count
         $res.stale_cited = [int]$res.stale_cited + $staleNames.Count
         $res.stale_cited_bytes = [int64]$res.stale_cited_bytes + $staleBytes
         $res.superseded_cited = [int]$res.superseded_cited + $supNames.Count
@@ -621,7 +714,15 @@ if ($poolFiles.exists -and -not $cite.ok) {
 $citedSet = @{}
 foreach ($k in @($cite.names.Keys)) { $citedSet[[string]$k] = $true }
 
-$census = Get-QaPoolCensus -Pool $Dir -Files $poolFiles.files -Cited $citedSet
+# Standing citations only (tech#19): prose that points at the file today, as
+# opposed to a dated ledger bullet that merely records what a past round took.
+$standingSet = @{}
+foreach ($k in @($cite.standing.Keys)) {
+    if ([int]$cite.standing[$k] -gt 0) { $standingSet[[string]$k] = $true }
+}
+
+$census = Get-QaPoolCensus -Pool $Dir -Files $poolFiles.files -Cited $citedSet `
+    -Standing $standingSet -LedgerGateDays $CiteLedgerDays
 
 # Compact group breakdown for the superseded count (e.g. "panel:61,city3d:11").
 # Computed once here so the record and the console line can never disagree.
@@ -632,7 +733,16 @@ if ($null -ne $census.superseded_by_group -and $census.superseded_by_group.Count
 }
 
 $dangling = @()
-foreach ($n in $archNames) { if ($citedSet.ContainsKey([string]$n)) { $dangling += [string]$n } }
+# A cited name sitting in _archive is an injury only when a STANDING document
+# still points at it. A name the dated ledger mentions after it rotated is
+# history text, counted separately (tech#19) - otherwise every rotation would
+# manufacture "dangling" citations, which is exactly what r778 had to repair.
+$archLedgerOnly = @()
+foreach ($n in $archNames) {
+    if (-not $citedSet.ContainsKey([string]$n)) { continue }
+    if ($standingSet.ContainsKey([string]$n)) { $dangling += [string]$n }
+    else { $archLedgerOnly += [string]$n }
+}
 
 # The audit record: a reader (the panel) shows these numbers with their own age
 # instead of rebuilding the citation index on every tick (~2.4 s per run). The
@@ -650,6 +760,12 @@ if (-not [string]::IsNullOrWhiteSpace($RecordPath)) {
         images = [int]$census.images
         bytes = [int64]$census.bytes
         cited = [int]$census.cited
+        standing_cited = @($standingSet.Keys).Count
+        ledger_only_cited = [int]($census.cited - @($standingSet.Keys).Count)
+        protected_cited = [int]$census.protected_cited
+        ledger_expired = [int]$census.ledger_expired
+        cite_ledger_days = [int]$CiteLedgerDays
+        archive_ledger_only = @($archLedgerOnly).Count
         stale_days = [int]$StaleDays
         stale_cited = [int]$census.stale_cited
         stale_cited_bytes = [int64]$census.stale_cited_bytes
@@ -689,6 +805,12 @@ if ($Json) {
         keep_panel = $KeepPanel
         cited = $census.cited
         cited_kept = $census.cited_kept
+        standing_cited = @($standingSet.Keys).Count
+        ledger_only_cited = [int]($census.cited - @($standingSet.Keys).Count)
+        protected_cited = [int]$census.protected_cited
+        ledger_expired = $census.ledger_expired
+        cite_ledger_days = $CiteLedgerDays
+        archive_ledger_only = @($archLedgerOnly).Count
         stale_days = $StaleDays
         stale_cited = $census.stale_cited
         stale_cited_bytes = $census.stale_cited_bytes
@@ -704,6 +826,8 @@ if ($Json) {
                 sessions = $_.sessions; move = $_.move; reclaim = $_.reclaim
                 oldest_days = $_.oldest_days; move_names = @($_.move_names)
                 cited = $_.cited; cited_kept = $_.cited_kept; cited_names = @($_.cited_names)
+                protected_cited = $_.protected_cited; ledger_expired = $_.ledger_expired
+                ledger_expired_names = @($_.ledger_expired_names)
                 stale_cited = $_.stale_cited; superseded_cited = $_.superseded_cited
                 newer_sibling_cited = $_.newer_sibling_cited
                 stale_cited_names = @($_.stale_cited_names)
@@ -723,15 +847,20 @@ if (-not $census.exists) {
 $head = 'QA POOL: images=' + $census.images + ' bytes=' + (Format-QaBytes -Bytes $census.bytes) +
     ' oldest=' + $census.oldest_days + 'd'
 Write-Host ($head + ' dir=' + $Dir)
+$ledgerOnlyN = [int]($census.cited - @($standingSet.Keys).Count)
 Write-Host ('QA CITE: cited=' + $census.cited + '/' + $census.images + ' in pool, archive_cited=' +
-    @($dangling).Count + ' (index=' + $cite.mode + ' scanned=' + $cite.scanned + ' md/txt)')
+    @($dangling).Count + ' standing=' + @($standingSet.Keys).Count + ' ledger_only=' + $ledgerOnlyN +
+    ' protected=' + $census.protected_cited + ' ledger_expired=' + $census.ledger_expired +
+    ' gate=' + $CiteLedgerDays + 'd' +
+    ' (index=' + $cite.mode + ' scanned=' + $cite.scanned + ' md/txt)')
 $supByTok = $(if ($supByCompact) { ' superseded_by=' + $supByCompact } else { '' })
 Write-Host ('QA STALE: stale_cited=' + $census.stale_cited + '/' + $census.cited +
     ' older_than=' + $StaleDays + 'd bytes=' + (Format-QaBytes -Bytes $census.stale_cited_bytes) +
     ' superseded_cited=' + $census.superseded_cited + $supByTok +
     ' newer_sibling_cited=' + $census.newer_sibling_cited +
     ' sibling_margin=' + $SiblingMarginMin + 'min' +
-    ' (report only: a cited file is never moved)')
+    ' (report only: a standing citation is never moved; a ledger-only one stops shielding past ' +
+    $CiteLedgerDays + 'd)')
 
 $moves = 0
 $reclaim = [int64]0
@@ -754,12 +883,20 @@ foreach ($g in $census.groups) {
         }
         foreach ($n in @($g.stale_cited_names)) { Write-Host ('    STALE ' + $n) }
         foreach ($n in @($g.superseded_cited_names)) { Write-Host ('    SUPERSEDED ' + $n) }
+        foreach ($n in @($g.ledger_expired_names)) { Write-Host ('    LEDGER-EXPIRED ' + $n) }
     }
 }
 $planTail = $(if ($Apply) { ' (apply follows)' } else { ' (dry-run, nothing touched)' })
 Write-Host ('QA PLAN: moves=' + $moves + ' reclaim=' + (Format-QaBytes -Bytes $reclaim) +
     ' keep_sessions=' + $KeepFamily + ' keep_panel=' + $KeepPanel +
-    ' cited_kept=' + $census.cited_kept + $planTail)
+    ' cited_kept=' + $census.cited_kept + ' ledger_expired=' + $census.ledger_expired + $planTail)
+if (@($archLedgerOnly).Count -gt 0) {
+    Write-Host ('QA ARCHIVE-LEDGER: ' + @($archLedgerOnly).Count +
+        ' name(s) in _archive are named only by the dated ledger - history text, not a live pointer')
+    if ($List) {
+        foreach ($n in @($archLedgerOnly | Sort-Object)) { Write-Host ('    ARCHIVE-LEDGER ' + $n) }
+    }
+}
 if (@($dangling).Count -gt 0) {
     Write-Host ('QA DANGLING: ' + @($dangling).Count + ' cited name(s) sit in _archive - ' +
         'a tracked document names a path that is no longer in the pool')
@@ -807,14 +944,15 @@ if ($Restore) {
     # Re-read the file system instead of doing arithmetic on the plan: the only
     # number worth printing is the one a second, independent read agrees with.
     $afterFiles = Get-QaPoolFiles -Pool $Dir
-    $afterCensus = Get-QaPoolCensus -Pool $Dir -Files $afterFiles.files -Cited $citedSet
+    $afterCensus = Get-QaPoolCensus -Pool $Dir -Files $afterFiles.files -Cited $citedSet `
+        -Standing $standingSet -LedgerGateDays $CiteLedgerDays
     Write-Host ('QA POOL: images=' + $afterCensus.images + ' bytes=' +
         (Format-QaBytes -Bytes $afterCensus.bytes) + ' oldest=' + $afterCensus.oldest_days + 'd')
     $stillDangling = @()
     if (Test-Path -LiteralPath $archiveDir) {
         foreach ($f in @(Get-ChildItem -LiteralPath $archiveDir -File -ErrorAction SilentlyContinue |
             Where-Object { $_.Extension -match '^\.(png|jpg|jpeg)$' })) {
-            if ($citedSet.ContainsKey([string]$f.Name) -and $citedSet[[string]$f.Name] -and
+            if ($standingSet.ContainsKey([string]$f.Name) -and $standingSet[[string]$f.Name] -and
                 -not ($afterFiles.files | Where-Object { $_.Name -eq $f.Name })) {
                 $stillDangling += [string]$f.Name
             }

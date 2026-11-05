@@ -638,6 +638,10 @@ $psWrite4Ran = $false
 $psWrite4Ms = 0
 $psWrite5Ran = $false
 $psWrite5Ms = 0
+# r843 (main#145): the two builder-driven panel sandboxes got their own half,
+# because the face half measured 38.4 s of a 45 s cap (85%, base 33.5 s).
+$psWrite6Ran = $false
+$psWrite6Ms = 0
 $psVerifyRan = $false
 $psVerifyMs = 0
 
@@ -732,6 +736,7 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
   Write-Output 'VERIFY HEALTH: ps-suites-write3: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-write4: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-write5: skipped (nested sandbox run)'
+  Write-Output 'VERIFY HEALTH: ps-suites-write6: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-verify: skipped (nested sandbox run)'
   Write-Output 'VERIFY HEALTH: ps-suites-verify2: skipped (nested sandbox run)'
 } else {
@@ -742,6 +747,7 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
     Write-Output 'VERIFY WARN: ps-suites-write3: ps-suites-tick.ps1 missing - tooling-side sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-write4: ps-suites-tick.ps1 missing - city-duty/shape sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-write5: ps-suites-tick.ps1 missing - census/archive sandboxes not run this tick'
+    Write-Output 'VERIFY WARN: ps-suites-write6: ps-suites-tick.ps1 missing - builder panel sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-verify: ps-suites-tick.ps1 missing - verify-side sandboxes not run this tick'
     Write-Output 'VERIFY WARN: ps-suites-verify2: ps-suites-tick.ps1 missing - heavy verify sandbox not run this tick'
   } else {
@@ -878,6 +884,28 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
       $psWrite5Ms = [int]$w5Turn.ms
       foreach ($l in @($w5Turn.lines)) { Write-Output $l }
 
+      # ---- 2h6. builder panel half (r843 / main#145) ----
+      # The face half carried five suites: three prove the written face (4.4 /
+      # 4.7 / 3.6 s) and two spawn the real builder (10.3 / 9.3 s). Measured
+      # together 38.4 s of the 45 s cap (85%), base 33.5 s - past the 30 s 2/3
+      # line every tick, which is the unactionable-WARN shape r757 forbids
+      # living with. The pair gets its own half (19.6 s); the 45 s cap is
+      # untouched, same ruling as r779 / r812 / r832.
+      $why6 = ''
+      if ($psWriteRan) { $why6 = 'write-side ran ' + $psWriteMs + 'ms' }
+      elseif ($psWrite2Ran) { $why6 = 'face-side ran ' + $psWrite2Ms + 'ms' }
+      elseif ($psWrite3Ran) { $why6 = 'tooling-side ran ' + $psWrite3Ms + 'ms' }
+      elseif ($psWrite4Ran) { $why6 = 'city/shape half ran ' + $psWrite4Ms + 'ms' }
+      elseif ($psWrite5Ran) { $why6 = 'census/archive half ran ' + $psWrite5Ms + 'ms' }
+
+      $w6Turn = Invoke-PsSuitesFamilyTurn -Family 'write6' -Label 'ps-suites-write6' `
+        -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-city-panel-proof.ps1,Tools\devloop\test-city-panel-null-reading.ps1' `
+        -OffEnv 'FLUXVERSE_PS_SUITES_WRITE6' -WarnNote 'builder panel sandboxes not measured this tick' `
+        -AnotherRan ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran -or $psWrite4Ran -or $psWrite5Ran) -AnotherWhy $why6
+      $psWrite6Ran = [bool]$w6Turn.ran
+      $psWrite6Ms = [int]$w6Turn.ms
+      foreach ($l in @($w6Turn.lines)) { Write-Output $l }
+
       # ---- 2i. verify-side family (same rules, own ticket, one heavy run per tick) ----
       if ($env:FLUXVERSE_PS_SUITES_VERIFY -eq 'off') {
         Write-Output 'VERIFY HEALTH: ps-suites-verify: disabled by FLUXVERSE_PS_SUITES_VERIFY=off'
@@ -899,13 +927,14 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
           try { $vRes = Invoke-PsSuitesTick @vArgs } catch { $vRes = $null }
           if ($null -ne $vRes -and $vRes.ran) { $psVerifyRan = $true; $psVerifyMs = [int]$vRes.ms }
           Write-PsSuitesVerdict -Label 'ps-suites-verify' -Res $vRes -Rerun 'Tools\devloop\run-ps-suites.ps1 -Verify'
-        } elseif ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran -or $psWrite4Ran -or $psWrite5Ran) {
+        } elseif ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran -or $psWrite4Ran -or $psWrite5Ran -or $psWrite6Ran) {
           $why = 'write-side ran ' + $psWriteMs + 'ms'
           if (-not $psWriteRan) {
             if ($psWrite2Ran) { $why = 'face-side ran ' + $psWrite2Ms + 'ms' }
             elseif ($psWrite3Ran) { $why = 'tooling-side ran ' + $psWrite3Ms + 'ms' }
             elseif ($psWrite4Ran) { $why = 'city/shape half ran ' + $psWrite4Ms + 'ms' }
-            else { $why = 'census/archive half ran ' + $psWrite5Ms + 'ms' }
+            elseif ($psWrite5Ran) { $why = 'census/archive half ran ' + $psWrite5Ms + 'ms' }
+            else { $why = 'builder panel half ran ' + $psWrite6Ms + 'ms' }
           }
           $deferLine = 'VERIFY HEALTH: ps-suites-verify: deferred (' + $why + ' this tick) sha=' + $vChk.sha + ' req=' + [int]$vChk.req_suites
           if ([int]$vChk.base_ms -gt 0) { $deferLine = $deferLine + ' base=' + [int]$vChk.base_ms + 'ms' }
@@ -941,13 +970,14 @@ if ($env:FLUXVERSE_PS_SUITES_CHILD -eq '1') {
           $v2Res = $null
           try { $v2Res = Invoke-PsSuitesTick @v2Args } catch { $v2Res = $null }
           Write-PsSuitesVerdict -Label 'ps-suites-verify2' -Res $v2Res -Rerun 'Tools\devloop\run-ps-suites.ps1 -Suites Tools\devloop\test-verify-ps-suites.ps1'
-        } elseif ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran -or $psWrite4Ran -or $psWrite5Ran -or $psVerifyRan) {
+        } elseif ($psWriteRan -or $psWrite2Ran -or $psWrite3Ran -or $psWrite4Ran -or $psWrite5Ran -or $psWrite6Ran -or $psVerifyRan) {
           $why = 'write-side ran ' + $psWriteMs + 'ms'
           if (-not $psWriteRan) {
             if ($psWrite2Ran) { $why = 'face-side ran ' + $psWrite2Ms + 'ms' }
             elseif ($psWrite3Ran) { $why = 'tooling-side ran ' + $psWrite3Ms + 'ms' }
             elseif ($psWrite4Ran) { $why = 'city/shape half ran ' + $psWrite4Ms + 'ms' }
             elseif ($psWrite5Ran) { $why = 'census/archive half ran ' + $psWrite5Ms + 'ms' }
+            elseif ($psWrite6Ran) { $why = 'builder panel half ran ' + $psWrite6Ms + 'ms' }
             else { $why = 'verify-side ran ' + $psVerifyMs + 'ms' }
           }
           $deferLine2 = 'VERIFY HEALTH: ps-suites-verify2: deferred (' + $why + ' this tick) sha=' + $v2Chk.sha + ' req=' + [int]$v2Chk.req_suites

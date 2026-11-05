@@ -51,6 +51,10 @@ $w2ticket = Join-Path $sandbox 'ticket-write2.json'
 # family too - an unseeded write3 would spawn the REAL 16 s suite half inside
 # every cached-tick case (caught by b3 when the family was added).
 $w3ticket = Join-Path $sandbox 'ticket-write3.json'
+# r843 (main#145): a fourth write half (the two builder-driven suites). Seeded
+# with a fixture runner for the same reason write3 is: an unseeded family spawns
+# the REAL half inside the cached-tick cases (b3 caught it at 17.0 s).
+$w6ticket = Join-Path $sandbox 'ticket-write6.json'
 
 function New-Runner([string]$name, [string]$body) {
     $p = Join-Path $sandbox $name
@@ -110,6 +114,12 @@ $script:w3force = $false
 $script:w3timeout = $null
 $script:w3off = $false
 $script:w3ticketpath = $w3ticket
+# Builder panel half (r843). Same rules once more: fixture runner, own ticket.
+$script:w6runner = $runnerGreen
+$script:w6force = $false
+$script:w6timeout = $null
+$script:w6off = $false
+$script:w6ticketpath = $w6ticket
 
 # Seed the verify-family ticket before the write-side cases: those assert that
 # a cached tick stays under 3 s, and a due verify run would spend that budget
@@ -119,6 +129,7 @@ $null = Invoke-PsSuitesTick -RepoDir $repo -Family verify -TicketPath $vticket -
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family verify2 -TicketPath $v2ticket -RunnerPath $runnerGreen -TimeoutSec 8
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write2 -TicketPath $w2ticket -RunnerPath $runnerGreen -TimeoutSec 8
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write3 -TicketPath $w3ticket -RunnerPath $runnerGreen -TimeoutSec 8
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family write6 -TicketPath $w6ticket -RunnerPath $runnerGreen -TimeoutSec 8
 
 function Clear-PsEnv {
     foreach ($k in @('FLUXVERSE_PS_SUITES', 'FLUXVERSE_PS_SUITES_RUNNER', 'FLUXVERSE_PS_SUITES_TICKET',
@@ -134,7 +145,10 @@ function Clear-PsEnv {
                      'FLUXVERSE_PS_SUITES_WRITE2_FORCE',
                      'FLUXVERSE_PS_SUITES_WRITE3', 'FLUXVERSE_PS_SUITES_WRITE3_RUNNER',
                      'FLUXVERSE_PS_SUITES_WRITE3_TICKET', 'FLUXVERSE_PS_SUITES_WRITE3_TIMEOUT',
-                     'FLUXVERSE_PS_SUITES_WRITE3_FORCE')) {
+                     'FLUXVERSE_PS_SUITES_WRITE3_FORCE',
+                     'FLUXVERSE_PS_SUITES_WRITE6', 'FLUXVERSE_PS_SUITES_WRITE6_RUNNER',
+                     'FLUXVERSE_PS_SUITES_WRITE6_TICKET', 'FLUXVERSE_PS_SUITES_WRITE6_TIMEOUT',
+                     'FLUXVERSE_PS_SUITES_WRITE6_FORCE')) {
         Remove-Item ('Env:\' + $k) -ErrorAction SilentlyContinue
     }
 }
@@ -175,6 +189,12 @@ function Run-Verify {
     if ($script:w3timeout) { $env:FLUXVERSE_PS_SUITES_WRITE3_TIMEOUT = [string]$script:w3timeout }
     if ($script:w3off) { $env:FLUXVERSE_PS_SUITES_WRITE3 = 'off' }
     if ($script:w3force) { $env:FLUXVERSE_PS_SUITES_WRITE3_FORCE = '1' }
+    # Builder panel half (r843): cached ticket + fixture runner, same reason.
+    $env:FLUXVERSE_PS_SUITES_WRITE6_TICKET = $script:w6ticketpath
+    $env:FLUXVERSE_PS_SUITES_WRITE6_RUNNER = $script:w6runner
+    if ($script:w6timeout) { $env:FLUXVERSE_PS_SUITES_WRITE6_TIMEOUT = [string]$script:w6timeout }
+    if ($script:w6off) { $env:FLUXVERSE_PS_SUITES_WRITE6 = 'off' }
+    if ($script:w6force) { $env:FLUXVERSE_PS_SUITES_WRITE6_FORCE = '1' }
     if ($script:child) { $env:FLUXVERSE_PS_SUITES_CHILD = '1' }
     $sw = New-Object System.Diagnostics.Stopwatch
     $sw.Start()
@@ -456,9 +476,15 @@ $wSuites = @(
 $w2Suites = @(
     'Tools\devloop\test-write-status-face-bare.ps1',
     'logs\devloop-r247-facewriter-test.ps1',
-    'Tools\devloop\test-status-face-screen.ps1',
-    # r840: a missing optional reading must not kill the build; this suite owns
-    # that contract and drives the builder the face half already guards.
+    'Tools\devloop\test-status-face-screen.ps1'
+)
+# r843 (main#145): the two suites that spawn the real builder measured 10.3 s
+# and 9.3 s; carried by the face half together with the three face suites the
+# family measured 38.4 s against a 45 s cap (85%, base 33.5 s) - past the 30 s
+# 2/3 line every tick. They now own a fourth write half. A family was added;
+# no cap was raised (r779/r812/r832 same ruling).
+$w6Suites = @(
+    'Tools\devloop\test-city-panel-proof.ps1',
     'Tools\devloop\test-city-panel-null-reading.ps1'
 )
 # main#133: the six-suite face half measured 27.7 / 28.1 s with a 36.5 s spike
@@ -479,16 +505,20 @@ $w3Suites = @(
     'Tools\devloop\test-panel-url.ps1'
 )
 $w3Defs = @(Get-PsSuitesTickDefaults -Family write3)
-$leak1 = @($wDefs | Where-Object { $w2Suites -contains $_ -or $w3Suites -contains $_ })
+$w6Defs = @(Get-PsSuitesTickDefaults -Family write6)
+$leak1 = @($wDefs | Where-Object { $w2Suites -contains $_ -or $w3Suites -contains $_ -or $w6Suites -contains $_ })
 Check 'r4b the state half carries none of the face or tooling suites' ($leak1.Count -eq 0) ($leak1 -join ',')
-$leak2 = @($w2Defs | Where-Object { $wSuites -contains $_ -or $w3Suites -contains $_ })
+$leak2 = @($w2Defs | Where-Object { $wSuites -contains $_ -or $w3Suites -contains $_ -or $w6Suites -contains $_ })
 Check 'r4c the face half carries none of the state or tooling suites' ($leak2.Count -eq 0) ($leak2 -join ',')
-$leak3 = @($w3Defs | Where-Object { $wSuites -contains $_ -or $w2Suites -contains $_ })
+$leak3 = @($w3Defs | Where-Object { $wSuites -contains $_ -or $w2Suites -contains $_ -or $w6Suites -contains $_ })
 Check 'r4c2 the tooling half carries none of the state or face suites' ($leak3.Count -eq 0) ($leak3 -join ',')
+$leak4 = @($w6Defs | Where-Object { $wSuites -contains $_ -or $w2Suites -contains $_ -or $w3Suites -contains $_ })
+Check 'r4c3 the builder half carries none of the state, face or tooling suites' ($leak4.Count -eq 0) ($leak4 -join ',')
 $missing1 = @($wSuites | Where-Object { -not ($wDefs -contains $_) })
 $missing2 = @($w2Suites | Where-Object { -not ($w2Defs -contains $_) })
 $missing3 = @($w3Suites | Where-Object { -not ($w3Defs -contains $_) })
-Check 'r4d every write suite is guarded by exactly one half' ($missing1.Count -eq 0 -and $missing2.Count -eq 0 -and $missing3.Count -eq 0) (($missing1 -join ',') + ' | ' + ($missing2 -join ',') + ' | ' + ($missing3 -join ','))
+$missing4 = @($w6Suites | Where-Object { -not ($w6Defs -contains $_) })
+Check 'r4d every write suite is guarded by exactly one half' ($missing1.Count -eq 0 -and $missing2.Count -eq 0 -and $missing3.Count -eq 0 -and $missing4.Count -eq 0) (($missing1 -join ',') + ' | ' + ($missing2 -join ',') + ' | ' + ($missing3 -join ',') + ' | ' + ($missing4 -join ','))
 Check 'r4e the face half keeps its own ticket file' ((Get-PsSuitesFamilyTicketName -Family write2) -eq 'logs\.ps-suites-write2-last.json') (Get-PsSuitesFamilyTicketName -Family write2)
 Check 'r4f the face cap stays at the same 45 s as the state half' ((Get-PsSuitesFamilyTimeout -Family write2) -eq 45) ([string](Get-PsSuitesFamilyTimeout -Family write2))
 $overlap2 = @($w2Defs | Where-Object { $vDefs -contains $_ })
@@ -497,6 +527,8 @@ Check 'r4h the tooling half keeps its own ticket file' ((Get-PsSuitesFamilyTicke
 Check 'r4i the tooling cap is the same 45 s - a family was added, no cap raised' ((Get-PsSuitesFamilyTimeout -Family write3) -eq 45) ([string](Get-PsSuitesFamilyTimeout -Family write3))
 $overlap3 = @($w3Defs | Where-Object { $vDefs -contains $_ })
 Check 'r4j the tooling half overlaps verify only on the runner and the fixture tree' ($overlap3.Count -eq 2 -and ($overlap3 -contains 'Tools\devloop\run-ps-suites.ps1') -and ($overlap3 -contains 'Tools\devloop\fixtures\*\*')) (($overlap3 -join ','))
+Check 'r4l the builder half keeps its own ticket file' ((Get-PsSuitesFamilyTicketName -Family write6) -eq 'logs\.ps-suites-write6-last.json') (Get-PsSuitesFamilyTicketName -Family write6)
+Check 'r4m the builder cap is the same 45 s - a family was added, no cap raised' ((Get-PsSuitesFamilyTimeout -Family write6) -eq 45) ([string](Get-PsSuitesFamilyTimeout -Family write6))
 # A suite must be asked for by name by the family that guards it: the runner's
 # own default list has no idea which half asked, so a silent fallback would make
 # one family pay for another's suites (main#117 z30/z31 same rule).
@@ -883,11 +915,15 @@ Check 'z30 the state half asks for exactly its five suites' ($zW -match '-Suites
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write2 -TicketPath (Join-Path $sandbox 'z-w2.json') -RunnerPath $runnerArgs -Force
 $zW2 = ''
 try { $zW2 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW2 = '' }
-Check 'z31 the face half asks for its five face suites only' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 5 -and $zW2 -match 'test-write-status-face-bare\.ps1' -and $zW2 -match 'test-status-face-screen\.ps1' -and $zW2 -match 'test-city-panel-proof\.ps1' -and $zW2 -match 'test-city-panel-null-reading\.ps1' -and $zW2 -notmatch 'test-qa-rotation\.ps1' -and $zW2 -notmatch 'test-simple-param-census\.ps1' -and $zW2 -notmatch 'test-runbook-sync\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
-# r825: the proof-row sandbox guards the builder's proof block; if its suite is
-# dropped from the command line while its sources stay guarded, the family keeps
-# a green badge over an unwatched file (r758 "split and nothing changed").
-Check 'z31c the proof-row sandbox is both guarded and run by the face half' ($tickTextNow -match 'test-city-panel-proof\.ps1' -and $tickTextNow -match 'city-panel-template\.html') 'write2 guarded+run'
+Check 'z31 the face half asks for its three face suites only' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 3 -and $zW2 -match 'test-write-status-face-bare\.ps1' -and $zW2 -match 'test-status-face-screen\.ps1' -and $zW2 -notmatch 'test-city-panel-proof\.ps1' -and $zW2 -notmatch 'test-city-panel-null-reading\.ps1' -and $zW2 -notmatch 'test-qa-rotation\.ps1' -and $zW2 -notmatch 'test-simple-param-census\.ps1' -and $zW2 -notmatch 'test-runbook-sync\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
+# r825/r843: a sandbox whose sources are guarded but whose suite is dropped from
+# the spawn list keeps a green badge over an unwatched file (r758). Both builder
+# suites must be guarded AND run by the same half - now write6.
+Check 'z31c the builder sandboxes are both guarded and run by the builder half' ($tickTextNow -match "Family -eq 'write6'" -and $tickTextNow -match 'test-city-panel-proof\.ps1,Tools\\devloop\\test-city-panel-null-reading\.ps1' -and $tickTextNow -match 'city-panel-template\.html') 'write6 guarded+run'
+$null = Invoke-PsSuitesTick -RepoDir $repo -Family write6 -TicketPath (Join-Path $sandbox 'z-w6.json') -RunnerPath $runnerArgs -Force
+$zW6 = ''
+try { $zW6 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW6 = '' }
+Check 'z31d the builder half asks for its two builder suites only' ($zW6 -match '-Suites' -and @(($zW6 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 2 -and $zW6 -match 'test-city-panel-proof\.ps1' -and $zW6 -match 'test-city-panel-null-reading\.ps1' -and $zW6 -notmatch 'test-write-status-face-bare\.ps1' -and $zW6 -notmatch 'test-qa-rotation\.ps1') $zW6
 # main#133: the third half must name its own three, or the runner's default list
 # would make it pay for the face suites (z30/z31 same rule for the other halves).
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write3 -TicketPath (Join-Path $sandbox 'z-w3.json') -RunnerPath $runnerArgs -Force

@@ -150,7 +150,7 @@ function Get-SuiteRegistryReading
     # ones that no spawn list asks for. This is exactly the r828 shape.
     $guardedOnly = @()
     if ($isLiveRegistry) {
-        foreach ($fam in @('write', 'write2', 'write3', 'verify2')) {
+        foreach ($fam in @('write', 'write2', 'write3', 'write4', 'write5', 'write6', 'verify2')) {
             try { $defs = @(Get-PsSuitesTickDefaults -Family $fam) } catch { $defs = @() }
             foreach ($p in $defs) {
                 $leaf = $p

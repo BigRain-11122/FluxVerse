@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-05T01:35:11Z",
-    "current_activity":  "r844 收口：CEO 页面上那句「城市变慢 33%」第一次说清是谁慢的——`./Tools/devloop/build-city-panel.ps1` 在两份浸泡收据各自时刻解析「当时在位的 City3D 运行时提交」（排除 `City3D/Assets/Editor` 与 `City3D/ProjectSettings`，二者都不是浸泡所测的东西），并把整帧两半的单帧耗时一起带上：现场两份收据（10-26 基线 vs 10-28 复测）竟落在同一棵运行时树上（a7383446），而 logic（纯 CPU）与 render 同幅变慢 1.56× / 1.49× —— 全帧一起慢，不是场景变重。",
-    "artifact":  "实物＝`./world-public/city-panel.html` 城市证据卡的浸泡行现读「两份收据之间城市运行时树零变更（a7383446），logic 与 render 同幅变慢（1.56× / 1.49×）——指向同机负载，不是场景加重」；机器面 `PANEL OK` 新增 `proof_soak_code_same=true proof_soak_code=a7383446 proof_soak_ratio=1.56/1.49`；新沙盒 `./logs/devloop-r844-panel-soakcode-test.js` 22/22（三态：同树/换树/未知，未知与健康行逐字保持 r843 原样）；`./Tools/devloop/test-city-panel-proof.ps1` 34→39/39（git 答不出时不许说「未变」）。",
-    "artifact_utc":  "2026-11-05T01:35:11Z",
-    "milestone":  "48 小时内：①等兄弟窗腾出编辑器后重烧一份浸泡收据（`./Tools/devloop/r2-soak.ps1`），届时页面会自动判定「换树」还是「同机负载」；②`./state/queue/main.md` #52 仍候 0 个 Tuanjie 进程窗（实读编辑器进程占位）；③`./state/queue/tech.md` #18 深潜 due 2026-11-19；④新债＝write2 族实测 35.9 s（基线上次已 33.5 s）越过 45 s 帽的 2/3 线，须照 r812 拆族。",
-    "milestone_eta_utc":  "2026-11-07T01:30:00Z"
+    "updated_utc":  "2026-11-05T01:52:58Z",
+    "current_activity":  "r845 收口：把每 tick 都在响、却没人能处置的那句「拆族或隔轮跑」真的拆掉——逐套计时后发现 `ps-suites-write2` 五套里只有两件重（10.3 s / 9.3 s，且都是真去驱动 builder 跑三遍），另三件只证写出来的脸面（4.4 / 4.7 / 3.6 s）；于是照 r812 先例新增第四写族 `./Tools/devloop/ps-suites-tick.ps1` 的 write6 收这两件，45 s 族帽一字未抬。",
+    "artifact":  "实物＝`./Tools/perceptor/verify.ps1` 的族行现在读 `ps-suites-write2: suites=3 … ran=11277ms`（帽的 25%，改前 38.4 s = 85%）与 `ps-suites-write6: suites=2 … ran=17007ms`（38%），两行全 HEALTH、`over 2/3` 字样零出现；门中门 `./Tools/devloop/test-verify-ps-suites.ps1` 225→229/229、登记表普查 `./Tools/devloop/suite-registry-census.ps1` 17/17（`guarded_only=0` 且把五个写族全数纳入）、写侧 `./Tools/devloop/run-ps-suites.ps1` 9 套 467 断言 parity=ok。",
+    "artifact_utc":  "2026-11-05T00:00:00Z",
+    "milestone":  "48 小时内：①下一轮先看新的七族行在真实 tick 里稳定（`./logs/tick-20261105.log` 内应只出现 HEALTH 级族行）；②`./state/queue/main.md` #52 空载浸泡仍候 0 个 Tuanjie 进程窗；③`./state/queue/main.md` #121 候委员会 due 2026-11-16；④`./state/queue/tech.md` #18 深潜 due 2026-11-19。",
+    "milestone_eta_utc":  "2026-11-07T02:00:00Z"
 }

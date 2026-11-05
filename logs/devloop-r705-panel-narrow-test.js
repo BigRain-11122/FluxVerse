@@ -129,6 +129,8 @@ const FIXTURE = {
     roster_n: 4, speakers_n: 5, silent_n: 0,
     last_say_utc: nowIso(0.1), last_say_age_h: 0.1
   },
+  // r841 (queue main#143): why a reading is absent (five states, never two).
+  RESIDENTS_READ: 'ok',
   // r835: the reality-anchor card also names the residents; calm = two rows,
   // both with a last word inside the day.
   ROSTER: {

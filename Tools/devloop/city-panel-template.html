@@ -475,6 +475,13 @@ const DUTY = __DUTY_JSON__;
 // published readings, and the card says "unknown" - never "0 speakers".
 // Three model states on purpose: installed / not installed / unknown.
 const RESIDENTS = __RESIDENTS_JSON__;
+// r841 (queue main#143): WHY there is no reading. Five states, never two:
+// missing (no state file) / unreadable (file there, could not parse) / no-key
+// (parsed, probe has not published yet) / empty (key present, carries nothing)
+// / ok. A build that could not read the state file must not tell the reader
+// "the probe has not published" - that sentence claims something about the
+// probe that this page never observed.
+const RESIDENTS_READ = __RESIDENTS_READ_JSON__;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -487,8 +494,16 @@ function residentsAgeText(h) {
   if (n < 1) return Math.round(n * 60) + ' 分钟前';
   return (Math.round(n * 10) / 10) + ' 小时前';
 }
-function residentsText(m) {
-  if (!m) return '未记录（探针尚未发布读数）';
+function residentsText(m, read) {
+  if (!m) {
+    // r841: name the actual reason. Only the "parsed but unpublished" state may
+    // claim anything about the probe; a read that failed says so and says that
+    // it is not the same as "there is nothing".
+    if (read === 'unreadable') return '未记录（本轮读不到世界态，不等于没有读数）';
+    if (read === 'missing') return '未记录（世界态文件不在盘，不等于没有读数）';
+    if (read === 'empty') return '未记录（世界态里该读数存在但为空，不等于没有读数）';
+    return '未记录（探针尚未发布读数）';
+  }
   const model = m.model || '未知模型';
   let pres = '模型表读不到';
   if (m.model_known === true) pres = m.model_present ? '模型在盘' : '模型不在盘';
@@ -1486,7 +1501,7 @@ function artTitle(it){
   $('r-season').textContent = rp.season || '—';
   // r828 (main#138): three states for the model (installed / not / unknown),
   // and "never spoke" is distinct from "spoke 0 minutes ago".
-  $('r-residents').textContent = residentsText(RESIDENTS);
+  $('r-residents').textContent = residentsText(RESIDENTS, RESIDENTS_READ);
   // r835: the names behind that count.
   renderRoster();
 

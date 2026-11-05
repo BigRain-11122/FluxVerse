@@ -73,6 +73,12 @@ Write-TextFile $stateB @'
 # C: a snapshot path that does not exist (fail-loud control).
 $missingSnap = Join-Path $sandbox 'no-such-snapshot.json'
 
+# D: a TORN world state - the shape a reader lands on when the file is being
+# rewritten or promoted. Valid prefix, cut mid-token. This is the 03:21:01
+# shape as far as anyone can still reproduce it.
+$stateTorn = Join-Path $sandbox 'state-torn.json'
+Write-TextFile $stateTorn '{"ts_utc":"2026-01-01T00:00:00Z","git":{"commits_tot"'
+
 function Invoke-Build([string]$outName, [string]$statePath, [string]$snapPath) {
     $outHtml = Join-Path $sandbox ($outName + '.html')
     $hist = Join-Path $sandbox ($outName + '.jsonl')
@@ -93,6 +99,8 @@ function Invoke-Build([string]$outName, [string]$statePath, [string]$snapPath) {
 $A = Invoke-Build 'panelA' $stateA ''
 $B = Invoke-Build 'panelB' $stateB ''
 $C = Invoke-Build 'panelC' $stateA $missingSnap
+$D = Invoke-Build 'panelD' $stateTorn ''
+$E = Invoke-Build 'panelE' (Join-Path $sandbox 'no-such-state.json') ''
 
 $pass = 0
 $fail = 0
@@ -124,10 +132,32 @@ Check 'C: missing snapshot still fails' ($C.code -ne 0)
 Check 'C: failure names the input' (($C.log -match 'FAIL: .*missing') -and $C.log.Contains('no-such-snapshot.json'))
 Check 'C: target left untouched on failure' (-not (Test-Path -LiteralPath $C.out))
 
+# --- D/E: "could not read" must not be told as "the probe never published" ---
+# (r841 / queue main#143) The page used to print the same sentence for both.
+Check 'D: torn state still builds' ($D.code -eq 0)
+Check 'D: machine face names the unreadable read' ($D.log -match 'PANEL RESIDENTS: .* read=unreadable')
+Check 'D: page ships RESIDENTS_READ = unreadable' ($D.html -match 'const RESIDENTS_READ = "unreadable";')
+Check 'D: page says this round could not read, not "never published"' ($D.html.Contains('RESIDENTS_READ') -and $D.html.Contains('unreadable'))
+Check 'D: unreadable page does not ship the same state as a published one' ($D.html -notmatch 'const RESIDENTS_READ = "ok";')
+Check 'D: reading still ships as null' ($D.html -match 'const RESIDENTS = null;')
+Check 'E: absent state file still builds' ($E.code -eq 0)
+Check 'E: machine face names the missing read' ($E.log -match 'PANEL RESIDENTS: .* read=missing')
+Check 'E: page ships RESIDENTS_READ = missing' ($E.html -match 'const RESIDENTS_READ = "missing";')
+Check 'E: the two absent shapes are not collapsed into one' (($D.html -notmatch 'const RESIDENTS_READ = "missing";') -and ($E.html -notmatch 'const RESIDENTS_READ = "unreadable";'))
+Check 'A: parsed-but-unpublished names its own reason' ($A.log -match 'PANEL RESIDENTS: .* read=no-key')
+Check 'B: a real reading reports read=ok' ($B.log -match 'PANEL RESIDENTS: .* read=ok')
+
 # --- source contract ------------------------------------------------------
 $src = [IO.File]::ReadAllText($builder, [Text.Encoding]::UTF8)
 Check 'source: null is returned before ConvertTo-Json' ($src -match "if \(\`$null -eq \`$Obj\) \{ return 'null' \}")
 Check 'source: ConvertTo-Json guard still fails loud' ($src -match 're-serialize returned empty')
+# r841: the empty-serialization branch must exist AND only optional labels may
+# take the null exit - a required label silently shipping null would turn a real
+# defect into a blank cell.
+Check 'source: Optional switch exists on To-JsLiteral' ($src -match 'param\(\$Obj, \[string\]\$Label, \[switch\]\$Optional\)')
+Check 'source: empty serialization exits null only when Optional' ($src -match 'if \(\$Optional\) \{ return ''null'' \}')
+Check 'source: resident reading is declared optional' ($src -match "To-JsLiteral -Obj \`$residentsMeta -Label 'residents_meta' -Optional")
+Check 'source: snapshot reading is NOT optional' ($src -notmatch "To-JsLiteral -Obj \`$snap -Label 'snapshot' -Optional")
 # Scope the ASCII check to the function this round touched: the builder carries
 # older CJK in comments elsewhere (49 bytes), so a whole-file check would be a
 # false alarm rather than a contract.

@@ -210,7 +210,7 @@ foreach ($k in @('current_activity','artifact','milestone')) {
 # --- inline JSON (compact). Guard against a literal </script> breakout. ---
 function To-JsLiteral
 {
-    param($Obj, [string]$Label)
+    param($Obj, [string]$Label, [switch]$Optional)
     # A null reading is a VALUE, not a failure. Two call sites initialize to
     # $null on purpose (residents_meta, roster) and every consumer is already
     # written for it: the template prints "not recorded", the builder's machine
@@ -226,7 +226,17 @@ function To-JsLiteral
     if ($null -eq $Obj) { return 'null' }
     $json = $null
     try { $json = ConvertTo-Json $Obj -Depth 20 -Compress } catch { Fail ($Label + ' re-serialize failed: ' + $_.Exception.Message) }
-    if ([string]::IsNullOrWhiteSpace($json)) { Fail ($Label + ' re-serialize returned empty') }
+    if ([string]::IsNullOrWhiteSpace($json)) {
+        # r841 (queue main#143): $null was only one of the shapes that serialize
+        # to nothing. An empty pipeline result ([AutomationNull]) does too, and
+        # so may any future no-output value - measured: ConvertTo-Json of
+        # [System.Management.Automation.Internal.AutomationNull]::Value is 0
+        # bytes / white space, same as $null. For an OPTIONAL reading an empty
+        # serialization still means "no reading", so ship JSON null instead of
+        # stopping the whole page. Required labels keep failing loud.
+        if ($Optional) { return 'null' }
+        Fail ($Label + ' re-serialize returned empty')
+    }
     return ([string]$json).Replace('</', '<\/')
 }
 
@@ -1720,13 +1730,33 @@ $qdueJs = To-JsLiteral -Obj $qdue -Label 'qdue'
 # Absent readings ship as null so the page says "unknown", never "0 speakers".
 $residentsMeta = $null
 $wsState = $null
+# r841 (queue main#143): "no reading" has five different reasons and the page
+# used to print one sentence for all of them. Measured 2026-11-05 03:21:01 (a
+# backoff round): the build failed on an empty resident reading and the tick log
+# was the only place that said so - the page kept last round's copy. Who dropped
+# the reading was never established (the state file has been rewritten many
+# times since), but the shape is structural: scan writes world-state.json.new
+# with a plain WriteAllText (truncate, then write) and verify promotes it, so a
+# reader can land on a half-written or mid-promote file. What this round fixes
+# is the part that is provable: the page must SAY which of the five it hit.
+#   missing     - no state file on disk this round
+#   unreadable  - the file is there but could not be parsed (torn / locked)
+#   no-key      - parsed, the probe has not published the key yet
+#   empty       - the key is there but carries nothing
+#   ok          - a reading arrived
+$resRead = 'missing'
 try {
     if (Test-Path -LiteralPath $StatePath) {
         $wsState = ConvertFrom-Json ([IO.File]::ReadAllText($StatePath, [Text.Encoding]::UTF8))
-        if ($null -ne $wsState -and $null -ne $wsState.PSObject.Properties['residents_meta']) { $residentsMeta = $wsState.residents_meta }
+        $resRead = 'no-key'
+        if ($null -ne $wsState -and $null -ne $wsState.PSObject.Properties['residents_meta']) {
+            $residentsMeta = $wsState.residents_meta
+            if ($null -eq $residentsMeta) { $resRead = 'empty' } else { $resRead = 'ok' }
+        }
     }
-} catch { $residentsMeta = $null }
-$residentsJs = To-JsLiteral -Obj $residentsMeta -Label 'residents_meta'
+} catch { $residentsMeta = $null; $resRead = 'unreadable' }
+$residentsJs = To-JsLiteral -Obj $residentsMeta -Label 'residents_meta' -Optional
+$residentsReadJs = To-JsLiteral -Obj ([string]$resRead) -Label 'residents-read'
 
 # r835: the roster behind that count. Cards give the names, the internal state
 # gives each resident's last word time and routine place. Absent cards dir or
@@ -1736,7 +1766,7 @@ $roster = $null
 try {
     $roster = Get-ResidentRoster -CardsDir (Join-Path $repoDir 'docs\residents') -State $wsState -NowUtc ([DateTimeOffset]::UtcNow)
 } catch { $roster = $null }
-$rosterJs = To-JsLiteral -Obj $roster -Label 'roster'
+$rosterJs = To-JsLiteral -Obj $roster -Label 'roster' -Optional
 
 $proof = Resolve-CityProof -Root $ProofRoot
 $proofJs = To-JsLiteral -Obj $proof -Label 'proof'
@@ -1772,7 +1802,7 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__DUTY_JSON__','__ARCH_JSON__','__QACITE_JSON__','__QUEUE_JSON__','__ART_JSON__','__RESIDENTS_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__DUTY_JSON__','__ARCH_JSON__','__QACITE_JSON__','__QUEUE_JSON__','__ART_JSON__','__RESIDENTS_JSON__','__RESIDENTS_READ_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
@@ -1802,9 +1832,10 @@ $phMap = @{
     '__QUEUE_JSON__'    = $qdueJs
     '__ART_JSON__'      = $artJs
     '__RESIDENTS_JSON__' = $residentsJs
+    '__RESIDENTS_READ_JSON__' = $residentsReadJs
     '__ROSTER_JSON__'   = $rosterJs
 }
-$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|DUTY|ARCH|QACITE|SPARAM|QUEUE|ART|RESIDENTS|ROSTER)_JSON__')
+$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|DUTY|ARCH|QACITE|SPARAM|QUEUE|ART|RESIDENTS_READ|RESIDENTS|ROSTER)_JSON__')
 $evaluator = [System.Text.RegularExpressions.MatchEvaluator]{
     param($m)
     if (-not $phMap.ContainsKey($m.Value)) { return $m.Value }
@@ -1869,7 +1900,7 @@ $soakRead = Get-ProofSoakReading -Soak $proof.soak
 # r828: machine face for the resident-voice readings (the page shows the human
 # form). `present` is 1/0/unknown - an unreadable roster is never "0".
 if ($null -eq $residentsMeta) {
-    Write-Output 'PANEL RESIDENTS: model=none present=unknown say=unknown (no readings in world state)'
+    Write-Output ('PANEL RESIDENTS: model=none present=unknown say=unknown (no readings in world state) read=' + $resRead)
 } else {
     $resPres = 'unknown'
     $resKnown = $true
@@ -1909,7 +1940,7 @@ if ($null -eq $residentsMeta) {
         try { $bfGap = [int]$residentsMeta.backfill_gap_n } catch { $bfGap = -1 }
         if ($bfScanned -eq 1 -and $bfGap -gt 0) { $resBack = $resBack + ' backfill_gap=' + $bfGap }
     }
-    Write-Output ('PANEL RESIDENTS: model=' + [string]$residentsMeta.model + ' present=' + $resPres + ' residents=' + $resRes + ' say=' + $resSay + ' never=' + $resNever + ' stale=' + $resStale + ' models=' + $resMod + $resBack)
+    Write-Output ('PANEL RESIDENTS: model=' + [string]$residentsMeta.model + ' present=' + $resPres + ' residents=' + $resRes + ' say=' + $resSay + ' never=' + $resNever + ' stale=' + $resStale + ' models=' + $resMod + $resBack + ' read=' + $resRead)
 }
 
 # r835: machine face for the roster. `n` counts cards on disk, `talked` counts

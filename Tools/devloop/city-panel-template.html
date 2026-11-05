@@ -272,6 +272,19 @@ function tickSkipText(tk) {
   if (t.rounds_seen <= 0 || t.skip_rounds <= 0) return '';
   return '今日退避 ' + t.skip_rounds + '/' + t.rounds_seen + ' 轮';
 }
+// Why the last round bailed (r846). Since r813 the row says the round skipped
+// scan/gate, but never why - and a skipped round is what the reader sees most of
+// the day while the dev session is editing files. builder now carries the reason
+// part of that round's own `backoff:` line (last_reason); print it only when it
+// is a non-empty string. An older build, or a line with no reason after the
+// colon, keeps the exact old sentence - a dangling "：" would be worse than the
+// silence it replaced.
+function tickBackoffText(tk, fallback) {
+  const t = tk || {};
+  const why = (typeof t.last_reason === 'string') ? t.last_reason.trim() : '';
+  if (!why) return '上轮跳过 scan/gate' + (fallback || '');
+  return '上轮跳过 scan/gate（' + why + '）';
+}
 // Today's gate account (r823): r813 named the last round's disposition but folded
 // `gate: PASS` and `gate: FAIL` into the single token `gate`, so a round whose
 // verify failed read exactly like a healthy one - "the loop is running fine" and
@@ -841,8 +854,10 @@ function artTitle(it){
       const b = document.createElement('span');
       b.className = 'tag warn';
       b.style.marginLeft = '6px';
-      b.textContent = '上轮跳过 scan/gate';
-      b.title = '上一轮 tick 轮首退避（perceptor/schema 有在飞改动）：scan 与 verify 未跑，本行年龄只说明日志仍在写';
+      b.textContent = tickBackoffText(tk);
+      b.title = '上一轮 tick 轮首退避' +
+        ((typeof tk.last_reason === 'string' && tk.last_reason.trim()) ? '（日志原文：' + tk.last_reason.trim() + '）' : '') +
+        '：scan 与 verify 未跑，本行年龄只说明日志仍在写';
       $('f-tick').appendChild(b);
     } else if (tk.last_kind === 'running') {
       const r2 = document.createElement('span');
@@ -1867,7 +1882,10 @@ function artTitle(it){
   // 覆盖龄答不了「门跑没跑」：退避轮同样新鲜（r813）。把最后一轮的处置写进
   // 判词，但不改 ok 判据——日志仍在写是真的，门没跑也是真的，两件事分开说。
   if (tk.exists && tk.read_ok) {
-    if (tk.last_kind === 'backoff') tVd = tVd + ' · 上轮跳过 scan/gate（轮首退避）';
+    // 退避原因（r846）：只说「跳过」不说「为什么」，在开发会话改文件的那些
+    // 时段会读起来像故障。builder 把该轮 `backoff:` 行的原因部分带进
+    // last_reason；没有原因（旧构建／空原因）时逐字退回原句，绝不印一个空括注。
+    if (tk.last_kind === 'backoff') tVd = tVd + ' · ' + tickBackoffText(tk, '（轮首退避）');
     else if (tk.last_kind === 'running') tVd = tVd + ' · 上轮尚无门结论';
     // 当日总量（queue main#134）：只报最后一轮会把连续退避读成孤立事件。
     const skT = tickSkipText(tk);

@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-05T00:27:04Z",
-    "current_activity":  "r841 收口（FASTPATH·七查全静·队列取活 `./state/queue/main.md` #143）。治的是「页面替读不到的世界态作保」：今日 `./logs/tick-20261105.log` 03:21:01 那轮整页 `build exit=1`，r840 只让它不再冻页、没说清是谁弄丢了读数。本轮先证两件事——PS5.1 里 `$null` 与空管道结果都序列化成 0 字节（r840 只堵了前者），且 `./Tools/perceptor/scan.ps1` 直写 `./world/world-state.json.new` 是「截断后写」，读侧无重试，读到半个文件在结构上可能。改法＝`./Tools/devloop/build-city-panel.ps1` 的可选读数在空序列化时交 JSON null、必填仍 fail-loud，并把世界态读取分成 missing／unreadable／no-key／empty／ok 五态印进机器行 `read=`。",
-    "artifact":  "实物＝`./Tools/devloop/build-city-panel.ps1`（`To-JsLiteral -Optional`＋五态读取＋`PANEL RESIDENTS: … read=` 机器键）＋`./Tools/devloop/city-panel-template.html`（`RESIDENTS_READ` 注入与 `residentsText(m, read)` 按态改口：只有真解析成功才说「探针尚未发布读数」）＋`./Tools/devloop/test-city-panel-null-reading.ps1`（36/36，含撕裂夹具与无文件两态互不冒充）＋`./world-public/city-panel.html`（重建产物，活跑 `read=ok`）。验证＝面板 42 套 failing=0、`COMPILE OK bytes=272286`、390 窄屏 `pnghead=390x7574 offenders=0`、写侧闸 `suites=9 assertions=447 parity=ok`。",
-    "artifact_utc":  "2026-11-05T00:27:04Z",
-    "milestone":  "48 小时内：`./state/queue/main.md` #144 把世界里那条写侧窗口关掉（`./world/world-state.json.new` 改唯一旁路件再搬，due 2026-11-29，判据＝写入途中读取必得完整旧件或完整新件）；`./state/queue/main.md` #52 空载复跑仍候 0 个 Tuanjie 进程窗（判据 fps_avg≥486.8 且 p95≤2.58ms）；`./state/queue/main.md` #121 候委员会（due 2026-11-16）；`./state/queue/tech.md` #18／#19 深潜窗（due 2026-11-19）。",
+    "updated_utc":  "2026-11-05T00:56:48Z",
+    "current_activity":  "r842 收口（FASTPATH·七查全静·队列取活 `./state/queue/main.md` #144）。治的是上上轮留下的结构窗口：`./Tools/perceptor/scan.ps1` 此前用 `WriteAllText` 直写 `./world/world-state.json.new`（截断后写、读侧无重试），任何在窗口里读它的进程都可能拿到半个文件。改法＝把两相交接的写侧也收进 `./Tools/devloop/state-promote.ps1`：先写同目录唯一旁路件再 `Move-Item` 盖上目的地，读者只可能看到完整旧件或完整新件；空体在碰盘之前就被拒，写或搬失败一律 loud 退出并保留旧候选。",
+    "artifact":  "实物＝`./Tools/devloop/state-promote.ps1`（新增 `Write-StateCandidate`／`Remove-StateSideFile`，三种失败态各自专名）＋`./Tools/perceptor/scan.ps1`（dot-source 该模块，非 written 即印那条 FAIL 行并 exit 1）＋`./Tools/devloop/test-state-promote.ps1`（43→65/65，含写者中途死的旧候选留存、负控撕裂、独占锁让 rename 必败、空体不碰盘）＋`./world-public/city-panel.html`（重建产物）。验证＝verify 侧十一套 `assertions=757 failing=0`、写侧族 `suites=9 assertions=447 parity=ok`、活链路 `./Tools/perceptor/scan.ps1`→`./Tools/perceptor/verify.ps1` `VERIFY PASS`、`./world/world-state.json` 解析成功 20 键、`./world/` 零旁路件残留。",
+    "artifact_utc":  "2026-11-05T00:56:48Z",
+    "milestone":  "48 小时内：`./state/queue/main.md` #144 已由本轮关闭，队列 open 面转为观察位与物理阻塞——`./state/queue/main.md` #52 空载复跑仍候 0 个 Tuanjie 进程窗（判据 fps_avg≥486.8 且 p95≤2.58ms）；`./state/queue/main.md` #121 候委员会（due 2026-11-16）；`./state/queue/tech.md` #18／#19 深潜窗（due 2026-11-19）；下轮无活即转提案轨出 ≥1 条自驱提案（判据先立，可机械验收）。",
     "milestone_eta_utc":  "2026-11-07T08:30:00Z"
 }

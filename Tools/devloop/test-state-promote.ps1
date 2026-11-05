@@ -216,6 +216,96 @@ Check 'l2 live world-events.jsonl untouched by both gate runs' ($liveBefore['wor
 Check 'm1 gate reads FLUXVERSE_WORLD_DIR' ($gate -match 'FLUXVERSE_WORLD_DIR')
 Check 'm2 gate falls back to the live world dir when unset' ($gate -match "Join-Path \`$repoRoot 'world'")
 
+# ---------- n..r. the WRITE half (queue main#144) ----------
+# Groups n..q drive Write-StateCandidate against temp dirs; group r proves
+# scan.ps1 is actually wired to it. The destination in these groups is named
+# candidate-stage.json on purpose: the promote groups above own the real
+# world-state.json.new residue count (i5), and mixing the two would blur it.
+$modText = [System.IO.File]::ReadAllText($mod, $utf8)
+$oldBody = '{"protocol":"fluxverse/1","gen":"old","zones":[]}'
+$newBody = '{"protocol":"fluxverse/1","gen":"new"}'
+
+# Staging files are <dest>.<pid>. -Filter 'candidate-stage.json.*' also matches
+# the destination itself (DOS wildcards let '*' match an empty tail), so this
+# helper uses a literal-dot -like instead.
+function Get-StagingFile([string]$where) {
+    return @(Get-ChildItem -Path $where -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -like 'candidate-stage.json.*' })
+}
+
+# n. healthy write lands the whole body and leaves no staging file behind.
+$r = New-Root 'n'
+$dest = Join-Path $r 'candidate-stage.json'
+$body = '{"protocol":"fluxverse/1","gen":"new","filler":"' + ('x' * 4096) + '"}'
+$res = Write-StateCandidate -DestPath $dest -Text $body
+Check 'n1 healthy write -> status written' ($res.Status -eq 'written')
+Check 'n2 destination holds the body verbatim' ([System.IO.File]::ReadAllText($dest, $utf8) -eq $body)
+Check 'n3 no staging file left behind' (@(Get-StagingFile $r).Count -eq 0)
+# n4 is the structural half of the fix: the destination is never opened for
+# writing, only renamed onto - so no reader can land inside the byte stream.
+Check 'n4 module never writes the destination in place' (-not ($modText -match 'WriteAllText\(\$DestPath'))
+
+# o. writer dies mid-stream: the OLD candidate survives whole and parseable.
+# The seam writes a prefix to the staging path and then throws, which is exactly
+# the state a killed WriteAllText leaves behind - only now on a path nobody reads.
+$r = New-Root 'o'
+$dest = Join-Path $r 'candidate-stage.json'
+[System.IO.File]::WriteAllText($dest, $oldBody, $utf8)
+$crashMid = {
+    param($path, $text)
+    [System.IO.File]::WriteAllText($path, $text.Substring(0, 20), (New-Object System.Text.UTF8Encoding($false)))
+    throw 'writer died mid-stream'
+}
+$res = Write-StateCandidate -DestPath $dest -Text $newBody -WriteFile $crashMid
+Check 'o1 dying writer -> status write-failed' ($res.Status -eq 'write-failed')
+Check 'o2 old candidate survived verbatim' ([System.IO.File]::ReadAllText($dest, $utf8) -eq $oldBody)
+$parses = $true
+try { $null = ([System.IO.File]::ReadAllText($dest, $utf8) | ConvertFrom-Json) } catch { $parses = $false }
+Check 'o3 old candidate still parses (a reader would not see a tear)' $parses
+Check 'o4 the partial bytes are gone (staging cleaned)' (@(Get-StagingFile $r).Count -eq 0)
+
+# o5. negative control: the OLD in-place shape on the SAME fixture really tears.
+[System.IO.File]::WriteAllText($dest, $newBody.Substring(0, 12), $utf8)
+$torn = $false
+try { $null = ([System.IO.File]::ReadAllText($dest, $utf8) | ConvertFrom-Json) } catch { $torn = $true }
+Check 'o5 negative control: in-place truncate-then-write leaves a torn candidate' $torn
+
+# p. the rename cannot happen (real exclusive lock on the destination).
+$r = New-Root 'p'
+$dest = Join-Path $r 'candidate-stage.json'
+[System.IO.File]::WriteAllText($dest, $oldBody, $utf8)
+$lock = [System.IO.File]::Open($dest, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+try {
+    $res = Write-StateCandidate -DestPath $dest -Text $newBody
+} finally {
+    $lock.Dispose()
+}
+Check 'p1 locked destination -> status move-failed' ($res.Status -eq 'move-failed')
+Check 'p2 locked destination keeps the old candidate verbatim' ([System.IO.File]::ReadAllText($dest, $utf8) -eq $oldBody)
+Check 'p3 move failure cleans its staging file' (@(Get-StagingFile $r).Count -eq 0)
+
+# q. an empty body is refused before any disk touch (r840/r841 disease class).
+$r = New-Root 'q'
+$dest = Join-Path $r 'candidate-stage.json'
+[System.IO.File]::WriteAllText($dest, $oldBody, $utf8)
+$res = Write-StateCandidate -DestPath $dest -Text '   '
+Check 'q1 empty body -> status empty-text' ($res.Status -eq 'empty-text')
+Check 'q2 empty body leaves the old candidate alone' ([System.IO.File]::ReadAllText($dest, $utf8) -eq $oldBody)
+Check 'q3 empty body creates no staging file' (@(Get-StagingFile $r).Count -eq 0)
+$r2 = New-Root 'q2'
+$dest2 = Join-Path $r2 'candidate-stage.json'
+$res = Write-StateCandidate -DestPath $dest2 -Text ''
+Check 'q4 empty body with no destination creates nothing' ($res.Status -eq 'empty-text' -and -not (Test-Path -LiteralPath $dest2))
+
+# r. scan.ps1 is wired to this module and keeps only the write half.
+$scanPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'perceptor\scan.ps1'
+$scan = [System.IO.File]::ReadAllText($scanPath, $utf8)
+Check 'r1 scan dot-sources state-promote.ps1' ($scan -match 'state-promote\.ps1')
+Check 'r2 scan calls Write-StateCandidate' ($scan -match 'Write-StateCandidate')
+Check 'r3 scan no longer writes the candidate in place' (-not ($scan -match 'WriteAllText\(\$newFile'))
+Check 'r4 scan stops loud on a non-written candidate' ($scan -match "Status -ne 'written'")
+Check 'r5 scan fails loud when the module is missing' ($scan -match 'state-promote\.ps1 missing')
+Check 'r6 scan does not promote (that stays verify''s half)' (-not ($scan -match 'Invoke-StatePromotion'))
+
 # ---------- i. shape and hygiene ----------
 $r = New-Root 'i'
 $res = Invoke-StatePromotion -NewPath (Join-Path $r 'nope.new') -StatePath (Join-Path $r 'nope.json')

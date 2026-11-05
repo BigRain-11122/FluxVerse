@@ -56,6 +56,15 @@ if (Test-Path -LiteralPath $groupResolver) {
       $root = Resolve-Path -LiteralPath $rootResolved
     }
 }
+# r842 (queue main#144): the two-phase state handoff lives in ONE module. scan
+# owns the write half (candidate -> world-state.json.new), verify owns promote.
+# Missing module = no candidate can be produced -> loud stop before the lock.
+$stateMod = Join-Path (Join-Path $PSScriptRoot '..\devloop') 'state-promote.ps1'
+if (-not (Test-Path -LiteralPath $stateMod)) {
+    Write-Output 'scan:   FAIL state-promote.ps1 missing - cannot stage the state candidate'
+    exit 1
+}
+. $stateMod
 $worldDir = Join-Path $repoRoot 'world'
 if (-not (Test-Path $worldDir)) { New-Item -ItemType Directory -Path $worldDir | Out-Null }
 $cursorFile = Join-Path $worldDir 'perceptor-state.txt'
@@ -434,8 +443,25 @@ if ($streetBeh.Count -gt 0) { $state['street_behavior'] = $streetBeh }
 # census export is missing or torn (zero consumer impact when idle)
 if ($censusSec.Count -gt 0) { $state['census'] = $censusSec }
 
-# ---------- write outputs (state -> .new, verify promotes on PASS) ----------
-[System.IO.File]::WriteAllText($newFile, ($state | ConvertTo-Json -Depth 6), $utf8)
+# ---------- write outputs (state -> side file -> .new, verify promotes on PASS) ----------
+# r842 (queue main#144): never truncate the candidate in place. The bytes go to a
+# unique side file first and are renamed onto .new, so any reader of .new sees
+# the whole previous candidate or the whole new one, never a prefix. An empty
+# body is refused outright - that is exactly what a torn write looked like.
+$stateText = ($state | ConvertTo-Json -Depth 6)
+$stateWrite = Write-StateCandidate -DestPath $newFile -Text $stateText
+if ($stateWrite.Status -ne 'written') {
+    Write-Output ('scan:   FAIL state candidate not written (' + $stateWrite.Status + ') detail=' + $stateWrite.Detail)
+    Write-Output 'scan:   previous world-state.json.new kept untouched; verify will judge it on its own'
+    # Leave no live lock behind: the process is about to end, and a dead-owner
+    # lock would be taken over anyway, but this keeps the next tick's reading
+    # honest instead of showing a phantom owner.
+    try {
+        $ownPid = [string]([System.IO.File]::ReadAllText($lockFile)).Trim()
+        if ($ownPid -eq ([string]$PID)) { Remove-Item $lockFile -Force -ErrorAction SilentlyContinue }
+    } catch {}
+    exit 1
+}
 # F1: malformed event lines are quarantined too (registered types already gated at the outlet)
 $goodEvents = @()
 foreach ($ev in $events) {

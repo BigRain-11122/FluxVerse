@@ -211,6 +211,19 @@ foreach ($k in @('current_activity','artifact','milestone')) {
 function To-JsLiteral
 {
     param($Obj, [string]$Label)
+    # A null reading is a VALUE, not a failure. Two call sites initialize to
+    # $null on purpose (residents_meta, roster) and every consumer is already
+    # written for it: the template prints "not recorded", the builder's machine
+    # face prints "(no readings in world state)". PS 5.1's ConvertTo-Json emits
+    # NOTHING for $null, so the emptiness guard below turned that documented
+    # state into a whole-panel build failure - measured 2026-11-05 03:21:01:
+    #   panel: FAIL: residents_meta re-serialize returned empty
+    #   panel: build exit=1 (last-good kept, round health unchanged)
+    # i.e. one unreadable/mid-rewrite world-state file froze the CEO page for a
+    # whole round, and the failure was invisible outside the tick log. Ship the
+    # JSON literal `null` instead; required inputs (snapshot, face) are already
+    # rejected earlier by Read-JsonFile, so fail-loud is not weakened.
+    if ($null -eq $Obj) { return 'null' }
     $json = $null
     try { $json = ConvertTo-Json $Obj -Depth 20 -Compress } catch { Fail ($Label + ' re-serialize failed: ' + $_.Exception.Message) }
     if ([string]::IsNullOrWhiteSpace($json)) { Fail ($Label + ' re-serialize returned empty') }

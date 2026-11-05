@@ -456,7 +456,10 @@ $wSuites = @(
 $w2Suites = @(
     'Tools\devloop\test-write-status-face-bare.ps1',
     'logs\devloop-r247-facewriter-test.ps1',
-    'Tools\devloop\test-status-face-screen.ps1'
+    'Tools\devloop\test-status-face-screen.ps1',
+    # r840: a missing optional reading must not kill the build; this suite owns
+    # that contract and drives the builder the face half already guards.
+    'Tools\devloop\test-city-panel-null-reading.ps1'
 )
 # main#133: the six-suite face half measured 27.7 / 28.1 s with a 36.5 s spike
 # against a 45 s cap - on the 2/3 line every tick. The three suites that prove
@@ -880,7 +883,7 @@ Check 'z30 the state half asks for exactly its five suites' ($zW -match '-Suites
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write2 -TicketPath (Join-Path $sandbox 'z-w2.json') -RunnerPath $runnerArgs -Force
 $zW2 = ''
 try { $zW2 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW2 = '' }
-Check 'z31 the face half asks for its four face suites only' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 4 -and $zW2 -match 'test-write-status-face-bare\.ps1' -and $zW2 -match 'test-status-face-screen\.ps1' -and $zW2 -match 'test-city-panel-proof\.ps1' -and $zW2 -notmatch 'test-qa-rotation\.ps1' -and $zW2 -notmatch 'test-simple-param-census\.ps1' -and $zW2 -notmatch 'test-runbook-sync\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
+Check 'z31 the face half asks for its five face suites only' ($zW2 -match '-Suites' -and @(($zW2 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 5 -and $zW2 -match 'test-write-status-face-bare\.ps1' -and $zW2 -match 'test-status-face-screen\.ps1' -and $zW2 -match 'test-city-panel-proof\.ps1' -and $zW2 -match 'test-city-panel-null-reading\.ps1' -and $zW2 -notmatch 'test-qa-rotation\.ps1' -and $zW2 -notmatch 'test-simple-param-census\.ps1' -and $zW2 -notmatch 'test-runbook-sync\.ps1' -and $zW2 -notmatch 'test-fastpath-state-live\.ps1') $zW2
 # r825: the proof-row sandbox guards the builder's proof block; if its suite is
 # dropped from the command line while its sources stay guarded, the family keeps
 # a green badge over an unwatched file (r758 "split and nothing changed").

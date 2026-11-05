@@ -115,6 +115,13 @@ function Get-PsSuitesTickDefaults {
             # Measured 8.4 s alone; this half last ticked 13.2 s, so the pair
             # stays under the 30 s (2/3 of 45 s) line.
             'Tools\devloop\test-city-panel-proof.ps1',
+            # r840: the null-reading sandbox drives the same builder this half
+            # guards. It exists because one backoff round froze the page
+            # ("residents_meta re-serialize returned empty", build exit=1), and
+            # leaving it unregistered would repeat the main#86/main#120 shape:
+            # a regression test nobody runs. Measured 5.0 s alone and 25.1 s for
+            # the whole half (2/3 of the 45 s cap is 30 s) - no cap raised.
+            'Tools\devloop\test-city-panel-null-reading.ps1',
             'Tools\devloop\run-ps-suites.ps1',
             'Tools\devloop\build-city-panel.ps1',
             'Tools\devloop\city-panel-template.html',
@@ -771,7 +778,7 @@ function Invoke-PsSuitesTick {
         # r825: the proof-row sandbox rides this half (its guarded sources are
         # here too) - a family that guards a file but never runs its suite is
         # the r758 "split and nothing changed" trap.
-        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-status-face-screen.ps1,Tools\devloop\test-city-panel-proof.ps1')
+        $ExtraArgs = @('-Suites', 'Tools\devloop\test-write-status-face-bare.ps1,logs\devloop-r247-facewriter-test.ps1,Tools\devloop\test-status-face-screen.ps1,Tools\devloop\test-city-panel-proof.ps1,Tools\devloop\test-city-panel-null-reading.ps1')
     }
     # main#133: the tooling half names its own three suites for the same reason -
     # the runner's default list has no idea which half asked.

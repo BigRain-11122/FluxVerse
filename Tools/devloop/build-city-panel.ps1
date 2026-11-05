@@ -596,6 +596,18 @@ $scanLines = 0
 $rounds = 0
 $roundsSeen = 0
 $skipRounds = 0
+# Today's backoff reasons (queue main#146). r846 lets the page say WHY the LAST
+# round skipped scan/gate; a day with two dozen backoff rounds has several
+# causes and the reader still had to open the tick log to find out which. The
+# reason already sits on every round's own `backoff:` line, so classify them in
+# the same per-round pass (no extra scan, no state file).
+# Classification is all-or-nothing: a backoff round whose line carries no
+# reason turns the whole tally into "unmeasured" (-1) rather than a partial
+# list that claims to be every reason (r818/r838 precedent).
+$backoffReasonCounts = @{}
+$backoffReasonParseOk = $true
+$backoffReasonClasses = -1
+$backoffReasonRows = @()
 $probesAll = 0
 $probeBadAll = 0
 $probeBadRounds = 0
@@ -653,6 +665,35 @@ $scanRounds = 0
 $degNamesAll = @{}
 $degRounds = 0
 $degParseOk = $true
+# Normalise a round's backoff reason once (queue main#146). The last-round
+# reading (r846) and today's per-reason tally must agree on what the reason IS,
+# otherwise the page could name one reason for the last round and classify that
+# same round under a different one. Drop the " - <boilerplate>" tail, collapse
+# whitespace, cap the length; an empty reason stays empty (the caller then
+# either falls back to the old sentence or withholds the tally).
+function Get-BackoffReasonText
+{
+    param([string]$Raw)
+    if ([string]::IsNullOrWhiteSpace($Raw)) { return '' }
+    $t = [string]$Raw
+    $cutAt = $t.IndexOf(' - ')
+    if ($cutAt -ge 0) { $t = $t.Substring(0, $cutAt) }
+    $t = ($t -replace '\s+', ' ').Trim()
+    if ($t.Length -gt 80) { $t = $t.Substring(0, 80).TrimEnd() }
+    return $t
+}
+# A closed vocabulary, not a slug of the prose: the PANEL OK line lives in the
+# tick log the c1 red-scan reads (`(gate|probe).*FAIL`, case-insensitive), and
+# a reason like "write failed" slugged inline would trip that alarm from a
+# healthy round. The page still prints the full text; this token only says
+# which class it was.
+function Get-BackoffReasonSlug
+{
+    param([string]$Reason)
+    if ([string]::IsNullOrWhiteSpace($Reason)) { return '' }
+    if ($Reason -match 'stack dirty') { return 'stack-dirty' }
+    return 'other'
+}
 $readOk = $true
 try {
     if (Test-Path -LiteralPath $TickLogPath) {
@@ -689,22 +730,11 @@ try {
                     # The why (r846): keep the reason part of this round's own
                     # line, drop the boilerplate tail, cap the length. An empty
                     # reason stays empty - the page then falls back to its old
-                    # sentence instead of printing a dangling colon.
-                    $rawReason = [string]$Matches[1]
-                    $cutAt = $rawReason.IndexOf(' - ')
-                    if ($cutAt -ge 0) { $rawReason = $rawReason.Substring(0, $cutAt) }
-                    $rawReason = ($rawReason -replace '\s+', ' ').Trim()
-                    if ($rawReason.Length -gt 80) { $rawReason = $rawReason.Substring(0, 80).TrimEnd() }
-                    $lastReason = $rawReason
-                    # A closed vocabulary, not a slug of the prose: the PANEL OK
-                    # line lives in the tick log the c1 red-scan reads
-                    # (`(gate|probe).*FAIL`, case-insensitive, last 40 lines), and
-                    # a reason like "write failed" slugged inline would trip that
-                    # alarm from a healthy round. The page still prints the full
-                    # text; this token only says which class it was.
-                    if ($rawReason -eq '') { $lastReasonSlug = '' }
-                    elseif ($rawReason -match 'stack dirty') { $lastReasonSlug = 'stack-dirty' }
-                    else { $lastReasonSlug = 'other' }
+                    # sentence instead of printing a dangling colon. Same pure
+                    # function the per-round tally below uses (queue main#146),
+                    # so the last round can never be classified differently.
+                    $lastReason = Get-BackoffReasonText -Raw ([string]$Matches[1])
+                    $lastReasonSlug = Get-BackoffReasonSlug -Reason $lastReason
                     break
                 }
                 # End-anchored: every verify output line is echoed as `gate: <line>`
@@ -738,6 +768,7 @@ try {
             $roundStamp = ''
             if ($tickAllLines[$from] -match '^\[\d{4}-\d{2}-\d{2}\s+(\d{2}:\d{2})') { $roundStamp = $Matches[1] }
             $roundBackoff = $false
+            $roundReason = ''
             $roundGate = ''
             $roundProbes = 0
             $roundBad = 0
@@ -746,7 +777,13 @@ try {
             $roundDeg = -1
             $roundDegWarned = $false
             for ($bj = $from; $bj -le $to; $bj++) {
-                if (-not $roundBackoff -and $tickAllLines[$bj] -match '^\s*backoff:') { $roundBackoff = $true }
+                if (-not $roundBackoff -and $tickAllLines[$bj] -match '^\s*backoff:\s*(.*)$') {
+                    $roundBackoff = $true
+                    # This round's own why (queue main#146). Same normaliser as
+                    # the last-round read above; an empty reason is not "no
+                    # backoff", it is a backoff the log could not explain.
+                    $roundReason = Get-BackoffReasonText -Raw ([string]$Matches[1])
+                }
                 # This round's own gate verdict (r823). Same anchoring rule as the
                 # last-round read above: only the bare `gate: PASS|FAIL` line is a
                 # verdict, never one of the echoed verify lines. First one wins -
@@ -800,7 +837,16 @@ try {
                     if ($roundDeg -gt 0) { $roundDegWarned = $true; $degParseOk = $false }
                 }
             }
-            if ($roundBackoff) { $skipRounds++ }
+            if ($roundBackoff) {
+                $skipRounds++
+                # Today's why-account (queue main#146). A round whose `backoff:`
+                # line carried no reason makes the whole tally unmeasurable: a
+                # partial list would let the page claim "these are the reasons"
+                # while silently dropping one.
+                if ($roundReason -eq '') { $backoffReasonParseOk = $false }
+                elseif ($backoffReasonCounts.ContainsKey($roundReason)) { $backoffReasonCounts[$roundReason] = [int]$backoffReasonCounts[$roundReason] + 1 }
+                else { $backoffReasonCounts[$roundReason] = 1 }
+            }
             # Today's gate account (r823): a backed-off round produces no verdict
             # at all, so it neither counts as green nor as red - it is simply not
             # measured, exactly like the probe account above.
@@ -826,6 +872,25 @@ try {
                     [void]$probeBadStampsAll.Add($roundStamp)
                 }
             }
+        }
+        # Rank today's backoff reasons (queue main#146). Complete or withheld:
+        # a log where any backoff round lacked a reason leaves classes at -1 and
+        # the page prints nothing (an unmeasured set is not "0 reasons"). Rows
+        # are top-3 by count, ties by reason so two rebuilds stay byte-identical;
+        # `classes` still carries the full distinct total for the page's "another N"
+        # tail (the CJK wording lives in the template, not here).
+        if ($skipRounds -gt 0 -and $backoffReasonParseOk) {
+            $backoffReasonClasses = [int]$backoffReasonCounts.Count
+            $reasonRows = New-Object System.Collections.ArrayList
+            foreach ($rk in $backoffReasonCounts.Keys) {
+                [void]$reasonRows.Add((New-Object PSObject -Property ([ordered]@{
+                    reason = [string]$rk
+                    rounds = [int]$backoffReasonCounts[$rk]
+                })))
+            }
+            $sortedReasons = @($reasonRows | Sort-Object -Property @{Expression = { [int]$_.rounds }; Descending = $true }, @{Expression = { [string]$_.reason }; Ascending = $true })
+            if ($sortedReasons.Count -gt 3) { $sortedReasons = @($sortedReasons[0], $sortedReasons[1], $sortedReasons[2]) }
+            $backoffReasonRows = @($sortedReasons)
         }
         # Name the bad rounds themselves (r818). Only when EVERY bad round
         # carries a stamp - a partial list would let the page claim "these are
@@ -911,11 +976,35 @@ $tickMeta = New-Object PSObject -Property ([ordered]@{
     last_kind  = [string]$lastKind
     last_gate  = [string]$lastGate
     last_reason = [string]$lastReason
+    backoff_reason_classes = [int]$backoffReasonClasses
+    backoff_reason_rows = @($backoffReasonRows)
     gate_rounds = [int]$gateRounds
     gate_red_rounds = [int]$gateRedRounds
     read_ok    = [bool]$readOk
 })
 $tickJs = To-JsLiteral -Obj $tickMeta -Label 'tick-meta'
+
+# Closed-vocabulary token for the PANEL OK line (queue main#146). Only slug
+# names and counts - never the reason prose, which would land in the tick log
+# the c1 red-scan reads. `unknown` when the log is unreadable or any backoff
+# round lacked a reason: not measured is not "no backoff".
+$backoffSlugText = 'unknown'
+if ($tickExists -and [bool]$readOk) {
+    if ($skipRounds -le 0) { $backoffSlugText = 'none' }
+    elseif (-not $backoffReasonParseOk) { $backoffSlugText = 'unknown' }
+    else {
+        $slugCounts = @{}
+        foreach ($rk in $backoffReasonCounts.Keys) {
+            $sl = Get-BackoffReasonSlug -Reason ([string]$rk)
+            if ($sl -eq '') { $sl = 'other' }
+            if ($slugCounts.ContainsKey($sl)) { $slugCounts[$sl] = [int]$slugCounts[$sl] + [int]$backoffReasonCounts[$rk] }
+            else { $slugCounts[$sl] = [int]$backoffReasonCounts[$rk] }
+        }
+        $slugParts = @()
+        foreach ($sk in @($slugCounts.Keys | Sort-Object)) { $slugParts += ($sk + ':' + [string]$slugCounts[$sk]) }
+        $backoffSlugText = ($slugParts -join ',')
+    }
+}
 
 # --- city framing card (queue main#42) --------------------------------------
 # The panel is all numbers and prose - the CEO cannot see what the city looks
@@ -2047,5 +2136,5 @@ if ($null -eq $roster) {
     Write-Output ('PANEL ROSTER: n=' + [int]$roster.n + ' talked=' + [int]$roster.talked_n + ' ids=' + ((@($roster.rows) | ForEach-Object { [string]$_.id }) -join ','))
 }
 
-Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' art_bare=' + [int]$artBare.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds + ' last=' + $lastKind + ' last_gate=' + $(if ([string]::IsNullOrEmpty($lastGate)) { 'none' } else { [string]$lastGate }) + ' last_reason=' + $(if ([string]::IsNullOrEmpty($lastReasonSlug)) { 'none' } else { [string]$lastReasonSlug }) + ' gate_red=' + [int]$gateRedRounds + '/' + [int]$gateRounds + ' skip=' + [int]$skipRounds + '/' + [int]$roundsSeen + ' probes=' + [int]$probeTotal + ' probes_bad=' + [int]$probeBad + ' probes_all=' + [int]$probesAll + ' probes_bad_all=' + [int]$probeBadAll + ' probe_bad_rounds=' + [int]$probeBadRounds + ' probe_bad_first=' + $(if ([string]::IsNullOrEmpty($probeBadFirst)) { 'none' } else { [string]$probeBadFirst }) + ' probe_bad_last=' + $(if ([string]::IsNullOrEmpty($probeBadLast)) { 'none' } else { [string]$probeBadLast }) + ' probe_bad_stamps=' + $(if ($probeBadStamps.Count -eq 0) { 'none' } else { ($probeBadStamps -join ',') }) + ' quarantined=' + [int]$quarantined + ' degraded=' + [int]$degraded + ' quarantined_all=' + [int]$quarantinedAll + ' degraded_all=' + [int]$degradedAll + ' degraded_probes=' + [int]$degProbes + ' degraded_rounds=' + [int]$degRounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' shots_sha=' + [int]$(if ($null -ne $script:shotsSha) { $script:shotsSha } else { 0 }) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + [string]$soakRead.token + ' proof_soak_age_h=' + [int]$soakRead.age_h + ' proof_soak_code_same=' + $(if ($null -ne $proof.soak.runtime_same) { [string]([bool]$proof.soak.runtime_same).ToString().ToLowerInvariant() } else { 'none' }) + ' proof_soak_code=' + $(if ([string]$proof.soak.code_at -ne '') { [string]$proof.soak.code_at } else { 'none' }) + ' proof_soak_ratio=' + $(if ($null -ne $proof.soak.logic_ratio -and $null -ne $proof.soak.render_ratio) { [string]$proof.soak.logic_ratio + '/' + [string]$proof.soak.render_ratio } else { 'none' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' duty_receipted=' + [int]$duty.receipted + ' duty_receipts=' + $(if ($duty.receipts_exists) { [string]$duty.receipts_count } else { 'missing' }) + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' qacite=' + $(if ($qacite.exists) { 'ok' } elseif ($qacite.error) { $qacite.error } else { 'missing' }) + ' qacite_stale=' + $(if ($qacite.exists) { [string]$qacite.stale_cited } else { 'missing' }) + ' qacite_cited=' + $(if ($qacite.exists) { [string]$qacite.cited } else { 'missing' }) + ' qacite_age=' + $(if ($qacite.exists) { [string]$qacite.age_hours } else { 'missing' }) + ' qacite_overdue=' + $(if ($qacite.exists) { if ($qacite.overdue) { '1' } else { '0' } } else { 'missing' }) + ' sparam_risky=' + $(if ($sparam.reason -eq 'no-dir') { 'missing' } else { [string]$sparam.risky }) + ' sparam_cached=' + $(if ($sparam.cached) { '1' } else { '0' }) + ' sparam_note=' + $(if ([string]::IsNullOrEmpty($sparam.reason)) { 'none' } else { $sparam.reason }) + ' qdue=' + $(if ($qdue.exists) { [string]$qdue.late } else { 'missing' }) + ' qdue_note=' + $(if ([string]::IsNullOrEmpty($qdue.note)) { 'none' } else { [string]$qdue.note }) + ' qdue_bad=' + $(if ($qdue.exists) { [string]$qdue.bad } else { 'missing' }) + ' qdue_code=' + $(if ($qdue.exists) { [string]$qdue.code } else { 'missing' }) + ' qdue_long=' + $(if ($qdue.exists) { [string]$qdue.long } else { 'missing' }) + ' qdue_longmax=' + $(if ($qdue.exists) { [string]$qdue.long_max } else { 'missing' }) + ' qdue_dupe=' + $(if ($qdue.exists) { [string]$qdue.dupe } else { 'missing' }) + ' qdue_dupe_rows=' + $(if ($qdue.exists) { [string]$qdue.dupe_rows } else { 'missing' }) + ' qdue_split=' + $qdueSplit + ' qdue_next=' + $(if (-not $qdue.exists) { 'missing' } elseif ([string]::IsNullOrEmpty([string]$qdue.next_due)) { 'none' } else { [string]$qdue.next_due + '/' + [string]$qdue.next_days_left + 'd/#' + [string]$qdue.next_id }) + ' qdue_max=' + [int]$qdue.max_days + ' qdue_open=' + [int]$qdue.open + ' qdue_dated=' + [int]$qdue.dated + ' built=' + $built + ' path=' + $OutPath)
+Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' art_bare=' + [int]$artBare.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds + ' last=' + $lastKind + ' last_gate=' + $(if ([string]::IsNullOrEmpty($lastGate)) { 'none' } else { [string]$lastGate }) + ' last_reason=' + $(if ([string]::IsNullOrEmpty($lastReasonSlug)) { 'none' } else { [string]$lastReasonSlug }) + ' backoff_reason=' + [string]$backoffSlugText + ' gate_red=' + [int]$gateRedRounds + '/' + [int]$gateRounds + ' skip=' + [int]$skipRounds + '/' + [int]$roundsSeen + ' probes=' + [int]$probeTotal + ' probes_bad=' + [int]$probeBad + ' probes_all=' + [int]$probesAll + ' probes_bad_all=' + [int]$probeBadAll + ' probe_bad_rounds=' + [int]$probeBadRounds + ' probe_bad_first=' + $(if ([string]::IsNullOrEmpty($probeBadFirst)) { 'none' } else { [string]$probeBadFirst }) + ' probe_bad_last=' + $(if ([string]::IsNullOrEmpty($probeBadLast)) { 'none' } else { [string]$probeBadLast }) + ' probe_bad_stamps=' + $(if ($probeBadStamps.Count -eq 0) { 'none' } else { ($probeBadStamps -join ',') }) + ' quarantined=' + [int]$quarantined + ' degraded=' + [int]$degraded + ' quarantined_all=' + [int]$quarantinedAll + ' degraded_all=' + [int]$degradedAll + ' degraded_probes=' + [int]$degProbes + ' degraded_rounds=' + [int]$degRounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' shots_sha=' + [int]$(if ($null -ne $script:shotsSha) { $script:shotsSha } else { 0 }) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + [string]$soakRead.token + ' proof_soak_age_h=' + [int]$soakRead.age_h + ' proof_soak_code_same=' + $(if ($null -ne $proof.soak.runtime_same) { [string]([bool]$proof.soak.runtime_same).ToString().ToLowerInvariant() } else { 'none' }) + ' proof_soak_code=' + $(if ([string]$proof.soak.code_at -ne '') { [string]$proof.soak.code_at } else { 'none' }) + ' proof_soak_ratio=' + $(if ($null -ne $proof.soak.logic_ratio -and $null -ne $proof.soak.render_ratio) { [string]$proof.soak.logic_ratio + '/' + [string]$proof.soak.render_ratio } else { 'none' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' duty_receipted=' + [int]$duty.receipted + ' duty_receipts=' + $(if ($duty.receipts_exists) { [string]$duty.receipts_count } else { 'missing' }) + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' qacite=' + $(if ($qacite.exists) { 'ok' } elseif ($qacite.error) { $qacite.error } else { 'missing' }) + ' qacite_stale=' + $(if ($qacite.exists) { [string]$qacite.stale_cited } else { 'missing' }) + ' qacite_cited=' + $(if ($qacite.exists) { [string]$qacite.cited } else { 'missing' }) + ' qacite_age=' + $(if ($qacite.exists) { [string]$qacite.age_hours } else { 'missing' }) + ' qacite_overdue=' + $(if ($qacite.exists) { if ($qacite.overdue) { '1' } else { '0' } } else { 'missing' }) + ' sparam_risky=' + $(if ($sparam.reason -eq 'no-dir') { 'missing' } else { [string]$sparam.risky }) + ' sparam_cached=' + $(if ($sparam.cached) { '1' } else { '0' }) + ' sparam_note=' + $(if ([string]::IsNullOrEmpty($sparam.reason)) { 'none' } else { $sparam.reason }) + ' qdue=' + $(if ($qdue.exists) { [string]$qdue.late } else { 'missing' }) + ' qdue_note=' + $(if ([string]::IsNullOrEmpty($qdue.note)) { 'none' } else { [string]$qdue.note }) + ' qdue_bad=' + $(if ($qdue.exists) { [string]$qdue.bad } else { 'missing' }) + ' qdue_code=' + $(if ($qdue.exists) { [string]$qdue.code } else { 'missing' }) + ' qdue_long=' + $(if ($qdue.exists) { [string]$qdue.long } else { 'missing' }) + ' qdue_longmax=' + $(if ($qdue.exists) { [string]$qdue.long_max } else { 'missing' }) + ' qdue_dupe=' + $(if ($qdue.exists) { [string]$qdue.dupe } else { 'missing' }) + ' qdue_dupe_rows=' + $(if ($qdue.exists) { [string]$qdue.dupe_rows } else { 'missing' }) + ' qdue_split=' + $qdueSplit + ' qdue_next=' + $(if (-not $qdue.exists) { 'missing' } elseif ([string]::IsNullOrEmpty([string]$qdue.next_due)) { 'none' } else { [string]$qdue.next_due + '/' + [string]$qdue.next_days_left + 'd/#' + [string]$qdue.next_id }) + ' qdue_max=' + [int]$qdue.max_days + ' qdue_open=' + [int]$qdue.open + ' qdue_dated=' + [int]$qdue.dated + ' built=' + $built + ' path=' + $OutPath)
 exit 0

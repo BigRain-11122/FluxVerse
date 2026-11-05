@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-05T02:02:41Z",
-    "current_activity":  "r846 收口：CEO 页面在「上轮跳过 scan/gate」时第一次说出为什么——原因取自那一轮自己的 `backoff:` 行（今天绝大多数是 perceptor stack dirty (in-flight dev edits)，也就是开发会话正在改文件，不是故障）。改前每天二十来轮只印「跳过」，读起来像城市停了。",
-    "artifact":  "实物＝`./world-public/city-panel.html` 的每轮那一格现在读「上轮跳过 scan/gate（perceptor stack dirty (in-flight dev edits)）」，机器行同步印 `PANEL OK … last=backoff last_reason=stack-dirty …`；判断单点化在 `./Tools/devloop/city-panel-template.html` 的 tickBackoffText（行与自检两处同源），原因由 `./Tools/devloop/build-city-panel.ps1` 在同一趟读盘里取出（去掉样板尾巴、限长 80 字），旧构建与空原因逐字退回原句。新沙盒 `./logs/devloop-r846-panel-backoffreason-test.js` 29/29，面板 44 套全绿，`./logs/devloop-r702-compile-check.js` COMPILE OK，390 窄屏 `pnghead=390x7420 offenders=0`。",
-    "artifact_utc":  "2026-11-05T02:02:10Z",
-    "milestone":  "48 小时内：①下一轮看真实退避轮（`./logs/tick-20261105.log`）里新句是否按原因分类出现，且干净轮一个字不多；②`./state/queue/main.md` #52 空载浸泡仍候 0 个 Tuanjie 进程窗（本机实读 72 个引擎进程）；③`./state/queue/main.md` #121 候委员会 due 2026-11-16；④`./state/queue/tech.md` #18 深潜 due 2026-11-19。",
+    "updated_utc":  "2026-11-05T02:25:10Z",
+    "current_activity":  "r847 收口：CEO 页面第一次说得出「今天这些退避轮是被什么挡的」——原来只答最后一轮的原因（r846），今天二十多轮的分布仍要人去翻日志。改法＝`./Tools/devloop/build-city-panel.ps1` 在已按轮切段的同一趟读盘里给每个退避轮取原因并分类（归一化函数与末轮共用一份，两处口径不可能分叉）；`./Tools/devloop/city-panel-template.html` 新增单一纯函数 tickBackoffWhyText，行标与自检两处同源；某一轮没写原因则整段不出现（未测不等于 0 类）。",
+    "artifact":  "实物＝`./world-public/city-panel.html` 的每轮那一格多一枚「今日退避原因 perceptor stack dirty (in-flight dev edits) ×20 · 另 1 类」，机器行同步印 `PANEL OK … last=backoff last_reason=stack-dirty backoff_reason=stack-dirty:20,other:4`（封闭词表，永不回显原因原文，免得这行自己撞上 c1 红扫）。新沙盒 `./logs/devloop-r847-panel-backoffwhy-test.js` 38/38（单原因两轮／两原因各一轮定序／某轮无原因即整段撤下且印 unknown／干净日不出声／旧载荷逐字退回），面板全族随后复跑取证。",
+    "artifact_utc":  "2026-11-05T02:25:10Z",
+    "milestone":  "48 小时内：①下一轮在真实当日日志 `./logs/tick-20261105.log` 上核对原因分布是否出现、干净轮一个字不多；②`./state/queue/main.md` #52 空载浸泡仍候 0 个 Tuanjie 进程窗（本机实读 72 个引擎进程）；③`./state/queue/main.md` #121 候委员会 due 2026-11-16；④`./state/queue/tech.md` #18 深潜 due 2026-11-19。",
     "milestone_eta_utc":  "2026-11-07T02:00:00Z"
 }

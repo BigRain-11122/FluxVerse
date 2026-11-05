@@ -285,6 +285,27 @@ function tickBackoffText(tk, fallback) {
   if (!why) return '上轮跳过 scan/gate' + (fallback || '');
   return '上轮跳过 scan/gate（' + why + '）';
 }
+// Today's backoff reasons (queue main#146). r846 told the reader why the LAST
+// round bailed; a day with two dozen backoffs had several causes and there was
+// still no way to see which without opening the tick log. builder classifies
+// every backoff round by its own reason in the same read pass and ranks them;
+// -1 / missing rows mean "not measured" (a log where some round gave no
+// reason), never "0 reasons" - same r799/r810 contract as the totals.
+function tickBackoffWhyText(tk) {
+  const t = tk || {};
+  if (typeof t.backoff_reason_classes !== 'number' || t.backoff_reason_classes <= 0) return '';
+  const rows = Array.isArray(t.backoff_reason_rows) ? t.backoff_reason_rows : [];
+  const shown = [];
+  for (let i = 0; i < rows.length && shown.length < 2; i++) {
+    const r = rows[i];
+    if (r && typeof r.reason === 'string' && r.reason.trim() && typeof r.rounds === 'number' && r.rounds > 0) {
+      shown.push(r.reason.trim() + ' \u00d7' + r.rounds);
+    }
+  }
+  if (!shown.length) return '';
+  const rest = t.backoff_reason_classes - shown.length;
+  return '今日退避原因 ' + shown.join(' \u00b7 ') + (rest > 0 ? ' \u00b7 另 ' + rest + ' 类' : '');
+}
 // Today's gate account (r823): r813 named the last round's disposition but folded
 // `gate: PASS` and `gate: FAIL` into the single token `gate`, so a round whose
 // verify failed read exactly like a healthy one - "the loop is running fine" and
@@ -891,6 +912,20 @@ function artTitle(it){
       sk.title = '当日日志里共有 ' + tk.rounds_seen + ' 轮，其中 ' + tk.skip_rounds +
         ' 轮在轮首退避（scan/verify 未跑）；按轮自己的起始标记切段计数';
       $('f-tick').appendChild(sk);
+    }
+    // 今日退避原因分布（queue main#146）：上面那格只说「今天几轮」，不说是被
+    // 什么挡的；开发会话改文件的时段最常见的就是一条固定原因，读者却要翻整份
+    // 日志才知道。builder 在同一趟按轮分类，这里只印前两类与剩余类数；日志里有
+    // 一轮没写原因则整段不出现（未测不等于 0，r799/r810 同约）。
+    const whyTxt = tickBackoffWhyText(tk);
+    if (whyTxt) {
+      const whyEl = document.createElement('span');
+      whyEl.className = 'tag';
+      whyEl.style.marginLeft = '6px';
+      whyEl.textContent = whyTxt;
+      whyEl.title = '当日 ' + tk.skip_rounds + ' 个退避轮按各自 `backoff:` 行里的原因分类，共 ' +
+        tk.backoff_reason_classes + ' 类；某轮没写原因时整段不出现（那是未测量，不是 0 类）';
+      $('f-tick').appendChild(whyEl);
     }
     // 今日门失败总量（r823）：上面那格只说最后一轮——两次红轮连着的日子，会被
     // 读成一次孤立事件（与 r814 治退避同型）。有计数才挂；轮首退避的轮没有门
@@ -1890,6 +1925,9 @@ function artTitle(it){
     // 当日总量（queue main#134）：只报最后一轮会把连续退避读成孤立事件。
     const skT = tickSkipText(tk);
     if (skT) tVd = tVd + ' · ' + skT;
+    // 今日退避原因分布（queue main#146）：与上面的行标同源，一行说清今天被什么挡过。
+    const whyT = tickBackoffWhyText(tk);
+    if (whyT) tVd = tVd + ' · ' + whyT;
     // 门失败（r823）：上面那格只说最后一轮，这里把「今天几轮失败」同句补上；
     // 两处读同一份 builder 读数，不可能各说各的。
     if (tk.last_kind === 'gate' && tk.last_gate === 'red') tVd = tVd + ' · 上轮门失败';

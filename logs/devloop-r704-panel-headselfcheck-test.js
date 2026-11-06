@@ -164,6 +164,12 @@ const GREEN = {
   // r841 (queue main#143): the page also carries WHY a reading is absent. A
   // calm fixture read the world state and got a reading.
   RESIDENTS_READ: 'ok',
+    // r848: the street pulse (world state street_behavior) - calm = a city
+    // where every seat has a state and most of them are out on the street.
+    STREET: {
+      total: 4, visible: 3, nodata: 0, seats_n: 4,
+      states: [{ name: 'commute', count: 2 }, { name: 'home', count: 1 }, { name: 'exercise', count: 1 }]
+    },
   // r835: the reality-anchor card also names the residents; calm = two rows,
   // both with a last word inside the day.
   ROSTER: {

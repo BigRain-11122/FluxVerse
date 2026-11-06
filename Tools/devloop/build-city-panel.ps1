@@ -243,6 +243,53 @@ function To-JsLiteral
 $snapJs = To-JsLiteral -Obj $snap -Label 'snapshot'
 $faceJs = To-JsLiteral -Obj $face -Label 'status-face'
 
+# r848: what the residents are doing RIGHT NOW (world state `street_behavior`).
+# The probe already publishes one seat per resident with a state (commute /
+# home / exercise / ...), whether that seat is visible on the street, and a
+# no-data count - and the page used none of it: the CEO could read how many
+# residents exist but never what the city is doing this minute. Normalise here
+# so the machine line and the page print the SAME numbers (one source, no
+# drift between what the log says and what the page says). Unknown state names
+# are kept verbatim rather than folded into an "other" bucket, and a missing
+# reading stays $null so the page says "not recorded" instead of "0 residents".
+function Get-StreetPulse
+{
+    param($Raw)
+    if ($null -eq $Raw) { return $null }
+    $seats = @()
+    try { $seats = @($Raw.seats) } catch { $seats = @() }
+    $total = $seats.Count
+    if ($null -ne $Raw.PSObject.Properties['total']) { try { $total = [int]$Raw.total } catch { $total = $seats.Count } }
+    $visible = 0
+    if ($null -ne $Raw.PSObject.Properties['visible']) { try { $visible = [int]$Raw.visible } catch { $visible = 0 } }
+    $nodata = 0
+    if ($null -ne $Raw.PSObject.Properties['nodata']) { try { $nodata = [int]$Raw.nodata } catch { $nodata = 0 } }
+    $byName = @{}
+    foreach ($s in $seats) {
+        $name = ''
+        try { $name = [string]$s.state } catch { $name = '' }
+        if ([string]::IsNullOrWhiteSpace($name)) { $name = 'unknown' }
+        if (-not $byName.ContainsKey($name)) {
+            $byName[$name] = New-Object PSObject -Property ([ordered]@{ name = $name; count = [int]0; visible = [int]0 })
+        }
+        $byName[$name].count = [int]$byName[$name].count + 1
+        $v = 0
+        try { $v = [int]$s.visible } catch { $v = 0 }
+        if ($v -gt 0) { $byName[$name].visible = [int]$byName[$name].visible + 1 }
+    }
+    # Two runs over the same seats must produce byte-identical output: count
+    # desc, then name asc. (PS 5.1 ordering on dictionary values needs explicit
+    # expressions - a bare -Property name silently keeps dictionary order.)
+    $states = @($byName.Values | Sort-Object -Property @{Expression = { [int]$_.count }; Descending = $true }, @{Expression = { [string]$_.name }; Descending = $false })
+    return [ordered]@{
+        total   = [int]$total
+        visible = [int]$visible
+        nodata  = [int]$nodata
+        seats_n = [int]$seats.Count
+        states  = @($states)
+    }
+}
+
 # --- artifact path resolution (queue main#28, r690) -------------------------
 # The face's "latest artifact" line is prose that names real files (panel html,
 # qa screenshots, edited scripts). The page must never guess a path: every
@@ -1951,6 +1998,17 @@ try {
 } catch { $roster = $null }
 $rosterJs = To-JsLiteral -Obj $roster -Label 'roster' -Optional
 
+# r848: same world-state read as the residents block above (no extra file
+# pass). A state file that could not be parsed leaves this $null, and the page
+# then says "not recorded" - never "0 residents on the street".
+$street = $null
+try {
+    if ($null -ne $wsState -and $null -ne $wsState.PSObject.Properties['street_behavior']) {
+        $street = Get-StreetPulse -Raw $wsState.street_behavior
+    }
+} catch { $street = $null }
+$streetJs = To-JsLiteral -Obj $street -Label 'street_behavior' -Optional
+
 $proof = Resolve-CityProof -Root $ProofRoot
 $proofJs = To-JsLiteral -Obj $proof -Label 'proof'
 
@@ -1985,7 +2043,7 @@ $tpl = ''
 try { $tpl = [IO.File]::ReadAllText($TemplatePath, [Text.Encoding]::UTF8) }
 catch { Fail ('template read failed: ' + $_.Exception.Message) }
 
-foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__DUTY_JSON__','__ARCH_JSON__','__QACITE_JSON__','__QUEUE_JSON__','__ART_JSON__','__RESIDENTS_JSON__','__RESIDENTS_READ_JSON__')) {
+foreach ($ph in @('__SNAPSHOT_JSON__','__FACE_JSON__','__BUILT_JSON__','__BUILTISO_JSON__','__PREV_JSON__','__HIST_JSON__','__SERIES_JSON__','__TREND_JSON__','__TICK_JSON__','__SHOTS_JSON__','__PROOF_JSON__','__DUTY_JSON__','__ARCH_JSON__','__QACITE_JSON__','__QUEUE_JSON__','__ART_JSON__','__RESIDENTS_JSON__','__RESIDENTS_READ_JSON__','__STREET_JSON__')) {
     if ($tpl.IndexOf($ph) -lt 0) { Fail ('template placeholder missing: ' + $ph) }
 }
 
@@ -2017,8 +2075,9 @@ $phMap = @{
     '__RESIDENTS_JSON__' = $residentsJs
     '__RESIDENTS_READ_JSON__' = $residentsReadJs
     '__ROSTER_JSON__'   = $rosterJs
+    '__STREET_JSON__'   = $streetJs
 }
-$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|DUTY|ARCH|QACITE|SPARAM|QUEUE|ART|RESIDENTS_READ|RESIDENTS|ROSTER)_JSON__')
+$phRx = New-Object System.Text.RegularExpressions.Regex('__(SNAPSHOT|FACE|BUILT|BUILTISO|PREV|HIST|SERIES|TREND|TICK|SHOTS|PROOF|DUTY|ARCH|QACITE|SPARAM|QUEUE|ART|RESIDENTS_READ|RESIDENTS|ROSTER|STREET)_JSON__')
 $evaluator = [System.Text.RegularExpressions.MatchEvaluator]{
     param($m)
     if (-not $phMap.ContainsKey($m.Value)) { return $m.Value }
@@ -2134,6 +2193,16 @@ if ($null -eq $roster) {
     Write-Output 'PANEL ROSTER: n=? talked=? (cards dir missing)'
 } else {
     Write-Output ('PANEL ROSTER: n=' + [int]$roster.n + ' talked=' + [int]$roster.talked_n + ' ids=' + ((@($roster.rows) | ForEach-Object { [string]$_.id }) -join ','))
+}
+
+# r848: machine face for the street pulse. `states` is count-desc/name-asc so two
+# builds of the same world state print the same line; a missing reading prints
+# `unknown` rather than a zero nobody measured.
+if ($null -eq $street) {
+    Write-Output 'PANEL STREET: unknown (no street_behavior in world state)'
+} else {
+    $stParts = @(@($street.states) | ForEach-Object { [string]$_.name + ':' + [int]$_.count })
+    Write-Output ('PANEL STREET: total=' + [int]$street.total + ' visible=' + [int]$street.visible + ' nodata=' + [int]$street.nodata + ' seats=' + [int]$street.seats_n + ' states=' + ($(if ($stParts.Count -eq 0) { 'none' } else { $stParts -join ',' })))
 }
 
 Write-Output ('PANEL OK bytes=' + $out.Length + ' zones=' + $zonesN + ' events=' + $evsN + ' snapshot_ts=' + [string]$snap.ts_utc + ' hist=' + [int]$histAll.Count + ' series=' + [int]$seriesArr.Count + ' trend=' + [int]$trendArr.Count + ' prev=' + $(if ($null -ne $prevRec) { [string]$prevRec.ts } else { 'none' }) + ' hist_ok=' + $histOk + ' art=' + [int]$artPaths + ' art_missing=' + [int]$artMiss.Count + ' art_bare=' + [int]$artBare.Count + ' tick=' + $(if ($tickExists) { [string]$tickAgeMin + 'min scan=' + $scanLines + ' rounds=' + $rounds + ' last=' + $lastKind + ' last_gate=' + $(if ([string]::IsNullOrEmpty($lastGate)) { 'none' } else { [string]$lastGate }) + ' last_reason=' + $(if ([string]::IsNullOrEmpty($lastReasonSlug)) { 'none' } else { [string]$lastReasonSlug }) + ' backoff_reason=' + [string]$backoffSlugText + ' gate_red=' + [int]$gateRedRounds + '/' + [int]$gateRounds + ' skip=' + [int]$skipRounds + '/' + [int]$roundsSeen + ' probes=' + [int]$probeTotal + ' probes_bad=' + [int]$probeBad + ' probes_all=' + [int]$probesAll + ' probes_bad_all=' + [int]$probeBadAll + ' probe_bad_rounds=' + [int]$probeBadRounds + ' probe_bad_first=' + $(if ([string]::IsNullOrEmpty($probeBadFirst)) { 'none' } else { [string]$probeBadFirst }) + ' probe_bad_last=' + $(if ([string]::IsNullOrEmpty($probeBadLast)) { 'none' } else { [string]$probeBadLast }) + ' probe_bad_stamps=' + $(if ($probeBadStamps.Count -eq 0) { 'none' } else { ($probeBadStamps -join ',') }) + ' quarantined=' + [int]$quarantined + ' degraded=' + [int]$degraded + ' quarantined_all=' + [int]$quarantinedAll + ' degraded_all=' + [int]$degradedAll + ' degraded_probes=' + [int]$degProbes + ' degraded_rounds=' + [int]$degRounds } else { 'missing' }) + ' tickrow=' + [int]$tickOne.paths + ' tickrow_missing=' + [int]$tickOne.missing + ' shots=' + [int]$shots.Count + ' shots_inlined=' + [int]$shotsInlined + ' shots_skipped=' + [int]$(if ($null -ne $script:shotsSkipped) { $script:shotsSkipped } else { 0 }) + ' shots_unnamed=' + [int]$(if ($null -ne $script:shotsUnnamed) { $script:shotsUnnamed } else { 0 }) + ' shots_kb=' + [int][Math]::Round($shotsBytes / 1024) + ' shots_sha=' + [int]$(if ($null -ne $script:shotsSha) { $script:shotsSha } else { 0 }) + ' proof_build=' + $(if ($proof.build.exists) { [string]$proof.build.exit_code } else { 'missing' }) + ' proof_soak=' + [string]$soakRead.token + ' proof_soak_age_h=' + [int]$soakRead.age_h + ' proof_soak_code_same=' + $(if ($null -ne $proof.soak.runtime_same) { [string]([bool]$proof.soak.runtime_same).ToString().ToLowerInvariant() } else { 'none' }) + ' proof_soak_code=' + $(if ([string]$proof.soak.code_at -ne '') { [string]$proof.soak.code_at } else { 'none' }) + ' proof_soak_ratio=' + $(if ($null -ne $proof.soak.logic_ratio -and $null -ne $proof.soak.render_ratio) { [string]$proof.soak.logic_ratio + '/' + [string]$proof.soak.render_ratio } else { 'none' }) + ' proof_code=' + $(if ($proof.code.exists) { [string]$proof.code.sha } else { 'none' }) + ' site=' + $(if ($proof.site.ran) { [string]$proof.site.block_water_text + '%/' + $(if ($proof.site.nearest_dry_text) { [string]$proof.site.nearest_dry_text + 'm' } else { 'none' }) } else { 'missing' }) + ' site_over=' + $(if (Test-SiteOverWater -Verdict $proof.site) { '1' } else { '0' }) + ' site_props=' + [string]$proof.site.props_in_road_text + ' site_scale=' + [string]$proof.site.scale_a2_text + '/' + [string]$proof.site.scale_a2_area_text + ' duty=' + $(if ($duty.exists) { [string]$duty.open } else { 'missing' }) + ' duty_late=' + [int]$duty.late + ' duty_scanned=' + [int]$duty.scanned + ' duty_receipted=' + [int]$duty.receipted + ' duty_receipts=' + $(if ($duty.receipts_exists) { [string]$duty.receipts_count } else { 'missing' }) + ' arch=' + $(if (-not $arch.exists) { 'missing' } elseif ($arch.is_today) { 'today' } else { 'stale' }) + ' arch_remain=' + [int]$arch.remain + ' qacite=' + $(if ($qacite.exists) { 'ok' } elseif ($qacite.error) { $qacite.error } else { 'missing' }) + ' qacite_stale=' + $(if ($qacite.exists) { [string]$qacite.stale_cited } else { 'missing' }) + ' qacite_cited=' + $(if ($qacite.exists) { [string]$qacite.cited } else { 'missing' }) + ' qacite_age=' + $(if ($qacite.exists) { [string]$qacite.age_hours } else { 'missing' }) + ' qacite_overdue=' + $(if ($qacite.exists) { if ($qacite.overdue) { '1' } else { '0' } } else { 'missing' }) + ' sparam_risky=' + $(if ($sparam.reason -eq 'no-dir') { 'missing' } else { [string]$sparam.risky }) + ' sparam_cached=' + $(if ($sparam.cached) { '1' } else { '0' }) + ' sparam_note=' + $(if ([string]::IsNullOrEmpty($sparam.reason)) { 'none' } else { $sparam.reason }) + ' qdue=' + $(if ($qdue.exists) { [string]$qdue.late } else { 'missing' }) + ' qdue_note=' + $(if ([string]::IsNullOrEmpty($qdue.note)) { 'none' } else { [string]$qdue.note }) + ' qdue_bad=' + $(if ($qdue.exists) { [string]$qdue.bad } else { 'missing' }) + ' qdue_code=' + $(if ($qdue.exists) { [string]$qdue.code } else { 'missing' }) + ' qdue_long=' + $(if ($qdue.exists) { [string]$qdue.long } else { 'missing' }) + ' qdue_longmax=' + $(if ($qdue.exists) { [string]$qdue.long_max } else { 'missing' }) + ' qdue_dupe=' + $(if ($qdue.exists) { [string]$qdue.dupe } else { 'missing' }) + ' qdue_dupe_rows=' + $(if ($qdue.exists) { [string]$qdue.dupe_rows } else { 'missing' }) + ' qdue_split=' + $qdueSplit + ' qdue_next=' + $(if (-not $qdue.exists) { 'missing' } elseif ([string]::IsNullOrEmpty([string]$qdue.next_due)) { 'none' } else { [string]$qdue.next_due + '/' + [string]$qdue.next_days_left + 'd/#' + [string]$qdue.next_id }) + ' qdue_max=' + [int]$qdue.max_days + ' qdue_open=' + [int]$qdue.open + ' qdue_dated=' + [int]$qdue.dated + ' built=' + $built + ' path=' + $OutPath)

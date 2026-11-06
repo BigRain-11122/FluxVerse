@@ -210,6 +210,13 @@ function Get-PsSuitesTickDefaults {
         return @(
             'Tools\devloop\test-city-panel-proof.ps1',
             'Tools\devloop\test-city-panel-null-reading.ps1',
+            # r848: the street pulse (world state `street_behavior`) is a third
+            # reading on the same card, normalised by the same builder, so it is
+            # guarded in the same half: a new suite must be spawned by some
+            # family (r831) and a builder-only suite does not belong in the
+            # verify half. Measured 4.6 s - this half still sits under its 2/3
+            # line, and no cap was raised (r779/r812/r843 rule).
+            'Tools\devloop\test-city-panel-street.ps1',
             'Tools\devloop\build-city-panel.ps1',
             'Tools\devloop\city-panel-template.html',
             'Tools\devloop\face-path-lint.ps1',
@@ -801,7 +808,7 @@ function Invoke-PsSuitesTick {
     # the full list under a new name (the r779 lesson).
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write4') { $ExtraArgs = @('-Suites', 'Tools\devloop\test-city-duty.ps1,Tools\devloop\test-city-shot-shape.ps1') }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write5') { $ExtraArgs = @('-Suites', 'Tools\devloop\test-city-shot-census.ps1,Tools\devloop\test-archive-logs.ps1,Tools\devloop\test-panel-bare-artifact.ps1') }
-    if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write6') { $ExtraArgs = @('-Suites', 'Tools\devloop\test-city-panel-proof.ps1,Tools\devloop\test-city-panel-null-reading.ps1') }
+    if ($ExtraArgs.Count -eq 0 -and $Family -eq 'write6') { $ExtraArgs = @('-Suites', 'Tools\devloop\test-city-panel-proof.ps1,Tools\devloop\test-city-panel-null-reading.ps1,Tools\devloop\test-city-panel-street.ps1') }
     if ($ExtraArgs.Count -eq 0 -and $Family -eq 'verify') {
         $lightSuites = @(Get-PsSuitesTickDefaults -Family 'verify' | Where-Object { $_ -match 'test-[^\\]+\.ps1$' })
         $ExtraArgs = @('-Suites', ($lightSuites -join ','))

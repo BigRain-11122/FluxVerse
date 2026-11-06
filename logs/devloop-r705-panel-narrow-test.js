@@ -131,6 +131,12 @@ const FIXTURE = {
   },
   // r841 (queue main#143): why a reading is absent (five states, never two).
   RESIDENTS_READ: 'ok',
+  // r848: the street pulse (world state street_behavior) - same calm fixture
+  // shape as the selfcheck suite, so a missing placeholder surfaces here too.
+  STREET: {
+    total: 4, visible: 3, nodata: 0, seats_n: 4,
+    states: [{ name: 'commute', count: 2 }, { name: 'home', count: 1 }, { name: 'exercise', count: 1 }]
+  },
   // r835: the reality-anchor card also names the residents; calm = two rows,
   // both with a last word inside the day.
   ROSTER: {

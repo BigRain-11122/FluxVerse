@@ -163,6 +163,7 @@
       <div class="rowline"><span class="tag">季节</span><span id="r-season">—</span></div>
       <div class="rowline"><span class="tag">居民</span><span id="r-residents">—</span></div>
       <div class="roster" id="r-roster">—</div>
+      <div class="rowline"><span class="tag">街面</span><span id="r-street">—</span></div>
     </div>
   </div>
 
@@ -516,6 +517,12 @@ const RESIDENTS = __RESIDENTS_JSON__;
 // "the probe has not published" - that sentence claims something about the
 // probe that this page never observed.
 const RESIDENTS_READ = __RESIDENTS_READ_JSON__;
+// r848: the street right now (internal world state `street_behavior`), already
+// normalised by the builder into {total, visible, nodata, seats_n,
+// states:[{name,count,visible}]}. null = no reading, and the card says so -
+// never "0 residents on the street". The page only words these numbers; the
+// builder and the machine line share the same counts so they cannot drift.
+const STREET = __STREET_JSON__;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -566,6 +573,61 @@ function residentsText(m, read) {
   }
   txt += ' · 最近 ' + residentsAgeText(m.last_say_age_h);
   if (m.last_error) txt += ' · ' + String(m.last_error);
+  return txt;
+}
+
+// r848: what the city is doing this minute. The world state carries one seat
+// per resident (state / visible / no-data), yet the page only ever printed how
+// many residents EXIST - reading it felt like a roster, not a living city. The
+// counts come from the builder; this function only words them. A missing
+// reading prints 未记录, never "0 人在街上"; an unrecognised state name prints
+// as-is rather than being folded into an invented "other".
+// Vocabulary = BigLife Tools/behavior.py STATES (the producing side); the page
+// must not invent states, and must not silently swallow one it does not know.
+const STREET_STATE_TEXT = {
+  sleep: '睡觉',
+  home: '在家',
+  work: '工作',
+  commute: '通勤',
+  school: '上学',
+  meal: '吃饭',
+  social: '社交',
+  explore: '探索',
+  exercise: '锻炼',
+  run: '跑步',
+  shelter: '避雨',
+  indoors: '室内',
+  night_shift: '夜班',
+  night_light: '夜游',
+  charge: '充电',
+  slump: '心气低落',
+  grumble: '抱怨',
+  fumble: '手忙脚乱',
+  rest_nap: '午睡',
+  rest_eve: '傍晚小憩',
+  leisure_play: '休闲玩耍',
+  leisure_park: '公园散步',
+  leisure_stroll: '闲逛',
+  nodata: '无读数',
+  unknown: '状态未知'
+};
+function streetText(st) {
+  if (!st) return '未记录（世界态里没有街面读数）';
+  const total = Number(st.total);
+  if (!isFinite(total) || total <= 0) return '未记录（街面席位上没有居民）';
+  const rows = Array.isArray(st.states) ? st.states : (st.states ? [st.states] : []);
+  const parts = [];
+  for (const s of rows) {
+    if (!s) continue;
+    const nm = STREET_STATE_TEXT[s.name] || String(s.name);
+    parts.push(nm + ' ' + Number(s.count));
+  }
+  let txt = '此刻 ' + total + ' 名居民在册';
+  const vis = Number(st.visible);
+  if (isFinite(vis)) txt += '（街上可见 ' + vis + '）';
+  if (parts.length) txt += '：' + parts.join(' · ');
+  const nd = Number(st.nodata);
+  if (isFinite(nd) && nd > 0) txt += ' · 无读数 ' + nd;
   return txt;
 }
 
@@ -1577,6 +1639,10 @@ function artTitle(it){
   // r828 (main#138): three states for the model (installed / not / unknown),
   // and "never spoke" is distinct from "spoke 0 minutes ago".
   $('r-residents').textContent = residentsText(RESIDENTS, RESIDENTS_READ);
+  // r848: the street line sits under the roster - same card, one source, and a
+  // missing reading says so instead of printing a number nobody measured.
+  const streetEl = $('r-street');
+  if (streetEl) streetEl.textContent = streetText(STREET);
   // r835: the names behind that count.
   renderRoster();
 

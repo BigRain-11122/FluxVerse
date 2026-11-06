@@ -1,8 +1,8 @@
 {
-    "updated_utc":  "2026-11-05T02:25:10Z",
-    "current_activity":  "r847 收口：CEO 页面第一次说得出「今天这些退避轮是被什么挡的」——原来只答最后一轮的原因（r846），今天二十多轮的分布仍要人去翻日志。改法＝`./Tools/devloop/build-city-panel.ps1` 在已按轮切段的同一趟读盘里给每个退避轮取原因并分类（归一化函数与末轮共用一份，两处口径不可能分叉）；`./Tools/devloop/city-panel-template.html` 新增单一纯函数 tickBackoffWhyText，行标与自检两处同源；某一轮没写原因则整段不出现（未测不等于 0 类）。",
-    "artifact":  "实物＝`./world-public/city-panel.html` 的每轮那一格多一枚「今日退避原因 perceptor stack dirty (in-flight dev edits) ×20 · 另 1 类」，机器行同步印 `PANEL OK … last=backoff last_reason=stack-dirty backoff_reason=stack-dirty:20,other:4`（封闭词表，永不回显原因原文，免得这行自己撞上 c1 红扫）。新沙盒 `./logs/devloop-r847-panel-backoffwhy-test.js` 38/38（单原因两轮／两原因各一轮定序／某轮无原因即整段撤下且印 unknown／干净日不出声／旧载荷逐字退回），面板全族随后复跑取证。",
-    "artifact_utc":  "2026-11-05T02:25:10Z",
-    "milestone":  "48 小时内：①下一轮在真实当日日志 `./logs/tick-20261105.log` 上核对原因分布是否出现、干净轮一个字不多；②`./state/queue/main.md` #52 空载浸泡仍候 0 个 Tuanjie 进程窗（本机实读 72 个引擎进程）；③`./state/queue/main.md` #121 候委员会 due 2026-11-16；④`./state/queue/tech.md` #18 深潜 due 2026-11-19。",
+    "updated_utc":  "2026-11-06T03:17:41Z",
+    "current_activity":  "r848 收口：CEO 页面第一次说得出「这座城市此刻在干什么」——世界态里 32 个街面席位（状态 / 是否可见 / 无读数）一直躺在 `./world/world-state.json` 的 `street_behavior` 里，面板却只印「5 名居民」，读起来像名册不像一座活着的城。改法＝`./Tools/devloop/build-city-panel.ps1` 新增纯函数 `Get-StreetPulse` 归一化（按状态计数，count 降序 + 名字升序，两次构建逐字节相同；没读数交 null、绝不当 0），`./Tools/devloop/city-panel-template.html` 的 `streetText()` 只负责措辞、不自己数数，词表照 BigLife 的行为状态集当面译词、不认识的词原样印。",
+    "artifact":  "实物＝`./world-public/city-panel.html` 现实锚卡多一行「街面：此刻 32 名居民在册（街上可见 1）：工作 21 · 在家 5 · 充电 2 · 心气低落 2 · 公园散步 1 · 上学 1」，机器行同步印 `PANEL STREET: total=32 visible=1 nodata=0 seats=32 states=work:21,home:5,charge:2,slump:2,leisure_park:1,school:1`（两处共用同一份计数，不可能各说各的）。取证＝新沙盒 `./logs/devloop-r848-panel-street-test.js` 26/26、`./Tools/devloop/test-city-panel-street.ps1` 22/22（真跑 builder 两态：无读数→unknown+null；有席位→总数不被席位重算、未知名原样保留），面板全族 46 套零失败，390 窄屏 `./qa/city-panel-narrow.png` 实测 390x6989、offenders=0。",
+    "artifact_utc":  "2026-11-06T03:17:13Z",
+    "milestone":  "48 小时内：①下一轮 tick 重建后在 `./logs/tick-20261106.log` 核对 `PANEL STREET:` 与页面同数；②`./state/queue/main.md` #52 空载浸泡仍候 0 个 Tuanjie 进程窗（本机实读 59 个引擎进程）；③`./state/queue/main.md` #121 候委员会 due 2026-11-16；④`./state/queue/tech.md` #18 深潜 due 2026-11-19。",
     "milestone_eta_utc":  "2026-11-07T02:00:00Z"
 }

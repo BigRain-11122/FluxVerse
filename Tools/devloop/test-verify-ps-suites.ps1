@@ -485,7 +485,10 @@ $w2Suites = @(
 # no cap was raised (r779/r812/r832 same ruling).
 $w6Suites = @(
     'Tools\devloop\test-city-panel-proof.ps1',
-    'Tools\devloop\test-city-panel-null-reading.ps1'
+    'Tools\devloop\test-city-panel-null-reading.ps1',
+    # r848: the street pulse sandbox drives the same builder, so it belongs to
+    # the same half (and a new suite must be spawned by a family, r831).
+    'Tools\devloop\test-city-panel-street.ps1'
 )
 # main#133: the six-suite face half measured 27.7 / 28.1 s with a 36.5 s spike
 # against a 45 s cap - on the 2/3 line every tick. The three suites that prove
@@ -919,11 +922,11 @@ Check 'z31 the face half asks for its three face suites only' ($zW2 -match '-Sui
 # r825/r843: a sandbox whose sources are guarded but whose suite is dropped from
 # the spawn list keeps a green badge over an unwatched file (r758). Both builder
 # suites must be guarded AND run by the same half - now write6.
-Check 'z31c the builder sandboxes are both guarded and run by the builder half' ($tickTextNow -match "Family -eq 'write6'" -and $tickTextNow -match 'test-city-panel-proof\.ps1,Tools\\devloop\\test-city-panel-null-reading\.ps1' -and $tickTextNow -match 'city-panel-template\.html') 'write6 guarded+run'
+Check 'z31c the builder sandboxes are all guarded and run by the builder half' ($tickTextNow -match "Family -eq 'write6'" -and $tickTextNow -match 'test-city-panel-proof\.ps1,Tools\\devloop\\test-city-panel-null-reading\.ps1,Tools\\devloop\\test-city-panel-street\.ps1' -and $tickTextNow -match 'city-panel-template\.html') 'write6 guarded+run'
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write6 -TicketPath (Join-Path $sandbox 'z-w6.json') -RunnerPath $runnerArgs -Force
 $zW6 = ''
 try { $zW6 = [System.IO.File]::ReadAllText($zArgFile, [System.Text.Encoding]::UTF8) } catch { $zW6 = '' }
-Check 'z31d the builder half asks for its two builder suites only' ($zW6 -match '-Suites' -and @(($zW6 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 2 -and $zW6 -match 'test-city-panel-proof\.ps1' -and $zW6 -match 'test-city-panel-null-reading\.ps1' -and $zW6 -notmatch 'test-write-status-face-bare\.ps1' -and $zW6 -notmatch 'test-qa-rotation\.ps1') $zW6
+Check 'z31d the builder half asks for its three builder suites only' ($zW6 -match '-Suites' -and @(($zW6 -split '[,;\s]+') | Where-Object { $_ -match '\.ps1$' }).Count -eq 3 -and $zW6 -match 'test-city-panel-proof\.ps1' -and $zW6 -match 'test-city-panel-null-reading\.ps1' -and $zW6 -match 'test-city-panel-street\.ps1' -and $zW6 -notmatch 'test-write-status-face-bare\.ps1' -and $zW6 -notmatch 'test-qa-rotation\.ps1') $zW6
 # main#133: the third half must name its own three, or the runner's default list
 # would make it pay for the face suites (z30/z31 same rule for the other halves).
 $null = Invoke-PsSuitesTick -RepoDir $repo -Family write3 -TicketPath (Join-Path $sandbox 'z-w3.json') -RunnerPath $runnerArgs -Force

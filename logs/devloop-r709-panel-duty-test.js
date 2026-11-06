@@ -91,8 +91,21 @@ const duty = (() => {
 })();
 chk('real page ships a DUTY object', !!duty && duty.exists === true);
 const rows = Array.isArray(duty.rows) ? duty.rows : (duty.rows ? [duty.rows] : []);
-chk('real build: one rendered row per DUTY row', dutyRows(real).length === rows.length,
-  'rendered=' + dutyRows(real).length + ' data=' + rows.length);
+// r848: the live duty list can be genuinely EMPTY (no group decision round names
+// this company right now), and then the page renders exactly one empty-state
+// row. Comparing "rendered rows" to "data rows" made this suite a calendar
+// bomb: it went red the day the list emptied, with code unchanged. The contract
+// is the same in both directions - rows present => one row each; rows absent =>
+// one honest empty-state row and no invented data row.
+if (rows.length === 0) {
+  const shown = dutyRows(real);
+  chk('real build: empty duty list renders the empty-state row only',
+    shown.length === 1 && shown[0].text.indexOf('\u5f85\u529e\u4ee4') >= 0,
+    'rendered=' + shown.length + (shown[0] ? ' text=' + shown[0].text : ''));
+} else {
+  chk('real build: one rendered row per DUTY row', dutyRows(real).length === rows.length,
+    'rendered=' + dutyRows(real).length + ' data=' + rows.length);
+}
 chk('real build: every row shows its decision id',
   rows.every(r => dutyRows(real).some(x => x.text.indexOf(r.id) >= 0)));
 chk('real build: overdue rows are marked late',

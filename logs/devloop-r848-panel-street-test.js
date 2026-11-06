@@ -81,7 +81,10 @@ check('1 null reading prints no NaN/undefined/null', dirtyNone === 0, noneLine);
 // ---------- 2) a real reading ----------
 console.log('--- live ---');
 const liveLine = streetLine(live, 'live-street');
-check('2 total is printed', liveLine.indexOf('32 名居民在册') >= 0, liveLine);
+// r849 (main#147): the seats are no longer worded as "residents", because the
+// same card already counts AI resident cards; two populations must not read as
+// one contradictory number.
+check('2 total is printed', liveLine.indexOf('32 个街面席位在册') >= 0, liveLine);
 check('2 visible count is printed', liveLine.indexOf('街上可见 1') >= 0, liveLine);
 check('2 work count is translated', liveLine.indexOf('工作 21') >= 0, liveLine);
 check('2 home count is translated', liveLine.indexOf('在家 5') >= 0, liveLine);

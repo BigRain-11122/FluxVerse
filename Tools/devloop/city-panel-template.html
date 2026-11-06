@@ -164,6 +164,7 @@
       <div class="rowline"><span class="tag">居民</span><span id="r-residents">—</span></div>
       <div class="roster" id="r-roster">—</div>
       <div class="rowline"><span class="tag">街面</span><span id="r-street">—</span></div>
+      <div class="rhint" id="r-people-hint"></div>
     </div>
   </div>
 
@@ -622,13 +623,32 @@ function streetText(st) {
     const nm = STREET_STATE_TEXT[s.name] || String(s.name);
     parts.push(nm + ' ' + Number(s.count));
   }
-  let txt = '此刻 ' + total + ' 名居民在册';
+  // r849 (main#147): these seats are not the AI resident cards counted on the
+  // line above. Saying "N 名居民在册" made two different populations read as
+  // one contradictory number; the seats are named as seats.
+  let txt = '此刻 ' + total + ' 个街面席位在册';
   const vis = Number(st.visible);
   if (isFinite(vis)) txt += '（街上可见 ' + vis + '）';
   if (parts.length) txt += '：' + parts.join(' · ');
   const nd = Number(st.nodata);
   if (isFinite(nd) && nd > 0) txt += ' · 无读数 ' + nd;
   return txt;
+}
+
+// r849 (main#147): the card prints two populations from two different sources -
+// the AI resident cards (./docs/residents/, residents probe) and the street
+// seats (City/Assets/Data/residents-street.json, behaviour from the BigLife
+// census snapshot). They are not meant to be equal, but nothing said so, so
+// "5 名居民" next to a street count read like a contradiction. The sentence
+// appears only when BOTH counts are real and differ: an unknown side is not a
+// difference, and equal counts need no explanation.
+function peopleSplitHint(m, st) {
+  const resN = (m && typeof m.residents_n === 'number') ? m.residents_n : null;
+  const seatN = st ? Number(st.total) : NaN;
+  if (resN === null || !isFinite(seatN) || seatN <= 0) return '';
+  if (resN === seatN) return '';
+  return '两处人口不是一回事：' + resN + ' 名 AI 居民（有居民卡、会说话）／' +
+    seatN + ' 个街面席位（City 场景 · BigLife 行为快照）';
 }
 
 // r835: WHO lives here. The line above counts residents; this block names them
@@ -1643,6 +1663,10 @@ function artTitle(it){
   // missing reading says so instead of printing a number nobody measured.
   const streetEl = $('r-street');
   if (streetEl) streetEl.textContent = streetText(STREET);
+  // r849 (main#147): name the difference between the two population counts,
+  // but only when both are real and unequal - never a sentence about unknowns.
+  const peopleHintEl = $('r-people-hint');
+  if (peopleHintEl) peopleHintEl.textContent = peopleSplitHint(RESIDENTS, STREET);
   // r835: the names behind that count.
   renderRoster();
 

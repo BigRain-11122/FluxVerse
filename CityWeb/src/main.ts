@@ -275,6 +275,18 @@ function main(): void {
   // ---- render loop ----
   const clock = new THREE.Clock();
   (window as unknown as { __cwCamera?: THREE.PerspectiveCamera }).__cwCamera = camera;
+  // perf telemetry: rolling fps + renderer.info every 500ms (perf lane).
+  let frames = 0;
+  let fpsAccum = 0;
+  let lastPerfAt = performance.now();
+  window.setInterval(() => {
+    const info = renderer.info;
+    const now = performance.now();
+    const fps = (frames * 1000) / Math.max(1, now - lastPerfAt);
+    hud.setPerf(info.render.calls, info.render.triangles, fps);
+    frames = 0;
+    lastPerfAt = now;
+  }, 500);
 
   // 2026-11-26 CEO「居民形象精细化可视化」：街景巡览。按 R 或调 window.__CITY_STREET__
   // 依次把镜头放到某位居民身旁（人眼高度），屏幕下方显示姓名/职业/年轮首句。
@@ -332,6 +344,8 @@ function main(): void {
     // entirely while the first-person walker owns it.
     if (!walker.enabled()) rig.update(dt);
     composer.render();
+    frames++;
+    fpsAccum += dt;
   }
   animate();
 

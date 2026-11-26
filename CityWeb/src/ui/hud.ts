@@ -36,6 +36,7 @@ const CSS = `
 #cw-bb{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(9,14,26,.85);border:1px solid #1a2538;border-radius:20px;padding:5px 16px;font-size:10.5px;color:#93a4ba;white-space:nowrap}
 #cw-bb b{color:#93a4ba}
 #cw-cam{position:absolute;bottom:12px;left:14px;font-size:10.5px;color:#5eead4;background:rgba(9,14,26,.8);border:1px solid #1a2538;border-radius:8px;padding:4px 10px}
+#cw-perf{position:absolute;top:14px;right:330px;font-size:10px;color:#93a4ba;background:rgba(9,14,26,.7);border:1px solid #1a2538;border-radius:6px;padding:3px 8px;font-variant-numeric:tabular-nums}
 #cw-demo{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:#4a1d1d;border:1px solid #f87171;color:#fecaca;font-size:10.5px;border-radius:8px;padding:4px 12px}
 .cwf-data{color:#fbbf24}.cwf-quant{color:#fbbf24}.cwf-gaming{color:#5eead4}.cwf-media{color:#f472b6}.cwf-governance{color:#60a5fa}
 `;
@@ -45,6 +46,7 @@ export interface Hud {
   setClock: (d: Date, phase: string) => void;
   ticker: (e: CityEvent) => void;
   setCam: (label: string) => void;
+  setPerf: (calls: number, tris: number, fps: number) => void;
 }
 
 export function buildHud(data: CityData): Hud {
@@ -125,6 +127,11 @@ export function buildHud(data: CityData): Hud {
   cam.textContent = "L0 总览";
   root.appendChild(cam);
 
+  // Performance telemetry (perf-audit lane): draw calls / triangles / fps.
+  const perf = document.createElement("div");
+  perf.id = "cw-perf";
+  root.appendChild(perf);
+
   // 2026-11-26 CEO「居民形象精细化可视化」：街景巡览时显示的居民卡
   // （姓名/职业/今日年轮首句）。按 R 依次切到下一位居民。
   const resCard = document.createElement("div");
@@ -168,6 +175,9 @@ export function buildHud(data: CityData): Hud {
     },
     setCam(label: string): void {
       cam.textContent = label;
+    },
+    setPerf(calls: number, tris: number, fps: number): void {
+      perf.textContent = `draw ${calls} · tri ${(tris / 1000).toFixed(0)}k · ${fps.toFixed(0)} fps`;
     },
   };
 }

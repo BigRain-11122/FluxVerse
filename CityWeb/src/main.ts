@@ -24,6 +24,9 @@ import { buildMetro } from "./city/metroLine";
 import { buildStreetSilicon } from "./city/streetSilicon";
 import { buildShips } from "./live/ships";
 import { buildWaterfront } from "./city/waterfront";
+import { buildBirthPulse } from "./live/birthPulse";
+import { buildAmbientLife } from "./live/ambientLife";
+import { buildHubLife } from "./live/hubLife";
 import { buildWeather } from "./live/weather";
 import { buildPedestrians } from "./live/pedestrians";
 import { buildComposer } from "./render/postfx";
@@ -148,6 +151,13 @@ function main(): void {
   scene.add(ships.root);
   const waterfront = buildWaterfront();
   scene.add(waterfront.root);
+  // ---- wave4: silicon-life city responses ----
+  const birthPulse = buildBirthPulse(plan);
+  scene.add(birthPulse.root);
+  const ambientLife = buildAmbientLife(data);
+  scene.add(ambientLife.root);
+  const hubLife = buildHubLife(hubs.specs);
+  scene.add(hubLife.root);
   const weather = buildWeather(data);
   scene.add(weather.root);
   const pedestrians = buildPedestrians(plan, data);
@@ -176,6 +186,7 @@ function main(): void {
   messengers.hooks.onEvent = (e) => {
     hud.ticker(e);
     if (e.type === "TRANSFER") traffic.pushEvent(e);
+    birthPulse.pushEvent(e); // NEW_RESIDENT/RESIDENT_BIRTH play as city pulses
   };
 
   // ---- input ----
@@ -312,6 +323,9 @@ function main(): void {
     streetSilicon.update(dt, elapsed);
     ships.update(dt, elapsed);
     waterfront.update(dt, elapsed);
+    birthPulse.update(dt, elapsed);
+    ambientLife.update(dt, elapsed, daynight.hour());
+    hubLife.update(dt, elapsed, daynight.hour());
     walker.update(dt);
     for (const lm of landmarkRigs) lm.update(dt, elapsed);
     // Orbit controls overwrite the camera every frame; they must yield

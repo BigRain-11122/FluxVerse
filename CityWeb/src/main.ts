@@ -18,7 +18,7 @@ import { buildRiverReflection } from "./geo/riverReflection";
 import { buildSkyTransit } from "./city/skyTransit";
 import { buildBlockDetails } from "./city/blockDetails";
 import { buildBundRow } from "./city/bundRow";
-import { buildEnterableHubs } from "./city/enterable";
+import { buildEnterableHubs } from "./city/enterableBatched"; // BatchedMesh: 88 -> 4 dc
 import { WalkController } from "./controls/walkController";
 import { buildMetro } from "./city/metroLine";
 import { buildStreetSilicon } from "./city/streetSilicon";

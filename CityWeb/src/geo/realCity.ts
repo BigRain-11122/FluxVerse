@@ -93,6 +93,9 @@ uniform vec3 uTint;
 uniform float uWinGain;
 uniform float uBreath;
 uniform float uBodyGain;
+uniform float uFloorH;   // district signature: floor spacing (m)
+uniform float uWinW;     // district signature: window column spacing (m)
+uniform float uWinRate;  // district signature: lit-window probability
 varying vec3 vWPos;
 varying vec3 vWNormal;
 #include <common>
@@ -105,12 +108,12 @@ float hash12(vec2 p) {
 void main() {
   vec3 col = uTint;
   float side = 1.0 - step(0.5, abs(vWNormal.y)); // side faces only
-  // World-space facade grid: floors every 3.6m, columns every 2.9m along the
-  // horizontal axis the wall faces. No UVs needed -> works on merged meshes.
+  // World-space facade grid driven by the district signature (GTA6 rule A1:
+  // zones must differ in >=3 readable channels - tint/floor/window rates).
   float h = mix(vWPos.x, vWPos.z, step(abs(vWNormal.x), abs(vWNormal.z)));
-  float fy = fract(vWPos.y / 3.6);
-  float fh = fract(h / 2.9);
-  float cellOn = step(0.55, hash12(vec2(floor(h / 2.9) * 0.37 + floor(vWPos.y / 3.6) * 7.1, floor(h / 2.9) * 3.1)));
+  float fy = fract(vWPos.y / uFloorH);
+  float fh = fract(h / uWinW);
+  float cellOn = step(1.0 - uWinRate, hash12(vec2(floor(h / uWinW) * 0.37 + floor(vWPos.y / uFloorH) * 7.1, floor(h / uWinW) * 3.1)));
   float win = side * step(fy, 0.62) * step(fh, 0.55) * cellOn;
   vec3 emissive = uTint * (uWinGain + uBreath) * (1.35 + 0.65 * hash12(vec2(h, vWPos.y)));
   vec4 diffuseColor = vec4(col * uBodyGain * (0.55 + 0.45 * (1.0 - side)), 1.0);
@@ -118,6 +121,16 @@ void main() {
   gl_FragColor = diffuseColor;
   #include <fog_fragment>
 }`;
+
+// District visual signatures (GTA6 rule A1): >=3 distinguishable channels
+// per zone - tint + floor spacing + window column spacing + lit rate.
+// Lujiazui = modern glass curtain wall (tight grid, cool tint);
+// North Bund = mixed business; Bund edge = historic stone (loose, warm).
+const DISTRICT_SIGNATURE: Record<string, { floorH: number; winW: number; winRate: number }> = {
+  quant: { floorH: 4.0, winW: 2.4, winRate: 0.5 },     // Lujiazui curtain wall
+  gaming: { floorH: 3.4, winW: 3.0, winRate: 0.42 },   // North Bund mixed
+  media: { floorH: 4.4, winW: 3.6, winRate: 0.62 },    // Bund heritage stone
+};
 
 export interface RealCityRig {
   root: THREE.Group;
@@ -199,6 +212,9 @@ export function buildRealCity(data: CityData): RealCityRig {
           uWinGain: { value: 1.0 },
           uBreath: { value: 0.0 },
           uBodyGain: { value: 1.0 },
+          uFloorH: { value: DISTRICT_SIGNATURE[zone]?.floorH ?? 3.6 },
+          uWinW: { value: DISTRICT_SIGNATURE[zone]?.winW ?? 2.9 },
+          uWinRate: { value: DISTRICT_SIGNATURE[zone]?.winRate ?? 0.45 },
         },
       ]),
       fog: true,

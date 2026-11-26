@@ -1,10 +1,10 @@
-# Real-geography city smoke test.
+﻿# Real-geography city smoke test.
 import json
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
-DIST = Path(r"D:\FluxGroup\gaming\FluxVerse\_wt-cityweb\CityWeb\dist")
-OUT = Path(r"D:\FluxGroup\gaming\FluxVerse\_wt-cityweb\CityWeb\qa")
+DIST = Path(__file__).resolve().parent.parent / "dist"
+OUT = Path(__file__).resolve().parent
 OUT.mkdir(exist_ok=True)
 errors = []
 with sync_playwright() as p:
@@ -28,3 +28,4 @@ print("ERRORS:", len(errors))
 for e in errors[:8]:
     print("  ", e[:250])
 print("OK" if not errors else "HAS_ERRORS")
+

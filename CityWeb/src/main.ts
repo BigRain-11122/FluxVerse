@@ -36,6 +36,10 @@ import { project } from "./geo/projection";
 import { buildRealSky } from "./render/realSky";
 import { buildRiverWater } from "./geo/riverWater";
 import { buildStreetSigns } from "./city/streetSigns";
+import { EventBus } from "./core/eventBus";
+import { loadLifeState } from "./player/lifeState";
+import { buildInteraction, registerResidentDialog } from "./player/interaction";
+import { buildSiliconCat } from "./player/formsCat";
 
 function placeLandmark(rig: { root: THREE.Group }, lat: number, lon: number, rotY: number, scale = 1): void {
   const { x, z } = project({ lat, lon });
@@ -205,6 +209,24 @@ function main(): void {
   const walker = new WalkController(camera, renderer.domElement);
   walker.setColliders(real.colliders);
   walker.setEnterable(hubs.specs);
+
+  // ---- player systems (wave P): typed bus + life state + E-key interaction ----
+  const bus = new EventBus<Record<string, unknown>>();
+  const life = loadLifeState();
+  life.tick(Date.now()); // offline catch-up (Bitburner pattern)
+  const interact = buildInteraction(camera, renderer.domElement, {
+    // radius gate (4.5m) already restricts reach; keep E live in walk mode
+    // AND the R street tour (how the CEO views residents up close).
+    enabled: () => true,
+  });
+  registerResidentDialog(interact, residents.anchors, bus);
+  // QA hook: anchors for proximity/dialog probes (coordinator-owned wiring).
+  (window as unknown as { __CITY_ANCHORS__?: unknown }).__CITY_ANCHORS__ = residents.anchors;
+
+  // ---- player form pilot (P1): silicon cat entity on the brain island ----
+  const silCat = buildSiliconCat(7);
+  silCat.root.position.set(real.islandPos.x + 26, 9.2, real.islandPos.z + 14);
+  scene.add(silCat.root);
   window.addEventListener("keydown", (ev) => {
     if (ev.key === "0") rig.applyLevel(0, true);
     if (ev.key === "1") rig.applyLevel(1, true);
@@ -358,6 +380,8 @@ function main(): void {
     realSky.update(daynight.hour(), elapsed);
     riverWater.update(dt, elapsed);
     streetSigns.update(dt, elapsed);
+    interact.update(dt, elapsed);
+    silCat.update(dt, elapsed);
     walker.update(dt);
     for (const lm of landmarkRigs) lm.update(dt, elapsed);
     // Orbit controls overwrite the camera every frame; they must yield

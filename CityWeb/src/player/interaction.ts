@@ -376,7 +376,7 @@ export function registerResidentDialog(
       id,
       label: `对话 · ${fact.name}`,
       position: r.pos.clone(),
-      radius: 4.5, // 街道尺度：一步多一点就能触发，瞄得准也要能站得住
+      radius: 10, // 街道尺度 + 街景巡览档（R 键机位距居民 6.5m，4.5m 够不着——实测判据）
       onInteract: () => {
         if (!core) {
           console.warn("[interact] rig 未由 buildInteraction 创建，忽略交互");

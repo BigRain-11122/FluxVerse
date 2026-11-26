@@ -19,6 +19,7 @@ import { buildWeather } from "./live/weather";
 import { buildPedestrians } from "./live/pedestrians";
 import { buildComposer } from "./render/postfx";
 import { CameraRig } from "./controls/cameraRig";
+import { createPlayer } from "./player/controller";
 import { buildHud } from "./ui/hud";
 import { project } from "./geo/projection";
 
@@ -133,6 +134,12 @@ function main(): void {
   const rig = new CameraRig(camera, renderer.domElement, plan);
   rig.onLevelChange = (label) => hud.setCam(label);
 
+  // ---- S1 可走切片（2026-11-26）：玩家接管相机；?play=1 或按 P 开关。 ----
+  // 默认关闭，原有浏览/街景模式完全不受影响（零漂移）。碰撞用城市自带 AABB，不引物理引擎。
+  const player = createPlayer(plan, camera, renderer.domElement);
+  if (new URLSearchParams(location.search).get("play")) player.toggle(true);
+  (window as unknown as { __CITY_PLAYER__?: unknown }).__CITY_PLAYER__ = player;
+
   // ---- day/night wiring (real facade shader materials) ----
   const daynight = new DayNight(scene, sun, hemi, sky, data);
   daynight.attachMaterials(null, ground.material as THREE.MeshStandardMaterial);
@@ -237,7 +244,9 @@ function main(): void {
   rooftops.update(dt, elapsed);
   riverReflection.update(dt, elapsed);
     for (const lm of landmarkRigs) lm.update(dt, elapsed);
-    rig.update(dt);
+    // 玩家接管时暂停轨道相机，避免两套相机互相抢位置
+    player.update(dt);
+    if (!player.isOn()) rig.update(dt);
     composer.render();
   }
   animate();

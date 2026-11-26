@@ -151,6 +151,23 @@ try {
     if ($sfExit -ne 0) { $lines += ('  statusface: gate exit=' + $sfExit + ' (needs attention, round health unchanged)') }
   } catch { $lines += ('  statusface: freshness check crashed (fail-soft): ' + ($_.Exception.Message -replace "[\r\n]", ' ')) }
 
+  # 2.65 CityWeb data export (2026-11-26, three.js face order): whitelist
+  #     projection world-state + city-snapshot -> CityWeb/dist/city-data.js
+  #     so the file:// city page picks up fresh data on its 10-min self
+  #     reload (same cadence as this loop). Runs even on backoff rounds
+  #     (reads the last-good promoted state, never the half-edited stack).
+  #     Fail-soft by design: an export problem logs a cityweb: line and
+  #     never changes the round exit.
+  try {
+    $cwPath = Join-Path $repoRoot 'CityWeb\tools\export-city-data.ps1'
+    if (Test-Path $cwPath) {
+      $cwOut = & powershell -NoProfile -ExecutionPolicy Bypass -File $cwPath -CityWebRoot (Join-Path $repoRoot 'CityWeb') -FluxVerseRoot $repoRoot 2>&1
+      foreach ($l in $cwOut) { $lines += ('  cityweb: ' + ([string]$l)) }
+    } else {
+      $lines += '  cityweb: exporter missing (CityWeb not deployed), skipped'
+    }
+  } catch { $lines += ('  cityweb: export crashed (fail-soft): ' + ($_.Exception.Message -replace "[\r\n]", ' ')) }
+
   # 2.7 round-end marker (v1.6, r94): stamp the block end BEFORE the log write
   #     so the marker actually lands in the file (old code appended it after
   #     WriteAllText = never written; the ticklog probe reads blocks by it)

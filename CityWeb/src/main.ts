@@ -33,6 +33,8 @@ import { buildComposer } from "./render/postfx";
 import { CameraRig } from "./controls/cameraRig";
 import { buildHud } from "./ui/hud";
 import { project } from "./geo/projection";
+import { buildRealSky } from "./render/realSky";
+import { buildRiverWater } from "./geo/riverWater";
 
 function placeLandmark(rig: { root: THREE.Group }, lat: number, lon: number, rotY: number, scale = 1): void {
   const { x, z } = project({ lat, lon });
@@ -75,9 +77,11 @@ function main(): void {
   scene.add(hemi);
 
   // ---- sky ----
-  const sky = buildSky();
-  scene.add(sky.mesh);
-  scene.add(sky.stars);
+  const sky = buildSky(); // legacy dome kept compiled but unmounted (realSky owns the dome now)
+  const realSky = buildRealSky();
+  scene.add(realSky.sky);
+  scene.add(realSky.sunSphere);
+  scene.add(sky.stars); // star Points stay (night sky, in front of the Sky box)
 
   // ---- ground (dark silicon base under the whole metro area) ----
   const ground = new THREE.Mesh(
@@ -154,6 +158,10 @@ function main(): void {
   // ---- wave4: silicon-life city responses ----
   const birthPulse = buildBirthPulse(plan);
   scene.add(birthPulse.root);
+  // Official Water on the Huangpu (wave5 lane B) - the old flat ribbon
+  // stays underneath (hidden at daynight level) as a fallback.
+  const riverWater = buildRiverWater();
+  scene.add(riverWater.water);
   const ambientLife = buildAmbientLife(data);
   scene.add(ambientLife.root);
   const hubLife = buildHubLife(hubs.specs);
@@ -338,6 +346,8 @@ function main(): void {
     birthPulse.update(dt, elapsed);
     ambientLife.update(dt, elapsed, daynight.hour());
     hubLife.update(dt, elapsed, daynight.hour());
+    realSky.update(daynight.hour(), elapsed);
+    riverWater.update(dt, elapsed);
     walker.update(dt);
     for (const lm of landmarkRigs) lm.update(dt, elapsed);
     // Orbit controls overwrite the camera every frame; they must yield

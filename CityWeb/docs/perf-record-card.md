@@ -5,10 +5,10 @@
 
 ## 立即执行序
 
-1. **审计闸先行（当天可上）**：renderer.info + rAF 帧时间探针 + CI 预算断言。
-2. **BatchedMesh 静态合批第一波**：异形静态件（bundRow/blockDetails/metroLine）按「材质×城区」分桶；同款重复件（灯/树/栏杆）留 InstancedMesh 但**分区**。
+1. **审计闸先行（当天可上）**：renderer.info + rAF 帧时间探针 + CI 预算断言。✅ 已上（c498a051·真值 2944dc/614k tri）。
+2. **BatchedMesh 静态合批第一波**：异形静态件（bundRow/blockDetails/metroLine）按「材质×城区」分桶；同款重复件（灯/树/栏杆）留 InstancedMesh 但**分区**。（泳道在飞）
 3. **bloom A-B 量化第二波**：threshold 只放黄昏辉光/窗灯/脉冲。
-4. **录屏流水线**：Tools/cityweb_cruise_record.py 贴入即用（一条命令出绝对路径 MP4）。
+4. **录屏流水线**：Tools/cityweb_cruise_record.py ✅ 管线全通（MP4 产出 1600×900 h264 30fps）——但 **headless SwiftShader 下 captureStream 不产有效帧（实锚：分片空/帧黑）**，CEO 交付必须 `--headed` 系统 Chrome 真机 GPU；QA 取证用 Playwright screenshot 逐帧。
 
 ## 关键陷阱判例（必须记住）
 

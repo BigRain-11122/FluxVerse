@@ -286,6 +286,9 @@ function main(): void {
   // ---- render loop ----
   const clock = new THREE.Clock();
   (window as unknown as { __cwCamera?: THREE.PerspectiveCamera }).__cwCamera = camera;
+  // unified debug handle for QA probes + the cruise recorder (perf card A).
+  // THREE passed in: the IIFE bundle has no window.THREE global.
+  (window as unknown as { __cityDebug?: unknown }).__cityDebug = { renderer, composer, scene, camera, rig, THREE };
   // perf telemetry: rolling fps + renderer.info every 500ms (perf lane).
   // EffectComposer trap (perf-record-card): autoReset resets info at EVERY
   // internal render pass (bloom), so the HUD would only show the last pass

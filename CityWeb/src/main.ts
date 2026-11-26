@@ -10,6 +10,9 @@ import { buildResidents } from "./city/residents";
 import { buildSky, DayNight } from "./live/daynight";
 import { buildDust } from "./live/dust";
 import { Messengers } from "./live/messengers";
+import { buildTraffic } from "./live/traffic";
+import { buildWeather } from "./live/weather";
+import { buildPedestrians } from "./live/pedestrians";
 import { buildComposer } from "./render/postfx";
 import { CameraRig } from "./controls/cameraRig";
 import { buildHud } from "./ui/hud";
@@ -83,6 +86,12 @@ function main(): void {
   // 2026-11-26 BigLife 融合：32 席挂牌居民（年轮立柱 + 观察流弧线）
   const residents = buildResidents(plan, data);
   scene.add(residents.root);
+  const traffic = buildTraffic(plan);
+  scene.add(traffic.root);
+  const weather = buildWeather(data);
+  scene.add(weather.root);
+  const pedestrians = buildPedestrians(plan, data);
+  scene.add(pedestrians.root);
   const dust = buildDust(plan, data);
   scene.add(dust.points);
 
@@ -122,7 +131,10 @@ function main(): void {
 
   // ---- messengers (event performances) ----
   const messengers = new Messengers(scene, plan, tower, daynight, data.events_tail ?? []);
-  messengers.hooks.onEvent = (e) => hud.ticker(e);
+  messengers.hooks.onEvent = (e) => {
+    hud.ticker(e);
+    if (e.type === "TRANSFER") traffic.pushEvent(e);
+  };
 
   // ---- input ----
   window.addEventListener("keydown", (ev) => {
@@ -174,6 +186,8 @@ function main(): void {
 
   // ---- render loop ----
   const clock = new THREE.Clock();
+  // expose camera for QA scripts (street-level regression shots)
+  (window as unknown as { __cwCamera?: THREE.PerspectiveCamera }).__cwCamera = camera;
   function animate(): void {
     requestAnimationFrame(animate);
     const dt = Math.min(0.1, clock.getDelta());
@@ -182,6 +196,9 @@ function main(): void {
     messengers.update(elapsed);
     robots.update(dt, elapsed);
     residents.update(dt, elapsed);
+    traffic.update(dt, elapsed);
+    weather.update(dt, elapsed);
+    pedestrians.update(dt, elapsed, daynight.hour());
     rig.update(dt);
     composer.render();
   }

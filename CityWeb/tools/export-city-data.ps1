@@ -72,6 +72,14 @@ if ($null -ne $bridge -and $null -ne $bridge.slots) {
             profession = $s.profession; ring = $s.ring
             goal_done = if ($null -ne $s.goal) { [int]$s.goal.done } else { $null }
             goal_total = if ($null -ne $s.goal) { [int]$s.goal.total } else { $null }
+            # 外形特征（2026-11-26 CEO「每个人都要有自己的特征」）：全部来自卡面
+            # 契约的六 hex 换装位 + 性别/年龄/发型/瞳型，three.js 侧按数据搭几何。
+            gender = $s.gender; age = $s.age
+            hair_part = $s.hair_part; eye_part = $s.eye_part
+            skin_c = $s.skin_c; hair_c = $s.hair_c
+            cloth_c = $s.cloth_c; pant_c = $s.pant_c
+            badge_c = $s.badge_c; eye_c = $s.eye_c
+            faction = $s.faction
         }
     }
     foreach ($e in @($bridge.echoes)) {

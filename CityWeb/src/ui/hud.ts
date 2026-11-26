@@ -125,6 +125,17 @@ export function buildHud(data: CityData): Hud {
   cam.textContent = "L0 总览";
   root.appendChild(cam);
 
+  // 2026-11-26 CEO「居民形象精细化可视化」：街景巡览时显示的居民卡
+  // （姓名/职业/今日年轮首句）。按 R 依次切到下一位居民。
+  const resCard = document.createElement("div");
+  resCard.id = "cw-resident";
+  resCard.style.cssText = "position:absolute;left:14px;bottom:46px;max-width:420px;"
+    + "display:none;background:rgba(9,14,26,.9);border:1px solid #2a3f63;border-radius:10px;"
+    + "padding:10px 13px;font-size:12.5px;line-height:1.6;color:#dbe7f7";
+  root.appendChild(resCard);
+  // 底部提示补上 R 键（不覆盖原有说明，接在后面）
+  bb.innerHTML += " · <b>R</b> 居民街景";
+
   if (!isLive()) {
     const demo = document.createElement("div");
     demo.id = "cw-demo";

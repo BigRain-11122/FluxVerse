@@ -68,6 +68,20 @@ export interface ResidentEntry {
   ring?: string;
   goal_done?: number | null;
   goal_total?: number | null;
+  // 外形特征（2026-11-26 CEO「每个人都要有自己的特征」）：来自卡面六 hex 换装位
+  // + 性别/年龄/发型/瞳型。three.js 侧按这些字段搭几何体，禁随机脸——
+  // 随机生成的脸等于没有特征（看不出是谁）。
+  gender?: string;
+  age?: number;
+  hair_part?: string;
+  eye_part?: string;
+  skin_c?: string;
+  hair_c?: string;
+  cloth_c?: string;
+  pant_c?: string;
+  badge_c?: string;
+  eye_c?: string;
+  faction?: string;
 }
 
 export interface EchoEntry {

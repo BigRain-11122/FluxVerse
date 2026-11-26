@@ -188,6 +188,32 @@ function main(): void {
   const clock = new THREE.Clock();
   // expose camera for QA scripts (street-level regression shots)
   (window as unknown as { __cwCamera?: THREE.PerspectiveCamera }).__cwCamera = camera;
+
+  // 2026-11-26 CEO「居民形象精细化可视化」：街景巡览。按 R 或调 window.__CITY_STREET__
+  // 依次把镜头放到某位居民身旁（人眼高度），屏幕下方显示姓名/职业/年轮首句。
+  // 无居民时整段不生效（禁装饰律）。
+  let streetIdx = -1;
+  const enterStreet = (i?: number): void => {
+    const list = residents.anchors;
+    if (!list.length) return;
+    streetIdx = typeof i === "number" ? ((i % list.length) + list.length) % list.length
+                                      : (streetIdx + 1) % list.length;
+    const a = list[streetIdx];
+    // 街景收起头顶名牌：信息已在底部卡，名牌会挡住人（截图取证）
+    residents.setLabels(false);
+    rig.applyStreet(a.pos);
+    hud.setCam(`居民 ${streetIdx + 1}/${list.length} · ${a.name}`);
+    const el = document.getElementById("cw-resident");
+    if (el) {
+      el.innerHTML = `<b>${a.name}</b>　<span style="color:#8aa0c4">${a.profession}</span><br>`
+        + `<span style="color:#dbe7f7">${(a.ring || "（今日暂无年轮）").slice(0, 90)}</span>`;
+      el.style.display = "block";
+    }
+  };
+  (window as unknown as { __CITY_STREET__?: (i?: number) => void }).__CITY_STREET__ = enterStreet;
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "r" || e.key === "R") enterStreet();
+  });
   function animate(): void {
     requestAnimationFrame(animate);
     const dt = Math.min(0.1, clock.getDelta());

@@ -26,5 +26,11 @@ await build({
 
 // Static entry lives in dist/ already (index.html references ./city.js and
 // ./city-data.js with relative paths). Only city.js is regenerated here.
+// Stage-1 building slice rides along as a classic script (file:// channel).
+const sliceSrc = path.join(root, "data", "slices", "shanghai-core-stage1.js");
+if (fs.existsSync(sliceSrc)) {
+  fs.copyFileSync(sliceSrc, path.join(dist, "city-slice.js"));
+  console.log(`[build-static] dist/city-slice.js ${(fs.statSync(sliceSrc).size / 1024).toFixed(0)} KB copied`);
+}
 const size = fs.statSync(path.join(dist, "city.js")).size;
 console.log(`[build-static] dist/city.js ${(size / 1024).toFixed(1)} KB in ${Date.now() - t0} ms`);

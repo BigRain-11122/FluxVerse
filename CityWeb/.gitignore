@@ -2,3 +2,8 @@ node_modules/
 .vite/
 *.log
 dist/city-data.js
+
+# OSM stage-1 tile cache (data/slices/_tiles): raw Overpass responses, ~1.9 MB.
+# Derived, re-fetchable state -- the product (shanghai-core-stage1.js) is tracked,
+# the cache is not.
+data/slices/_tiles/

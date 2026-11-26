@@ -1,0 +1,21 @@
+{
+  "name": "fluxverse-cityweb",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "FluxVerse silicon city - three.js web rendering face (CEO order 2026-11-26: rebuild city with three.js, retire Unity City3D)",
+  "scripts": {
+    "dev": "vite",
+    "build": "node tools/build-static.mjs",
+    "export-data": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/export-city-data.ps1"
+  },
+  "dependencies": {
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.187.0",
+    "esbuild": "^0.27.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8"
+  }
+}

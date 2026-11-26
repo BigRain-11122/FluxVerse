@@ -10,6 +10,7 @@
     "export-data": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/export-city-data.ps1"
   },
   "dependencies": {
+    "procedural-animals": "git+https://github.com/majidmanzarpour/threejs-procedural-animals.git#c95ae49346aa8e140a924376cec6cf0073d99512",
     "three": "^0.187.0",
     "troika-three-text": "^0.54.0"
   },

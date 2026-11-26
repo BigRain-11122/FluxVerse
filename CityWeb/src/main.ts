@@ -15,6 +15,15 @@ import { buildTraffic } from "./live/traffic";
 import { buildVehicles } from "./live/vehicles";
 import { buildRooftops } from "./city/rooftops";
 import { buildRiverReflection } from "./geo/riverReflection";
+import { buildSkyTransit } from "./city/skyTransit";
+import { buildBlockDetails } from "./city/blockDetails";
+import { buildBundRow } from "./city/bundRow";
+import { buildEnterableHubs } from "./city/enterable";
+import { WalkController } from "./controls/walkController";
+import { buildMetro } from "./city/metroLine";
+import { buildStreetSilicon } from "./city/streetSilicon";
+import { buildShips } from "./live/ships";
+import { buildWaterfront } from "./city/waterfront";
 import { buildWeather } from "./live/weather";
 import { buildPedestrians } from "./live/pedestrians";
 import { buildComposer } from "./render/postfx";
@@ -45,7 +54,7 @@ function main(): void {
 
   // ---- scene & camera (real-geography scale: 1 unit = 1m, city ~4km wide) ----
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 2, 9000);
+  const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.3, 9000);
   camera.position.set(0, 1600, 1900);
 
   const sun = new THREE.DirectionalLight(0xfff2dc, 2.2);
@@ -118,6 +127,27 @@ function main(): void {
   scene.add(rooftops.root);
   const riverReflection = buildRiverReflection();
   scene.add(riverReflection.root);
+  // ---- wave3: silicon city layer (8 lane modules, parallel-built) ----
+  const skyTransit = buildSkyTransit(plan);
+  scene.add(skyTransit.root);
+  const blockDetails = buildBlockDetails(plan);
+  scene.add(blockDetails.root);
+  // Bund heritage row along the west bank, facing the river.
+  const bundRow = buildBundRow();
+  const bundAnchor = project({ lat: 31.2390, lon: 121.4868 });
+  bundRow.root.position.set(bundAnchor.x, 0, bundAnchor.z);
+  bundRow.root.rotation.y = Math.PI;
+  scene.add(bundRow.root);
+  const metro = buildMetro();
+  scene.add(metro.root);
+  const hubs = buildEnterableHubs(plan);
+  scene.add(hubs.root);
+  const streetSilicon = buildStreetSilicon(plan, data);
+  scene.add(streetSilicon.root);
+  const ships = buildShips();
+  scene.add(ships.root);
+  const waterfront = buildWaterfront();
+  scene.add(waterfront.root);
   const weather = buildWeather(data);
   scene.add(weather.root);
   const pedestrians = buildPedestrians(plan, data);
@@ -149,11 +179,49 @@ function main(): void {
   };
 
   // ---- input ----
+  // Walk mode (CEO "人能进入" + cityscale law: F free, T jump between hubs).
+  const walker = new WalkController(camera, renderer.domElement);
+  walker.setColliders(real.colliders);
+  walker.setEnterable(hubs.specs);
   window.addEventListener("keydown", (ev) => {
     if (ev.key === "0") rig.applyLevel(0, true);
     if (ev.key === "1") rig.applyLevel(1, true);
     if (ev.key === "2") rig.applyLevel(2, true);
     if (ev.key === "3") rig.applyLevel(3, true);
+    if (ev.key === "f" || ev.key === "F") {
+      // Enter walking AT the nearest hub entrance, FACING the hub: an aerial
+      // toggle keeps the old downward heading and lands you staring at
+      // empty ground (black street frames).
+      if (!walker.enabled() && hubs.specs.length > 0) {
+        const cam = camera.position;
+        let best = 0, bestD = Infinity;
+        hubs.specs.forEach((s, i) => {
+          const d = Math.hypot(cam.x - s.cx, cam.z - s.cz);
+          if (d < bestD) { bestD = d; best = i; }
+        });
+        const s = hubs.specs[best];
+        cam.set(s.cx, 1.8, s.cz + s.hd + 6);
+        camera.lookAt(s.cx, 12, s.cz);
+      }
+      const on = walker.toggle();
+      hud.setCam(on ? "L2 步行" : rig.currentLevel);
+      rig.controls.enabled = !on; // orbit yields while walking
+    }
+    if (ev.key === "t" || ev.key === "T") {
+      // teleport cycle between enterable hubs (人尺度律: no 2km hikes)
+      if (walker.enabled() && hubs.specs.length > 0) {
+        const cam = camera.position;
+        let best = 0, bestD = Infinity;
+        hubs.specs.forEach((s, i) => {
+          const d = Math.hypot(cam.x - s.cx, cam.z - s.cz);
+          if (d < bestD) { bestD = d; best = i; }
+        });
+        const next = hubs.specs[(best + 1) % hubs.specs.length];
+        cam.set(next.cx, 1.8, next.cz + next.hd + 6);
+        camera.lookAt(next.cx, 12, next.cz);
+        hud.setCam("L2 传送 → 馆");
+      }
+    }
   });
 
   let downX = 0, downY = 0;
@@ -233,11 +301,22 @@ function main(): void {
     traffic.update(dt, elapsed);
     weather.update(dt, elapsed);
     pedestrians.update(dt, elapsed, daynight.hour());
-  vehicles.update(dt, elapsed, daynight.hour());
-  rooftops.update(dt, elapsed);
-  riverReflection.update(dt, elapsed);
+    vehicles.update(dt, elapsed, daynight.hour());
+    rooftops.update(dt, elapsed);
+    riverReflection.update(dt, elapsed);
+    skyTransit.update(dt, elapsed);
+    blockDetails.update(dt, elapsed);
+    bundRow.update(dt, elapsed);
+    metro.update(dt, elapsed);
+    hubs.update(dt, elapsed);
+    streetSilicon.update(dt, elapsed);
+    ships.update(dt, elapsed);
+    waterfront.update(dt, elapsed);
+    walker.update(dt);
     for (const lm of landmarkRigs) lm.update(dt, elapsed);
-    rig.update(dt);
+    // Orbit controls overwrite the camera every frame; they must yield
+    // entirely while the first-person walker owns it.
+    if (!walker.enabled()) rig.update(dt);
     composer.render();
   }
   animate();

@@ -35,6 +35,7 @@ import { buildHud } from "./ui/hud";
 import { project } from "./geo/projection";
 import { buildRealSky } from "./render/realSky";
 import { buildRiverWater } from "./geo/riverWater";
+import { buildStreetSigns } from "./city/streetSigns";
 
 function placeLandmark(rig: { root: THREE.Group }, lat: number, lon: number, rotY: number, scale = 1): void {
   const { x, z } = project({ lat, lon });
@@ -162,6 +163,8 @@ function main(): void {
   // stays underneath (hidden at daynight level) as a fallback.
   const riverWater = buildRiverWater();
   scene.add(riverWater.water);
+  const streetSigns = buildStreetSigns(plan);
+  scene.add(streetSigns.root);
   const ambientLife = buildAmbientLife(data);
   scene.add(ambientLife.root);
   const hubLife = buildHubLife(hubs.specs);
@@ -348,6 +351,7 @@ function main(): void {
     hubLife.update(dt, elapsed, daynight.hour());
     realSky.update(daynight.hour(), elapsed);
     riverWater.update(dt, elapsed);
+    streetSigns.update(dt, elapsed);
     walker.update(dt);
     for (const lm of landmarkRigs) lm.update(dt, elapsed);
     // Orbit controls overwrite the camera every frame; they must yield

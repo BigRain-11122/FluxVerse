@@ -10,7 +10,8 @@
     "export-data": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/export-city-data.ps1"
   },
   "dependencies": {
-    "three": "^0.187.0"
+    "three": "^0.187.0",
+    "troika-three-text": "^0.54.0"
   },
   "devDependencies": {
     "@types/three": "^0.187.0",

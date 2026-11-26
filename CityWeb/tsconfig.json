@@ -9,6 +9,7 @@
     "noUnusedParameters": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["vite/client"]

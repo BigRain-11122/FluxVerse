@@ -30,10 +30,11 @@ export class CameraRig {
     this.controls = new OrbitControls(camera, dom);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
-    // 2026-11-26：minDistance 30→4。街景要看 1.7m 的人，30m 的下限会把相机
-    // 强行推回去（实测：applyStreet 设 11m，一帧后被 clamp 到 30m，人永远是个点）。
+    // minDistance 4: street level must reach 1.7m residents (30m floor
+    // clamps the street tween back out - people stay dots).
+    // maxDistance 3600: real-geography city is ~4km wide.
     this.controls.minDistance = 4;
-    this.controls.maxDistance = 900;
+    this.controls.maxDistance = 3600;
     this.controls.maxPolarAngle = Math.PI * 0.485;
     this.controls.target.set(0, 12, 0);
 
@@ -56,14 +57,16 @@ export class CameraRig {
 
   levels(): CameraLevel[] {
     const lv: CameraLevel[] = [
-      { name: "L0 总览", pos: new THREE.Vector3(0, 400, 430), target: new THREE.Vector3(0, 10, 0) },
+      // overview shifted +X so the Lujiazui supertall cluster (Shanghai
+      // Tower/SWFC) stays in frame - it was cut at the right edge.
+      { name: "L0 总览", pos: new THREE.Vector3(240, 1750, 2150), target: new THREE.Vector3(180, 90, 0) },
     ];
     for (const d of this.plan.districts) {
       const dir = new THREE.Vector3(d.cx, 0, d.cz).normalize();
       lv.push({
         name: `L1 ${d.name}`,
-        pos: new THREE.Vector3(d.cx - dir.x * 60, 120, d.cz - dir.z * 60),
-        target: new THREE.Vector3(d.cx, 22, d.cz),
+        pos: new THREE.Vector3(d.cx - dir.x * 640, 700, d.cz - dir.z * 640),
+        target: new THREE.Vector3(d.cx, 90, d.cz),
       });
     }
     return lv;
@@ -115,7 +118,7 @@ export class CameraRig {
       const dist = Math.hypot(world.x - d.cx, world.z - d.cz);
       if (dist < bestD) { bestD = dist; best = i; }
     });
-    if (best >= 0 && bestD < 220) this.applyLevel(best + 1, true);
+    if (best >= 0 && bestD < 900) this.applyLevel(best + 1, true);
   }
 
   /// 2026-11-26 CEO「居民形象精细化可视化」：原有 L0(400m)/L1(120m) 两档，

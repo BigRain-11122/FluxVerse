@@ -4,6 +4,7 @@ import { buildRealCity } from "./geo/realCity";
 import { buildBrainTower } from "./city/brainTower";
 import { buildMasts } from "./city/masts";
 import { buildRobots } from "./city/robots";
+import { buildResidentsBatched } from "./city/residentsBatched";
 import { buildResidents } from "./city/residents";
 import { buildOrientalPearl, buildJinmao } from "./city/landmarks-pearl-jinmao";
 import { buildShanghaiTower, buildSwfc } from "./city/landmarks-tower-swfc";
@@ -15,6 +16,18 @@ import { buildTraffic } from "./live/traffic";
 import { buildVehicles } from "./live/vehicles";
 import { buildRooftops } from "./city/rooftops";
 import { buildRiverReflection } from "./geo/riverReflection";
+import { buildSkyTransit } from "./city/skyTransit";
+import { buildBlockDetails } from "./city/blockDetails";
+import { buildBundRow } from "./city/bundRowBatched"; // BatchedMesh: 183 -> 11 dc
+import { buildEnterableHubs } from "./city/enterableBatched"; // BatchedMesh: 88 -> 4 dc
+import { WalkController } from "./controls/walkController";
+import { buildMetro } from "./city/metroLine";
+import { buildStreetSilicon } from "./city/streetSilicon";
+import { buildShips } from "./live/ships";
+import { buildWaterfront } from "./city/waterfront";
+import { buildBirthPulse } from "./live/birthPulse";
+import { buildAmbientLife } from "./live/ambientLife";
+import { buildHubLife } from "./live/hubLife";
 import { buildWeather } from "./live/weather";
 import { buildPedestrians } from "./live/pedestrians";
 import { buildComposer } from "./render/postfx";
@@ -23,6 +36,13 @@ import { createPlayer } from "./player/controller";
 import { createWorld } from "./core/world";
 import { buildHud } from "./ui/hud";
 import { project } from "./geo/projection";
+import { buildRealSky } from "./render/realSky";
+import { buildRiverWater } from "./geo/riverWater";
+import { buildStreetSigns } from "./city/streetSigns";
+import { EventBus } from "./core/eventBus";
+import { loadLifeState } from "./player/lifeState";
+import { buildInteraction, registerResidentDialog } from "./player/interaction";
+import { buildSiliconCat } from "./player/formsCat";
 
 function placeLandmark(rig: { root: THREE.Group }, lat: number, lon: number, rotY: number, scale = 1): void {
   const { x, z } = project({ lat, lon });
@@ -47,7 +67,7 @@ function main(): void {
 
   // ---- scene & camera (real-geography scale: 1 unit = 1m, city ~4km wide) ----
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 2, 9000);
+  const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.3, 9000);
   camera.position.set(0, 1600, 1900);
 
   const sun = new THREE.DirectionalLight(0xfff2dc, 2.2);
@@ -65,9 +85,11 @@ function main(): void {
   scene.add(hemi);
 
   // ---- sky ----
-  const sky = buildSky();
-  scene.add(sky.mesh);
-  scene.add(sky.stars);
+  const sky = buildSky(); // legacy dome kept compiled but unmounted (realSky owns the dome now)
+  const realSky = buildRealSky();
+  scene.add(realSky.sky);
+  scene.add(realSky.sunSphere);
+  scene.add(sky.stars); // star Points stay (night sky, in front of the Sky box)
 
   // ---- ground (dark silicon base under the whole metro area) ----
   const ground = new THREE.Mesh(
@@ -110,7 +132,12 @@ function main(): void {
   const robots = buildRobots(data);
   robots.root.position.set(real.islandPos.x, 0, real.islandPos.z); // park on the brain island
   scene.add(robots.root);
-  const residents = buildResidents(plan, data);
+  // 2026-11-26 合并取舍：远端线为省 draw call 做了静态批（433 → 4），但静态批把矩阵
+  // 一次性写死，支持不了「按拍回放」。行为层优先级更高（真人尺子：居民要真的在动），
+  // 所以有 agentTurns 时用带回放的渲染器，没有时才用实例化版。
+  // P0 待办：把回放并入 residentsBatched（改它的 setMatrixAt 更新路径）后可删掉这个分支。
+  const hasTurns = ((data as unknown as { agentTurns?: unknown[] }).agentTurns?.length ?? 0) > 0;
+  const residents = hasTurns ? buildResidents(plan, data) : buildResidentsBatched(plan, data);
   scene.add(residents.root);
   const traffic = buildTraffic(plan);
   scene.add(traffic.root);
@@ -120,6 +147,40 @@ function main(): void {
   scene.add(rooftops.root);
   const riverReflection = buildRiverReflection();
   scene.add(riverReflection.root);
+  // ---- wave3: silicon city layer (8 lane modules, parallel-built) ----
+  const skyTransit = buildSkyTransit(plan);
+  scene.add(skyTransit.root);
+  const blockDetails = buildBlockDetails(plan);
+  scene.add(blockDetails.root);
+  // Bund heritage row along the west bank, facing the river.
+  const bundRow = buildBundRow();
+  const bundAnchor = project({ lat: 31.2390, lon: 121.4868 });
+  bundRow.root.position.set(bundAnchor.x, 0, bundAnchor.z);
+  bundRow.root.rotation.y = Math.PI;
+  scene.add(bundRow.root);
+  const metro = buildMetro();
+  scene.add(metro.root);
+  const hubs = buildEnterableHubs(plan);
+  scene.add(hubs.root);
+  const streetSilicon = buildStreetSilicon(plan, data);
+  scene.add(streetSilicon.root);
+  const ships = buildShips();
+  scene.add(ships.root);
+  const waterfront = buildWaterfront();
+  scene.add(waterfront.root);
+  // ---- wave4: silicon-life city responses ----
+  const birthPulse = buildBirthPulse(plan);
+  scene.add(birthPulse.root);
+  // Official Water on the Huangpu (wave5 lane B) - the old flat ribbon
+  // stays underneath (hidden at daynight level) as a fallback.
+  const riverWater = buildRiverWater();
+  scene.add(riverWater.water);
+  const streetSigns = buildStreetSigns(plan);
+  scene.add(streetSigns.root);
+  const ambientLife = buildAmbientLife(data);
+  scene.add(ambientLife.root);
+  const hubLife = buildHubLife(hubs.specs);
+  scene.add(hubLife.root);
   const weather = buildWeather(data);
   scene.add(weather.root);
   const pedestrians = buildPedestrians(plan, data);
@@ -144,21 +205,8 @@ function main(): void {
   // ---- 架构 v2 内核：主循环不再认识任何具体模块（cph4/city-architecture-v2.md）----
   // 每个模块只声明「谁 / 多快 / 什么顺序」，降频是内建能力（hz），不是各模块自己写计时器。
   const world = createWorld(plan, data);
-  world.add({ id: "daynight", layer: "live", hz: 2, order: 10, update: () => daynight.update() });
-  world.add({ id: "weather", layer: "live", order: 20, update: (f) => weather.update(f.dt, f.elapsed) });
-  world.add({ id: "traffic", layer: "live", hz: 30, order: 30, update: (f) => traffic.update(f.dt, f.elapsed) });
-  world.add({ id: "pedestrians", layer: "live", hz: 30, order: 40,
-              update: (f) => pedestrians.update(f.dt, f.elapsed, f.hour) });
-  world.add({ id: "vehicles", layer: "live", hz: 30, order: 50,
-              update: (f) => vehicles.update(f.dt, f.elapsed, f.hour) });
-  world.add({ id: "residents", layer: "sim", hz: 30, order: 10,
-              update: (f) => residents.update(f.dt, f.elapsed) });
-  world.add({ id: "robots", layer: "world", order: 10, update: (f) => robots.update(f.dt, f.elapsed) });
-  world.add({ id: "messengers", layer: "live", order: 60, update: (f) => messengers.update(f.elapsed) });
-  world.add({ id: "rooftops", layer: "world", hz: 2, order: 20, update: (f) => rooftops.update(f.dt, f.elapsed) });
-  world.add({ id: "river", layer: "live", order: 70, update: (f) => riverReflection.update(f.dt, f.elapsed) });
-  world.add({ id: "landmarks", layer: "world", order: 30,
-              update: (f) => { for (const lm of landmarkRigs) lm.update(f.dt, f.elapsed); } });
+  // 合并后（2026-11-26）：远端线的 20+ 系统仍在循环里内联执行，这里只注册"新增模块"，
+  // 避免同一模块被跑两遍。P2 会把内联调用逐个搬成 System（cph4/city-architecture-v2.md §六）。
   world.add({ id: "player", layer: "play", order: 10, update: (f) => player.update(f.dt) });
   (window as unknown as { __CITY_WORLD__?: unknown }).__CITY_WORLD__ = world;
 
@@ -175,14 +223,71 @@ function main(): void {
   messengers.hooks.onEvent = (e) => {
     hud.ticker(e);
     if (e.type === "TRANSFER") traffic.pushEvent(e);
+    birthPulse.pushEvent(e); // NEW_RESIDENT/RESIDENT_BIRTH play as city pulses
   };
 
   // ---- input ----
+  // Walk mode (CEO "人能进入" + cityscale law: F free, T jump between hubs).
+  const walker = new WalkController(camera, renderer.domElement);
+  walker.setColliders(real.colliders);
+  walker.setEnterable(hubs.specs);
+
+  // ---- player systems (wave P): typed bus + life state + E-key interaction ----
+  const bus = new EventBus<Record<string, unknown>>();
+  const life = loadLifeState();
+  life.tick(Date.now()); // offline catch-up (Bitburner pattern)
+  const interact = buildInteraction(camera, renderer.domElement, {
+    // radius gate (4.5m) already restricts reach; keep E live in walk mode
+    // AND the R street tour (how the CEO views residents up close).
+    enabled: () => true,
+  });
+  registerResidentDialog(interact, residents.anchors, bus);
+  // QA hook: anchors for proximity/dialog probes (coordinator-owned wiring).
+  (window as unknown as { __CITY_ANCHORS__?: unknown }).__CITY_ANCHORS__ = residents.anchors;
+
+  // ---- player form pilot (P1): silicon cat entity on the brain island ----
+  const silCat = buildSiliconCat(7);
+  silCat.root.position.set(real.islandPos.x + 26, 9.2, real.islandPos.z + 14);
+  scene.add(silCat.root);
   window.addEventListener("keydown", (ev) => {
     if (ev.key === "0") rig.applyLevel(0, true);
     if (ev.key === "1") rig.applyLevel(1, true);
     if (ev.key === "2") rig.applyLevel(2, true);
     if (ev.key === "3") rig.applyLevel(3, true);
+    if (ev.key === "f" || ev.key === "F") {
+      // Enter walking AT the nearest hub entrance, FACING the hub: an aerial
+      // toggle keeps the old downward heading and lands you staring at
+      // empty ground (black street frames).
+      if (!walker.enabled() && hubs.specs.length > 0) {
+        const cam = camera.position;
+        let best = 0, bestD = Infinity;
+        hubs.specs.forEach((s, i) => {
+          const d = Math.hypot(cam.x - s.cx, cam.z - s.cz);
+          if (d < bestD) { bestD = d; best = i; }
+        });
+        const s = hubs.specs[best];
+        cam.set(s.cx, 1.8, s.cz + s.hd + 6);
+        camera.lookAt(s.cx, 12, s.cz);
+      }
+      const on = walker.toggle();
+      hud.setCam(on ? "L2 步行" : rig.currentLevel);
+      rig.controls.enabled = !on; // orbit yields while walking
+    }
+    if (ev.key === "t" || ev.key === "T") {
+      // teleport cycle between enterable hubs (人尺度律: no 2km hikes)
+      if (walker.enabled() && hubs.specs.length > 0) {
+        const cam = camera.position;
+        let best = 0, bestD = Infinity;
+        hubs.specs.forEach((s, i) => {
+          const d = Math.hypot(cam.x - s.cx, cam.z - s.cz);
+          if (d < bestD) { bestD = d; best = i; }
+        });
+        const next = hubs.specs[(best + 1) % hubs.specs.length];
+        cam.set(next.cx, 1.8, next.cz + next.hd + 6);
+        camera.lookAt(next.cx, 12, next.cz);
+        hud.setCam("L2 传送 → 馆");
+      }
+    }
   });
 
   let downX = 0, downY = 0;
@@ -225,6 +330,24 @@ function main(): void {
   // ---- render loop ----
   const clock = new THREE.Clock();
   (window as unknown as { __cwCamera?: THREE.PerspectiveCamera }).__cwCamera = camera;
+  // unified debug handle for QA probes + the cruise recorder (perf card A).
+  // THREE passed in: the IIFE bundle has no window.THREE global.
+  (window as unknown as { __cityDebug?: unknown }).__cityDebug = { renderer, composer, scene, camera, rig, THREE };
+  // perf telemetry: rolling fps + renderer.info every 500ms (perf lane).
+  // EffectComposer trap (perf-record-card): autoReset resets info at EVERY
+  // internal render pass (bloom), so the HUD would only show the last pass
+  // (draw 1). Frame-start manual reset accumulates all passes.
+  renderer.info.autoReset = false;
+  let frames = 0;
+  let lastPerfAt = performance.now();
+  window.setInterval(() => {
+    const info = renderer.info;
+    const now = performance.now();
+    const fps = (frames * 1000) / Math.max(1, now - lastPerfAt);
+    hud.setPerf(info.render.calls, info.render.triangles, fps);
+    frames = 0;
+    lastPerfAt = now;
+  }, 500);
 
   // 2026-11-26 CEO「居民形象精细化可视化」：街景巡览。按 R 或调 window.__CITY_STREET__
   // 依次把镜头放到某位居民身旁（人眼高度），屏幕下方显示姓名/职业/年轮首句。
@@ -257,10 +380,45 @@ function main(): void {
     const dt = Math.min(0.1, clock.getDelta());
     const elapsed = clock.elapsedTime;
     fpsAvg = fpsAvg * 0.9 + (1 / Math.max(dt, 1e-4)) * 0.1;
-    // 全部模块由 World 按 hz/order 派发；主循环只负责"给一帧"
+    // 合并说明（2026-11-26）：远端这条线有 20+ 个系统直接内联在循环里（metro/hubs/
+    // ships/waterfront/walker/interact…）。P1 不强行重排它们（P2 再逐个注册成 System），
+    // 内核 World 当前只驱动 player 与后续新增模块，避免与内联调用重复执行。
     world.tick({ dt, elapsed, hour: daynight.hour(), fps: fpsAvg });
-    if (!player.isOn()) rig.update(dt);
+    daynight.update();
+    messengers.update(elapsed);
+    robots.update(dt, elapsed);
+    residents.update(dt, elapsed);
+    traffic.update(dt, elapsed);
+    weather.update(dt, elapsed);
+    pedestrians.update(dt, elapsed, daynight.hour());
+    vehicles.update(dt, elapsed, daynight.hour());
+    rooftops.update(dt, elapsed);
+    riverReflection.update(dt, elapsed);
+    skyTransit.update(dt, elapsed);
+    blockDetails.update(dt, elapsed);
+    bundRow.update(dt, elapsed);
+    metro.update(dt, elapsed);
+    hubs.update(dt, elapsed);
+    streetSilicon.update(dt, elapsed);
+    ships.update(dt, elapsed);
+    waterfront.update(dt, elapsed);
+    birthPulse.update(dt, elapsed);
+    ambientLife.update(dt, elapsed, daynight.hour());
+    hubLife.update(dt, elapsed, daynight.hour());
+    realSky.update(daynight.hour(), elapsed);
+    riverWater.update(dt, elapsed);
+    streetSigns.update(dt, elapsed);
+    interact.update(dt, elapsed);
+    silCat.update(dt, elapsed);
+    walker.update(dt);
+    for (const lm of landmarkRigs) lm.update(dt, elapsed);
+    // Orbit controls overwrite the camera every frame; they must yield
+    // entirely while the first-person walker owns it.
+    // 2026-11-26：玩家切片（P 键/?play=1）与远端 walker 是两种互斥的第一人称模式。
+    if (!player.isOn() && !walker.enabled()) rig.update(dt);
+    renderer.info.reset(); // frame-start reset: composer passes accumulate
     composer.render();
+    frames++;
   }
   animate();
 

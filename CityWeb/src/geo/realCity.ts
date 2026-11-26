@@ -14,6 +14,7 @@ import type { CityPlan, DistrictSpec, ArterySpec, MastSpec } from "../city/layou
 
 import footprints from "../../data/shanghai-buildings.json";
 import northBund from "../../data/shanghai-buildings-nb.json";
+import type { WalkCollider } from "../controls/walkController";
 
 interface RawBuilding {
   name: string;
@@ -138,6 +139,7 @@ export interface RealCityRig {
   bodyMats: Map<string, THREE.ShaderMaterial>; // zone -> facade material
   waterMat: THREE.ShaderMaterial;
   flowMats: THREE.MeshBasicMaterial[]; // bridge edges (day/night gain)
+  colliders: WalkCollider[]; // footprint AABBs for the walk mode
   buildingCount: number;
   landmarkSlots: typeof LANDMARKS;
   islandPos: THREE.Vector3; // brain island world position (river bend)
@@ -152,29 +154,34 @@ export function buildRealCity(data: CityData): RealCityRig {
     ...((northBund.buildings as unknown) as RawBuilding[]),
   ];
 
-  const sum = new Map<string, { x: number; z: number; n: number; hmax: number }>();
+  const sum = new Map<string, { x: number; z: number; n: number; ptSum: number; hmax: number }>();
   for (const b of raws) {
     const zone = REGION_TO_ZONE[b.region] ?? "quant";
     let s = sum.get(zone);
-    if (!s) { s = { x: 0, z: 0, n: 0, hmax: 0 }; sum.set(zone, s); }
+    if (!s) { s = { x: 0, z: 0, n: 0, ptSum: 0, hmax: 0 }; sum.set(zone, s); }
     s.n++;
     s.hmax = Math.max(s.hmax, b.h);
-    for (const [lat, lon] of b.ring) { s.x += projectX(lon); s.z += projectZ(lat); }
+    for (const [lat, lon] of b.ring) { s.x += projectX(lon); s.z += projectZ(lat); s.ptSum++; }
   }
+  // Centroid = ring-point average (ptSum is the true divisor). The old
+  // `/(n*4)` shrank centroids ~4-8x toward the origin, dragging every
+  // district-relative placement (hubs, furniture, pedestrians) into empty
+  // ground - the street-frame black-shot bug (fixed 2026-11-26).
   const districts: DistrictSpec[] = [];
   for (const [zone, s] of sum) {
     districts.push({
       id: zone,
       name: DISTRICT_LABEL[zone] ?? zone,
       angleDeg: 0,
-      cx: s.x / (s.n * 4), // ring points averaged then /4 approx centroid
-      cz: s.z / (s.n * 4),
+      cx: s.x / s.ptSum,
+      cz: s.z / s.ptSum,
     });
   }
 
   // ---- merged footprint extrusion (1 mesh, 1 material per zone) ----
   const bodyMats = new Map<string, THREE.ShaderMaterial>();
   const zoneGeos = new Map<string, THREE.BufferGeometry[]>();
+  const colliders: WalkCollider[] = []; // AABB per footprint (walk mode)
   let buildingCount = 0;
 
   for (const b of raws) {
@@ -182,6 +189,19 @@ export function buildRealCity(data: CityData): RealCityRig {
     const zone = REGION_TO_ZONE[b.region] ?? "quant";
     const pts = b.ring.map(([lat, lon]) => new THREE.Vector2(projectX(lon), -projectZ(lat)));
     if (pts.length < 3) continue;
+    // AABB collider for the walk mode (ring bounding box; landmark rigs are
+    // walk-through by design - their geometry is decorative shells).
+    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (const p of pts) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minZ) minZ = p.y;
+      if (p.y > maxZ) maxZ = p.y;
+    }
+    colliders.push({
+      cx: (minX + maxX) / 2, cz: (minZ + maxZ) / 2,
+      hw: (maxX - minX) / 2, hd: (maxZ - minZ) / 2,
+    });
     const shape = new THREE.Shape(pts);
     let geo: THREE.BufferGeometry;
     try {
@@ -401,5 +421,5 @@ export function buildRealCity(data: CityData): RealCityRig {
 
   const plan: CityPlan = { districts, buildings: [], arteries, masts, ringNodes };
 
-  return { root, plan, bodyMats, waterMat, flowMats, buildingCount, landmarkSlots: LANDMARKS, islandPos };
+  return { root, plan, bodyMats, waterMat, flowMats, colliders, buildingCount, landmarkSlots: LANDMARKS, islandPos };
 }

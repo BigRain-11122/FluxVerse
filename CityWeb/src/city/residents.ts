@@ -367,6 +367,8 @@ export function buildResidents(plan: CityPlan, data: CityData): ResidentsRig {
     positions: () => figures.map((f) => [
       Math.round(f.position.x * 10) / 10, Math.round(f.position.z * 10) / 10]),
     turn: () => curTurn,
+    // 诊断读数（2026-11-26 合并后查"回放不动"）：turns 条数与内部时钟
+    probe: () => ({ turns: turns.length, clock: Math.round(clock * 100) / 100 }),
   };
 
   return {

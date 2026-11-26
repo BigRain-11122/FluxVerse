@@ -98,6 +98,9 @@ export class Messengers {
         this.ceoPulse(elapsed);
       } else if (e.type === "OS_TICK_START" || e.type === "OS_TICK_DONE") {
         this.daynight.breathBoost = Math.min(0.35, this.daynight.breathBoost + 0.22);
+      } else if (e.type === "TRANSFER") {
+        // TRANSFER plays as a street-level light band (traffic.ts) via the
+        // onEvent hook, not as a flying dot - one event, one performance.
       } else {
         this.spawn(e.zone, elapsed);
       }

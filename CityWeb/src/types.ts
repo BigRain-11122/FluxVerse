@@ -82,6 +82,15 @@ export interface ResidentEntry {
   badge_c?: string;
   eye_c?: string;
   faction?: string;
+  // 行为层（2026-11-26 共用技术底座 v1：cph4/city-foundation.md §三）：
+  // 语义在 BigLife（Tools/city_agents.py 的行动闭环），几何在本仓。
+  // place 只能是 cph4/city-foundation/places.json 里声明过的名字；
+  // act 只取 work|move|seek|rest|wait；with 是本拍同地点搭话的居民 id。
+  // 缺失时本仓关闭行为层（居民按原样站位），绝不拿占位动作冒充"在动"。
+  place?: string;
+  act?: string;
+  act_label?: string;
+  with?: string;
 }
 
 export interface EchoEntry {

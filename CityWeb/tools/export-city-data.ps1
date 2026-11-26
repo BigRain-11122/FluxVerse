@@ -80,6 +80,9 @@ if ($null -ne $bridge -and $null -ne $bridge.slots) {
             cloth_c = $s.cloth_c; pant_c = $s.pant_c
             badge_c = $s.badge_c; eye_c = $s.eye_c
             faction = $s.faction
+            # 行为层（共用技术底座 v1 · cph4/city-foundation.md §三）：语义在 BigLife，
+            # 本仓只透传，坐标由 residents.ts 按 place 映射——不许在这里重算位置。
+            place = $s.place; act = $s.act; act_label = $s.act_label; with = $s.with
         }
     }
     foreach ($e in @($bridge.echoes)) {

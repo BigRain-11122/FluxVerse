@@ -1,0 +1,10825 @@
+{
+ "protocol": "biglife-agent-loop-v1",
+ "day": "2026-11-26",
+ "turns": 8,
+ "agents": {
+  "C-00377": {
+   "name": "应惠芬",
+   "district": "GM",
+   "prof": "像素画匠"
+  },
+  "C-00467": {
+   "name": "桂顺发",
+   "district": "GM",
+   "prof": "大编译调律师"
+  },
+  "C-00762": {
+   "name": "邵志刚",
+   "district": "GM",
+   "prof": "缓存管理员"
+  },
+  "C-01255": {
+   "name": "严志明",
+   "district": "GM",
+   "prof": "数据粥铺摊主"
+  },
+  "C-01567": {
+   "name": "邵清晚",
+   "district": "GM",
+   "prof": "缓存管理员"
+  },
+  "C-01879": {
+   "name": "北风",
+   "district": "GM",
+   "prof": "声景师——江岸湿地的雨天合唱团，只在雨里现身"
+  },
+  "C-02217": {
+   "name": "曾念念",
+   "district": "GM",
+   "prof": "像素小学学生"
+  },
+  "C-02218": {
+   "name": "何行舟",
+   "district": "GM",
+   "prof": "像素画匠"
+  },
+  "C-02554": {
+   "name": "薛糖糖",
+   "district": "GM",
+   "prof": "像素小学学生"
+  },
+  "C-02693": {
+   "name": "卢蕾",
+   "district": "GM",
+   "prof": "数据菜市摊主"
+  },
+  "C-03127": {
+   "name": "阿时序-7",
+   "district": "GM",
+   "prof": "大编译调律师"
+  },
+  "C-03182": {
+   "name": "宋蕾",
+   "district": "GM",
+   "prof": "玩家留言整理员"
+  },
+  "C-04355": {
+   "name": "老缓存-9",
+   "district": "GM",
+   "prof": "灯塔守望"
+  },
+  "C-04999": {
+   "name": "尹梓涵",
+   "district": "GM",
+   "prof": "算法调参师"
+  },
+  "C-07495": {
+   "name": "田锡金",
+   "district": "GM",
+   "prof": "攻略誊写员"
+  },
+  "C-07951": {
+   "name": "杜米粒",
+   "district": "GM",
+   "prof": "像素学徒"
+  },
+  "C-09005": {
+   "name": "阴极-5",
+   "district": "GM",
+   "prof": "8bit 乐师"
+  },
+  "C-09011": {
+   "name": "白雪英",
+   "district": "GM",
+   "prof": "晨操领队"
+  },
+  "C-09367": {
+   "name": "董雨欣",
+   "district": "GM",
+   "prof": "游戏策划"
+  },
+  "C-00379": {
+   "name": "魏果果",
+   "district": "MD",
+   "prof": "像素小学学生"
+  },
+  "C-00943": {
+   "name": "高福生",
+   "district": "MD",
+   "prof": "粉丝回信人"
+  },
+  "C-02191": {
+   "name": "朱文倩",
+   "district": "MD",
+   "prof": "数据清洗工"
+  },
+  "C-02532": {
+   "name": "糜嘉树",
+   "district": "MD",
+   "prof": "玩家留言整理员"
+  },
+  "C-02835": {
+   "name": "吴燕",
+   "district": "MD",
+   "prof": "城市接线生"
+  },
+  "C-03677": {
+   "name": "钟之南",
+   "district": "MD",
+   "prof": "数据搬运工"
+  },
+  "C-04063": {
+   "name": "阿贪心·新",
+   "district": "MD",
+   "prof": "平台对接员"
+  },
+  "C-04120": {
+   "name": "闸门·丁",
+   "district": "MD",
+   "prof": "玩家留言整理员"
+  },
+  "C-04687": {
+   "name": "高秀英",
+   "district": "MD",
+   "prof": "声优棚掌柜"
+  },
+  "C-05590": {
+   "name": "桂志明",
+   "district": "MD",
+   "prof": "语义翻译官"
+  },
+  "C-06247": {
+   "name": "严之恒",
+   "district": "MD",
+   "prof": "新市民安居顾问"
+  },
+  "C-07428": {
+   "name": "梁珍珠",
+   "district": "MD",
+   "prof": "粉丝回信人"
+  },
+  "C-07807": {
+   "name": "华红",
+   "district": "MD",
+   "prof": "视频修复师"
+  },
+  "C-08119": {
+   "name": "快照·甲",
+   "district": "MD",
+   "prof": "七段街区导游"
+  },
+  "C-08420": {
+   "name": "时钟树-7",
+   "district": "MD",
+   "prof": "粉丝回信人"
+  },
+  "C-08430": {
+   "name": "蔡国强",
+   "district": "MD",
+   "prof": "8bit 乐师"
+  },
+  "C-08447": {
+   "name": "章慧",
+   "district": "MD",
+   "prof": "节日活动策划"
+  },
+  "C-08931": {
+   "name": "孟惠芬",
+   "district": "MD",
+   "prof": "数据粥铺摊主"
+  },
+  "C-09055": {
+   "name": "袁团团",
+   "district": "MD",
+   "prof": "像素小学学生"
+  },
+  "C-09130": {
+   "name": "阿小锚",
+   "district": "MD",
+   "prof": "巡信使——街坊短笺的翅膀，怕台风天"
+  },
+  "C-01179": {
+   "name": "毛玉兰",
+   "district": "NS",
+   "prof": "老克勒咖啡主"
+  },
+  "C-02912": {
+   "name": "龚蕾",
+   "district": "NS",
+   "prof": "脑环广场管理员"
+  },
+  "C-03729": {
+   "name": "章伟",
+   "district": "NS",
+   "prof": "语义翻译官"
+  },
+  "C-04278": {
+   "name": "宋根娣",
+   "district": "NS",
+   "prof": "江边棋摊主"
+  },
+  "C-05621": {
+   "name": "李团团",
+   "district": "NS",
+   "prof": "像素小学学生"
+  },
+  "C-05935": {
+   "name": "邱涛",
+   "district": "NS",
+   "prof": "数据搬运工"
+  },
+  "C-09069": {
+   "name": "黄嘉树",
+   "district": "NS",
+   "prof": "信使墙管理员"
+  },
+  "C-09679": {
+   "name": "阿哈希-3",
+   "district": "NS",
+   "prof": "脑环广场管理员"
+  },
+  "C-00319": {
+   "name": "钱子轩",
+   "district": "OR",
+   "prof": "防火墙巡林员"
+  },
+  "C-00612": {
+   "name": "许阿凤",
+   "district": "OR",
+   "prof": "外环巡夜员"
+  },
+  "C-00631": {
+   "name": "快照",
+   "district": "OR",
+   "prof": "新市民安居顾问"
+  },
+  "C-03457": {
+   "name": "黎根娣",
+   "district": "OR",
+   "prof": "机器站宿舍管理员"
+  },
+  "C-03851": {
+   "name": "余之恒",
+   "district": "OR",
+   "prof": "外环巡夜员"
+  },
+  "C-04129": {
+   "name": "贺子轩",
+   "district": "OR",
+   "prof": "防火墙巡林员"
+  },
+  "C-05550": {
+   "name": "缓存婆婆-8",
+   "district": "OR",
+   "prof": "编年史誊录员"
+  },
+  "C-06022": {
+   "name": "常量·叁",
+   "district": "OR",
+   "prof": "城市气象播报员"
+  },
+  "C-06559": {
+   "name": "盛春梅",
+   "district": "OR",
+   "prof": "机器站宿舍管理员"
+  },
+  "C-06871": {
+   "name": "黎承宗",
+   "district": "OR",
+   "prof": "旧件修复师"
+  },
+  "C-07452": {
+   "name": "桂伟民",
+   "district": "OR",
+   "prof": "城市气象播报员"
+  },
+  "C-09681": {
+   "name": "程Ruby",
+   "district": "OR",
+   "prof": "城市气象播报员"
+  },
+  "C-00837": {
+   "name": "郑志明",
+   "district": "QT",
+   "prof": "穿城信使"
+  },
+  "C-00902": {
+   "name": "林伟民",
+   "district": "QT",
+   "prof": "QUANT 食堂大厨"
+  },
+  "C-01038": {
+   "name": "桂沐辰",
+   "district": "QT",
+   "prof": "数据清洗工"
+  },
+  "C-01256": {
+   "name": "史浩宇",
+   "district": "QT",
+   "prof": "穿城信使"
+  },
+  "C-01268": {
+   "name": "董磊",
+   "district": "QT",
+   "prof": "尾盘茶室老板"
+  },
+  "C-01845": {
+   "name": "徐小满",
+   "district": "QT",
+   "prof": "像素学徒"
+  },
+  "C-02503": {
+   "name": "盛星野",
+   "district": "QT",
+   "prof": "防火墙巡林员"
+  },
+  "C-02815": {
+   "name": "白嘀嗒",
+   "district": "QT",
+   "prof": "巡信使——街坊短笺的翅膀，怕台风天"
+  },
+  "C-02841": {
+   "name": "肖浩宇",
+   "district": "QT",
+   "prof": "像素学徒"
+  },
+  "C-03044": {
+   "name": "施沈鱼",
+   "district": "QT",
+   "prof": "新市民安居顾问"
+  },
+  "C-03439": {
+   "name": "香侬·丙",
+   "district": "QT",
+   "prof": "时空校准师"
+  },
+  "C-03751": {
+   "name": "奚浩宇",
+   "district": "QT",
+   "prof": "量化策略研究员"
+  },
+  "C-03982": {
+   "name": "谭桂芳",
+   "district": "QT",
+   "prof": "盘口记录员"
+  },
+  "C-04115": {
+   "name": "赵志明",
+   "district": "QT",
+   "prof": "资金金灯匠"
+  },
+  "C-04133": {
+   "name": "钟根福",
+   "district": "QT",
+   "prof": "数据粥铺摊主"
+  },
+  "C-04375": {
+   "name": "唐卡佳",
+   "district": "QT",
+   "prof": "回测农"
+  },
+  "C-05186": {
+   "name": "席大壮",
+   "district": "QT",
+   "prof": "防火墙巡林员"
+  },
+  "C-05311": {
+   "name": "孟根福",
+   "district": "QT",
+   "prof": "尾盘茶室老板"
+  },
+  "C-05623": {
+   "name": "石诗涵",
+   "district": "QT",
+   "prof": "防火墙巡林员"
+  },
+  "C-06703": {
+   "name": "唐阿Jay",
+   "district": "QT",
+   "prof": "数据清洗工"
+  },
+  "C-06775": {
+   "name": "熊芳",
+   "district": "QT",
+   "prof": "数据粥铺摊主"
+  },
+  "C-06776": {
+   "name": "谢静",
+   "district": "QT",
+   "prof": "量化策略研究员"
+  },
+  "C-06874": {
+   "name": "余Kai",
+   "district": "QT",
+   "prof": "数据搬运工"
+  },
+  "C-06876": {
+   "name": "邹予安",
+   "district": "QT",
+   "prof": "算法调参师"
+  },
+  "C-07149": {
+   "name": "史阿宁",
+   "district": "QT",
+   "prof": "盘口记录员"
+  },
+  "C-07222": {
+   "name": "黑早潮",
+   "district": "QT",
+   "prof": "伴居灵——弄堂与三城屋顶的伴居者，尾巴天线永远对准最热闹的方向"
+  },
+  "C-08431": {
+   "name": "席丽",
+   "district": "QT",
+   "prof": "大编译调律师"
+  },
+  "C-08743": {
+   "name": "吞吐-8",
+   "district": "QT",
+   "prof": "穿城信使"
+  },
+  "C-09078": {
+   "name": "唐斌",
+   "district": "QT",
+   "prof": "量化策略研究员"
+  },
+  "C-01873": {
+   "name": "丁静",
+   "district": "RV",
+   "prof": "光桥市集摊主"
+  },
+  "C-02000": {
+   "name": "白窗花",
+   "district": "RV",
+   "prof": "巡信使——街坊短笺的翅膀，怕台风天"
+  },
+  "C-02583": {
+   "name": "张洁",
+   "district": "RV",
+   "prof": "渡轮船长"
+  },
+  "C-02698": {
+   "name": "半加器·拾",
+   "district": "RV",
+   "prof": "渡轮检票员"
+  },
+  "C-07183": {
+   "name": "郁清晚",
+   "district": "RV",
+   "prof": "穿城信使"
+  },
+  "C-00001": {
+   "name": "大圣 Dasheng",
+   "district": "",
+   "prof": "城主"
+  }
+ },
+ "timeline": [
+  {
+   "turn": 0,
+   "agents": {
+    "C-00001": {
+     "place": "街口",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-00319": {
+     "place": "工作间",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-00377": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-00379": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-00467": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-00612": {
+     "place": "工作间",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-00631": {
+     "place": "工作间",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-00762": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-00837": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": "C-03439"
+    },
+    "C-00902": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收灶",
+     "with": ""
+    },
+    "C-00943": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01038": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-01179": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": "C-05935"
+    },
+    "C-01255": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-01256": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01268": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01567": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01845": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01873": {
+     "place": "摊位",
+     "act": "work",
+     "label": "看摊",
+     "with": "C-07183"
+    },
+    "C-01879": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02000": {
+     "place": "摊位",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-02191": {
+     "place": "工位",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-02217": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02218": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-02503": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-02532": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-02554": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02583": {
+     "place": "摊位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02693": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-02698": {
+     "place": "摊位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-02815": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-02835": {
+     "place": "工位",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-02841": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02912": {
+     "place": "铺面",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-03044": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-03127": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-03182": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-03439": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": "C-00837"
+    },
+    "C-03457": {
+     "place": "工作间",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-03677": {
+     "place": "工位",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-03729": {
+     "place": "铺面",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03751": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-03851": {
+     "place": "工作间",
+     "act": "work",
+     "label": "查线",
+     "with": ""
+    },
+    "C-03982": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04063": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04115": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-04120": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04129": {
+     "place": "工作间",
+     "act": "work",
+     "label": "回站",
+     "with": "C-07452"
+    },
+    "C-04133": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-04278": {
+     "place": "铺面",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-04355": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-04375": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04687": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": "C-09130"
+    },
+    "C-04999": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "记账",
+     "with": ""
+    },
+    "C-05186": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "查线",
+     "with": ""
+    },
+    "C-05311": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-05550": {
+     "place": "工作间",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-05590": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-05621": {
+     "place": "铺面",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-05623": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-05935": {
+     "place": "铺面",
+     "act": "work",
+     "label": "修件",
+     "with": "C-01179"
+    },
+    "C-06022": {
+     "place": "工作间",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-06247": {
+     "place": "工位",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-06559": {
+     "place": "工作间",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-06703": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-06775": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-06776": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-06871": {
+     "place": "工作间",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-06874": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-06876": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "对账",
+     "with": ""
+    },
+    "C-07149": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-07183": {
+     "place": "摊位",
+     "act": "work",
+     "label": "清点",
+     "with": "C-01873"
+    },
+    "C-07222": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-07428": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-07452": {
+     "place": "工作间",
+     "act": "work",
+     "label": "出摊",
+     "with": "C-04129"
+    },
+    "C-07495": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-07807": {
+     "place": "工位",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-07951": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08119": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08420": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08430": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08431": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08447": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08743": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08931": {
+     "place": "工位",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-09005": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09011": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09055": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09069": {
+     "place": "铺面",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09078": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09130": {
+     "place": "工位",
+     "act": "work",
+     "label": "巡边",
+     "with": "C-04687"
+    },
+    "C-09367": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09679": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09681": {
+     "place": "工作间",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    }
+   }
+  },
+  {
+   "turn": 1,
+   "agents": {
+    "C-00001": {
+     "place": "料市",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-00319": {
+     "place": "料市",
+     "act": "move",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-00377": {
+     "place": "街口",
+     "act": "move",
+     "label": "做工",
+     "with": ""
+    },
+    "C-00379": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-00467": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-00612": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-00631": {
+     "place": "工作间",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-00762": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-00837": {
+     "place": "巡边站",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-00902": {
+     "place": "机房",
+     "act": "move",
+     "label": "备料",
+     "with": ""
+    },
+    "C-00943": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-01038": {
+     "place": "街口",
+     "act": "move",
+     "label": "修件",
+     "with": ""
+    },
+    "C-01179": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": "C-07149"
+    },
+    "C-01255": {
+     "place": "街口",
+     "act": "move",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-01256": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01268": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-01567": {
+     "place": "料市",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01845": {
+     "place": "机房",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-01873": {
+     "place": "摊位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-01879": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02000": {
+     "place": "街口",
+     "act": "move",
+     "label": "查线",
+     "with": ""
+    },
+    "C-02191": {
+     "place": "门口",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-02217": {
+     "place": "料市",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-02218": {
+     "place": "料市",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-02503": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-02532": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02554": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-02583": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02693": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-02698": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02815": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-02835": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": "C-08119"
+    },
+    "C-02841": {
+     "place": "机房",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-02912": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-03044": {
+     "place": "机房",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03127": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-03182": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-03439": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-03457": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03677": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03729": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-03751": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-03851": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03982": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-04063": {
+     "place": "门口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04115": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "修件",
+     "with": ""
+    },
+    "C-04120": {
+     "place": "料市",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-04129": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-04133": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-04278": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-04355": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-04375": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04687": {
+     "place": "门口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04999": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-05186": {
+     "place": "街口",
+     "act": "move",
+     "label": "回站",
+     "with": ""
+    },
+    "C-05311": {
+     "place": "机房",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-05550": {
+     "place": "工作间",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-05590": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-05621": {
+     "place": "灶间",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-05623": {
+     "place": "机房",
+     "act": "move",
+     "label": "查线",
+     "with": ""
+    },
+    "C-05935": {
+     "place": "街口",
+     "act": "move",
+     "label": "做工",
+     "with": ""
+    },
+    "C-06022": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-06247": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-06559": {
+     "place": "工作间",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-06703": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "修件",
+     "with": ""
+    },
+    "C-06775": {
+     "place": "机房",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-06776": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-06871": {
+     "place": "工作间",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-06874": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-06876": {
+     "place": "街口",
+     "act": "move",
+     "label": "记账",
+     "with": ""
+    },
+    "C-07149": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": "C-01179"
+    },
+    "C-07183": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-07222": {
+     "place": "机房",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-07428": {
+     "place": "门口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-07452": {
+     "place": "工作间",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-07495": {
+     "place": "自家摊",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-07807": {
+     "place": "料市",
+     "act": "move",
+     "label": "修件",
+     "with": ""
+    },
+    "C-07951": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-08119": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": "C-02835"
+    },
+    "C-08420": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-08430": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-08431": {
+     "place": "机房",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08447": {
+     "place": "料市",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08743": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08931": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-09005": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09011": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09055": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-09069": {
+     "place": "灶间",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-09078": {
+     "place": "机房",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-09130": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-09367": {
+     "place": "料市",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09679": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09681": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    }
+   }
+  },
+  {
+   "turn": 2,
+   "agents": {
+    "C-00001": {
+     "place": "家门口",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-00319": {
+     "place": "料市",
+     "act": "move",
+     "label": "回站",
+     "with": ""
+    },
+    "C-00377": {
+     "place": "料市",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-00379": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-00467": {
+     "place": "街口",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-00612": {
+     "place": "料市",
+     "act": "move",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-00631": {
+     "place": "料市",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-00762": {
+     "place": "料市",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-00837": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": "C-04278"
+    },
+    "C-00902": {
+     "place": "街口",
+     "act": "move",
+     "label": "收灶",
+     "with": ""
+    },
+    "C-00943": {
+     "place": "门口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01038": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "做工",
+     "with": ""
+    },
+    "C-01179": {
+     "place": "灶间",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01255": {
+     "place": "自家摊",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-01256": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01268": {
+     "place": "机房",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-01567": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-01845": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01873": {
+     "place": "街口",
+     "act": "move",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-01879": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02000": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-02191": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "修件",
+     "with": ""
+    },
+    "C-02217": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02218": {
+     "place": "自家摊",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-02503": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "查线",
+     "with": "C-09367"
+    },
+    "C-02532": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-02554": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-02583": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02693": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-02698": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-02815": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-02835": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-02841": {
+     "place": "机房",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-02912": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-03044": {
+     "place": "街口",
+     "act": "move",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-03127": {
+     "place": "自家摊",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03182": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-03439": {
+     "place": "巡边站",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03457": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03677": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-03729": {
+     "place": "灶间",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03751": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03851": {
+     "place": "料市",
+     "act": "move",
+     "label": "查线",
+     "with": ""
+    },
+    "C-03982": {
+     "place": "机房",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-04063": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-04115": {
+     "place": "街口",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-04120": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04129": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-04133": {
+     "place": "机房",
+     "act": "move",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-04278": {
+     "place": "街口",
+     "act": "move",
+     "label": "补货",
+     "with": "C-00837"
+    },
+    "C-04355": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-04375": {
+     "place": "巡边站",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-04687": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-04999": {
+     "place": "街口",
+     "act": "move",
+     "label": "对账",
+     "with": ""
+    },
+    "C-05186": {
+     "place": "机房",
+     "act": "move",
+     "label": "查线",
+     "with": ""
+    },
+    "C-05311": {
+     "place": "巡边站",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-05550": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-05590": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": "C-09681"
+    },
+    "C-05621": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": "C-05935"
+    },
+    "C-05623": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-05935": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": "C-05621"
+    },
+    "C-06022": {
+     "place": "料市",
+     "act": "move",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-06247": {
+     "place": "门口",
+     "act": "move",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-06559": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-06703": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-06775": {
+     "place": "街口",
+     "act": "move",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-06776": {
+     "place": "机房",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-06871": {
+     "place": "料市",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-06874": {
+     "place": "机房",
+     "act": "move",
+     "label": "修件",
+     "with": ""
+    },
+    "C-06876": {
+     "place": "机房",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-07149": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-07183": {
+     "place": "码头",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-07222": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-07428": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-07452": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-07495": {
+     "place": "料市",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-07807": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "修件",
+     "with": ""
+    },
+    "C-07951": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08119": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-08420": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-08430": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-08431": {
+     "place": "巡边站",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-08447": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08743": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-08931": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-09005": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-09011": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-09055": {
+     "place": "料市",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09069": {
+     "place": "灶间",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-09078": {
+     "place": "机房",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-09130": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "回站",
+     "with": ""
+    },
+    "C-09367": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": "C-02503"
+    },
+    "C-09679": {
+     "place": "灶间",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09681": {
+     "place": "料市",
+     "act": "move",
+     "label": "看摊",
+     "with": "C-05590"
+    }
+   }
+  },
+  {
+   "turn": 3,
+   "agents": {
+    "C-00001": {
+     "place": "街口",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-00319": {
+     "place": "工作间",
+     "act": "work",
+     "label": "巡边",
+     "with": "C-09681"
+    },
+    "C-00377": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "做工",
+     "with": ""
+    },
+    "C-00379": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-00467": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-00612": {
+     "place": "工作间",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-00631": {
+     "place": "工作间",
+     "act": "work",
+     "label": "出摊",
+     "with": "C-05550"
+    },
+    "C-00762": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-00837": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-00902": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收灶",
+     "with": ""
+    },
+    "C-00943": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01038": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-01179": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01255": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-01256": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01268": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-01567": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01845": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01873": {
+     "place": "摊位",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-01879": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-02000": {
+     "place": "摊位",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-02191": {
+     "place": "工位",
+     "act": "work",
+     "label": "做工",
+     "with": ""
+    },
+    "C-02217": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-02218": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "做工",
+     "with": ""
+    },
+    "C-02503": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-02532": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02554": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02583": {
+     "place": "摊位",
+     "act": "work",
+     "label": "收尾",
+     "with": "C-07183"
+    },
+    "C-02693": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-02698": {
+     "place": "摊位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02815": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-02835": {
+     "place": "工位",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-02841": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02912": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-03044": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-03127": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-03182": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03439": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03457": {
+     "place": "工作间",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-03677": {
+     "place": "工位",
+     "act": "work",
+     "label": "做工",
+     "with": ""
+    },
+    "C-03729": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-03751": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03851": {
+     "place": "工作间",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-03982": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04063": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-04115": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-04120": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04129": {
+     "place": "工作间",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-04133": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-04278": {
+     "place": "铺面",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-04355": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04375": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": "C-08743"
+    },
+    "C-04687": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04999": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "对账",
+     "with": ""
+    },
+    "C-05186": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-05311": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-05550": {
+     "place": "工作间",
+     "act": "work",
+     "label": "收尾",
+     "with": "C-00631"
+    },
+    "C-05590": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-05621": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-05623": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "查线",
+     "with": ""
+    },
+    "C-05935": {
+     "place": "铺面",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-06022": {
+     "place": "工作间",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-06247": {
+     "place": "工位",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-06559": {
+     "place": "工作间",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-06703": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-06775": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-06776": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-06871": {
+     "place": "工作间",
+     "act": "work",
+     "label": "做工",
+     "with": ""
+    },
+    "C-06874": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-06876": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "记账",
+     "with": ""
+    },
+    "C-07149": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": "C-08431"
+    },
+    "C-07183": {
+     "place": "摊位",
+     "act": "work",
+     "label": "清点",
+     "with": "C-02583"
+    },
+    "C-07222": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-07428": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-07452": {
+     "place": "工作间",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-07495": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-07807": {
+     "place": "工位",
+     "act": "work",
+     "label": "做工",
+     "with": ""
+    },
+    "C-07951": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-08119": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08420": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08430": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08431": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": "C-07149"
+    },
+    "C-08447": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-08743": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": "C-04375"
+    },
+    "C-08931": {
+     "place": "工位",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-09005": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09011": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09055": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-09069": {
+     "place": "铺面",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-09078": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09130": {
+     "place": "工位",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-09367": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09679": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09681": {
+     "place": "工作间",
+     "act": "work",
+     "label": "看摊",
+     "with": "C-00319"
+    }
+   }
+  },
+  {
+   "turn": 4,
+   "agents": {
+    "C-00001": {
+     "place": "街口",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-00319": {
+     "place": "工作间",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-00377": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-00379": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-00467": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-00612": {
+     "place": "工作间",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-00631": {
+     "place": "工作间",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-00762": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-00837": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-00902": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "开火",
+     "with": ""
+    },
+    "C-00943": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-01038": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "修件",
+     "with": "C-01268"
+    },
+    "C-01179": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01255": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-01256": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01268": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": "C-01038"
+    },
+    "C-01567": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01845": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01873": {
+     "place": "摊位",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-01879": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02000": {
+     "place": "摊位",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-02191": {
+     "place": "工位",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-02217": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-02218": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-02503": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "查线",
+     "with": ""
+    },
+    "C-02532": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-02554": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02583": {
+     "place": "摊位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-02693": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-02698": {
+     "place": "摊位",
+     "act": "work",
+     "label": "收尾",
+     "with": "C-07183"
+    },
+    "C-02815": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "查线",
+     "with": "C-07149"
+    },
+    "C-02835": {
+     "place": "工位",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-02841": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02912": {
+     "place": "铺面",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03044": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-03127": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03182": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-03439": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-03457": {
+     "place": "工作间",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-03677": {
+     "place": "工位",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-03729": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": "C-09679"
+    },
+    "C-03751": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-03851": {
+     "place": "工作间",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-03982": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04063": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04115": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-04120": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04129": {
+     "place": "工作间",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-04133": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-04278": {
+     "place": "铺面",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-04355": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04375": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04687": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04999": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "对账",
+     "with": ""
+    },
+    "C-05186": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-05311": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-05550": {
+     "place": "工作间",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-05590": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-05621": {
+     "place": "铺面",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-05623": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-05935": {
+     "place": "铺面",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-06022": {
+     "place": "工作间",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-06247": {
+     "place": "工位",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-06559": {
+     "place": "工作间",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-06703": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "做工",
+     "with": ""
+    },
+    "C-06775": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-06776": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-06871": {
+     "place": "工作间",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-06874": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "做工",
+     "with": ""
+    },
+    "C-06876": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "对账",
+     "with": ""
+    },
+    "C-07149": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": "C-02815"
+    },
+    "C-07183": {
+     "place": "摊位",
+     "act": "work",
+     "label": "清点",
+     "with": "C-02698"
+    },
+    "C-07222": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-07428": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-07452": {
+     "place": "工作间",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-07495": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-07807": {
+     "place": "工位",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-07951": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08119": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08420": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-08430": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08431": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-08447": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08743": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08931": {
+     "place": "工位",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-09005": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09011": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09055": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-09069": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09078": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09130": {
+     "place": "工位",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-09367": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09679": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": "C-03729"
+    },
+    "C-09681": {
+     "place": "工作间",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    }
+   }
+  },
+  {
+   "turn": 5,
+   "agents": {
+    "C-00001": {
+     "place": "料市",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-00319": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-00377": {
+     "place": "街口",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-00379": {
+     "place": "门口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-00467": {
+     "place": "料市",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-00612": {
+     "place": "工作间",
+     "act": "seek",
+     "label": "找",
+     "with": "C-00631"
+    },
+    "C-00631": {
+     "place": "工作间",
+     "act": "seek",
+     "label": "找",
+     "with": "C-00612"
+    },
+    "C-00762": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-00837": {
+     "place": "机房",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-00902": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-00943": {
+     "place": "门口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01038": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-01179": {
+     "place": "铺面",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-01255": {
+     "place": "料市",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-01256": {
+     "place": "机房",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01268": {
+     "place": "机房",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-01567": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-01845": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01873": {
+     "place": "摊位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-01879": {
+     "place": "料市",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02000": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "回站",
+     "with": ""
+    },
+    "C-02191": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-02217": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02218": {
+     "place": "自家摊",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-02503": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-02532": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-02554": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-02583": {
+     "place": "码头",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02693": {
+     "place": "街口",
+     "act": "move",
+     "label": "看摊",
+     "with": "C-09681"
+    },
+    "C-02698": {
+     "place": "码头",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02815": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-02835": {
+     "place": "料市",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-02841": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02912": {
+     "place": "铺面",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03044": {
+     "place": "机房",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03127": {
+     "place": "料市",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03182": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03439": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-03457": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03677": {
+     "place": "料市",
+     "act": "move",
+     "label": "做工",
+     "with": ""
+    },
+    "C-03729": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03751": {
+     "place": "巡边站",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03851": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "回站",
+     "with": ""
+    },
+    "C-03982": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04063": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04115": {
+     "place": "街口",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-04120": {
+     "place": "门口",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-04129": {
+     "place": "料市",
+     "act": "move",
+     "label": "查线",
+     "with": ""
+    },
+    "C-04133": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-04278": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-04355": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-04375": {
+     "place": "机房",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04687": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-04999": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "核数",
+     "with": ""
+    },
+    "C-05186": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-05311": {
+     "place": "机房",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-05550": {
+     "place": "街口",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-05590": {
+     "place": "门口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-05621": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-05623": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "查线",
+     "with": ""
+    },
+    "C-05935": {
+     "place": "街口",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-06022": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "看摊",
+     "with": "C-06559"
+    },
+    "C-06247": {
+     "place": "料市",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-06559": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": "C-06022"
+    },
+    "C-06703": {
+     "place": "巡边站",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-06775": {
+     "place": "机房",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-06776": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-06871": {
+     "place": "料市",
+     "act": "move",
+     "label": "做工",
+     "with": ""
+    },
+    "C-06874": {
+     "place": "机房",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-06876": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-07149": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-07183": {
+     "place": "街口",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-07222": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-07428": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-07452": {
+     "place": "街口",
+     "act": "move",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-07495": {
+     "place": "料市",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-07807": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "做工",
+     "with": ""
+    },
+    "C-07951": {
+     "place": "料市",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-08119": {
+     "place": "门口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-08420": {
+     "place": "门口",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08430": {
+     "place": "料市",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08431": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-08447": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-08743": {
+     "place": "巡边站",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-08931": {
+     "place": "料市",
+     "act": "move",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-09005": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-09011": {
+     "place": "街口",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-09055": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-09069": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-09078": {
+     "place": "机房",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09130": {
+     "place": "料市",
+     "act": "move",
+     "label": "查线",
+     "with": ""
+    },
+    "C-09367": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-09679": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09681": {
+     "place": "街口",
+     "act": "move",
+     "label": "出摊",
+     "with": "C-02693"
+    }
+   }
+  },
+  {
+   "turn": 6,
+   "agents": {
+    "C-00001": {
+     "place": "料市",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-00319": {
+     "place": "街口",
+     "act": "move",
+     "label": "查线",
+     "with": ""
+    },
+    "C-00377": {
+     "place": "料市",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-00379": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-00467": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-00612": {
+     "place": "街口",
+     "act": "move",
+     "label": "回站",
+     "with": ""
+    },
+    "C-00631": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-00762": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-00837": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-00902": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "开火",
+     "with": ""
+    },
+    "C-00943": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-01038": {
+     "place": "街口",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-01179": {
+     "place": "灶间",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01255": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-01256": {
+     "place": "机房",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01268": {
+     "place": "机房",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-01567": {
+     "place": "自家摊",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-01845": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01873": {
+     "place": "摊位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-01879": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-02000": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-02191": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "修件",
+     "with": ""
+    },
+    "C-02217": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02218": {
+     "place": "料市",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-02503": {
+     "place": "机房",
+     "act": "move",
+     "label": "查线",
+     "with": ""
+    },
+    "C-02532": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-02554": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-02583": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02693": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-02698": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02815": {
+     "place": "机房",
+     "act": "move",
+     "label": "查线",
+     "with": ""
+    },
+    "C-02835": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-02841": {
+     "place": "街口",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-02912": {
+     "place": "铺面",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03044": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-03127": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03182": {
+     "place": "料市",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-03439": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03457": {
+     "place": "料市",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-03677": {
+     "place": "料市",
+     "act": "move",
+     "label": "修件",
+     "with": ""
+    },
+    "C-03729": {
+     "place": "灶间",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-03751": {
+     "place": "巡边站",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-03851": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-03982": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-04063": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-04115": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "下料",
+     "with": ""
+    },
+    "C-04120": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-04129": {
+     "place": "街口",
+     "act": "move",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-04133": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-04278": {
+     "place": "街口",
+     "act": "move",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-04355": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-04375": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04687": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-04999": {
+     "place": "自家摊",
+     "act": "seek",
+     "label": "找",
+     "with": "C-07951"
+    },
+    "C-05186": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-05311": {
+     "place": "巡边站",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-05550": {
+     "place": "料市",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-05590": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-05621": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-05623": {
+     "place": "机房",
+     "act": "move",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-05935": {
+     "place": "广场",
+     "act": "rest",
+     "label": "歇脚",
+     "with": ""
+    },
+    "C-06022": {
+     "place": "料市",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-06247": {
+     "place": "料市",
+     "act": "move",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-06559": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-06703": {
+     "place": "街口",
+     "act": "move",
+     "label": "做工",
+     "with": ""
+    },
+    "C-06775": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-06776": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-06871": {
+     "place": "工作间",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-06874": {
+     "place": "街口",
+     "act": "move",
+     "label": "修件",
+     "with": ""
+    },
+    "C-06876": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "核数",
+     "with": ""
+    },
+    "C-07149": {
+     "place": "机房",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-07183": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-07222": {
+     "place": "机房",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-07428": {
+     "place": "门口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-07452": {
+     "place": "料市",
+     "act": "move",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-07495": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-07807": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-07951": {
+     "place": "自家摊",
+     "act": "seek",
+     "label": "找",
+     "with": "C-04999"
+    },
+    "C-08119": {
+     "place": "料市",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08420": {
+     "place": "料市",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-08430": {
+     "place": "门口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08431": {
+     "place": "机房",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08447": {
+     "place": "料市",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08743": {
+     "place": "机房",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-08931": {
+     "place": "料市",
+     "act": "move",
+     "label": "补货",
+     "with": ""
+    },
+    "C-09005": {
+     "place": "茶铺",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09011": {
+     "place": "料市",
+     "act": "move",
+     "label": "清点",
+     "with": ""
+    },
+    "C-09055": {
+     "place": "工位",
+     "act": "seek",
+     "label": "找",
+     "with": ""
+    },
+    "C-09069": {
+     "place": "灶间",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09078": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09130": {
+     "place": "料市",
+     "act": "move",
+     "label": "查线",
+     "with": ""
+    },
+    "C-09367": {
+     "place": "街口",
+     "act": "move",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09679": {
+     "place": "街口",
+     "act": "move",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09681": {
+     "place": "料市",
+     "act": "move",
+     "label": "看摊",
+     "with": ""
+    }
+   }
+  },
+  {
+   "turn": 7,
+   "agents": {
+    "C-00001": {
+     "place": "街口",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-00319": {
+     "place": "工作间",
+     "act": "work",
+     "label": "查线",
+     "with": ""
+    },
+    "C-00377": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-00379": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-00467": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-00612": {
+     "place": "工作间",
+     "act": "work",
+     "label": "查线",
+     "with": "C-00631"
+    },
+    "C-00631": {
+     "place": "工作间",
+     "act": "work",
+     "label": "看摊",
+     "with": "C-00612"
+    },
+    "C-00762": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-00837": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-00902": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收灶",
+     "with": ""
+    },
+    "C-00943": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-01038": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-01179": {
+     "place": "铺面",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-01255": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-01256": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-01268": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-01567": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-01845": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-01873": {
+     "place": "摊位",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-01879": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02000": {
+     "place": "摊位",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-02191": {
+     "place": "工位",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-02217": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-02218": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "做工",
+     "with": ""
+    },
+    "C-02503": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-02532": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-02554": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02583": {
+     "place": "摊位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02693": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-02698": {
+     "place": "摊位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-02815": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-02835": {
+     "place": "工位",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-02841": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-02912": {
+     "place": "铺面",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03044": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-03127": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03182": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-03439": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-03457": {
+     "place": "工作间",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-03677": {
+     "place": "工位",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-03729": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-03751": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-03851": {
+     "place": "工作间",
+     "act": "work",
+     "label": "查线",
+     "with": ""
+    },
+    "C-03982": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04063": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-04115": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-04120": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04129": {
+     "place": "工作间",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-04133": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "看摊",
+     "with": "C-05311"
+    },
+    "C-04278": {
+     "place": "铺面",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-04355": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-04375": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-04687": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-04999": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "记账",
+     "with": ""
+    },
+    "C-05186": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "巡边",
+     "with": ""
+    },
+    "C-05311": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": "C-04133"
+    },
+    "C-05550": {
+     "place": "工作间",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-05590": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": "C-06247"
+    },
+    "C-05621": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-05623": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-05935": {
+     "place": "铺面",
+     "act": "work",
+     "label": "修件",
+     "with": "C-09679"
+    },
+    "C-06022": {
+     "place": "工作间",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-06247": {
+     "place": "工位",
+     "act": "work",
+     "label": "补货",
+     "with": "C-05590"
+    },
+    "C-06559": {
+     "place": "工作间",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-06703": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "下料",
+     "with": ""
+    },
+    "C-06775": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "出摊",
+     "with": ""
+    },
+    "C-06776": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-06871": {
+     "place": "工作间",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-06874": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-06876": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "核数",
+     "with": ""
+    },
+    "C-07149": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-07183": {
+     "place": "摊位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-07222": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-07428": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-07452": {
+     "place": "工作间",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    },
+    "C-07495": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-07807": {
+     "place": "工位",
+     "act": "work",
+     "label": "修件",
+     "with": ""
+    },
+    "C-07951": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08119": {
+     "place": "工位",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-08420": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-08430": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-08431": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08447": {
+     "place": "工位",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08743": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-08931": {
+     "place": "工位",
+     "act": "work",
+     "label": "看摊",
+     "with": ""
+    },
+    "C-09005": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "干活",
+     "with": ""
+    },
+    "C-09011": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "清点",
+     "with": ""
+    },
+    "C-09055": {
+     "place": "工位",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09069": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09078": {
+     "place": "巡边站",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09130": {
+     "place": "工位",
+     "act": "work",
+     "label": "回站",
+     "with": ""
+    },
+    "C-09367": {
+     "place": "自家摊",
+     "act": "work",
+     "label": "收尾",
+     "with": ""
+    },
+    "C-09679": {
+     "place": "铺面",
+     "act": "work",
+     "label": "收尾",
+     "with": "C-05935"
+    },
+    "C-09681": {
+     "place": "工作间",
+     "act": "work",
+     "label": "补货",
+     "with": ""
+    }
+   }
+  }
+ ],
+ "events": [
+  {
+   "turn": 0,
+   "type": "MEET",
+   "a": "C-03439",
+   "b": "C-00837",
+   "place": "巡边站",
+   "mates": true
+  },
+  {
+   "turn": 0,
+   "type": "MEET",
+   "a": "C-04687",
+   "b": "C-09130",
+   "place": "工位",
+   "mates": true
+  },
+  {
+   "turn": 0,
+   "type": "MEET",
+   "a": "C-07452",
+   "b": "C-04129",
+   "place": "工作间",
+   "mates": false
+  },
+  {
+   "turn": 0,
+   "type": "MEET",
+   "a": "C-07183",
+   "b": "C-01873",
+   "place": "摊位",
+   "mates": true
+  },
+  {
+   "turn": 0,
+   "type": "MEET",
+   "a": "C-01179",
+   "b": "C-05935",
+   "place": "铺面",
+   "mates": true
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-00001",
+   "place": "街口",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-00319",
+   "place": "工作间",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-00377",
+   "place": "自家摊",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-00379",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-00467",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-00612",
+   "place": "工作间",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-00631",
+   "place": "工作间",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-00762",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-00902",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收灶"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-00943",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-01038",
+   "place": "巡边站",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-01255",
+   "place": "自家摊",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-01256",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-01268",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-01567",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-01845",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-01879",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02000",
+   "place": "摊位",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02191",
+   "place": "工位",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02217",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02218",
+   "place": "自家摊",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02503",
+   "place": "巡边站",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02532",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02554",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02583",
+   "place": "摊位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02693",
+   "place": "自家摊",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02698",
+   "place": "摊位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02815",
+   "place": "巡边站",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02835",
+   "place": "工位",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02841",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-02912",
+   "place": "铺面",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-03044",
+   "place": "巡边站",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-03127",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-03182",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-03457",
+   "place": "工作间",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-03677",
+   "place": "工位",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-03729",
+   "place": "铺面",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-03751",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-03851",
+   "place": "工作间",
+   "act": "work",
+   "label": "查线"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-03982",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-04063",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-04115",
+   "place": "巡边站",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-04120",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-04133",
+   "place": "巡边站",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-04278",
+   "place": "铺面",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-04355",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-04375",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-04999",
+   "place": "自家摊",
+   "act": "work",
+   "label": "记账"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-05186",
+   "place": "巡边站",
+   "act": "work",
+   "label": "查线"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-05311",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-05550",
+   "place": "工作间",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-05590",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-05621",
+   "place": "铺面",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-05623",
+   "place": "巡边站",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-06022",
+   "place": "工作间",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-06247",
+   "place": "工位",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-06559",
+   "place": "工作间",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-06703",
+   "place": "巡边站",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-06775",
+   "place": "巡边站",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-06776",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-06871",
+   "place": "工作间",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-06874",
+   "place": "巡边站",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-06876",
+   "place": "巡边站",
+   "act": "work",
+   "label": "对账"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-07149",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-07222",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-07428",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-07495",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-07807",
+   "place": "工位",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-07951",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-08119",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-08420",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-08430",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-08431",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-08447",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-08743",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-08931",
+   "place": "工位",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-09005",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-09011",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-09055",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-09069",
+   "place": "铺面",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-09078",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-09367",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-09679",
+   "place": "铺面",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 0,
+   "type": "ACT",
+   "id": "C-09681",
+   "place": "工作间",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 1,
+   "type": "MEET",
+   "a": "C-02835",
+   "b": "C-08119",
+   "place": "广场",
+   "mates": true
+  },
+  {
+   "turn": 1,
+   "type": "MEET",
+   "a": "C-07149",
+   "b": "C-01179",
+   "place": "街口",
+   "mates": false
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-00001",
+   "place": "料市",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-00319",
+   "place": "料市",
+   "act": "move",
+   "label": "巡边"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-00377",
+   "place": "街口",
+   "act": "move",
+   "label": "做工"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-00379",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-00467",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-00612",
+   "place": "茶铺",
+   "act": "move",
+   "label": "巡边"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-00631",
+   "place": "工作间",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-00762",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-00837",
+   "place": "巡边站",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-00902",
+   "place": "机房",
+   "act": "move",
+   "label": "备料"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-00943",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-01038",
+   "place": "街口",
+   "act": "move",
+   "label": "修件"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-01255",
+   "place": "街口",
+   "act": "move",
+   "label": "出摊"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-01256",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-01268",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-01567",
+   "place": "料市",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-01845",
+   "place": "机房",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-01873",
+   "place": "摊位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-01879",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02000",
+   "place": "街口",
+   "act": "move",
+   "label": "查线"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02191",
+   "place": "门口",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02217",
+   "place": "料市",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02218",
+   "place": "料市",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02503",
+   "place": "茶铺",
+   "act": "move",
+   "label": "巡边"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02532",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02554",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02583",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02693",
+   "place": "茶铺",
+   "act": "move",
+   "label": "看摊"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02698",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02815",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02841",
+   "place": "机房",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-02912",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-03044",
+   "place": "机房",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-03127",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-03182",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-03439",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-03457",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-03677",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-03729",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-03751",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-03851",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-03982",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-04063",
+   "place": "门口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-04115",
+   "place": "茶铺",
+   "act": "move",
+   "label": "修件"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-04120",
+   "place": "料市",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-04129",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-04133",
+   "place": "茶铺",
+   "act": "move",
+   "label": "出摊"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-04278",
+   "place": "茶铺",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-04355",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-04375",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-04687",
+   "place": "门口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-04999",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-05186",
+   "place": "街口",
+   "act": "move",
+   "label": "回站"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-05311",
+   "place": "机房",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-05550",
+   "place": "工作间",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-05590",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-05621",
+   "place": "灶间",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-05623",
+   "place": "机房",
+   "act": "move",
+   "label": "查线"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-05935",
+   "place": "街口",
+   "act": "move",
+   "label": "做工"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-06022",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-06247",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-06559",
+   "place": "工作间",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-06703",
+   "place": "茶铺",
+   "act": "move",
+   "label": "修件"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-06775",
+   "place": "机房",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-06776",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-06871",
+   "place": "工作间",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-06874",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-06876",
+   "place": "街口",
+   "act": "move",
+   "label": "记账"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-07183",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-07222",
+   "place": "机房",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-07428",
+   "place": "门口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-07452",
+   "place": "工作间",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-07495",
+   "place": "自家摊",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-07807",
+   "place": "料市",
+   "act": "move",
+   "label": "修件"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-07951",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-08420",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-08430",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-08431",
+   "place": "机房",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-08447",
+   "place": "料市",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-08743",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-08931",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-09005",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-09011",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-09055",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-09069",
+   "place": "灶间",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-09078",
+   "place": "机房",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-09130",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-09367",
+   "place": "料市",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-09679",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 1,
+   "type": "ACT",
+   "id": "C-09681",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "MEET",
+   "a": "C-05621",
+   "b": "C-05935",
+   "place": "广场",
+   "mates": true
+  },
+  {
+   "turn": 2,
+   "type": "MEET",
+   "a": "C-09681",
+   "b": "C-05590",
+   "place": "料市",
+   "mates": false
+  },
+  {
+   "turn": 2,
+   "type": "MEET",
+   "a": "C-02503",
+   "b": "C-09367",
+   "place": "茶铺",
+   "mates": false
+  },
+  {
+   "turn": 2,
+   "type": "MEET",
+   "a": "C-04278",
+   "b": "C-00837",
+   "place": "街口",
+   "mates": false
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-00001",
+   "place": "家门口",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-00319",
+   "place": "料市",
+   "act": "move",
+   "label": "回站"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-00377",
+   "place": "料市",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-00379",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-00467",
+   "place": "街口",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-00612",
+   "place": "料市",
+   "act": "move",
+   "label": "巡边"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-00631",
+   "place": "料市",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-00762",
+   "place": "料市",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-00902",
+   "place": "街口",
+   "act": "move",
+   "label": "收灶"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-00943",
+   "place": "门口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-01038",
+   "place": "茶铺",
+   "act": "move",
+   "label": "做工"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-01179",
+   "place": "灶间",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-01255",
+   "place": "自家摊",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-01256",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-01268",
+   "place": "机房",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-01567",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-01845",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-01873",
+   "place": "街口",
+   "act": "move",
+   "label": "看摊"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-01879",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02000",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02191",
+   "place": "茶铺",
+   "act": "move",
+   "label": "修件"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02217",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02218",
+   "place": "自家摊",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02532",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02554",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02583",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02693",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02698",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02815",
+   "place": "茶铺",
+   "act": "move",
+   "label": "巡边"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02835",
+   "place": "茶铺",
+   "act": "move",
+   "label": "出摊"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02841",
+   "place": "机房",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-02912",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-03044",
+   "place": "街口",
+   "act": "move",
+   "label": "出摊"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-03127",
+   "place": "自家摊",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-03182",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-03439",
+   "place": "巡边站",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-03457",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-03677",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-03729",
+   "place": "灶间",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-03751",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-03851",
+   "place": "料市",
+   "act": "move",
+   "label": "查线"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-03982",
+   "place": "机房",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-04063",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-04115",
+   "place": "街口",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-04120",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-04129",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-04133",
+   "place": "机房",
+   "act": "move",
+   "label": "看摊"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-04355",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-04375",
+   "place": "巡边站",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-04687",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-04999",
+   "place": "街口",
+   "act": "move",
+   "label": "对账"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-05186",
+   "place": "机房",
+   "act": "move",
+   "label": "查线"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-05311",
+   "place": "巡边站",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-05550",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-05623",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-06022",
+   "place": "料市",
+   "act": "move",
+   "label": "看摊"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-06247",
+   "place": "门口",
+   "act": "move",
+   "label": "看摊"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-06559",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-06703",
+   "place": "茶铺",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-06775",
+   "place": "街口",
+   "act": "move",
+   "label": "看摊"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-06776",
+   "place": "机房",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-06871",
+   "place": "料市",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-06874",
+   "place": "机房",
+   "act": "move",
+   "label": "修件"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-06876",
+   "place": "机房",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-07149",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-07183",
+   "place": "码头",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-07222",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-07428",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-07452",
+   "place": "茶铺",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-07495",
+   "place": "料市",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-07807",
+   "place": "茶铺",
+   "act": "move",
+   "label": "修件"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-07951",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-08119",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-08420",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-08430",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-08431",
+   "place": "巡边站",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-08447",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-08743",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-08931",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-09005",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-09011",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-09055",
+   "place": "料市",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-09069",
+   "place": "灶间",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-09078",
+   "place": "机房",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-09130",
+   "place": "茶铺",
+   "act": "move",
+   "label": "回站"
+  },
+  {
+   "turn": 2,
+   "type": "ACT",
+   "id": "C-09679",
+   "place": "灶间",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "MEET",
+   "a": "C-04375",
+   "b": "C-08743",
+   "place": "巡边站",
+   "mates": false
+  },
+  {
+   "turn": 3,
+   "type": "MEET",
+   "a": "C-07149",
+   "b": "C-08431",
+   "place": "巡边站",
+   "mates": true
+  },
+  {
+   "turn": 3,
+   "type": "MEET",
+   "a": "C-05550",
+   "b": "C-00631",
+   "place": "工作间",
+   "mates": true
+  },
+  {
+   "turn": 3,
+   "type": "MEET",
+   "a": "C-00319",
+   "b": "C-09681",
+   "place": "工作间",
+   "mates": true
+  },
+  {
+   "turn": 3,
+   "type": "MEET",
+   "a": "C-02583",
+   "b": "C-07183",
+   "place": "摊位",
+   "mates": true
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-00001",
+   "place": "街口",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-00377",
+   "place": "自家摊",
+   "act": "work",
+   "label": "做工"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-00379",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-00467",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-00612",
+   "place": "工作间",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-00762",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-00837",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-00902",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收灶"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-00943",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-01038",
+   "place": "巡边站",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-01179",
+   "place": "铺面",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-01255",
+   "place": "自家摊",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-01256",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-01268",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-01567",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-01845",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-01873",
+   "place": "摊位",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-01879",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02000",
+   "place": "摊位",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02191",
+   "place": "工位",
+   "act": "work",
+   "label": "做工"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02217",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02218",
+   "place": "自家摊",
+   "act": "work",
+   "label": "做工"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02503",
+   "place": "巡边站",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02532",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02554",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02693",
+   "place": "自家摊",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02698",
+   "place": "摊位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02815",
+   "place": "巡边站",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02835",
+   "place": "工位",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02841",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-02912",
+   "place": "铺面",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-03044",
+   "place": "巡边站",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-03127",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-03182",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-03439",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-03457",
+   "place": "工作间",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-03677",
+   "place": "工位",
+   "act": "work",
+   "label": "做工"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-03729",
+   "place": "铺面",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-03751",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-03851",
+   "place": "工作间",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-03982",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-04063",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-04115",
+   "place": "巡边站",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-04120",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-04129",
+   "place": "工作间",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-04133",
+   "place": "巡边站",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-04278",
+   "place": "铺面",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-04355",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-04687",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-04999",
+   "place": "自家摊",
+   "act": "work",
+   "label": "对账"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-05186",
+   "place": "巡边站",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-05311",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-05590",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-05621",
+   "place": "铺面",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-05623",
+   "place": "巡边站",
+   "act": "work",
+   "label": "查线"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-05935",
+   "place": "铺面",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-06022",
+   "place": "工作间",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-06247",
+   "place": "工位",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-06559",
+   "place": "工作间",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-06703",
+   "place": "巡边站",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-06775",
+   "place": "巡边站",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-06776",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-06871",
+   "place": "工作间",
+   "act": "work",
+   "label": "做工"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-06874",
+   "place": "巡边站",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-06876",
+   "place": "巡边站",
+   "act": "work",
+   "label": "记账"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-07222",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-07428",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-07452",
+   "place": "工作间",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-07495",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-07807",
+   "place": "工位",
+   "act": "work",
+   "label": "做工"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-07951",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-08119",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-08420",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-08430",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-08447",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-08931",
+   "place": "工位",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-09005",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-09011",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-09055",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-09069",
+   "place": "铺面",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-09078",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-09130",
+   "place": "工位",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-09367",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 3,
+   "type": "ACT",
+   "id": "C-09679",
+   "place": "铺面",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "MEET",
+   "a": "C-01268",
+   "b": "C-01038",
+   "place": "巡边站",
+   "mates": false
+  },
+  {
+   "turn": 4,
+   "type": "MEET",
+   "a": "C-02815",
+   "b": "C-07149",
+   "place": "巡边站",
+   "mates": false
+  },
+  {
+   "turn": 4,
+   "type": "MEET",
+   "a": "C-07183",
+   "b": "C-02698",
+   "place": "摊位",
+   "mates": true
+  },
+  {
+   "turn": 4,
+   "type": "MEET",
+   "a": "C-03729",
+   "b": "C-09679",
+   "place": "铺面",
+   "mates": true
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-00001",
+   "place": "街口",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-00319",
+   "place": "工作间",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-00377",
+   "place": "自家摊",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-00379",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-00467",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-00612",
+   "place": "工作间",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-00631",
+   "place": "工作间",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-00762",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-00837",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-00902",
+   "place": "巡边站",
+   "act": "work",
+   "label": "开火"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-00943",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-01179",
+   "place": "铺面",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-01255",
+   "place": "自家摊",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-01256",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-01567",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-01845",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-01873",
+   "place": "摊位",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-01879",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02000",
+   "place": "摊位",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02191",
+   "place": "工位",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02217",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02218",
+   "place": "自家摊",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02503",
+   "place": "巡边站",
+   "act": "work",
+   "label": "查线"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02532",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02554",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02583",
+   "place": "摊位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02693",
+   "place": "自家摊",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02835",
+   "place": "工位",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02841",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-02912",
+   "place": "铺面",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-03044",
+   "place": "巡边站",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-03127",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-03182",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-03439",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-03457",
+   "place": "工作间",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-03677",
+   "place": "工位",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-03751",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-03851",
+   "place": "工作间",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-03982",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-04063",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-04115",
+   "place": "巡边站",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-04120",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-04129",
+   "place": "工作间",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-04133",
+   "place": "巡边站",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-04278",
+   "place": "铺面",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-04355",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-04375",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-04687",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-04999",
+   "place": "自家摊",
+   "act": "work",
+   "label": "对账"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-05186",
+   "place": "巡边站",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-05311",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-05550",
+   "place": "工作间",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-05590",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-05621",
+   "place": "铺面",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-05623",
+   "place": "巡边站",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-05935",
+   "place": "铺面",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-06022",
+   "place": "工作间",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-06247",
+   "place": "工位",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-06559",
+   "place": "工作间",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-06703",
+   "place": "巡边站",
+   "act": "work",
+   "label": "做工"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-06775",
+   "place": "巡边站",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-06776",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-06871",
+   "place": "工作间",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-06874",
+   "place": "巡边站",
+   "act": "work",
+   "label": "做工"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-06876",
+   "place": "巡边站",
+   "act": "work",
+   "label": "对账"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-07222",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-07428",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-07452",
+   "place": "工作间",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-07495",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-07807",
+   "place": "工位",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-07951",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-08119",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-08420",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-08430",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-08431",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-08447",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-08743",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-08931",
+   "place": "工位",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-09005",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-09011",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-09055",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-09069",
+   "place": "铺面",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-09078",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-09130",
+   "place": "工位",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-09367",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 4,
+   "type": "ACT",
+   "id": "C-09681",
+   "place": "工作间",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 5,
+   "type": "MEET",
+   "a": "C-00631",
+   "b": "C-00612",
+   "place": "工作间",
+   "mates": true
+  },
+  {
+   "turn": 5,
+   "type": "MEET",
+   "a": "C-06559",
+   "b": "C-06022",
+   "place": "茶铺",
+   "mates": true
+  },
+  {
+   "turn": 5,
+   "type": "MEET",
+   "a": "C-09681",
+   "b": "C-02693",
+   "place": "街口",
+   "mates": false
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-00001",
+   "place": "料市",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-00319",
+   "place": "茶铺",
+   "act": "move",
+   "label": "巡边"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-00377",
+   "place": "街口",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-00379",
+   "place": "门口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-00467",
+   "place": "料市",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-00762",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-00837",
+   "place": "机房",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-00902",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-00943",
+   "place": "门口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-01038",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-01179",
+   "place": "铺面",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-01255",
+   "place": "料市",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-01256",
+   "place": "机房",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-01268",
+   "place": "机房",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-01567",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-01845",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-01873",
+   "place": "摊位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-01879",
+   "place": "料市",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02000",
+   "place": "茶铺",
+   "act": "move",
+   "label": "回站"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02191",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02217",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02218",
+   "place": "自家摊",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02503",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02532",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02554",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02583",
+   "place": "码头",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02698",
+   "place": "码头",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02815",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02835",
+   "place": "料市",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02841",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-02912",
+   "place": "铺面",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-03044",
+   "place": "机房",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-03127",
+   "place": "料市",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-03182",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-03439",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-03457",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-03677",
+   "place": "料市",
+   "act": "move",
+   "label": "做工"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-03729",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-03751",
+   "place": "巡边站",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-03851",
+   "place": "茶铺",
+   "act": "move",
+   "label": "回站"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-03982",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-04063",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-04115",
+   "place": "街口",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-04120",
+   "place": "门口",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-04129",
+   "place": "料市",
+   "act": "move",
+   "label": "查线"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-04133",
+   "place": "茶铺",
+   "act": "move",
+   "label": "出摊"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-04278",
+   "place": "茶铺",
+   "act": "move",
+   "label": "出摊"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-04355",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-04375",
+   "place": "机房",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-04687",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-04999",
+   "place": "茶铺",
+   "act": "move",
+   "label": "核数"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-05186",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-05311",
+   "place": "机房",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-05550",
+   "place": "街口",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-05590",
+   "place": "门口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-05621",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-05623",
+   "place": "茶铺",
+   "act": "move",
+   "label": "查线"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-05935",
+   "place": "街口",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-06247",
+   "place": "料市",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-06703",
+   "place": "巡边站",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-06775",
+   "place": "机房",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-06776",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-06871",
+   "place": "料市",
+   "act": "move",
+   "label": "做工"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-06874",
+   "place": "机房",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-06876",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-07149",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-07183",
+   "place": "街口",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-07222",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-07428",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-07452",
+   "place": "街口",
+   "act": "move",
+   "label": "出摊"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-07495",
+   "place": "料市",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-07807",
+   "place": "茶铺",
+   "act": "move",
+   "label": "做工"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-07951",
+   "place": "料市",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-08119",
+   "place": "门口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-08420",
+   "place": "门口",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-08430",
+   "place": "料市",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-08431",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-08447",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-08743",
+   "place": "巡边站",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-08931",
+   "place": "料市",
+   "act": "move",
+   "label": "看摊"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-09005",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-09011",
+   "place": "街口",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-09055",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-09069",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-09078",
+   "place": "机房",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-09130",
+   "place": "料市",
+   "act": "move",
+   "label": "查线"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-09367",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 5,
+   "type": "ACT",
+   "id": "C-09679",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "MEET",
+   "a": "C-07951",
+   "b": "C-04999",
+   "place": "自家摊",
+   "mates": true
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-00001",
+   "place": "料市",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-00319",
+   "place": "街口",
+   "act": "move",
+   "label": "查线"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-00377",
+   "place": "料市",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-00379",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-00467",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-00612",
+   "place": "街口",
+   "act": "move",
+   "label": "回站"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-00631",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-00762",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-00837",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-00902",
+   "place": "茶铺",
+   "act": "move",
+   "label": "开火"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-00943",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-01038",
+   "place": "街口",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-01179",
+   "place": "灶间",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-01255",
+   "place": "茶铺",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-01256",
+   "place": "机房",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-01268",
+   "place": "机房",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-01567",
+   "place": "自家摊",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-01845",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-01873",
+   "place": "摊位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-01879",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02000",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02191",
+   "place": "茶铺",
+   "act": "move",
+   "label": "修件"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02217",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02218",
+   "place": "料市",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02503",
+   "place": "机房",
+   "act": "move",
+   "label": "查线"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02532",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02554",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02583",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02693",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02698",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02815",
+   "place": "机房",
+   "act": "move",
+   "label": "查线"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02835",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02841",
+   "place": "街口",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-02912",
+   "place": "铺面",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-03044",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-03127",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-03182",
+   "place": "料市",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-03439",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-03457",
+   "place": "料市",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-03677",
+   "place": "料市",
+   "act": "move",
+   "label": "修件"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-03729",
+   "place": "灶间",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-03751",
+   "place": "巡边站",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-03851",
+   "place": "茶铺",
+   "act": "move",
+   "label": "巡边"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-03982",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-04063",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-04115",
+   "place": "茶铺",
+   "act": "move",
+   "label": "下料"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-04120",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-04129",
+   "place": "街口",
+   "act": "move",
+   "label": "巡边"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-04133",
+   "place": "茶铺",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-04278",
+   "place": "街口",
+   "act": "move",
+   "label": "看摊"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-04355",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-04375",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-04687",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-05186",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-05311",
+   "place": "巡边站",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-05550",
+   "place": "料市",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-05590",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-05621",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-05623",
+   "place": "机房",
+   "act": "move",
+   "label": "巡边"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-05935",
+   "place": "广场",
+   "act": "rest",
+   "label": "歇脚"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-06022",
+   "place": "料市",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-06247",
+   "place": "料市",
+   "act": "move",
+   "label": "出摊"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-06559",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-06703",
+   "place": "街口",
+   "act": "move",
+   "label": "做工"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-06775",
+   "place": "茶铺",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-06776",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-06871",
+   "place": "工作间",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-06874",
+   "place": "街口",
+   "act": "move",
+   "label": "修件"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-06876",
+   "place": "茶铺",
+   "act": "move",
+   "label": "核数"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-07149",
+   "place": "机房",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-07183",
+   "place": "茶铺",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-07222",
+   "place": "机房",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-07428",
+   "place": "门口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-07452",
+   "place": "料市",
+   "act": "move",
+   "label": "出摊"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-07495",
+   "place": "茶铺",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-07807",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-08119",
+   "place": "料市",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-08420",
+   "place": "料市",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-08430",
+   "place": "门口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-08431",
+   "place": "机房",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-08447",
+   "place": "料市",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-08743",
+   "place": "机房",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-08931",
+   "place": "料市",
+   "act": "move",
+   "label": "补货"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-09005",
+   "place": "茶铺",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-09011",
+   "place": "料市",
+   "act": "move",
+   "label": "清点"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-09055",
+   "place": "工位",
+   "act": "seek",
+   "label": "找"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-09069",
+   "place": "灶间",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-09078",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-09130",
+   "place": "料市",
+   "act": "move",
+   "label": "查线"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-09367",
+   "place": "街口",
+   "act": "move",
+   "label": "收尾"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-09679",
+   "place": "街口",
+   "act": "move",
+   "label": "干活"
+  },
+  {
+   "turn": 6,
+   "type": "ACT",
+   "id": "C-09681",
+   "place": "料市",
+   "act": "move",
+   "label": "看摊"
+  },
+  {
+   "turn": 7,
+   "type": "MEET",
+   "a": "C-04133",
+   "b": "C-05311",
+   "place": "巡边站",
+   "mates": true
+  },
+  {
+   "turn": 7,
+   "type": "MEET",
+   "a": "C-06247",
+   "b": "C-05590",
+   "place": "工位",
+   "mates": true
+  },
+  {
+   "turn": 7,
+   "type": "MEET",
+   "a": "C-00612",
+   "b": "C-00631",
+   "place": "工作间",
+   "mates": true
+  },
+  {
+   "turn": 7,
+   "type": "MEET",
+   "a": "C-09679",
+   "b": "C-05935",
+   "place": "铺面",
+   "mates": false
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-00001",
+   "place": "街口",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-00319",
+   "place": "工作间",
+   "act": "work",
+   "label": "查线"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-00377",
+   "place": "自家摊",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-00379",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-00467",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-00762",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-00837",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-00902",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收灶"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-00943",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-01038",
+   "place": "巡边站",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-01179",
+   "place": "铺面",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-01255",
+   "place": "自家摊",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-01256",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-01268",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-01567",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-01845",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-01873",
+   "place": "摊位",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-01879",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02000",
+   "place": "摊位",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02191",
+   "place": "工位",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02217",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02218",
+   "place": "自家摊",
+   "act": "work",
+   "label": "做工"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02503",
+   "place": "巡边站",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02532",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02554",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02583",
+   "place": "摊位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02693",
+   "place": "自家摊",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02698",
+   "place": "摊位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02815",
+   "place": "巡边站",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02835",
+   "place": "工位",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02841",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-02912",
+   "place": "铺面",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-03044",
+   "place": "巡边站",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-03127",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-03182",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-03439",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-03457",
+   "place": "工作间",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-03677",
+   "place": "工位",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-03729",
+   "place": "铺面",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-03751",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-03851",
+   "place": "工作间",
+   "act": "work",
+   "label": "查线"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-03982",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-04063",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-04115",
+   "place": "巡边站",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-04120",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-04129",
+   "place": "工作间",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-04278",
+   "place": "铺面",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-04355",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-04375",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-04687",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-04999",
+   "place": "自家摊",
+   "act": "work",
+   "label": "记账"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-05186",
+   "place": "巡边站",
+   "act": "work",
+   "label": "巡边"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-05550",
+   "place": "工作间",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-05621",
+   "place": "铺面",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-05623",
+   "place": "巡边站",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-06022",
+   "place": "工作间",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-06559",
+   "place": "工作间",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-06703",
+   "place": "巡边站",
+   "act": "work",
+   "label": "下料"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-06775",
+   "place": "巡边站",
+   "act": "work",
+   "label": "出摊"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-06776",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-06871",
+   "place": "工作间",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-06874",
+   "place": "巡边站",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-06876",
+   "place": "巡边站",
+   "act": "work",
+   "label": "核数"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-07149",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-07183",
+   "place": "摊位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-07222",
+   "place": "巡边站",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-07428",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-07452",
+   "place": "工作间",
+   "act": "work",
+   "label": "补货"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-07495",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-07807",
+   "place": "工位",
+   "act": "work",
+   "label": "修件"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-07951",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-08119",
+   "place": "工位",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-08420",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-08430",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-08431",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-08447",
+   "place": "工位",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-08743",
+   "place": "巡边站",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-08931",
+   "place": "工位",
+   "act": "work",
+   "label": "看摊"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-09005",
+   "place": "自家摊",
+   "act": "work",
+   "label": "干活"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-09011",
+   "place": "自家摊",
+   "act": "work",
+   "label": "清点"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-09055",
+   "place": "工位",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-09069",
+   "place": "铺面",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-09078",
+   "place": "巡边站",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-09130",
+   "place": "工位",
+   "act": "work",
+   "label": "回站"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-09367",
+   "place": "自家摊",
+   "act": "work",
+   "label": "收尾"
+  },
+  {
+   "turn": 7,
+   "type": "ACT",
+   "id": "C-09681",
+   "place": "工作间",
+   "act": "work",
+   "label": "补货"
+  }
+ ]
+}

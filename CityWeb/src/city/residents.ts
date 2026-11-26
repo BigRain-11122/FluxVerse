@@ -27,6 +27,9 @@ export interface ResidentAnchor {
   name: string;
   profession: string;
   ring: string;
+  /// 行为层（共用技术底座 v1）：当前地点（语义键）与本拍动作，用于街景卡与调试
+  place: string;
+  act: string;
   pos: THREE.Vector3;
 }
 
@@ -265,11 +268,24 @@ export function buildResidents(plan: CityPlan, data: CityData): ResidentsRig {
     const z = cz + Math.sin(ang) * rad;
 
     const { g, h } = buildFigure(r);
-    g.position.set(x, 0, z);
+    // 2026-11-26 共用技术底座 v1（cph4/city-foundation.md）：居民按 BigLife 行动闭环
+    // 给的 place 站位，不再随机撒在外环带。place 是语义键，本仓负责映射到坐标——
+    // 同区同地点的人聚到同一角度扇区，相遇才看得出"这两个人在一起"。
+    // 没有 place（旧数据/行为层未接）时保持原随机站位：零漂移，不拿占位坐标冒充。
+    let tx = x;
+    let tz = z;
+    if (r.place) {
+      const pa = ((h32(`${r.district ?? ""}|${r.place}`) % 7200) / 7200) * Math.PI * 2;
+      const rr = 82 + (h32(r.id) % 12);                    // 同地点错开半径，不重叠
+      const ja = (((h32(r.id + "|a") % 100) / 100) - 0.5) * 0.10;  // 扇区内小偏移
+      tx = cx + Math.cos(pa + ja) * rr;
+      tz = cz + Math.sin(pa + ja) * rr;
+    }
+    g.position.set(tx, 0, tz);
     // 朝向：**朝城区外**（2026-11-26 实锚：原先朝中心，而街景相机从外圈朝内拍
     // → 观众永远看到后脑勺，眼睛和胸前徽章全被挡住，"每个人都有自己的特征"
     // 等于白做）。朝外站着，正脸对镜头。
-    g.rotation.y = Math.atan2(x - cx, z - cz) + (h32(r.id) % 60) / 100 - 0.3;
+    g.rotation.y = Math.atan2(tx - cx, tz - cz) + (h32(r.id) % 60) / 100 - 0.3;
     root.add(g);
     figures.push(g);
     meshCount += g.children.length;
@@ -277,15 +293,16 @@ export function buildResidents(plan: CityPlan, data: CityData): ResidentsRig {
     const zoneHex = ZONE_COLOR[zone] ?? 0xffffff;
     const label = makeLabelSprite(
       `${r.name ?? r.id}`, `#${zoneHex.toString(16).padStart(6, "0")}`);
-    label.position.set(x, h + 0.72, z);
+    label.position.set(tx, h + 0.72, tz);
     root.add(label);
     labels.push(label);
 
-    byId.set(r.id, new THREE.Vector3(x, h * 0.75, z));
+    byId.set(r.id, new THREE.Vector3(tx, h * 0.75, tz));
     anchors.push({
       id: r.id, name: r.name ?? r.id,
       profession: r.profession ?? "", ring: r.ring ?? "",
-      pos: new THREE.Vector3(x, h * 0.5, z),
+      place: r.place ?? "", act: r.act_label ?? "",
+      pos: new THREE.Vector3(tx, h * 0.5, tz),
     });
   });
 

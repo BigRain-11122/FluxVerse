@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "updated_utc": "2026-11-26T15:10:00Z",
+  "constitution": "docs/multi-machine-lanes.md",
+  "lease_hours_default": 4,
+  "lanes": [
+    { "id": "A1", "domain": "tech", "title": "OSM stage-1 full pipeline (3808 bldgs -> quantized slices)", "fileScope": ["CityWeb/tools/osm-stage1-", "CityWeb/data/slices/"], "caps": ["python", "net"], "priority": 1, "status": "open", "claim": null },
+    { "id": "A2", "domain": "tech", "title": "Batch closeout (landmarks C2 + remaining offenders)", "fileScope": ["CityWeb/src/city/", "Batched.ts"], "caps": ["node", "tsc"], "priority": 1, "status": "claimed", "claim": { "machine": "bm-a", "host": "DASHENG", "lease_until_utc": "2026-11-26T19:00:00Z", "branch": "lane/A2" } },
+    { "id": "A3", "domain": "tech", "title": "Delivery size (pako slice compaction / build chain)", "fileScope": ["CityWeb/tools/build-static.mjs", "CityWeb/tools/slice-"], "caps": ["node"], "priority": 3, "status": "open", "claim": null },
+    { "id": "A4", "domain": "tech", "title": "Save system + PLAYER_ACTION event registration", "fileScope": ["CityWeb/src/core/"], "caps": ["node", "tsc"], "priority": 2, "status": "claimed", "claim": { "machine": "bm-a", "host": "DASHENG", "lease_until_utc": "2026-11-26T19:00:00Z", "branch": "lane/A4" } },
+    { "id": "B1", "domain": "build", "title": "Slice loader (realCity data source -> slice channel)", "fileScope": ["CityWeb/src/geo/sliceLoader.ts"], "caps": ["node", "tsc"], "priority": 2, "status": "open", "claim": null },
+    { "id": "B2", "domain": "build", "title": "Inner-ring street grid / road bands", "fileScope": ["CityWeb/src/city/streetGrid.ts"], "caps": ["node", "tsc"], "priority": 3, "status": "open", "claim": null },
+    { "id": "B3", "domain": "build", "title": "Enterable expansion (hubs -> 3 commercial blocks)", "fileScope": ["CityWeb/src/city/enterableExpansion.ts"], "caps": ["node", "tsc"], "priority": 4, "status": "open", "claim": null },
+    { "id": "C1", "domain": "art", "title": "Silicon shell material library (avatar/animal/building)", "fileScope": ["CityWeb/src/art/siliconShell.ts"], "caps": ["node", "tsc"], "priority": 2, "status": "open", "claim": null },
+    { "id": "C2", "domain": "art", "title": "Post-FX pro (SSAA / color grading)", "fileScope": ["CityWeb/src/render/postfxPro.ts"], "caps": ["node", "tsc", "chrome"], "priority": 4, "status": "open", "claim": null },
+    { "id": "C3", "domain": "art", "title": "Event particles (birth/alarm)", "fileScope": ["CityWeb/src/live/eventParticles.ts"], "caps": ["node", "tsc"], "priority": 3, "status": "open", "claim": null },
+    { "id": "C4", "domain": "art", "title": "UI theme (player/vocation/dialog skins)", "fileScope": ["CityWeb/src/ui/theme.ts"], "caps": ["node", "tsc"], "priority": 3, "status": "open", "claim": null },
+    { "id": "D1", "domain": "agents", "title": "Resident dialog corpus (32 seats)", "fileScope": ["CityWeb/src/agents/dialogCorpus.ts"], "caps": ["node"], "priority": 2, "status": "open", "claim": null },
+    { "id": "D2", "domain": "agents", "title": "Resident social graph (echoes -> graph)", "fileScope": ["CityWeb/src/agents/socialGraph.ts"], "caps": ["node", "tsc"], "priority": 3, "status": "open", "claim": null },
+    { "id": "D3", "domain": "agents", "title": "Animal/pet NPCs (procedural-animals reuse)", "fileScope": ["CityWeb/src/agents/animalNpcs.ts"], "caps": ["node", "gpu"], "priority": 4, "status": "open", "claim": null },
+    { "id": "E1", "domain": "player", "title": "Avatar creator UI (genome three-axis)", "fileScope": ["CityWeb/src/player/creator.ts"], "caps": ["node", "tsc"], "priority": 2, "status": "open", "claim": null },
+    { "id": "E2", "domain": "player", "title": "Life panel (lifeState -> HUD)", "fileScope": ["CityWeb/src/ui/lifePanel.ts"], "caps": ["node", "tsc"], "priority": 2, "status": "open", "claim": null },
+    { "id": "E4", "domain": "player", "title": "Vocation desk (four districts)", "fileScope": ["CityWeb/src/player/vocationDesk.ts"], "caps": ["node", "tsc"], "priority": 3, "status": "open", "claim": null },
+    { "id": "E5", "domain": "player", "title": "Transmute forms (dog/bird/robot body plans)", "fileScope": ["CityWeb/src/player/forms"], "caps": ["node", "gpu"], "priority": 4, "status": "open", "claim": null },
+    { "id": "F1", "domain": "gameplay", "title": "Warrant / prior-record state machine", "fileScope": ["CityWeb/src/gameplay/warrant.ts"], "caps": ["node", "tsc"], "priority": 3, "status": "open", "claim": null },
+    { "id": "F2", "domain": "gameplay", "title": "Quest system (anchored to real TASK events)", "fileScope": ["CityWeb/src/gameplay/quests.ts"], "caps": ["node", "tsc"], "priority": 4, "status": "open", "claim": null },
+    { "id": "F3", "domain": "gameplay", "title": "Crime-pursuit event chain", "fileScope": ["CityWeb/src/gameplay/pursuit.ts"], "caps": ["node", "tsc"], "priority": 4, "status": "open", "claim": null },
+    { "id": "G1", "domain": "ops", "title": "Lane board / claim / runner (this infra)", "fileScope": ["CityWeb/lane-board.json", "CityWeb/tools/lane-"], "caps": ["node"], "priority": 1, "status": "claimed", "claim": { "machine": "bm-a", "host": "DASHENG", "lease_until_utc": "2026-11-26T19:00:00Z", "branch": "lane/G1" } },
+    { "id": "G3", "domain": "ops", "title": "Cruise recording (headed real GPU)", "fileScope": ["CityWeb/tools/cityweb_cruise_record.py"], "caps": ["chrome", "gpu"], "priority": 3, "status": "open", "claim": null }
+  ],
+  "machines": [
+    { "id": "bm-a", "host": "DASHENG", "caps": ["node", "tsc", "python", "chrome", "gpu", "net"], "last_seen_utc": "2026-11-26T15:10:00Z", "repo_present": true, "role": "POOL-INTEG coordinator" },
+    { "id": "bm-b", "host": "CHUANJIABAO", "caps": ["node", "tsc"], "last_seen_utc": null, "repo_present": false, "role": "POOL-BUILD" },
+    { "id": "bm-c", "host": "XIAOGANGPAO", "caps": ["node", "tsc", "python", "gpu"], "last_seen_utc": null, "repo_present": false, "role": "POOL-ASSET" },
+    { "id": "bm-d", "host": "SUANLIDANAO", "caps": ["node", "python", "net"], "last_seen_utc": null, "repo_present": false, "role": "POOL-CPU" },
+    { "id": "bm-m", "host": "MACBOOK", "caps": ["node", "chrome"], "last_seen_utc": null, "repo_present": false, "role": "POOL-REVIEW" }
+  ]
+}

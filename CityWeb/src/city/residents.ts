@@ -254,6 +254,37 @@ export function buildResidents(plan: CityPlan, data: CityData): ResidentsRig {
   const labels: THREE.Sprite[] = [];
   let meshCount = 0;
 
+  // 行为层回放（共用技术底座 v1）：按 BigLife 的真实拍次把居民挪过去。
+  // 我们的规矩是「城里每个动画对应一次真实 AI 行为，禁装饰性走动」——所以没有
+  // agentTurns 就一动不动（零漂移），而不是自己编一段巡游。
+  const ids: string[] = [];
+  const dists: string[] = [];
+  residents.forEach((r) => {
+    ids.push(r.id);
+    dists.push(r.district ?? "");
+  });
+  type TurnAgent = { place?: string; act?: string; label?: string; with?: string };
+  const turns = (data as unknown as {
+    agentTurns?: { turn: number; agents: Record<string, TurnAgent> }[];
+  }).agentTurns ?? [];
+  const TURN_SECONDS = 14;   // 一拍 = 14 秒真实时间，8 拍约 2 分钟一轮
+  let clock = 0;
+  let curTurn = -1;
+  // 地点 -> 位置。同地点的人要聚在一起但不能叠在一起（实测 6 人挤在 0.4 米内），
+  // 所以每个居民在地点锚点周围按 id 取一个 2-7 米的固定偏移。
+  const placePos = (district: string, place: string, id: string): THREE.Vector3 => {
+    const zone = ZONE_OF_DISTRICT[district] ?? "media";
+    const spec = plan.districts.find((d) => d.id === zone);
+    const cx = spec ? spec.cx : 0;
+    const cz = spec ? spec.cz : 0;
+    const pa = ((h32(`${district}|${place}`) % 7200) / 7200) * Math.PI * 2;
+    const sa = ((h32(id + "|s") % 360) / 360) * Math.PI * 2;
+    const sr = 2 + (h32(id + "|r") % 50) / 10;
+    return new THREE.Vector3(
+      cx + Math.cos(pa) * 86 + Math.cos(sa) * sr, 0,
+      cz + Math.sin(pa) * 86 + Math.sin(sa) * sr);
+  };
+
   residents.forEach((r) => {
     const zone = ZONE_OF_DISTRICT[r.district ?? ""] ?? "media";
     const spec = plan.districts.find((d) => d.id === zone);
@@ -275,11 +306,9 @@ export function buildResidents(plan: CityPlan, data: CityData): ResidentsRig {
     let tx = x;
     let tz = z;
     if (r.place) {
-      const pa = ((h32(`${r.district ?? ""}|${r.place}`) % 7200) / 7200) * Math.PI * 2;
-      const rr = 82 + (h32(r.id) % 12);                    // 同地点错开半径，不重叠
-      const ja = (((h32(r.id + "|a") % 100) / 100) - 0.5) * 0.10;  // 扇区内小偏移
-      tx = cx + Math.cos(pa + ja) * rr;
-      tz = cz + Math.sin(pa + ja) * rr;
+      const v = placePos(r.district ?? "", r.place, r.id);
+      tx = v.x;
+      tz = v.z;
     }
     g.position.set(tx, 0, tz);
     // 朝向：**朝城区外**（2026-11-26 实锚：原先朝中心，而街景相机从外圈朝内拍
@@ -334,6 +363,10 @@ export function buildResidents(plan: CityPlan, data: CityData): ResidentsRig {
   (window as unknown as { __CITY_RESIDENTS__?: unknown }).__CITY_RESIDENTS__ = {
     figures: figures.length, meshes: meshCount, arcs: arcs.length,
     slots: residents.length,
+    // 只读采样口：给验收脚本隔拍比对用（证明按拍回放真的在动，不是装饰）
+    positions: () => figures.map((f) => [
+      Math.round(f.position.x * 10) / 10, Math.round(f.position.z * 10) / 10]),
+    turn: () => curTurn,
   };
 
   return {
@@ -349,6 +382,38 @@ export function buildResidents(plan: CityPlan, data: CityData): ResidentsRig {
         const m = ln.material as THREE.LineBasicMaterial;
         m.opacity = 0.18 + 0.26 * (0.5 + 0.5 * Math.sin(elapsed * 0.9 + i));
       });
+      // 按拍回放：只在这批真有 agentTurns 时才动（零漂移）
+      if (!turns.length) return;
+      clock += _dt;
+      const idx = Math.floor(clock / TURN_SECONDS) % turns.length;
+      const now = turns[idx]?.agents ?? {};
+      const k = Math.min(1, _dt * 1.6);   // 追赶系数：约 1 秒走到位，像走过去而不是瞬移
+      figures.forEach((f, i) => {
+        const a = now[ids[i]];
+        if (!a || !a.place) return;
+        const v = placePos(dists[i], a.place, ids[i]);
+        const dx = v.x - f.position.x;
+        const dz = v.z - f.position.z;
+        if (dx * dx + dz * dz > 0.04) {
+          f.position.x += dx * k;
+          f.position.z += dz * k;
+          // 走的时候朝行进方向；站住时朝城区外（原设计，正脸对镜头）
+          f.rotation.y = Math.atan2(dx, dz);
+        }
+        const lb = labels[i];
+        if (lb) {
+          lb.position.x = f.position.x;
+          lb.position.z = f.position.z;
+        }
+        const an = anchors[i];
+        if (an) {
+          an.pos.x = f.position.x;
+          an.pos.z = f.position.z;
+          an.place = a.place;
+          an.act = a.label ?? a.act ?? "";
+        }
+      });
+      if (idx !== curTurn) curTurn = idx;
     },
   };
 }

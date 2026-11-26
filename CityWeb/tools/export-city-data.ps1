@@ -91,6 +91,25 @@ if ($null -ne $bridge -and $null -ne $bridge.slots) {
     }
 }
 
+# 2026-11-26 行为层时间线（共用技术底座 v1）：BigLife 的行动闭环给的是**按拍的轨迹**，
+# 本仓只回放，不生成动作（自定规矩：城里每个动画必须对应一次真实 AI 行为，禁装饰性走动）。
+$agentTurns = @()
+$loopPath = Join-Path (Split-Path $FluxVerseRoot -Parent) 'FluxVerse\world-public\agent-loop.json'
+if (-not (Test-Path $loopPath)) { $loopPath = Join-Path $FluxVerseRoot 'world-public\agent-loop.json' }
+if (Test-Path $loopPath) {
+    try {
+        $loop = Get-Content -Path $loopPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        foreach ($snap in @($loop.timeline)) {
+            $m = [ordered]@{}
+            foreach ($p in $snap.agents.PSObject.Properties) {
+                $m[$p.Name] = [ordered]@{ place = $p.Value.place; act = $p.Value.act;
+                                          label = $p.Value.label; with = $p.Value.with }
+            }
+            $agentTurns += [ordered]@{ turn = [int]$snap.turn; agents = $m }
+        }
+    } catch { Write-Output ("agent-loop 读取失败（行为层关闭）: " + $_) }
+}
+
 $data = [ordered]@{
     gen_utc     = $state.ts_utc
     zones       = $zones
@@ -98,6 +117,7 @@ $data = [ordered]@{
     census_total = [int]$state.census.total
     residents   = $residents
     echoes      = $echoes
+    agentTurns  = $agentTurns
     reality     = [ordered]@{
         city_day_phase = $state.reality.city_day_phase
         beijing_hhmm   = $state.reality.beijing_hhmm

@@ -362,5 +362,54 @@ const e26 = runPanel(withQueue(lateAndNext), 'nextlate')('f-queue');
 chk('next.coexists-with-late-chip', e26.innerHTML.indexOf('逾期 1 件') >= 0 &&
   e26.innerHTML.indexOf('最近到期 2026-11-16') >= 0, e26.innerHTML);
 
+// --- 15) the OTHER upcoming deadlines (r850) ------------------------------
+// r808 printed only the nearest one and said so in its own comment: "the rest of
+// the upcoming deadlines are still invisible". With several dated rows, a single
+// date reads as if the others had no deadline at all. The page now adds how many
+// are further out plus the second nearest - and it must stay silent when the old
+// payload has no `next_items`, never printing an "0 more".
+const nextTwo = Object.assign({}, splitOnly, {
+  dated: 3, next_due: '2026-11-16', next_days_left: 12, next_id: '121',
+  next_items: [
+    { id: '121', file: 'main.md', due: '2026-11-16', days_left: 12 },
+    { id: '132', file: 'main.md', due: '2026-11-20', days_left: 16 }
+  ]
+});
+const e27 = runPanel(withQueue(nextTwo), 'nexttwo')('f-queue');
+chk('nextmore.count-shown', e27.innerHTML.indexOf('另有 1 件更远') >= 0, e27.innerHTML);
+chk('nextmore.names-second', e27.innerHTML.indexOf('（次近 2026-11-20 #132）') >= 0, e27.innerHTML);
+chk('nextmore.keeps-nearest', e27.innerHTML.indexOf('最近到期 2026-11-16') >= 0, e27.innerHTML);
+chk('nextmore.not-warn', e27.innerHTML.indexOf('tag warn') < 0, e27.innerHTML);
+
+const nextFour = Object.assign({}, nextTwo, {
+  dated: 5,
+  next_items: [
+    { id: '121', file: 'main.md', due: '2026-11-16', days_left: 12 },
+    { id: '132', file: 'main.md', due: '2026-11-20', days_left: 16 },
+    { id: '140', file: 'main.md', due: '2026-11-22', days_left: 18 },
+    { id: '141', file: 'tech.md', due: '2026-11-26', days_left: 22 }
+  ]
+});
+const e28 = runPanel(withQueue(nextFour), 'nextfour')('f-queue');
+chk('nextmore.counts-all-remaining', e28.innerHTML.indexOf('另有 3 件更远') >= 0, e28.innerHTML);
+chk('nextmore.still-names-only-second', e28.innerHTML.indexOf('次近 2026-11-20 #132') >= 0, e28.innerHTML);
+
+const nextNoDue = Object.assign({}, nextTwo, {
+  next_items: [
+    { id: '121', file: 'main.md', due: '2026-11-16', days_left: 12 },
+    { id: '132', file: 'main.md' }
+  ]
+});
+const e29 = runPanel(withQueue(nextNoDue), 'nextnodue')('f-queue');
+chk('nextmore.count-without-date', e29.innerHTML.indexOf('另有 1 件更远') >= 0, e29.innerHTML);
+chk('nextmore.no-invented-second-date', e29.innerHTML.indexOf('次近') < 0, e29.innerHTML);
+
+const legacyNext = Object.assign({}, splitOnly, {
+  dated: 3, next_due: '2026-11-16', next_days_left: 12, next_id: '121'
+});
+const e30 = runPanel(withQueue(legacyNext), 'nextlegacy')('f-queue');
+chk('nextmore.absent-without-items', e30.innerHTML.indexOf('另有') < 0, e30.innerHTML);
+chk('nextmore.never-says-zero', e30.innerHTML.indexOf('另有 0') < 0, e30.innerHTML);
+
 console.log('RESULT pass=' + pass + ' fail=' + fail);
 if (fail > 0) process.exit(1);

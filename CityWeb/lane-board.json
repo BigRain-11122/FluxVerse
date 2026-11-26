@@ -1,6 +1,6 @@
 {
     "version":  1,
-    "updated_utc":  "2026-11-26T15:17:38Z",
+    "updated_utc":  "2026-11-26T15:17:43Z",
     "constitution":  "docs/multi-machine-lanes.md",
     "lease_hours_default":  4,
     "lanes":  [
@@ -68,13 +68,8 @@
                                    "tsc"
                                ],
                       "priority":  2,
-                      "status":  "claimed",
-                      "claim":  {
-                                    "machine":  "bm-a",
-                                    "host":  "DASHENG",
-                                    "lease_until_utc":  "2026-11-26T19:00:00Z",
-                                    "branch":  "lane/A4"
-                                }
+                      "status":  "done",
+                      "claim":  null
                   },
                   {
                       "id":  "B1",

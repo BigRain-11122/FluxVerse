@@ -57,11 +57,36 @@ foreach ($m in @($state.fleet)) {
 $cityBlock = $null
 if ($null -ne $snap) { $cityBlock = $snap.city }
 
+# --- BigLife 桥（2026-11-26 融合）：32 席挂牌居民年轮 + 观察流传播边 ---
+# 数据源=life/BigLife/Tools/city_bridge_export.py（pump 收尾面自动重建；年轮
+# 按 id 直读卡面）。此处只读不写（居民生活事实=BigLife 唯一源）。缺文件静默
+# 降级（residents/echoes 字段缺省），页面照常渲染其余面。
+$bridgePath = Join-Path $FluxVerseRoot 'world-public\city-bridge.json'
+$bridge = Read-Json $bridgePath
+$residents = @()
+$echoes = @()
+if ($null -ne $bridge -and $null -ne $bridge.slots) {
+    foreach ($s in @($bridge.slots)) {
+        $residents += [ordered]@{
+            id = $s.id; name = $s.name; district = $s.district
+            profession = $s.profession; ring = $s.ring
+            goal_done = if ($null -ne $s.goal) { [int]$s.goal.done } else { $null }
+            goal_total = if ($null -ne $s.goal) { [int]$s.goal.total } else { $null }
+        }
+    }
+    foreach ($e in @($bridge.echoes)) {
+        $echoes += [ordered]@{ owner = $e.owner; by = $e.by; day = $e.day; frag = $e.frag;
+                               owner_d = $e.owner_d; by_d = $e.by_d }
+    }
+}
+
 $data = [ordered]@{
     gen_utc     = $state.ts_utc
     zones       = $zones
     fleet       = $fleet
     census_total = [int]$state.census.total
+    residents   = $residents
+    echoes      = $echoes
     reality     = [ordered]@{
         city_day_phase = $state.reality.city_day_phase
         beijing_hhmm   = $state.reality.beijing_hhmm

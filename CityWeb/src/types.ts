@@ -53,6 +53,31 @@ export interface CityData {
   };
   events_tail: CityEvent[];
   street_behavior?: StreetBehaviorEntry[];
+  // 2026-11-26 BigLife 融合：32 席挂牌居民（年轮按 id 直读卡面）与观察流传播边。
+  // 由 tools/export-city-data.ps1 从 world-public/city-bridge.json 投影；
+  // 缺省时居民层不生成（禁装饰律：不放假人）。
+  residents?: ResidentEntry[];
+  echoes?: EchoEntry[];
+}
+
+export interface ResidentEntry {
+  id: string;
+  name?: string;
+  district?: string;
+  profession?: string;
+  ring?: string;
+  goal_done?: number | null;
+  goal_total?: number | null;
+}
+
+export interface EchoEntry {
+  owner?: string;
+  by?: string;
+  day?: string;
+  frag?: string;
+  // 2026-11-26：两端城区（GM/QT/...），用于「城区→城区」退化弧
+  owner_d?: string;
+  by_d?: string;
 }
 
 declare global {

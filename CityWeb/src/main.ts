@@ -1,4 +1,4 @@
-import * as THREE from "three";
+﻿import * as THREE from "three";
 import { getCityData, isLive } from "./data";
 import { buildPlan } from "./city/layout";
 import { buildBuildings } from "./city/buildings";
@@ -6,6 +6,7 @@ import { buildRoads } from "./city/roads";
 import { buildBrainTower } from "./city/brainTower";
 import { buildMasts } from "./city/masts";
 import { buildRobots } from "./city/robots";
+import { buildResidents } from "./city/residents";
 import { buildSky, DayNight } from "./live/daynight";
 import { buildDust } from "./live/dust";
 import { Messengers } from "./live/messengers";
@@ -79,6 +80,9 @@ function main(): void {
   scene.add(masts.root);
   const robots = buildRobots(data);
   scene.add(robots.root);
+  // 2026-11-26 BigLife 融合：32 席挂牌居民（年轮立柱 + 观察流弧线）
+  const residents = buildResidents(plan, data);
+  scene.add(residents.root);
   const dust = buildDust(plan, data);
   scene.add(dust.points);
 
@@ -177,6 +181,7 @@ function main(): void {
     daynight.update();
     messengers.update(elapsed);
     robots.update(dt, elapsed);
+    residents.update(dt, elapsed);
     rig.update(dt);
     composer.render();
   }

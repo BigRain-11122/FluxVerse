@@ -1,6 +1,6 @@
 {
     "version":  1,
-    "updated_utc":  "2026-11-26T15:51:25Z",
+    "updated_utc":  "2026-11-26T15:51:30Z",
     "constitution":  "docs/multi-machine-lanes.md",
     "lease_hours_default":  4,
     "lanes":  [
@@ -83,7 +83,7 @@
                                    "tsc"
                                ],
                       "priority":  2,
-                      "status":  "open",
+                      "status":  "done",
                       "claim":  null
                   },
                   {

@@ -163,15 +163,27 @@ export function buildSkyTransit(plan: CityPlan): SkyTransitRig {
       paintVertexColors(tubeGeo, flow);
       root.add(new THREE.Mesh(tubeGeo, tubeMat));
 
-      // glow hoops every ~60m, hole axis aligned to the tangent
+      // glow hoops every ~60m, hole axis aligned to the tangent.
+      // Perf lane: one InstancedMesh per district tube (hoops share geometry;
+      // per-instance color replaces the per-district material clone).
       const nHoops = Math.max(2, Math.round(len / HOOP_SPACING));
+      const hoopMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const hoopInst = new THREE.InstancedMesh(HOOP_GEO, hoopMat, nHoops);
+      const hoopM = new THREE.Matrix4();
+      const hoopQ = new THREE.Quaternion();
+      const hoopS = new THREE.Vector3(1, 1, 1);
+      const hoopP = new THREE.Vector3();
       for (let i = 0; i < nHoops; i++) {
         const t = i / nHoops;
-        const hoop = new THREE.Mesh(HOOP_GEO, flowGlowMat);
-        hoop.position.copy(curve.getPointAt(t));
-        hoop.quaternion.setFromUnitVectors(FWD, curve.getTangentAt(t, _tan));
-        root.add(hoop);
+        hoopP.copy(curve.getPointAt(t));
+        hoopQ.setFromUnitVectors(FWD, curve.getTangentAt(t, _tan));
+        hoopM.compose(hoopP, hoopQ, hoopS);
+        hoopInst.setMatrixAt(i, hoopM);
+        hoopInst.setColorAt(i, flow.clone().multiplyScalar(1.3));
       }
+      hoopInst.instanceMatrix.needsUpdate = true;
+      if (hoopInst.instanceColor) hoopInst.instanceColor.needsUpdate = true;
+      root.add(hoopInst);
 
       // 3 capsule pods cycling district -> island, headlight at the nose
       const pods: Array<{ mesh: THREE.Mesh; progress: number }> = [];

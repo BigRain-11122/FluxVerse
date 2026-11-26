@@ -33,9 +33,9 @@ DEFAULT_SLICE = ROOT / "data" / "slices" / "shanghai-core-stage1.js"
 # Independent copy of the contract (deliberately not imported from the builder:
 # a verifier that shares the producer's constants cannot catch the producer).
 REGIONS = [
-    ("lujiazui", 31.2315, 121.4940, 31.2470, 121.5140),
-    ("northbund", 31.2400, 121.4775, 31.2570, 121.4985),
-    ("bund_edge", 31.2300, 121.4820, 31.2440, 121.4940),
+    ("lujiazui", 31.2290, 121.4940, 31.2490, 121.5260),
+    ("northbund", 31.2380, 121.4740, 31.2660, 121.4990),
+    ("bund_edge", 31.2290, 121.4800, 31.2450, 121.4950),
 ]
 SLICE_ID = "core"
 H_MIN, H_MAX = 3.0, 700.0

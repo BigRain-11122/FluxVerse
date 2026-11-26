@@ -50,11 +50,14 @@ OUT_FILE = SLICE_DIR / "shanghai-core-stage1.js"
 SLICE_ID = "core"
 
 # --------------------------------------------------------------- config ----
-# (name, south, west, north, east) -- identical to the incumbent puller's boxes.
+# (name, south, west, north, east) -- stage-1 footprint ~17.5 km2 matching the
+# roadmap's 3,808-building target density (215-218 bldg/km2): the original
+# 8 km2 trio only holds ~1,721, so Lujiazui extends east and North Bund north
+# (coordinator ruling 2026-11-26, A1 deviation report).
 REGIONS = [
-    ("lujiazui", 31.2315, 121.4940, 31.2470, 121.5140),
-    ("northbund", 31.2400, 121.4775, 31.2570, 121.4985),
-    ("bund_edge", 31.2300, 121.4820, 31.2440, 121.4940),
+    ("lujiazui", 31.2290, 121.4940, 31.2490, 121.5260),
+    ("northbund", 31.2380, 121.4740, 31.2660, 121.4990),
+    ("bund_edge", 31.2290, 121.4800, 31.2450, 121.4950),
 ]
 
 # maps.mail.ru first (only mirror that answered consistently from CN, per the
@@ -79,10 +82,10 @@ USER_AGENT = "FluxVerse-CityWeb-OSM-stage1/1.0 (+file:// city slice builder)"
 # has no height and no levels tag). CBD core is tall, old town is low-rise,
 # workers' new villages are mid-rise.
 INFER_TIERS = [
-    # (south, west, north, east, metres)
-    (31.2315, 121.4980, 31.2470, 121.5140, 96.0),   # Lujiazui CBD core
-    (31.2400, 121.4775, 31.2570, 121.4985, 42.0),   # North Bund
-    (31.2300, 121.4820, 31.2440, 121.4940, 22.0),   # Bund edge / old town
+    # (south, west, north, east, metres) -- widened with the stage-1 footprint.
+    (31.2290, 121.4980, 31.2490, 121.5260, 96.0),   # Lujiazui CBD core + east
+    (31.2380, 121.4740, 31.2660, 121.4990, 42.0),   # North Bund
+    (31.2290, 121.4800, 31.2450, 121.4950, 22.0),   # Bund edge / old town
 ]
 INFER_DEFAULT_M = 18.0                               # last resort, low-rise
 

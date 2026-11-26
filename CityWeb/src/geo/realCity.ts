@@ -14,6 +14,7 @@ import type { CityPlan, DistrictSpec, ArterySpec, MastSpec } from "../city/layou
 
 import footprints from "../../data/shanghai-buildings.json";
 import northBund from "../../data/shanghai-buildings-nb.json";
+import { getCoreBuildings } from "./sliceLoader";
 import type { WalkCollider } from "../controls/walkController";
 
 interface RawBuilding {
@@ -149,10 +150,27 @@ export function buildRealCity(data: CityData): RealCityRig {
   const root = new THREE.Group();
 
   // ---- district specs from real footprints ----
-  const raws: RawBuilding[] = [
-    ...((footprints as unknown) as RawBuilding[]),
-    ...((northBund.buildings as unknown) as RawBuilding[]),
-  ];
+  // Data source priority: stage-1 slice (3,581 buildings, self-registering
+  // file:// channel) -> legacy static arrays (504 buildings).
+  const slice = getCoreBuildings();
+  let raws: RawBuilding[];
+  if (slice && slice.length > 100) {
+    raws = slice.map((b) => {
+      // Region by centroid heuristic (slice carries no region field):
+      // east of the river -> Lujiazui; north band -> North Bund; else Bund edge.
+      let lat = 0, lon = 0;
+      for (const [la, lo] of b.ring) { lat += la; lon += lo; }
+      lat /= b.ring.length;
+      lon /= b.ring.length;
+      const region = lat > 31.2435 ? "northbund" : lon > 121.4980 ? "lujiazui" : "bund_edge";
+      return { name: b.name, h: b.h, ring: b.ring, region };
+    });
+  } else {
+    raws = [
+      ...((footprints as unknown) as RawBuilding[]),
+      ...((northBund.buildings as unknown) as RawBuilding[]),
+    ];
+  }
 
   const sum = new Map<string, { x: number; z: number; n: number; ptSum: number; hmax: number }>();
   for (const b of raws) {

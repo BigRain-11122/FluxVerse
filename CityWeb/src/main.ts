@@ -287,8 +287,11 @@ function main(): void {
   const clock = new THREE.Clock();
   (window as unknown as { __cwCamera?: THREE.PerspectiveCamera }).__cwCamera = camera;
   // perf telemetry: rolling fps + renderer.info every 500ms (perf lane).
+  // EffectComposer trap (perf-record-card): autoReset resets info at EVERY
+  // internal render pass (bloom), so the HUD would only show the last pass
+  // (draw 1). Frame-start manual reset accumulates all passes.
+  renderer.info.autoReset = false;
   let frames = 0;
-  let fpsAccum = 0;
   let lastPerfAt = performance.now();
   window.setInterval(() => {
     const info = renderer.info;
@@ -357,9 +360,9 @@ function main(): void {
     // Orbit controls overwrite the camera every frame; they must yield
     // entirely while the first-person walker owns it.
     if (!walker.enabled()) rig.update(dt);
+    renderer.info.reset(); // frame-start reset: composer passes accumulate
     composer.render();
     frames++;
-    fpsAccum += dt;
   }
   animate();
 

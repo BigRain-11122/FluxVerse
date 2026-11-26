@@ -4,7 +4,7 @@ import { buildRealCity } from "./geo/realCity";
 import { buildBrainTower } from "./city/brainTower";
 import { buildMasts } from "./city/masts";
 import { buildRobots } from "./city/robots";
-import { buildResidents } from "./city/residents";
+import { buildResidentsBatched } from "./city/residentsBatched";
 import { buildOrientalPearl, buildJinmao } from "./city/landmarks-pearl-jinmao";
 import { buildShanghaiTower, buildSwfc } from "./city/landmarks-tower-swfc";
 import { buildWhiteMagnolia, buildWaibaiduBridge } from "./city/landmarks-northbund";
@@ -125,7 +125,7 @@ function main(): void {
   const robots = buildRobots(data);
   robots.root.position.set(real.islandPos.x, 0, real.islandPos.z); // park on the brain island
   scene.add(robots.root);
-  const residents = buildResidents(plan, data);
+  const residents = buildResidentsBatched(plan, data); // BatchedMesh: 433 dc -> 4
   scene.add(residents.root);
   const traffic = buildTraffic(plan);
   scene.add(traffic.root);

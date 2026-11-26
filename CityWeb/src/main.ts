@@ -20,6 +20,7 @@ import { buildPedestrians } from "./live/pedestrians";
 import { buildComposer } from "./render/postfx";
 import { CameraRig } from "./controls/cameraRig";
 import { createPlayer } from "./player/controller";
+import { createWorld } from "./core/world";
 import { buildHud } from "./ui/hud";
 import { project } from "./geo/projection";
 
@@ -140,6 +141,27 @@ function main(): void {
   if (new URLSearchParams(location.search).get("play")) player.toggle(true);
   (window as unknown as { __CITY_PLAYER__?: unknown }).__CITY_PLAYER__ = player;
 
+  // ---- 架构 v2 内核：主循环不再认识任何具体模块（cph4/city-architecture-v2.md）----
+  // 每个模块只声明「谁 / 多快 / 什么顺序」，降频是内建能力（hz），不是各模块自己写计时器。
+  const world = createWorld(plan, data);
+  world.add({ id: "daynight", layer: "live", hz: 2, order: 10, update: () => daynight.update() });
+  world.add({ id: "weather", layer: "live", order: 20, update: (f) => weather.update(f.dt, f.elapsed) });
+  world.add({ id: "traffic", layer: "live", hz: 30, order: 30, update: (f) => traffic.update(f.dt, f.elapsed) });
+  world.add({ id: "pedestrians", layer: "live", hz: 30, order: 40,
+              update: (f) => pedestrians.update(f.dt, f.elapsed, f.hour) });
+  world.add({ id: "vehicles", layer: "live", hz: 30, order: 50,
+              update: (f) => vehicles.update(f.dt, f.elapsed, f.hour) });
+  world.add({ id: "residents", layer: "sim", hz: 30, order: 10,
+              update: (f) => residents.update(f.dt, f.elapsed) });
+  world.add({ id: "robots", layer: "world", order: 10, update: (f) => robots.update(f.dt, f.elapsed) });
+  world.add({ id: "messengers", layer: "live", order: 60, update: (f) => messengers.update(f.elapsed) });
+  world.add({ id: "rooftops", layer: "world", hz: 2, order: 20, update: (f) => rooftops.update(f.dt, f.elapsed) });
+  world.add({ id: "river", layer: "live", order: 70, update: (f) => riverReflection.update(f.dt, f.elapsed) });
+  world.add({ id: "landmarks", layer: "world", order: 30,
+              update: (f) => { for (const lm of landmarkRigs) lm.update(f.dt, f.elapsed); } });
+  world.add({ id: "player", layer: "play", order: 10, update: (f) => player.update(f.dt) });
+  (window as unknown as { __CITY_WORLD__?: unknown }).__CITY_WORLD__ = world;
+
   // ---- day/night wiring (real facade shader materials) ----
   const daynight = new DayNight(scene, sun, hemi, sky, data);
   daynight.attachMaterials(null, ground.material as THREE.MeshStandardMaterial);
@@ -229,23 +251,14 @@ function main(): void {
   window.addEventListener("keydown", (e) => {
     if (e.key === "r" || e.key === "R") enterStreet();
   });
+  let fpsAvg = 60;
   function animate(): void {
     requestAnimationFrame(animate);
     const dt = Math.min(0.1, clock.getDelta());
     const elapsed = clock.elapsedTime;
-    daynight.update();
-    messengers.update(elapsed);
-    robots.update(dt, elapsed);
-    residents.update(dt, elapsed);
-    traffic.update(dt, elapsed);
-    weather.update(dt, elapsed);
-    pedestrians.update(dt, elapsed, daynight.hour());
-  vehicles.update(dt, elapsed, daynight.hour());
-  rooftops.update(dt, elapsed);
-  riverReflection.update(dt, elapsed);
-    for (const lm of landmarkRigs) lm.update(dt, elapsed);
-    // 玩家接管时暂停轨道相机，避免两套相机互相抢位置
-    player.update(dt);
+    fpsAvg = fpsAvg * 0.9 + (1 / Math.max(dt, 1e-4)) * 0.1;
+    // 全部模块由 World 按 hz/order 派发；主循环只负责"给一帧"
+    world.tick({ dt, elapsed, hour: daynight.hour(), fps: fpsAvg });
     if (!player.isOn()) rig.update(dt);
     composer.render();
   }

@@ -65,7 +65,7 @@ const P = (
 // Keyframes over 24h (Beijing real time). Night -> dawn -> day -> dusk -> night.
 const NIGHT = P(0x04060e, 0x0a1220, 0x05080f, 0x8ea6c8, 0.32, 0x1a2436, 0x05070c, 0.5, 1.0, 0.9, 0.12, 0.6, 0x060a12);
 const DAWN = P(0x1c2a4c, 0xc98a72, 0x6a5a72, 0xffc9a0, 1.4, 0x3a4a6c, 0x141820, 0.7, 0.6, 0.35, 0.7, 0.9, 0x2c3246);
-const DAY = P(0x7ea6da, 0xd9e8f4, 0xb9c9da, 0xfff2dc, 3.0, 0x94aac8, 0x3a4252, 1.0, 0.45, 0.0, 1.0, 1.6, 0x46536b);
+const DAY = P(0x6f9cd4, 0xc9dbee, 0xa8bcd2, 0xfff2dc, 2.2, 0x84a0c4, 0x394254, 0.78, 0.45, 0.0, 1.0, 1.45, 0x3d4a61);
 const DUSK = P(0x2e2750, 0xc2743f, 0x7a4a48, 0xffb36b, 1.5, 0x3c3458, 0x181420, 0.75, 0.85, 0.4, 0.45, 1.0, 0x241f2a);
 
 const KEYS: Array<{ h: number; p: PhasePalette }> = [

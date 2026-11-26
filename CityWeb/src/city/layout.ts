@@ -6,10 +6,10 @@ import type { CityData } from "../types";
 // three neural arteries, outer perception ring.
 
 export const SEED = 20260923;
-export const CITY_R = 172; // district center distance from origin
+export const CITY_R = 172; // legacy fictional layout (superseded by geo/realCity)
 export const DISTRICT_R = 78;
-export const PLAZA_R = 30;
-export const OUTER_RING_R = 312;
+export const PLAZA_R = 130; // brain-island garage ring (robots park here)
+export const OUTER_RING_R = 1900; // perception ring, real city scale
 
 export interface DistrictSpec {
   id: string;

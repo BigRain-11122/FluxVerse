@@ -85,7 +85,8 @@ export class DayNight {
   private fog: THREE.FogExp2;
   breathBoost = 0; // decaying envelope set by OS_TICK performances
   zoneGain: Map<string, number> = new Map();
-  windowMats: Map<string, THREE.MeshBasicMaterial> = new Map();
+  realMats: Map<string, THREE.ShaderMaterial> = new Map(); // facade shader mats (real city)
+  waterMat: THREE.ShaderMaterial | null = null; // river flow shader
   flowMats: THREE.MeshBasicMaterial[] = [];
   dustMat: THREE.PointsMaterial | null = null;
 
@@ -99,14 +100,14 @@ export class DayNight {
     const [h, m] = hhmm.split(":").map((x) => parseInt(x, 10) || 0);
     this.baseHour = h + m / 60;
     this.basePerf = performance.now();
-    this.fog = new THREE.FogExp2(0x05080f, 0.0007);
+    this.fog = new THREE.FogExp2(0x05080f, 0.00016); // real-scale city ~4km wide
     scene.fog = this.fog;
     for (const z of data.zones) {
       this.zoneGain.set(z.id, 0.45 + 0.55 * Math.min(1, Math.max(0, z.activity)));
     }
   }
 
-  attachMaterials(bodyMat: THREE.MeshStandardMaterial, groundMat: THREE.MeshStandardMaterial): void {
+  attachMaterials(bodyMat: THREE.MeshStandardMaterial | null, groundMat: THREE.MeshStandardMaterial): void {
     this.bodyMat = bodyMat;
     this.groundMat = groundMat;
   }
@@ -148,15 +149,18 @@ export class DayNight {
     this.hemi.groundColor.copy(p.hemiGround);
     this.hemi.intensity = p.hemiIntensity;
 
-    // Windows: day/night gain x zone activity + breath envelope.
+    // Real-city facade shaders: window gain = phase x zone activity + breath.
     const breath = this.breathBoost;
-    for (const [zoneId, mat] of this.windowMats) {
+    for (const [zoneId, mat] of this.realMats) {
       const zone = this.zoneGain.get(zoneId) ?? 0.5;
-      const gain = p.windowGain * zone + breath;
-      const flow = mat.userData.flowColor as THREE.Color;
-      mat.color.copy(flow).multiplyScalar(Math.max(0.10, gain));
+      mat.uniforms.uWinGain.value = Math.max(0.30, p.windowGain * zone * 1.8);
+      mat.uniforms.uBreath.value = breath;
+      mat.uniforms.uBodyGain.value = p.bodyGain * 0.9 + 0.55;
     }
-    // Artery flow lines glow more at night.
+    if (this.waterMat) {
+      this.waterMat.uniforms.uTime.value = performance.now() / 1000;
+    }
+    // Bridge light edges glow more at night.
     for (const fm of this.flowMats) {
       const flow = fm.userData.flowColor as THREE.Color;
       fm.color.copy(flow).multiplyScalar(0.55 + 0.85 * p.windowGain + breath * 0.5);

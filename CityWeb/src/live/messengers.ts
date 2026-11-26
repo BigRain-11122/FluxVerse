@@ -43,7 +43,7 @@ export class Messengers {
     this.daynight = daynight;
     this.tower.beamMat.userData.t0 = -999;
 
-    const geo = new THREE.SphereGeometry(0.85, 10, 8);
+    const geo = new THREE.SphereGeometry(4.2, 10, 8);
     for (let i = 0; i < 18; i++) {
       const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
       const mesh = new THREE.Mesh(geo, mat);
@@ -66,15 +66,16 @@ export class Messengers {
     const dot = this.dots.find((d) => !d.active);
     if (!dot) return;
     const zone = zoneId ?? "governance";
-    let from = new THREE.Vector3(0, 40, 0);
+    let from = this.tower.root.position.clone();
     const d = this.plan.districts.find((dd) => dd.id === zone);
-    if (d) from = new THREE.Vector3(d.cx, 8, d.cz);
-    const to = new THREE.Vector3(0, 46, 0);
+    if (d) from = new THREE.Vector3(d.cx, 30, d.cz);
+    const to = this.tower.root.position.clone();
+    to.y += 150; // crown height at brain-tower scale
     const ctrl = from.clone().lerp(to, 0.5);
-    ctrl.y = Math.max(from.y, to.y) + 34;
+    ctrl.y = Math.max(from.y, to.y) + 160;
     dot.active = true;
     dot.t0 = elapsed;
-    dot.dur = 6.5;
+    dot.dur = 8.5;
     dot.from.copy(from);
     dot.ctrl.copy(ctrl);
     dot.to.copy(to);

@@ -30,8 +30,8 @@ export class CameraRig {
     this.controls = new OrbitControls(camera, dom);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
-    this.controls.minDistance = 30;
-    this.controls.maxDistance = 900;
+    this.controls.minDistance = 60;
+    this.controls.maxDistance = 3600;
     this.controls.maxPolarAngle = Math.PI * 0.485;
     this.controls.target.set(0, 12, 0);
 
@@ -54,14 +54,16 @@ export class CameraRig {
 
   levels(): CameraLevel[] {
     const lv: CameraLevel[] = [
-      { name: "L0 总览", pos: new THREE.Vector3(0, 400, 430), target: new THREE.Vector3(0, 10, 0) },
+      // overview shifted +X so the Lujiazui supertall cluster (Shanghai
+      // Tower/SWFC) stays in frame - it was cut at the right edge.
+      { name: "L0 总览", pos: new THREE.Vector3(240, 1750, 2150), target: new THREE.Vector3(180, 90, 0) },
     ];
     for (const d of this.plan.districts) {
       const dir = new THREE.Vector3(d.cx, 0, d.cz).normalize();
       lv.push({
         name: `L1 ${d.name}`,
-        pos: new THREE.Vector3(d.cx - dir.x * 60, 120, d.cz - dir.z * 60),
-        target: new THREE.Vector3(d.cx, 22, d.cz),
+        pos: new THREE.Vector3(d.cx - dir.x * 640, 700, d.cz - dir.z * 640),
+        target: new THREE.Vector3(d.cx, 90, d.cz),
       });
     }
     return lv;
@@ -113,6 +115,6 @@ export class CameraRig {
       const dist = Math.hypot(world.x - d.cx, world.z - d.cz);
       if (dist < bestD) { bestD = dist; best = i; }
     });
-    if (best >= 0 && bestD < 220) this.applyLevel(best + 1, true);
+    if (best >= 0 && bestD < 900) this.applyLevel(best + 1, true);
   }
 }

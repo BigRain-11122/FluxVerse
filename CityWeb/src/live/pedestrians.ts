@@ -15,8 +15,8 @@ export interface PedestriansRig {
 }
 
 const COUNT = 360;
-const RING_MIN = 20;
-const RING_MAX = 68;
+const RING_MIN = 90;   // real-meters street rings around district cores
+const RING_MAX = 300;
 const OMEGA_MIN = 0.08; // rad/s around the district center
 const OMEGA_MAX = 0.2;
 const BOB_AMP = 0.08;

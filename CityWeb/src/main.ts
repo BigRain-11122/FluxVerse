@@ -1,12 +1,13 @@
 ﻿import * as THREE from "three";
 import { getCityData, isLive } from "./data";
-import { buildPlan } from "./city/layout";
-import { buildBuildings } from "./city/buildings";
-import { buildRoads } from "./city/roads";
+import { buildRealCity } from "./geo/realCity";
 import { buildBrainTower } from "./city/brainTower";
 import { buildMasts } from "./city/masts";
 import { buildRobots } from "./city/robots";
 import { buildResidents } from "./city/residents";
+import { buildOrientalPearl, buildJinmao } from "./city/landmarks-pearl-jinmao";
+import { buildShanghaiTower, buildSwfc } from "./city/landmarks-tower-swfc";
+import { buildWhiteMagnolia, buildWaibaiduBridge } from "./city/landmarks-northbund";
 import { buildSky, DayNight } from "./live/daynight";
 import { buildDust } from "./live/dust";
 import { Messengers } from "./live/messengers";
@@ -16,7 +17,14 @@ import { buildPedestrians } from "./live/pedestrians";
 import { buildComposer } from "./render/postfx";
 import { CameraRig } from "./controls/cameraRig";
 import { buildHud } from "./ui/hud";
-import { ZONE_FLOW } from "./palette";
+import { project } from "./geo/projection";
+
+function placeLandmark(rig: { root: THREE.Group }, lat: number, lon: number, rotY: number, scale = 1): void {
+  const { x, z } = project({ lat, lon });
+  rig.root.position.set(x, 0, z);
+  rig.root.rotation.y = rotY;
+  rig.root.scale.setScalar(scale);
+}
 
 function main(): void {
   const data = getCityData();
@@ -32,19 +40,19 @@ function main(): void {
   renderer.toneMappingExposure = 1.05;
   app.appendChild(renderer.domElement);
 
-  // ---- scene & camera ----
+  // ---- scene & camera (real-geography scale: 1 unit = 1m, city ~4km wide) ----
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 2600);
-  camera.position.set(0, 400, 430);
+  const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 2, 9000);
+  camera.position.set(0, 1600, 1900);
 
   const sun = new THREE.DirectionalLight(0xfff2dc, 2.2);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.camera.left = -420;
-  sun.shadow.camera.right = 420;
-  sun.shadow.camera.top = 420;
-  sun.shadow.camera.bottom = -420;
-  sun.shadow.camera.far = 1600;
+  sun.shadow.camera.left = -1500;
+  sun.shadow.camera.right = 1500;
+  sun.shadow.camera.top = 1500;
+  sun.shadow.camera.bottom = -1500;
+  sun.shadow.camera.far = 4200;
   sun.shadow.bias = -0.0006;
   scene.add(sun);
 
@@ -56,34 +64,47 @@ function main(): void {
   scene.add(sky.mesh);
   scene.add(sky.stars);
 
-  // ---- ground ----
+  // ---- ground (dark silicon base under the whole metro area) ----
   const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(1000, 64),
+    new THREE.CircleGeometry(3600, 64),
     new THREE.MeshStandardMaterial({ color: 0x060a12, roughness: 0.96, metalness: 0 }),
   );
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   scene.add(ground);
 
-  const grid = new THREE.GridHelper(660, 66, 0x16233c, 0x0b1424);
-  (grid.material as THREE.Material).transparent = true;
-  (grid.material as THREE.Material).opacity = 0.5;
-  grid.position.y = 0.02;
-  scene.add(grid);
+  // ---- real-geography city body (Lujiazui + North Bund + river + island) ----
+  const real = buildRealCity(data);
+  scene.add(real.root);
+  const plan = real.plan;
 
-  // ---- city ----
-  const plan = buildPlan(data);
-  const buildings = buildBuildings(plan, data);
-  scene.add(buildings.root);
-  const roads = buildRoads(plan);
-  scene.add(roads.root);
+  // ---- brain tower on the river data island ----
   const tower = buildBrainTower();
+  tower.root.position.set(real.islandPos.x, 9, real.islandPos.z);
+  tower.root.scale.setScalar(2.6);
   scene.add(tower.root);
+
+  // ---- procedural landmarks at their real coordinates ----
+  const S = real.landmarkSlots;
+  const landmarkRigs: Array<{ update: (dt: number, elapsed: number) => void }> = [];
+  const addLandmark = (rig: { root: THREE.Group; update: (dt: number, elapsed: number) => void }, slot: { lat: number; lon: number; rotY: number }): void => {
+    placeLandmark(rig, slot.lat, slot.lon, slot.rotY);
+    scene.add(rig.root);
+    landmarkRigs.push(rig);
+  };
+  addLandmark(buildOrientalPearl(), S.pearl);
+  addLandmark(buildJinmao(), S.jinmao);
+  addLandmark(buildShanghaiTower(), S.shanghaiTower);
+  addLandmark(buildSwfc(), S.swfc);
+  addLandmark(buildWhiteMagnolia(), S.whiteMagnolia);
+  addLandmark(buildWaibaiduBridge(), S.waibaidu);
+
+  // ---- living systems ----
   const masts = buildMasts(plan);
   scene.add(masts.root);
   const robots = buildRobots(data);
+  robots.root.position.set(real.islandPos.x, 0, real.islandPos.z); // park on the brain island
   scene.add(robots.root);
-  // 2026-11-26 BigLife 融合：32 席挂牌居民（年轮立柱 + 观察流弧线）
   const residents = buildResidents(plan, data);
   scene.add(residents.root);
   const traffic = buildTraffic(plan);
@@ -103,30 +124,12 @@ function main(): void {
   const rig = new CameraRig(camera, renderer.domElement, plan);
   rig.onLevelChange = (label) => hud.setCam(label);
 
-  // ---- day/night wiring ----
+  // ---- day/night wiring (real facade shader materials) ----
   const daynight = new DayNight(scene, sun, hemi, sky, data);
-  daynight.attachMaterials(
-    buildings.bodyMesh.material as THREE.MeshStandardMaterial,
-    ground.material as THREE.MeshStandardMaterial,
-  );
-  for (const [zoneId, im] of buildings.windowMeshes) {
-    const mat = im.material as THREE.MeshBasicMaterial;
-    mat.userData.flowColor = (ZONE_FLOW[zoneId] ?? ZONE_FLOW.governance).clone();
-    daynight.windowMats.set(zoneId, mat);
-  }
-  for (const [zoneId, line] of roads.flowLines) {
-    const mat = line.material as THREE.MeshBasicMaterial;
-    mat.userData.flowColor = mat.color.clone();
-    daynight.flowMats.push(mat);
-  }
-  for (const ring of roads.districtRings) {
-    const mat = ring.material as THREE.MeshBasicMaterial;
-    mat.userData.flowColor = mat.color.clone();
-    daynight.flowMats.push(mat);
-  }
-  const plazaMat = roads.plazaRing.material as THREE.MeshBasicMaterial;
-  plazaMat.userData.flowColor = ZONE_FLOW.governance.clone();
-  daynight.flowMats.push(plazaMat);
+  daynight.attachMaterials(null, ground.material as THREE.MeshStandardMaterial);
+  daynight.realMats = real.bodyMats;
+  daynight.waterMat = real.waterMat;
+  for (const fm of real.flowMats) daynight.flowMats.push(fm);
   daynight.dustMat = dust.mat;
 
   // ---- messengers (event performances) ----
@@ -144,7 +147,6 @@ function main(): void {
     if (ev.key === "3") rig.applyLevel(3, true);
   });
 
-  // click-to-focus (distinguish from orbit drag)
   let downX = 0, downY = 0;
   renderer.domElement.addEventListener("pointerdown", (ev) => {
     downX = ev.clientX; downY = ev.clientY;
@@ -171,12 +173,10 @@ function main(): void {
     composer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  // ---- HUD clock ----
   const tickClock = (): void => hud.setClock(new Date(), daynight.label());
   tickClock();
   window.setInterval(tickClock, 1000);
 
-  // ---- auto refresh: pick up the next tick's data every 10 min ----
   window.setInterval(() => {
     rig.persist();
     location.reload();
@@ -186,7 +186,6 @@ function main(): void {
 
   // ---- render loop ----
   const clock = new THREE.Clock();
-  // expose camera for QA scripts (street-level regression shots)
   (window as unknown as { __cwCamera?: THREE.PerspectiveCamera }).__cwCamera = camera;
   function animate(): void {
     requestAnimationFrame(animate);
@@ -199,13 +198,13 @@ function main(): void {
     traffic.update(dt, elapsed);
     weather.update(dt, elapsed);
     pedestrians.update(dt, elapsed, daynight.hour());
+    for (const lm of landmarkRigs) lm.update(dt, elapsed);
     rig.update(dt);
     composer.render();
   }
   animate();
 
-  // mark live provenance in console for debugging
-  console.log(`[CityWeb] buildings=${buildings.buildingCount} windows=${buildings.windowCount} live=${isLive()}`);
+  console.log(`[CityWeb] real-geography city: footprints=${real.buildingCount} live=${isLive()}`);
 }
 
 main();

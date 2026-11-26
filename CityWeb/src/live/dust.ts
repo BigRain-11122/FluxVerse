@@ -22,16 +22,16 @@ export function buildDust(plan: CityPlan, data: CityData): DustRig {
   for (let i = 0; i < SAMPLE; i++) {
     const d = plan.districts[Math.floor(rng() * plan.districts.length)];
     const ang = rng() * Math.PI * 2;
-    const r = 16 + rng() * 58;
+    const r = 80 + rng() * 330; // real-meters spread over district cores
     positions[i * 3] = d.cx + Math.cos(ang) * r;
-    positions[i * 3 + 1] = 1.6 + rng() * 13;
+    positions[i * 3 + 1] = 3 + rng() * 45;
     positions[i * 3 + 2] = d.cz + Math.sin(ang) * r;
   }
 
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   const mat = new THREE.PointsMaterial({
-    color: 0x7de8d8, size: 1.7, sizeAttenuation: true,
+    color: 0x7de8d8, size: 3.4, sizeAttenuation: true,
     transparent: true, opacity: 0.4, depthWrite: false,
     blending: THREE.AdditiveBlending, fog: true,
   });

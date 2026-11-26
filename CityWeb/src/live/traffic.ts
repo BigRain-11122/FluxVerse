@@ -10,8 +10,8 @@ import type { CityEvent } from "../types";
 // traffic, pool overflow drops the event instead of queueing it.
 
 const POOL_SIZE = 12;
-const BAND_SPEED = 38; // world units per second along the artery
-const BAND_Y = 0.35; // hugs the road surface
+const BAND_SPEED = 150; // m/s along the light bridge (real-geography scale)
+const BAND_Y = 9.4; // bridge deck surface
 const ACTIVE_OPACITY = 0.85;
 
 const ZONE_COLOR: Record<string, THREE.Color> = {
@@ -41,7 +41,7 @@ export function buildTraffic(plan: CityPlan): TrafficRig {
 
   // One shared box; one material clone per band so each ride can carry its
   // own district flow color without touching the others.
-  const geo = new THREE.BoxGeometry(4.2, 0.22, 0.22);
+  const geo = new THREE.BoxGeometry(20, 1.1, 1.1);
   const bands: Band[] = [];
   for (let i = 0; i < POOL_SIZE; i++) {
     const mat = new THREE.MeshBasicMaterial({

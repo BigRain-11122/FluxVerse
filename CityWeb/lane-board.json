@@ -1,6 +1,6 @@
 {
     "version":  1,
-    "updated_utc":  "2026-11-26T15:51:30Z",
+    "updated_utc":  "2026-11-27T02:56:57Z",
     "constitution":  "docs/multi-machine-lanes.md",
     "lease_hours_default":  4,
     "lanes":  [
@@ -354,6 +354,128 @@
                                ],
                       "priority":  3,
                       "status":  "open",
+                      "claim":  null
+                  },
+                  {
+                      "domain":  "sim",
+                      "id":  "L1",
+                      "title":  "City growth loop (parcels/demand/growth/budget)",
+                      "caps":  [
+                                   "node",
+                                   "tsc"
+                               ],
+                      "status":  "open",
+                      "priority":  1,
+                      "fileScope":  [
+                                        "CityWeb/src/sim/growth"
+                                    ],
+                      "claim":  null
+                  },
+                  {
+                      "domain":  "sim",
+                      "id":  "L2",
+                      "title":  "Utility AI resident decisions (needs/scoring, 500ms rotation)",
+                      "caps":  [
+                                   "node",
+                                   "tsc"
+                               ],
+                      "status":  "open",
+                      "priority":  1,
+                      "fileScope":  [
+                                        "CityWeb/src/sim/agents"
+                                    ],
+                      "claim":  null
+                  },
+                  {
+                      "domain":  "sim",
+                      "id":  "L3",
+                      "title":  "Event director (beats/wheel/echo + daily chronicle)",
+                      "caps":  [
+                                   "node",
+                                   "tsc"
+                               ],
+                      "status":  "open",
+                      "priority":  2,
+                      "fileScope":  [
+                                        "CityWeb/src/sim/director"
+                                    ],
+                      "claim":  null
+                  },
+                  {
+                      "domain":  "sim",
+                      "id":  "L4",
+                      "title":  "Memory store + template dialog + Worker queue (4-level degrade)",
+                      "caps":  [
+                                   "node",
+                                   "tsc"
+                               ],
+                      "status":  "open",
+                      "priority":  2,
+                      "fileScope":  [
+                                        "CityWeb/src/sim/memory",
+                                        "CityWeb/src/sim/talk"
+                                    ],
+                      "claim":  null
+                  },
+                  {
+                      "domain":  "build",
+                      "id":  "L5",
+                      "title":  "Facade splitting (street frontage x6 density)",
+                      "caps":  [
+                                   "node",
+                                   "tsc"
+                               ],
+                      "status":  "open",
+                      "priority":  1,
+                      "fileScope":  [
+                                        "CityWeb/src/city/facades.ts"
+                                    ],
+                      "claim":  null
+                  },
+                  {
+                      "domain":  "build",
+                      "id":  "L6",
+                      "title":  "Three-ring density zoning (core 2km2/ring 6/backland 9)",
+                      "caps":  [
+                                   "node",
+                                   "tsc"
+                               ],
+                      "status":  "open",
+                      "priority":  2,
+                      "fileScope":  [
+                                        "CityWeb/src/city/rings.ts"
+                                    ],
+                      "claim":  null
+                  },
+                  {
+                      "domain":  "player",
+                      "id":  "L7",
+                      "title":  "Eureka-style promotion (condition-based discount)",
+                      "caps":  [
+                                   "node",
+                                   "tsc"
+                               ],
+                      "status":  "open",
+                      "priority":  3,
+                      "fileScope":  [
+                                        "CityWeb/src/player/eureka.ts"
+                                    ],
+                      "claim":  null
+                  },
+                  {
+                      "domain":  "ops",
+                      "id":  "L8",
+                      "title":  "Experience gates (facade/km, POI spacing, 5-min coverage)",
+                      "caps":  [
+                                   "node",
+                                   "tsc"
+                               ],
+                      "status":  "open",
+                      "priority":  2,
+                      "fileScope":  [
+                                        "CityWeb/src/gates",
+                                        "CityWeb/tools/gate-"
+                                    ],
                       "claim":  null
                   }
               ],
